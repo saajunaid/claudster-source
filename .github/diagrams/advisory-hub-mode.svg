@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760"
+  font-family="Inter, Segoe UI, system-ui, sans-serif">
+
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="110%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#94a3b8" flood-opacity="0.18"/>
+    </filter>
+    <filter id="shadow-sm" x="-4%" y="-4%" width="110%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2.5" flood-color="#94a3b8" flood-opacity="0.13"/>
+    </filter>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 1L10 5L0 9z" fill="#475569"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 1L10 5L0 9z" fill="#059669"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 1L10 5L0 9z" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- BACKGROUND                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <rect width="1400" height="760" fill="#f0f4f8"/>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- HEADER                                                      -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <rect x="14" y="12" width="1372" height="56" rx="10" fill="white" filter="url(#shadow)"/>
+  <text x="700" y="33" text-anchor="middle" font-size="19" font-weight="700" fill="#0f172a">AdvisoryHub Mode — Reference Card</text>
+  <text x="700" y="54" text-anchor="middle" font-size="11" fill="#64748b">The supervisor entry point · you orchestrate, AI advises · pipeline routing via @Orchestrator · standalone issues via Diagnostic Brief</text>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- ROW 1 — 3 INFO CARDS (y=82, h=122)                        -->
+  <!-- x: 14 | 476 | 938                  w: 448                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+
+  <!-- CARD A: What is AdvisoryHub -->
+  <rect x="14" y="82" width="448" height="122" rx="9" fill="white" filter="url(#shadow)"/>
+  <path d="M23,82 h429 q9,0 9,9 v22 h-448 v-22 q0,-9 9,-9 z" fill="#cffafe"/>
+  <text x="28" y="100" font-size="12" font-weight="700" fill="#164e63">What is AdvisoryHub?</text>
+  <g font-size="10.5" fill="#374151">
+    <text x="28" y="122">The <tspan font-weight="600">entry point</tspan> for all pipeline work in Supervisor Mode.</text>
+    <text x="28" y="138">You are the orchestrator — AI advises and routes, never acts.</text>
+    <text x="28" y="154">On load: reads project-config, plans, handoffs silently.</text>
+    <text x="28" y="170">Routes to named agents — never chains them autonomously.</text>
+    <text x="28" y="186" font-style="italic" fill="#64748b">Invoke: type  /advisoryhub  [description]  in Copilot Chat</text>
+  </g>
+
+  <!-- CARD B: Session Types -->
+  <rect x="476" y="82" width="448" height="122" rx="9" fill="white" filter="url(#shadow)"/>
+  <path d="M485,82 h429 q9,0 9,9 v22 h-448 v-22 q0,-9 9,-9 z" fill="#dbeafe"/>
+  <text x="490" y="100" font-size="12" font-weight="700" fill="#1e40af">Three Session Types</text>
+  <g font-size="10.5" fill="#374151">
+    <text x="490" y="122"><tspan font-weight="700" fill="#1d4ed8">A) Fresh Start</tspan> — new spec / feature request</text>
+    <text x="502" y="137" fill="#64748b">→ Asks 4 intake questions (scope, constraints, baseline, input)</text>
+    <text x="490" y="153"><tspan font-weight="700" fill="#1d4ed8">B) Continuation</tspan> — plan(s) already in .github/plans/</text>
+    <text x="502" y="168" fill="#64748b">→ Shows status dashboard; routes to next pipeline stage</text>
+    <text x="490" y="184"><tspan font-weight="700" fill="#1d4ed8">C) Directed</tspan> — user specifies exactly what to do</text>
+    <text x="502" y="199" fill="#64748b">→ Skips to routing step immediately</text>
+  </g>
+
+  <!-- CARD C: Advisory vs Autonomous -->
+  <rect x="938" y="82" width="448" height="122" rx="9" fill="white" filter="url(#shadow)"/>
+  <path d="M947,82 h429 q9,0 9,9 v22 h-448 v-22 q0,-9 9,-9 z" fill="#ede9fe"/>
+  <text x="952" y="100" font-size="12" font-weight="700" fill="#4c1d95">Supervisor vs Auto Mode</text>
+  <g font-size="10.5" fill="#374151">
+    <text x="952" y="122"><tspan font-weight="700" fill="#5b21b6">Supervisor (today)</tspan> — approval gate at each stage</text>
+    <text x="964" y="137" fill="#64748b">AdvisoryHub routes, user confirms, agent executes, user reviews</text>
+    <text x="952" y="153"><tspan font-weight="700" fill="#5b21b6">Auto Mode (future)</tspan> — fully autonomous pipeline</text>
+    <text x="964" y="168" fill="#64748b">PM agent orchestrates full chain without manual gates</text>
+    <text x="952" y="184"><tspan font-weight="700" fill="#5b21b6">Advisory in both</tspan> — AdvisoryHub advises in either mode</text>
+    <text x="964" y="199" fill="#64748b">Boundary rules apply regardless of mode</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- DECISION GATE — full width prominent (y=218, h=138)        -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <rect x="14" y="218" width="1372" height="138" rx="9" fill="white" filter="url(#shadow)"/>
+  <path d="M23,218 h1354 q9,0 9,9 v26 h-1372 v-26 q0,-9 9,-9 z" fill="#fef3c7"/>
+  <text x="700" y="236" text-anchor="middle" font-size="13" font-weight="700" fill="#78350f">The Decision Gate — apply before composing ANY prompt</text>
+  <text x="700" y="252" text-anchor="middle" font-size="10.5" fill="#92400e">Ask yourself this question every time</text>
+
+  <!-- The question box -->
+  <rect x="400" y="258" width="600" height="36" rx="8" fill="#fef9c3" stroke="#fcd34d" stroke-width="1.5"/>
+  <text x="700" y="272" text-anchor="middle" font-size="12" font-weight="700" fill="#0f172a">"Did I need to read</text>
+  <text x="700" y="287" text-anchor="middle" font-size="12" font-weight="700" fill="#0f172a">pipeline-state.json to construct this prompt?"</text>
+
+  <!-- YES path (left) -->
+  <line x1="400" y1="276" x2="280" y2="310" stroke="#dc2626" stroke-width="2" marker-end="url(#arr-red)"/>
+  <rect x="14" y="308" width="280" height="40" rx="7" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+  <text x="154" y="324" text-anchor="middle" font-size="11" font-weight="700" fill="#991b1b">YES → Pipeline Handoff</text>
+  <text x="154" y="339" text-anchor="middle" font-size="10" fill="#dc2626">STOP · say "Go to @Orchestrator in a new session"</text>
+  <!-- YES label -->
+  <text x="335" y="299" font-size="10" font-weight="700" fill="#dc2626">YES</text>
+
+  <!-- NO path (right) -->
+  <line x1="1000" y1="276" x2="1120" y2="310" stroke="#059669" stroke-width="2" marker-end="url(#arr-green)"/>
+  <rect x="1106" y="308" width="280" height="40" rx="7" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+  <text x="1246" y="324" text-anchor="middle" font-size="11" font-weight="700" fill="#14532d">NO → Diagnostic Brief</text>
+  <text x="1246" y="339" text-anchor="middle" font-size="10" fill="#059669">Standalone issue · proceed with Diagnostic Brief</text>
+  <!-- NO label -->
+  <text x="1060" y="299" font-size="10" font-weight="700" fill="#059669">NO</text>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- ROW 3 — ALLOWED/NEVER (left) + Diagnostic Brief (right)   -->
+  <!-- y=370, h=320                                               -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+
+  <!-- LEFT CARD: NEVER vs ALLOWED -->
+  <rect x="14" y="370" width="680" height="318" rx="9" fill="white" filter="url(#shadow)"/>
+  <path d="M23,370 h662 q9,0 9,9 v24 h-680 v-24 q0,-9 9,-9 z" fill="#f1f5f9"/>
+  <text x="354" y="388" text-anchor="middle" font-size="12" font-weight="700" fill="#0f172a">Boundary Rules</text>
+
+  <!-- NEVER column -->
+  <rect x="24" y="402" width="316" height="276" rx="7" fill="#fff1f2" stroke="#fecdd3" stroke-width="1"/>
+  <text x="182" y="420" text-anchor="middle" font-size="11" font-weight="700" fill="#be123c">NEVER (Hard Stops)</text>
+  <g font-size="10" fill="#374151">
+    <text x="36" y="440">✗  Edit files, run terminal commands, make code</text>
+    <text x="48" y="454" fill="#64748b">    changes — that's an agent's job</text>
+    <text x="36" y="474">✗  Compose pipeline stage handoff prompts</text>
+    <text x="48" y="488" fill="#64748b">    (driven by pipeline-state.json phase numbers)</text>
+    <text x="36" y="508">✗  Route directly to a pipeline agent by building</text>
+    <text x="48" y="522" fill="#64748b">    the full phase brief yourself</text>
+    <text x="36" y="542">✗  State "here is your Phase N prompt for @agent"</text>
+    <text x="36" y="562">✗  Reference pipeline-state.json phase numbers in</text>
+    <text x="48" y="576" fill="#64748b">    any prompt you write</text>
+    <text x="36" y="596">✗  Replace @Orchestrator's routing decisions</text>
+    <text x="36" y="654" fill="#6b7280" font-style="italic">All pipeline execution, regardless of how obvious</text>
+    <text x="36" y="668" fill="#6b7280" font-style="italic">the next step, routes through @Orchestrator.</text>
+  </g>
+
+  <!-- ALLOWED column -->
+  <rect x="348" y="402" width="336" height="276" rx="7" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+  <text x="516" y="420" text-anchor="middle" font-size="11" font-weight="700" fill="#14532d">ALLOWED</text>
+  <g font-size="10" fill="#374151">
+    <text x="360" y="440">✓  Read, explain, and reason about the codebase</text>
+    <text x="372" y="454" fill="#64748b">    and pipeline state (reading is fine)</text>
+    <text x="360" y="474">✓  Diagnose a bug or symptom raised by the user</text>
+    <text x="372" y="488" fill="#64748b">    in this conversation</text>
+    <text x="360" y="508">✓  Produce a Diagnostic Brief for a specialist agent</text>
+    <text x="372" y="522" fill="#64748b">    when the issue is NOT a scheduled stage</text>
+    <text x="360" y="542">✓  Advise on architecture, approach, trade-offs</text>
+    <text x="360" y="562">✓  Answer "what does this code do?" questions</text>
+    <text x="360" y="582">✓  Show status dashboard of active plans</text>
+    <text x="360" y="654" fill="#6b7280" font-style="italic">Advisory chat advises.</text>
+    <text x="360" y="668" fill="#6b7280" font-style="italic">Agents execute.</text>
+  </g>
+
+  <!-- RIGHT CARD: Diagnostic Brief -->
+  <rect x="708" y="370" width="678" height="318" rx="9" fill="white" filter="url(#shadow)"/>
+  <path d="M717,370 h660 q9,0 9,9 v24 h-678 v-24 q0,-9 9,-9 z" fill="#dcfce7"/>
+  <text x="1047" y="388" text-anchor="middle" font-size="12" font-weight="700" fill="#14532d">Diagnostic Brief — Format &amp; Rules</text>
+
+  <!-- When to use -->
+  <rect x="718" y="402" width="658" height="60" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+  <text x="728" y="420" font-size="10" font-weight="700" fill="#166534">Use ONLY when ALL of these are true:</text>
+  <g font-size="10" fill="#374151">
+    <text x="728" y="436">1. The trigger is a symptom the user described in this conversation</text>
+    <text x="728" y="450">2. You can diagnose the root cause · 3. A specialist agent is needed · 4. NOT a scheduled pipeline stage</text>
+  </g>
+
+  <!-- 5 items -->
+  <text x="718" y="480" font-size="10.5" font-weight="700" fill="#0f172a">The 5 required items:</text>
+  <g font-size="10.5" fill="#374151">
+    <rect x="718" y="486" width="658" height="18" rx="3" fill="#f8fafc"/>
+    <text x="726" y="499"><tspan font-weight="600" fill="#1d4ed8">1. Diagnosed issue</tspan> — what is wrong and why (root cause)</text>
+
+    <rect x="718" y="504" width="658" height="18" rx="3" fill="white"/>
+    <text x="726" y="517"><tspan font-weight="600" fill="#1d4ed8">2. Evidence</tspan> — specific file, line number, or observed behaviour</text>
+
+    <rect x="718" y="522" width="658" height="18" rx="3" fill="#f8fafc"/>
+    <text x="726" y="535"><tspan font-weight="600" fill="#1d4ed8">3. Agent to use</tspan> — which specialist (@debug, @security-analyst, @accessibility…)</text>
+
+    <rect x="718" y="540" width="658" height="18" rx="3" fill="white"/>
+    <text x="726" y="553"><tspan font-weight="600" fill="#1d4ed8">4. Files to attach</tspan> — which files to bring into that agent's session</text>
+
+    <rect x="718" y="558" width="658" height="18" rx="3" fill="#f8fafc"/>
+    <text x="726" y="571"><tspan font-weight="600" fill="#1d4ed8">5. Targeted prompt</tspan> — a concise statement of the specific problem to paste</text>
+  </g>
+
+  <!-- NOT list -->
+  <rect x="718" y="584" width="658" height="94" rx="6" fill="#fff7ed" stroke="#fed7aa" stroke-width="1"/>
+  <text x="728" y="602" font-size="10" font-weight="700" fill="#c2410c">A Diagnostic Brief must NOT:</text>
+  <g font-size="10" fill="#374151">
+    <text x="728" y="618">✗  Reference pipeline-state.json phase numbers or pipeline stage names</text>
+    <text x="728" y="634">✗  Replace @Orchestrator routing decisions</text>
+    <text x="728" y="650">✗  Contain a full copy-paste phase implementation brief</text>
+    <text x="728" y="666" fill="#6b7280" font-style="italic">Not sure? Apply the decision gate above. If phase number is involved → @Orchestrator, always.</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- FOOTER                                                      -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <text x="700" y="742" text-anchor="middle" font-size="10" fill="#94a3b8">
+    juno-ai agent pool · .github/diagrams/advisory-hub-mode.svg · v1.0 · 2026-02-20
+  </text>
+</svg>
