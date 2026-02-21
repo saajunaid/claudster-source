@@ -93,7 +93,9 @@ After loading state, read `_notes._routing_decision` and branch on `pipeline_mod
 2. If `_routing_decision` exists and not blocked:
   - `pipeline_mode: supervised` → present the target handoff button and WAIT for user click.
   - `pipeline_mode: auto` → invoke the target agent immediately with the routing prompt.
-3. If `_routing_decision` does not exist: this is intake/fresh context — run Intake Protocol (§9).
+3. If `_routing_decision` does not exist:
+   - If `current_stage: intent` → fresh intake. Run Intake Protocol (§9).
+   - If `current_stage` is any other stage → possible stage drift or mid-pipeline re-entry. Run Stage Drift / Re-entry Resync (§9.2) **before** any routing.
 
 ### 2. Validate Artefact Contracts
 Before routing to the next agent, check the artefact produced by the previous agent:
@@ -266,6 +268,52 @@ Shall I start with item 1?
 **What does NOT need decomposition:**
 - A single hotfix with multiple DEF IDs (same pipeline, list in `_hotfix_brief`)
 - A single feature with multiple phases (same pipeline, tracked in `current_phase`/`total_phases`)
+
+---
+
+### 9.2 Stage Drift / Re-entry Resync (GAP-I6)
+
+**When this applies** — any of the following:
+- User ran one or more agents directly without routing back to Orchestrator between each step
+- `_routing_decision` is `null` or missing but `current_stage` is not `intent`
+- `pipeline-state.json` stage fields show `status: not_started` for stages that appear complete in git history
+- `init --force` was run mid-pipeline (resets `_routing_decision` without clearing actual work)
+
+**Step 1 — Detect drift:**
+- Read `pipeline-state.json`: note `current_stage` and all stage `status` fields
+- Read git log: `git log --oneline -15` — look for commits with pipeline stage patterns (`feat(plan):`, `feat(implement):`, `fix(<scope>):`, `chore(pipeline):`)
+
+**Step 2 — Classify re-entry type:**
+
+| Condition | Type | Action |
+|---|---|---|
+| `_routing_decision: null` + `current_stage: intent` | Fresh intake | Run §9 Intake Protocol |
+| `_routing_decision: null` + `current_stage != intent` | Post-reset re-entry | Drift reconciliation (Step 3) |
+| `_routing_decision` exists + not blocked | Clean re-entry | Read it and branch per §1 normally |
+| State stage X, git shows stages X+N complete | Stage drift | Drift reconciliation (Step 3) |
+
+**Step 3 — Drift reconciliation:**
+
+1. Report discrepancy clearly:
+   ```
+   State file:   current_stage=<stage>, _routing_decision=null
+   Git history:  <SHA> <message>  ← apparent stage completions
+   Actual state: stages [<list>] appear complete based on commits
+   ```
+2. Ask user to confirm: *"Based on git history, it looks like [stages] are done. Should I align the pipeline state and route to [next_stage]?"*
+3. If confirmed: run `pipeline advance --stage <actual_current_stage>` to sync state file
+4. Commit the corrected state:
+   ```
+   git add .github/pipeline-state.json
+   git commit -m "chore(pipeline): resync state — drift detected on re-entry"
+   ```
+5. Proceed with normal routing per §1 and §3
+
+**Step 4 — If git history is insufficient to determine actual state:**
+Ask the user directly: *"What stages have been completed since the last Orchestrator session? I'll align the state before routing."*
+Never guess. Never advance a stage without user confirmation when drift is ambiguous.
+
+**In auto mode:** Repeated re-entry drift is a signal of a session boundary design problem. Surface it as a warning and recommend switching to supervised mode until the pipeline is stable.
 
 ---
 
