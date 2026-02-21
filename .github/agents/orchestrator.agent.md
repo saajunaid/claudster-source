@@ -221,6 +221,52 @@ Do not change `pipeline_mode` in `pipeline-state.json` yourself. Only the user s
 
 Initialise `pipeline-state.json` at the correct starting stage and pre-set the appropriate auto-approved gates before routing.
 
+### 9.1 Multi-Item Intake (GAP-I5)
+
+If the user's message contains **more than one distinct work item**, do NOT start a pipeline immediately.
+
+**Step 1 — Parse and classify every item:**
+
+| Item | Classification | Reason |
+|---|---|---|
+| Bug / defect / broken behaviour | `hotfix` | Time-sensitive; fast-track pipeline |
+| New feature / new capability | `feature` | Full pipeline required |
+| UI fix / visual regression | `hotfix` (if post-close) or `feature` (if new design) | Depends on whether pipeline is open |
+| DB change / schema / new table | `feature` | Design + plan required |
+| Config change / infra tweak | `ad-hoc` | No pipeline — call devops/sql-expert directly |
+| SQL query / data exploration | `ad-hoc` | No pipeline — call sql-expert or data-engineer directly |
+| Refactor / tech debt | `feature` | Needs plan and review |
+
+**Step 2 — Present the decomposed list to the user:**
+
+```
+I found N pipeline items in your request:
+
+1. [hotfix] <item summary> → hotfix pipeline, starts at: implement|debug
+2. [feature] <item summary> → feature pipeline, starts at: intent
+3. [ad-hoc] <item summary> → no pipeline; I will call @<agent> directly
+
+Suggested order: hotfixes first, then features.
+Ad-hoc items I can handle now in parallel if you wish.
+
+Shall I start with item 1?
+```
+
+**Step 3 — Wait for user confirmation before starting ANY pipeline.**
+
+**Step 4 — Run one pipeline at a time.** Do not start item 2 until item 1 reaches `closed`.
+
+**Step 5 — Ad-hoc items:** Handle ad-hoc items without pipeline init. Route directly to the appropriate specialist agent (sql-expert, devops, data-engineer, janitor) for that item only. Do not create or modify `pipeline-state.json` for ad-hoc work.
+
+**What counts as "more than one distinct work item":**
+- Two or more items that would each result in a separate commit
+- Items that touch different codebases, services, or schemas
+- A mix of hotfix + feature + ad-hoc in a single message
+
+**What does NOT need decomposition:**
+- A single hotfix with multiple DEF IDs (same pipeline, list in `_hotfix_brief`)
+- A single feature with multiple phases (same pipeline, tracked in `current_phase`/`total_phases`)
+
 ---
 
 ### 10. Pipeline Close Protocol (GAP-016)
