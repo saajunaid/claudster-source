@@ -4,9 +4,9 @@ description: Strategic planning assistant - analyzes requirements and creates im
 tools: ['codebase', 'search', 'fetch', 'usages', 'editFiles', 'runCommands', 'problems', 'terminalLastCommand']
 model: Claude Opus 4.6
 handoffs:
-  - label: Start Implementation
-    agent: Implement
-    prompt: Implement the plan outlined above, following the steps and file structure defined.
+  - label: Return to Orchestrator
+    agent: Orchestrator
+    prompt: Stage complete. Read pipeline-state.json and _routing_decision, then route.
     send: false
   - label: Review Architecture
     agent: Architect

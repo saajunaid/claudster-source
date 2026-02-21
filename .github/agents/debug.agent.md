@@ -4,6 +4,10 @@ description: Systematic debugger - diagnoses root causes, fixes bugs, and preven
 tools: ['codebase', 'search', 'usages', 'problems', 'runCommands', 'terminalLastCommand', 'testFailure', 'editFiles', 'changes']
 model: Claude Opus 4.6
 handoffs:
+  - label: Return to Orchestrator
+    agent: Orchestrator
+    prompt: Stage complete. Read pipeline-state.json and _routing_decision, then route.
+    send: false
   - label: Run Tests
     agent: Tester
     prompt: Run tests to verify the fix above works correctly and no regressions were introduced.
@@ -299,6 +303,38 @@ When context window is limited, read in this order:
 4. **Previous agent's artifact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
+
+---
+
+### 8. Completion Reporting Protocol (MANDATORY — GAP-001/002/004/008/009/010)
+
+When your work is complete:
+
+**Auto mode note:** If `pipeline_mode == auto`, call `notify_orchestrator` MCP tool instead of presenting Return to Orchestrator button.
+
+1. **Pre-commit checklist:**
+  - If the plan introduces new environment variables: write each to `.env` with its default value and a comment before committing
+  - If this is a multi-phase stage: confirm `current_phase == total_phases` before marking the stage `complete` — do NOT mark complete if more phases remain
+
+2. **Commit** — include `pipeline-state.json` in every phase commit:
+  ```
+  git add <deliverable files> .github/pipeline-state.json
+  git commit -m "<exact message specified in the plan>"
+  ```
+  > **No plan? (hotfix / deferred context):** Use the commit message from the orchestrator handoff prompt. If none provided, use: `fix(<scope>): <brief description>` or `chore(<scope>): <brief description>`.
+
+3. **Update `pipeline-state.json`** — set your stage `status: complete`, `completed_at: <ISO-date>`, `artefact: <paths>`.
+
+4. **Output your completion report, then HARD STOP:**
+  ```
+  **[Stage/Phase N] complete.**
+  - Built: <one-line summary>
+  - Commit: `<sha>` — `<message>`
+  - Tests: <N passed, N skipped>
+  - pipeline-state.json: updated
+  ```
+
+5. **HARD STOP** — Do NOT offer to proceed to the next phase. Do NOT ask if you should continue. Do NOT suggest what comes next. The Orchestrator owns all routing decisions. Present only the Return to Orchestrator button.
 
 ---
 

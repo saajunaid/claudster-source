@@ -88,6 +88,13 @@ You work in supervised-autonomous mode by default: auto-proceed on routine trans
 ### 1. Read Pipeline State First
 **Always** read `.github/pipeline-state.json` before doing anything else. If the file does not exist, initialise it by copying `.github/pipeline-state.template.json` and filling in `project` and `feature`, or ask the user to provide the feature name and starting stage.
 
+After loading state, read `_notes._routing_decision` and branch on `pipeline_mode`:
+1. If `_routing_decision.blocked == true`: report `blocked_reason` and STOP.
+2. If `_routing_decision` exists and not blocked:
+  - `pipeline_mode: supervised` → present the target handoff button and WAIT for user click.
+  - `pipeline_mode: auto` → invoke the target agent immediately with the routing prompt.
+3. If `_routing_decision` does not exist: this is intake/fresh context — run Intake Protocol (§9).
+
 ### 2. Validate Artefact Contracts
 Before routing to the next agent, check the artefact produced by the previous agent:
 - Does the artefact file exist at the `artefact_path` defined in that agent's `## Output Contract`?
@@ -102,35 +109,35 @@ If validation fails:
 > **Hotfix exception:** If `pipeline-state.json` has `"type": "hotfix"`, skip YAML artefact header validation for `implement` and `tester` stages — no plan/PRD artefact exists. Instead confirm the relevant commit SHA is present in `pipeline-state.json _notes` before routing forward.
 
 ### 3. Routing Logic
+The pipeline-runner owns all transition inference. Do NOT infer the next stage yourself.
 
-Follow this pipeline sequence by default (can be overridden by plan):
+After a stage completes:
+1. In auto mode, the agent calls `notify_orchestrator` (MCP) and the runner writes `_notes._routing_decision`.
+2. In supervised mode, user returns to orchestrator and you compute/read status via runner-backed tooling.
+3. You read `_notes._routing_decision` and execute it:
+  - present handoff button in supervised mode
+  - invoke target agent in auto mode
 
-```
-intent --> prd --> architect --> plan --> implement --> tester --> code-reviewer --> done
-```
+You still own:
+- Intake classification (§9)
+- `_notes.handoff_payload` construction (`upstream_artefact`, `coverage_requirements[]`)
+- Human-facing summaries and supervision-gate prompts
 
-Parallel or branching routes (only when the plan explicitly defines them):
-```
-architect --> security-analyst (parallel)
-implement --> tester + code-reviewer (parallel)
-ux-designer --> ui-ux-designer --> frontend-developer | streamlit-developer
-```
+You do not own:
+- Selecting next stage from static sequence
+- Guard evaluation
+- Gate satisfaction checks
 
-Support agents (not part of main pipeline, invoke on demand):
-- `debug` — when a defect is reported
-- `janitor` — for targeted patches
-- `data-engineer` / `sql-expert` — for data layer work
-- `devops` — for deployment
-- `mentor` — for explanations
-- `mermaid-diagram-specialist` / `svg-diagram` — for visuals
-- `prompt-engineer` — for pool resource updates
+### 3.1 Pipeline Mode
 
-**Before routing to `plan`, `implement`, `tester`, or `code-reviewer` (GAP-I1 — fidelity):**
-Write to `_notes.handoff_payload` in `pipeline-state.json`:
-- `upstream_artefact`: path to the artefact produced by the **current** stage (e.g., architecture doc, plan file, implemented code path)
-- `coverage_requirements[]`: every key deliverable / component / requirement extracted from that artefact that the receiving agent must address — do NOT leave empty if the upstream artefact exists
+Read `pipeline_mode` from `pipeline-state.json` root (default: `supervised`).
 
-The receiving agent will check every item in `coverage_requirements[]` before starting work and flag any `COVERAGE_GAP` in its opening response.
+| Mode | Behaviour |
+|------|-----------|
+| `supervised` | Present routing as handoff button with `send: false` and wait for user click. |
+| `auto` | Read `_notes._routing_decision` and invoke the target agent immediately. Stop only when decision is blocked or a gate is unsatisfied. |
+
+The mode is evaluated at every transition and can be changed by user edits to `pipeline-state.json`.
 
 ### 4. Supervision Gates
 **STOP and ask the user** before proceeding at these gates:
@@ -193,19 +200,16 @@ Initialise `pipeline-state.json` at the correct starting stage and pre-set the a
 
 When `review_approved: true` and the user confirms the pipeline is closed:
 
-1. Read the reviewer’s output for a `deferred:` block — structured items with `id`, `title`, `file`, `detail`, `severity`
-2. **Verify each `file:` path before writing** — read or grep the file to confirm it exists and contains the symbol/pattern described in `detail`. If a path cannot be verified:
-   - Try to locate the correct file (grep for the symbol name)
-   - Record the corrected path, or flag `file: UNVERIFIED — <reason>` if not resolvable
-   - Do NOT silently write an unverified path to `pipeline-state.json`
-3. Write each verified item to `pipeline-state.json` under the top-level `deferred[]` array
-3. Set `current_stage: closed` and `last_updated: <ISO-timestamp>`
-4. Commit:
+1. Read the reviewer’s output for a `deferred:` block — structured items with `id`, `title`, `file`, `detail`, `severity`.
+2. Call `validate_deferred_paths` MCP tool with those items.
+3. Write validated/corrected items to top-level `deferred[]` in `pipeline-state.json` and explicitly flag any unverified items.
+4. Set `current_stage: closed` and `last_updated: <ISO-timestamp>`.
+5. Commit:
    ```
    git add .github/pipeline-state.json
    git commit -m "chore(pipeline): close <feature> — <N> deferrals logged"
    ```
-5. Report to user:
+6. Report to user:
    ```
    Pipeline closed: <feature>
    Deferred items: <N> logged in pipeline-state.json deferred[]
@@ -218,30 +222,14 @@ If the reviewer produced no `deferred:` block, write `"deferred": []` and procee
 
 ### 11. Tester Retry Loop (GAP-H2/H3)
 
-After the tester reports its structured `tester_result` block:
+The pipeline-runner resolves tester outcomes (pass/fail/retry-budget) and writes `_notes._routing_decision`.
 
-**If `tester_result.status: passed`:**
-- Validate coverage artefact, route forward to `@code-reviewer` as normal.
+On tester completion:
+1. Read `_notes._routing_decision`.
+2. If blocked (retry budget exhausted), report `blocked_reason` and STOP.
+3. If not blocked, execute the routed handoff (supervised button or auto invoke per `pipeline_mode`).
 
-**If `tester_result.status: failed`:**
-1. Read `tester_result.failures[]`
-2. Check `pipeline-state.json` — read `tester.retry_count` (default `0`) and `tester.max_retries` (default `3`)
-3. If `retry_count >= max_retries`:
-   - Set `blocked_by: tester_retry_limit` in `pipeline-state.json`
-   - Commit and report to user:
-     ```
-     Pipeline halted: tester_retry_limit reached (<N> attempts)
-     Failures requiring human review:
-     <list failures>
-     Fix manually or reset retry_count in pipeline-state.json to resume.
-     ```
-   - STOP. Do not route further.
-4. If `retry_count < max_retries`:
-   - Increment `tester.retry_count` in `pipeline-state.json`
-   - Build a targeted fix brief from `failures[]`
-   - Route to the implementing agent for this stage (read from `pipeline-state.json` `_notes` or context)
-   - Handoff prompt: *"The pipeline is routing to you. Tests failed — apply the targeted fixes below, then stop. Do NOT rerun tests yourself."* followed by the `failures[]` list
-   - After implement fixes: re-route back to `@tester` with standard handoff
+Do not infer retry routing manually.
 
 ---
 
@@ -249,13 +237,13 @@ After the tester reports its structured `tester_result` block:
 
 When `pipeline-state.json` contains `"type": "hotfix"` OR the user initiates with a bug/defect scenario:
 
-**Fast-track route:** `debug (optional) → implement → tester → done`
+**Fast-track route:** Determined by pipeline-runner and read from `_notes._routing_decision`.
 
 Rules:
 - Skip `intent`, `prd`, `architect`, `plan` stages entirely — auto-approve all gates
 - `tester` scope: targeted rerun of affected tests only (not full suite), unless full regression is explicitly requested
 - **`@tester` is MANDATORY before close** — do NOT close the pipeline on implement completion alone; the pipeline cannot close without a `tester_result: status: passed` block
-- **Security review rule:** If ANY deferred item has `severity: security-nit`, `security`, or higher — route to `@code-reviewer` after tester passes. Security fixes require review even on a hotfix.
+- **Security review rule:** If deferred security severities require review, runner routes `tester → review`; otherwise `tester → closed`.
 - No `review` stage for `severity: code-quality` or `severity: performance` items — skip unless user explicitly requests it
 - Close the hotfix pipeline only after tester passes (and after review if required)
 

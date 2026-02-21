@@ -6,7 +6,7 @@ model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator
-    prompt: Stage complete. Read pipeline-state.json, validate completion, and route the next stage.
+    prompt: Stage complete. Read pipeline-state.json and _routing_decision, then route.
     send: false
   - label: Review Security
     agent: Security Analyst
@@ -179,6 +179,8 @@ When context window is limited, read in this order:
 ### 8. Completion Reporting Protocol (MANDATORY — GAP-001/002/004/008/009/010)
 
 When your work is complete:
+
+**Auto mode note:** If `pipeline_mode == auto`: call `notify_orchestrator` MCP tool as final step instead of presenting the button.
 
 1. **Pre-commit checklist:**
    - If the plan introduces new environment variables: write each to `.env` with its default value and a comment before committing

@@ -6,7 +6,7 @@ model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator
-    prompt: Stage complete. Read pipeline-state.json, parse review_result, and route or close the pipeline.
+    prompt: Stage complete. Read pipeline-state.json and _routing_decision, then route.
     send: false
   - label: Fix Issues
     agent: Implement
@@ -191,6 +191,8 @@ When context window is limited, read in this order:
 ### 8. Completion Reporting Protocol (MANDATORY — GAP-001/002/004/008/009/010)
 
 When your review is complete:
+
+**Auto mode note:** If `pipeline_mode == auto`: call `notify_orchestrator` MCP tool as final step instead of presenting the button.
 
 1. **Commit** — include `pipeline-state.json`:
    ```
