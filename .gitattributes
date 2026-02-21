@@ -1,0 +1,5 @@
+# Force shell scripts to LF line endings on all platforms
+*.sh text eol=lf
+
+# Windows batch files stay CRLF
+*.bat text eol=crlf
