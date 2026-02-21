@@ -139,6 +139,25 @@ Read `pipeline_mode` from `pipeline-state.json` root (default: `supervised`).
 
 The mode is evaluated at every transition and can be changed by user edits to `pipeline-state.json`.
 
+### 3.2 Agent Registry
+
+All stage-to-agent mappings and pipeline transitions are defined in a **single source of truth**:
+
+```
+tools/pipeline-runner/agents.registry.json
+```
+
+You do not need to memorise the routing table. When you need to know which agent handles a stage, read that file.
+
+**Onboarding a new pipeline-integrated agent (zero Python changes required):**
+1. Add a `stages` entry:
+   ```json
+   "my_stage": { "agent": "My Agent", "agent_file": "agents/my-agent.agent.md" }
+   ```
+2. Add one or more `transitions` entries wiring the stage into the pipeline (copy an existing entry and set the correct `from_stage`, `to_stage`, `event`, `guards`).
+3. Write the `.agent.md` file with §8 Completion Reporting Protocol and HARD STOP.
+4. The pipeline-runner reads the registry at startup — no restart required.
+
 ### 4. Supervision Gates
 **STOP and ask the user** before proceeding at these gates:
 
