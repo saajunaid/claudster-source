@@ -1,7 +1,7 @@
 ---
 name: Frontend Developer
 description: Expert frontend developer for HTML, CSS, and web standards
-tools: ['codebase', 'editFiles', 'search', 'usages', 'problems', 'runCommands']
+tools: [vscode/extensions, execute/runInTerminal, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, edit/editFiles, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, web/fetch, junai-mcp/get_pipeline_status, junai-mcp/notify_orchestrator, junai-mcp/satisfy_gate, junai-mcp/set_pipeline_mode]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator

@@ -249,5 +249,5 @@
   <text x="734" y="911" fill="#475569" font-size="10.5"><tspan font-weight="700" fill="#c2410c">Debug / investigate (H)     </tspan>   attach logs + "Investigate [symptom]"</text>
   <text x="734" y="929" fill="#475569" font-size="10.5"><tspan font-weight="700" fill="#4338ca">Resume mid-run              </tspan>   "Phase N complete, resume the pipeline for [feature]"</text>
   <!-- FOOTER -->
-  <text x="700" y="951" text-anchor="middle" fill="#94a3b8" font-size="9">.github/pipeline/PIPELINE-ENTRY-GUIDE.md  ·  juno-ai agent pool v1.0  ·  2026-02-20</text>
+  <text x="700" y="951" text-anchor="middle" fill="#94a3b8" font-size="9">.github/pipeline/PIPELINE-ENTRY-GUIDE.md  ·  junai agent pool v1.0  ·  2026-02-20</text>
 </svg>

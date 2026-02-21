@@ -19,8 +19,8 @@
   <!-- MAIN HEADER                                                 -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <rect x="20" y="14" width="1560" height="54" rx="10" fill="white" filter="url(#shadow)"/>
-  <text x="800" y="37" text-anchor="middle" font-size="19" font-weight="700" fill="#0f172a">juno-ai Resource Pool</text>
-  <text x="800" y="56" text-anchor="middle" font-size="11" fill="#64748b">5 pool folders · 23 agents · 18 skill domains · 22 instructions · 28 prompts · 8 diagrams · synced to every project via juno-pull / juno-push / juno-export / juno-import</text>
+  <text x="800" y="37" text-anchor="middle" font-size="19" font-weight="700" fill="#0f172a">junai Resource Pool</text>
+  <text x="800" y="56" text-anchor="middle" font-size="11" fill="#64748b">5 pool folders · 23 agents · 18 skill domains · 22 instructions · 28 prompts · 8 diagrams · synced to every project via junai-pull / junai-push / junai-export / junai-import</text>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!-- RESOURCE CARD HELPER: card = bg rect + colored header path -->
@@ -223,7 +223,7 @@
   <path d="M 30,635 h 355 q 10,0 10,10 v 24 h -375 v -24 q 0,-10 10,-10 z" fill="#dbeafe"/>
   <text x="34" y="654" font-size="12" font-weight="700" fill="#1e40af">juno-pull</text>
   <text x="371" y="654" text-anchor="end" font-size="10" fill="#3b82f6">GitHub → Project</text>
-  <text x="34" y="676" font-size="11" fill="#1e293b" font-weight="500">Copy juno-ai pool into current project's .github/</text>
+  <text x="34" y="676" font-size="11" fill="#1e293b" font-weight="500">Copy junai pool into current project's .github/</text>
   <text x="34" y="693" font-size="10.5" fill="#64748b">Overwrites agents, skills, prompts, instructions, diagrams</text>
   <text x="34" y="712" font-size="10" fill="#dc2626">Requires: GitHub access · git push to remote</text>
   <text x="34" y="727" font-size="10" fill="#6b7280">Usage:  juno-pull</text>
@@ -233,9 +233,9 @@
   <path d="M 425,635 h 355 q 10,0 10,10 v 24 h -375 v -24 q 0,-10 10,-10 z" fill="#dcfce7"/>
   <text x="429" y="654" font-size="12" font-weight="700" fill="#14532d">juno-push</text>
   <text x="766" y="654" text-anchor="end" font-size="10" fill="#16a34a">Project → GitHub</text>
-  <text x="429" y="676" font-size="11" fill="#1e293b" font-weight="500">Sync project pool changes back to juno-ai + commit</text>
-  <text x="429" y="693" font-size="10.5" fill="#64748b">Stages all pool folder changes, commits, pushes to juno-ai</text>
-  <text x="429" y="712" font-size="10" fill="#dc2626">Requires: GitHub access · write perms on juno-ai</text>
+  <text x="429" y="676" font-size="11" fill="#1e293b" font-weight="500">Sync project pool changes back to junai + commit</text>
+  <text x="429" y="693" font-size="10.5" fill="#64748b">Stages all pool folder changes, commits, pushes to junai</text>
+  <text x="429" y="712" font-size="10" fill="#dc2626">Requires: GitHub access · write perms on junai</text>
   <text x="429" y="727" font-size="10" fill="#6b7280">Usage:  juno-push [-Message "…"]</text>
 
   <!-- juno-export -->
@@ -262,6 +262,6 @@
   <!-- FOOTER                                                      -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <text x="800" y="762" text-anchor="middle" font-size="10" fill="#94a3b8">
-    juno-ai agent pool · .github/diagrams/juno-ai-resources.svg · v1.0 · 2026-02-21
+    junai agent pool · .github/diagrams/juno-ai-resources.svg · v1.0 · 2026-02-21
   </text>
 </svg>
