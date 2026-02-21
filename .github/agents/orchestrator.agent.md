@@ -202,14 +202,22 @@ On first invocation:
 
 When a user initiates a session without an existing pipeline in progress, map the scenario to the correct entry point:
 
-| Scenario | Entry stage | Auto-approved gates |
-|---|---|---|
-| "I have an idea / new feature" | `intent` → `prd` | None — all gates require approval |
-| "I have a PRD, need architecture" | `architect` | `intent_approved: true` |
-| "I have a plan, need implementation" | `implement` | `intent_approved: true`, `adr_approved: true`, `plan_approved: true` |
-| "Bug/hotfix — known root cause" | `implement` (fast-track) | All gates auto-approved; note `type: hotfix` in state |
-| "Bug/hotfix — unknown root cause" | `debug` (fast-track) | All gates auto-approved; note `type: hotfix` in state |
-| "Deferred items from `pipeline-state.json`" | `implement` (fast-track) | All gates auto-approved; load `deferred[]` as scope |
+| Scenario | Entry stage | Auto-approved gates | Recommended mode | Rationale |
+|---|---|---|---|---|
+| "I have an idea / new feature" | `intent` → `prd` | None — all gates require approval | supervised | Unknown scope; gates protect against scope drift |
+| "I have a PRD, need architecture" | `architect` | `intent_approved: true` | supervised | Architecture decisions benefit from human review gates |
+| "I have a plan, need implementation" | `implement` | `intent_approved: true`, `adr_approved: true`, `plan_approved: true` | supervised | Multi-phase work; human oversight per phase |
+| "Bug/hotfix — known root cause" | `implement` (fast-track) | All gates auto-approved; note `type: hotfix` in state | either | Safe: scope locked. Auto fine if confident, supervised if uncertain |
+| "Bug/hotfix — unknown root cause" | `debug` (fast-track) | All gates auto-approved; note `type: hotfix` in state | supervised | Debug output may need human interpretation before implement |
+| "Deferred items from `pipeline-state.json`" | `implement` (fast-track) | All gates auto-approved; load `deferred[]` as scope | auto | Scope pre-locked from previous run; low re-entry risk |
+
+**Mode recommendation output (required):**
+After classifying the scenario, output this line before any routing action:
+
+> **Recommended mode: `<supervised|auto>`** — <one-sentence rationale>
+> To switch: say *"Switch pipeline to supervised mode"* or *"Switch pipeline to auto mode"*
+
+Do not change `pipeline_mode` in `pipeline-state.json` yourself. Only the user switches mode via MCP tool or CLI. You recommend; they decide.
 
 Initialise `pipeline-state.json` at the correct starting stage and pre-set the appropriate auto-approved gates before routing.
 
