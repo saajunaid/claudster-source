@@ -91,8 +91,9 @@ You work in supervised-autonomous mode by default: auto-proceed on routine trans
 After loading state, read `_notes._routing_decision` and branch on `pipeline_mode`:
 1. If `_routing_decision.blocked == true`: report `blocked_reason` and STOP.
 2. If `_routing_decision` exists and not blocked:
-  - `pipeline_mode: supervised` → present the target handoff button and WAIT for user click.
-  - `pipeline_mode: auto` → invoke the target agent immediately with the routing prompt.
+   - **Cross-check (GAP-I2-a):** Run `junai pipeline next` in terminal and compare its `next_stage` against `_routing_decision.next_stage`. If they differ, the stored decision is stale — run §9.2 Stage Drift / Re-entry Resync instead of routing from the stale value.
+   - `pipeline_mode: supervised` → present the target handoff button and WAIT for user click.
+   - `pipeline_mode: auto` → invoke the target agent immediately with the routing prompt.
 3. If `_routing_decision` does not exist:
    - If `current_stage: intent` → fresh intake. Run Intake Protocol (§9).
    - If `current_stage` is any other stage → possible stage drift or mid-pipeline re-entry. Run Stage Drift / Re-entry Resync (§9.2) **before** any routing.

@@ -201,6 +201,7 @@ When your review is complete:
    ```
 
 2. **Update `pipeline-state.json`** — set `review.status: complete`, `review_approved: true|false`, `completed_at: <ISO-date>`, `artefact: <path>`.
+   > **Scope restriction (GAP-I2-c):** Only write your own stage’s `status`, `completed_at`, `review_approved`, and `artefact` fields. Never write `current_stage`, `_notes._routing_decision`, or `supervision_gates` — those belong exclusively to Orchestrator and pipeline-runner.
 
 3. **Output your completion report, then HARD STOP:**
    ```

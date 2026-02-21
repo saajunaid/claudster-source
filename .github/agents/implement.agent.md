@@ -1,7 +1,7 @@
 ---
 name: Implement
 description: Elite coding agent - implements features with test-driven development, builds reusable components, and ships production-ready code using systematic methodology
-tools: ['codebase', 'editFiles', 'runCommands', 'search', 'usages', 'problems', 'terminalLastCommand', 'testFailure', 'fetch', 'changes', 'extensions']
+tools: [vscode/extensions, execute/testFailure, execute/getTerminalOutput, execute/runInTerminal, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, juno-ai-mcp/get_pipeline_status, juno-ai-mcp/notify_orchestrator, juno-ai-mcp/satisfy_gate, juno-ai-mcp/set_pipeline_mode, juno-ai-mcp/validate_deferred_paths]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
@@ -992,6 +992,7 @@ When your work is complete:
    > **No plan? (hotfix / deferred context):** Use the commit message from the orchestrator handoff prompt. If none provided, use: `fix(<scope>): <brief description>` or `chore(<scope>): <brief description>`.
 
 3. **Update `pipeline-state.json`** — set your stage `status: complete`, `completed_at: <ISO-date>`, `artefact: <paths>`.
+   > **Scope restriction (GAP-I2-c):** Only write your own stage’s `status`, `completed_at`, and `artefact` fields. Never write `current_stage`, `_notes._routing_decision`, or `supervision_gates` — those belong exclusively to Orchestrator and pipeline-runner.
 
 4. **Output your completion report, then HARD STOP:**
    ```
