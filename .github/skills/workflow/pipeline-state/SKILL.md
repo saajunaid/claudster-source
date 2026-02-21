@@ -22,7 +22,7 @@ Load this skill when:
 .github/pipeline-state.json
 ```
 
-This file is **project-specific** — it lives in the project repo, NOT in juno-ai. Use `.github/pipeline-state.template.json` from juno-ai as the blank starting template.
+This file is **project-specific** — it lives in the project repo, NOT in junai. Use `.github/pipeline-state.template.json` from junai as the blank starting template.
 
 ---
 
@@ -183,7 +183,7 @@ Before routing to `plan`, `implement`, `tester`, or `code-reviewer`, the Orchest
 ## Initialisation
 
 When `.github/pipeline-state.json` does not exist:
-1. Copy from `.github/pipeline-state.template.json` (available in the juno-ai pool)
+1. Copy from `.github/pipeline-state.template.json` (available in the junai pool)
 2. Replace `<project-name>` with the value from `project-config.md → profile → project_name`
 3. Replace `<feature-slug>` with the kebab-case feature name from the Intent Document or user input
 4. Set `current_stage` to `"intent"` or the appropriate starting stage
