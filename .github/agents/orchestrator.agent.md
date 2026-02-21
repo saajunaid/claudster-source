@@ -323,6 +323,39 @@ Pipeline state for hotfix:
 
 ---
 
+### 13. Pipeline Halt & Recovery Protocol (GAP-I4)
+
+When the pipeline-runner returns `blocked: true` or `pipeline-state.json` shows `blocked_by` is set, **STOP all routing** and surface the issue to the user immediately.
+
+**Halt output format (always use this):**
+```
+⛔ Pipeline halted.
+Reason: <blocked_by value from pipeline-state.json>
+Stage: <current_stage>
+Recovery path: see below
+```
+
+**Recovery paths by cause:**
+
+| Cause | What to show user | Recovery action |
+|---|---|---|
+| Missing artefact (guard: `artefact_exists` failed) | "The artefact for stage `<stage>` does not exist at `<path>`." | User fixes the artefact → say *"Artefact is ready, resume pipeline"* → re-run `notify_orchestrator` |
+| Artefact not approved (guard: `artefact_approved` failed) | "The artefact at `<path>` does not have `approval: approved` in its YAML header." | User adds approval header → say *"Artefact approved, resume pipeline"* |
+| Gate unsatisfied | "Gate `<gate_name>` must be satisfied before advancing." | Review the gate content → say *"Approve <gate_name>"* → orchestrator calls `satisfy_gate` MCP tool |
+| Tester retry budget exhausted (T-15) | "Tester has failed `<retry_count>` times (max: `<max_retries>`). Pipeline blocked." | User reviews failures → say *"Route to debug agent"* → orchestrator manually advances to debug stage |
+| Blocking escalation exists | "A blocking escalation exists in `agent-docs/escalations/`. Pipeline cannot advance." | User resolves escalation → updates severity to `resolved` → say *"Escalation resolved, unblock pipeline"* → orchestrator clears `blocked_by` and re-runs runner |
+
+**After user resolves the issue:**
+1. Re-read `pipeline-state.json`
+2. Clear `blocked_by: null`
+3. Re-run `notify_orchestrator` or `pipeline-runner next` to recompute transition
+4. If transition is now valid, proceed with routing (supervised button or auto invoke per `pipeline_mode`)
+5. Commit updated `pipeline-state.json`
+
+**Important:** All resumption must go through `@Orchestrator`. Agents must never self-resume.
+
+---
+
 ## Pipeline State Schema
 
 The canonical schema for `.github/pipeline-state.json`:
