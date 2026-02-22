@@ -372,24 +372,6 @@ def test_t23_closed_reentry_without_deferred_items_blocks(make_state, workspace_
     assert result.blocked is True
 
 
-def test_pipeline_mode_auto_normalises_to_assisted_no_auto_gate(make_state, workspace_root: Path) -> None:
-    """'auto' is a deprecated alias for 'assisted'. Gates are NOT auto-satisfied."""
-    artefact = workspace_root / "intent.md"
-    artefact.write_text("intent", encoding="utf-8")
-    state = make_state(
-        "intent",
-        pipeline_mode="auto",
-        stage_overrides={"intent": {"artefact": "intent.md"}},
-    )
-    result = compute_next_transition(
-        state,
-        CompletionEvent(stage_completed="intent", result_status="complete"),
-        workspace_root,
-    )
-    assert result.transition_id == "T-01"
-    assert result.gate_satisfied is False  # 'auto' normalised to 'assisted'; requires explicit approval
-
-
 def test_pipeline_mode_autopilot_does_not_auto_satisfy_intent_approved(make_state, workspace_root: Path) -> None:
     """autopilot mode never auto-satisfies 'intent_approved' — always requires human."""
     artefact = workspace_root / "intent.md"

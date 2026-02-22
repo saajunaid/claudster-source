@@ -276,7 +276,7 @@
       "from_stage": "*",
       "to_stage": "*",
       "event": "*",
-      "guards": ["pipeline_mode_auto"],
+      "guards": ["pipeline_mode_assisted"],
       "gate": null,
       "hotfix_only": false,
       "priority": -10

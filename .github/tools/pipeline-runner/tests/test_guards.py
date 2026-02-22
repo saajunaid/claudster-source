@@ -176,12 +176,12 @@ def test_no_blocking_escalations_guard_false(make_state, workspace_root: Path) -
 
 
 def test_pipeline_mode_guards(make_state, workspace_root: Path) -> None:
-    auto_state = make_state("intent", pipeline_mode="auto")
+    assisted_state = make_state("intent", pipeline_mode="assisted")
     supervised_state = make_state("intent", pipeline_mode="supervised")
 
-    auto_ok, _ = evaluate_guard(
-        "pipeline_mode_auto",
-        auto_state,
+    assisted_ok, _ = evaluate_guard(
+        "pipeline_mode_assisted",
+        assisted_state,
         CompletionEvent(stage_completed="intent", result_status="complete"),
         workspace_root,
     )
@@ -191,7 +191,7 @@ def test_pipeline_mode_guards(make_state, workspace_root: Path) -> None:
         CompletionEvent(stage_completed="intent", result_status="complete"),
         workspace_root,
     )
-    assert auto_ok is True
+    assert assisted_ok is True
     assert supervised_ok is True
 
 

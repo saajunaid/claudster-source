@@ -330,21 +330,9 @@ def pipeline_mode_assisted(
     _event: CompletionEvent,
     _workspace_root: Path,
 ) -> tuple[bool, str | None]:
-    mode = (state.pipeline_mode or "").strip().lower()
-    # "auto" is the deprecated alias for "assisted"
-    if mode in ("assisted", "auto"):
+    if (state.pipeline_mode or "").strip().lower() == "assisted":
         return True, None
     return False, "pipeline_mode is not assisted"
-
-
-def pipeline_mode_auto(
-    state: PipelineState,
-    _event: CompletionEvent,
-    _workspace_root: Path,
-) -> tuple[bool, str | None]:
-    if state.pipeline_mode == "auto":
-        return True, None
-    return False, "pipeline_mode is not auto"
 
 
 def pipeline_mode_supervised(
@@ -387,7 +375,6 @@ GUARD_REGISTRY: dict[str, GuardFunction] = {
     "parallel_security_join_ready": parallel_security_join_ready,
     "ui_track_enabled": ui_track_enabled,
     "ui_track_not_enabled": ui_track_not_enabled,
-    "pipeline_mode_auto": pipeline_mode_auto,
     "pipeline_mode_supervised": pipeline_mode_supervised,
     "pipeline_mode_assisted": pipeline_mode_assisted,
     "pipeline_mode_autopilot": pipeline_mode_autopilot,

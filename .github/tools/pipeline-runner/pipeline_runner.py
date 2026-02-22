@@ -12,8 +12,7 @@ from transitions import TRANSITIONS, Transition, _REGISTRY_PATH
 
 
 DEFAULT_STATE_PATH = Path(".github/pipeline-state.json")
-# "auto" kept as deprecated alias for "assisted" for backwards compatibility
-ALLOWED_PIPELINE_MODES = {"supervised", "auto", "assisted", "autopilot"}
+ALLOWED_PIPELINE_MODES = {"supervised", "assisted", "autopilot"}
 ALLOWED_SUPERVISION_GATES = {
     "intent_approved",
     "adr_approved",
@@ -100,9 +99,6 @@ def _matches_transition(state: PipelineState, event: CompletionEvent, transition
 
 
 def _effective_mode(mode: str | None) -> str:
-    """Normalise deprecated 'auto' alias to 'assisted'."""
-    if (mode or "").strip().lower() == "auto":
-        return "assisted"
     return (mode or "supervised").strip().lower()
 
 
@@ -440,7 +436,7 @@ def main() -> None:
         requested_mode = args.value.strip().lower()
         if requested_mode not in ALLOWED_PIPELINE_MODES:
             _print_json_error(
-                "invalid pipeline mode. expected one of: supervised, assisted, autopilot (deprecated: auto)"
+                "invalid pipeline mode. expected one of: supervised, assisted, autopilot"
             )
         state.pipeline_mode = requested_mode
         _save_state(state_file, state)

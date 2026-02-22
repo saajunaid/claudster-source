@@ -45,14 +45,14 @@ def _seed_state_from_template(state_file: Path) -> None:
     state_file.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def test_mode_round_trip_supervised_auto_supervised(tmp_path: Path) -> None:
+def test_mode_round_trip_supervised_assisted_supervised(tmp_path: Path) -> None:
     state_file = tmp_path / ".github" / "pipeline-state.json"
     _seed_state_from_template(state_file)
 
-    to_auto = _run_cli("mode", "--state-file", str(state_file), "--value", "auto")
-    assert to_auto.returncode == 0
-    assert json.loads(to_auto.stdout) == {"ok": True, "pipeline_mode": "auto"}
-    assert _load_json(state_file)["pipeline_mode"] == "auto"
+    to_assisted = _run_cli("mode", "--state-file", str(state_file), "--value", "assisted")
+    assert to_assisted.returncode == 0
+    assert json.loads(to_assisted.stdout) == {"ok": True, "pipeline_mode": "assisted"}
+    assert _load_json(state_file)["pipeline_mode"] == "assisted"
 
     to_supervised = _run_cli("mode", "--state-file", str(state_file), "--value", "supervised")
     assert to_supervised.returncode == 0
@@ -199,7 +199,7 @@ def test_unknown_state_keys_preserved_after_mode_and_gate(tmp_path: Path) -> Non
     state["_notes"]["custom_note"] = {"x": 1}
     state_file.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
-    mode_result = _run_cli("mode", "--state-file", str(state_file), "--value", "auto")
+    mode_result = _run_cli("mode", "--state-file", str(state_file), "--value", "assisted")
     assert mode_result.returncode == 0
 
     gate_result = _run_cli("gate", "--state-file", str(state_file), "--name", "plan_approved")

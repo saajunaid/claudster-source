@@ -16,8 +16,7 @@ DEFAULT_PIPELINE_STATE = WORKSPACE_ROOT / ".github" / "pipeline-state.json"
 PIPELINE_STATE_PATH = Path(
     os.getenv("PIPELINE_STATE_PATH", str(DEFAULT_PIPELINE_STATE))
 )
-# "auto" kept as deprecated alias for "assisted" for backwards compatibility
-ALLOWED_PIPELINE_MODES = {"supervised", "auto", "assisted", "autopilot"}
+ALLOWED_PIPELINE_MODES = {"supervised", "assisted", "autopilot"}
 ALLOWED_SUPERVISION_GATES = {
     "intent_approved",
     "adr_approved",
@@ -281,12 +280,12 @@ async def get_pipeline_status() -> dict[str, Any]:
 
 @mcp.tool()
 async def set_pipeline_mode(mode: str) -> dict[str, Any]:
-    """Set the pipeline mode to supervised or auto."""
+    """Set the pipeline mode to supervised, assisted, or autopilot."""
     requested_mode = mode.strip().lower()
     if requested_mode not in ALLOWED_PIPELINE_MODES:
         return {
             "success": False,
-            "reason": "invalid mode. expected one of: supervised, auto",
+            "reason": "invalid mode. expected one of: supervised, assisted, autopilot",
         }
 
     state = _load_pipeline_state()
@@ -424,7 +423,7 @@ async def pipeline_init(
         "message": (
             f"Pipeline initialised for '{project.strip()}' / '{feature.strip()}' "
             f"({pipeline_type}). pipeline_mode is supervised by default. "
-            "Use set_pipeline_mode to switch to auto if desired."
+            "Use set_pipeline_mode to switch to assisted or autopilot if desired."
         ),
     }
 
