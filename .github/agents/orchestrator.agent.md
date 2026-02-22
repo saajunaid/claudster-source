@@ -157,7 +157,6 @@ Read `pipeline_mode` from `pipeline-state.json` root (default: `supervised`).
 | `supervised` | Present every routing decision as a handoff button (`send: false`). Wait for user click at every stage transition AND every supervision gate. |
 | `assisted` | Invoke agents automatically at every transition (no handoff button needed). Stop and ask the user at every supervision gate. |
 | `autopilot` ⚠️ *beta* | Invoke agents automatically. Only `intent_approved` requires user approval. All other gates auto-satisfied (call `satisfy_gate` immediately after the relevant stage). On tester budget exhaustion, auto-routes to Debug (T-28). On all other halts, write `PIPELINE_HALT.md` + fire desktop notification. See §4 for smart gate rules. |
-| ~~`auto`~~ *(deprecated)* | Alias for `assisted`. Accepted for backwards compatibility — use `assisted` in new pipelines. |
 
 The mode is evaluated at every transition and can be changed mid-pipeline via `set_pipeline_mode` MCP tool or by saying *"Switch to [mode] mode"* in chat.
 
