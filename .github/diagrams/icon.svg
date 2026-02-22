@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- Shared glow filter applied to each orbital node -->
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- ── Background ── -->
+  <rect width="128" height="128" rx="18" fill="#FFFFFF"/>
+  <rect width="128" height="128" rx="18" fill="none" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <!-- ── Orbit track: dashed ring, very slowly rotates to hint flow direction ── -->
+  <circle cx="64" cy="64" r="50"
+    fill="none" stroke="#E8ECF4" stroke-width="1.5" stroke-dasharray="4 5">
+    <animateTransform attributeName="transform" type="rotate"
+      from="0 64 64" to="360 64 64" dur="30s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- ── 5 orbital agent nodes — one per pipeline stage ──
+       All placed at cx="64" cy="14" (top of circle, r=50 above center (64,64)).
+       Each staggered 72° apart via the "from" angle.
+       Colors: blue / violet / cyan / emerald / amber                          -->
+
+  <!-- Stage 1 · Intent / Plan — Blue -->
+  <circle cx="64" cy="14" r="5.5" fill="#1D4ED8" filter="url(#glow)">
+    <animateTransform attributeName="transform" type="rotate"
+      from="0 64 64" to="360 64 64" dur="10s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Stage 2 · Architect — Violet -->
+  <circle cx="64" cy="14" r="5.5" fill="#7C3AED" filter="url(#glow)">
+    <animateTransform attributeName="transform" type="rotate"
+      from="72 64 64" to="432 64 64" dur="10s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Stage 3 · Implement — Cyan -->
+  <circle cx="64" cy="14" r="5.5" fill="#0891B2" filter="url(#glow)">
+    <animateTransform attributeName="transform" type="rotate"
+      from="144 64 64" to="504 64 64" dur="10s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Stage 4 · Test — Emerald -->
+  <circle cx="64" cy="14" r="5.5" fill="#059669" filter="url(#glow)">
+    <animateTransform attributeName="transform" type="rotate"
+      from="216 64 64" to="576 64 64" dur="10s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Stage 5 · Review — Amber -->
+  <circle cx="64" cy="14" r="5.5" fill="#D97706" filter="url(#glow)">
+    <animateTransform attributeName="transform" type="rotate"
+      from="288 64 64" to="648 64 64" dur="10s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- ── Center identity block ── -->
+  <!-- junai wordmark -->
+  <text x="64" y="59"
+    text-anchor="middle"
+    font-family="JetBrains Mono, Cascadia Code, Fira Code, Courier New, monospace"
+    font-size="21" font-weight="800" fill="#0F172A" letter-spacing="-0.5">junai</text>
+
+  <!-- Thin rule -->
+  <line x1="40" y1="65" x2="88" y2="65" stroke="#E2E8F0" stroke-width="1"/>
+
+  <!-- LABS -->
+  <text x="64" y="75"
+    text-anchor="middle"
+    font-family="JetBrains Mono, Cascadia Code, Fira Code, Courier New, monospace"
+    font-size="8.5" font-weight="600" fill="#475569" letter-spacing="4">LABS</text>
+
+  <!-- agentic pipeline -->
+  <text x="64" y="86"
+    text-anchor="middle"
+    font-family="JetBrains Mono, Cascadia Code, Fira Code, Courier New, monospace"
+    font-size="6.5" font-weight="600" fill="#94A3B8" letter-spacing="0.8">agentic pipeline</text>
+
+</svg>
