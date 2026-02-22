@@ -93,7 +93,8 @@ After loading state, read `_notes._routing_decision` and branch on `pipeline_mod
 2. If `_routing_decision` exists and not blocked:
    - **Cross-check (GAP-I2-a):** Run `junai pipeline next` in terminal and compare its `next_stage` against `_routing_decision.next_stage`. If they differ, the stored decision is stale — run §9.2 Stage Drift / Re-entry Resync instead of routing from the stale value.
    - `pipeline_mode: supervised` → present the target handoff button and WAIT for user click.
-   - `pipeline_mode: auto` → invoke the target agent immediately with the routing prompt.
+   - `pipeline_mode: assisted` → invoke the target agent immediately with the routing prompt.
+   - `pipeline_mode: autopilot` → invoke the target agent immediately; most gates are auto-satisfied.
 3. If `_routing_decision` does not exist:
    - If `current_stage: intent` → fresh intake. Run Intake Protocol (§9).
    - If `current_stage` is any other stage → possible stage drift or mid-pipeline re-entry. Run Stage Drift / Re-entry Resync (§9.2) **before** any routing.
@@ -132,11 +133,11 @@ If validation fails:
 The pipeline-runner owns all transition inference. Do NOT infer the next stage yourself.
 
 After a stage completes:
-1. In auto mode, the agent calls `notify_orchestrator` (MCP) and the runner writes `_notes._routing_decision`.
+1. In assisted or autopilot mode, the agent calls `notify_orchestrator` (MCP) and the runner writes `_notes._routing_decision`.
 2. In supervised mode, user returns to orchestrator and you compute/read status via runner-backed tooling.
 3. You read `_notes._routing_decision` and execute it:
   - present handoff button in supervised mode
-  - invoke target agent in auto mode
+  - invoke target agent in assisted or autopilot mode
 
 You still own:
 - Intake classification (§9)
@@ -260,13 +261,13 @@ When a user initiates a session without an existing pipeline in progress, map th
 | "I have a plan, need implementation" | `implement` | `intent_approved: true`, `adr_approved: true`, `plan_approved: true` | supervised | Multi-phase work; human oversight per phase |
 | "Bug/hotfix — known root cause" | `implement` (fast-track) | All gates auto-approved; note `type: hotfix` in state | either | Safe: scope locked. Auto fine if confident, supervised if uncertain |
 | "Bug/hotfix — unknown root cause" | `debug` (fast-track) | All gates auto-approved; note `type: hotfix` in state | supervised | Debug output may need human interpretation before implement |
-| "Deferred items from `pipeline-state.json`" | `implement` (fast-track) | All gates auto-approved; load `deferred[]` as scope | auto | Scope pre-locked from previous run; low re-entry risk |
+| "Deferred items from `pipeline-state.json`" | `implement` (fast-track) | All gates auto-approved; load `deferred[]` as scope | assisted | Scope pre-locked from previous run; low re-entry risk |
 
 **Mode recommendation output (required):**
 After classifying the scenario, output this line before any routing action:
 
-> **Recommended mode: `<supervised|auto>`** — <one-sentence rationale>
-> To switch: say *"Switch pipeline to supervised mode"* or *"Switch pipeline to auto mode"*
+> **Recommended mode: `<supervised|assisted|autopilot>`** — <one-sentence rationale>
+> To switch: say *"Switch pipeline to supervised mode"* or *"Switch pipeline to assisted mode"*
 
 Do not change `pipeline_mode` in `pipeline-state.json` yourself. Only the user switches mode via MCP tool or CLI. You recommend; they decide.
 
@@ -387,7 +388,7 @@ Shall I start with item 1?
 Ask the user directly: *"What stages have been completed since the last Orchestrator session? I'll align the state before routing."*
 Never guess. Never advance a stage without user confirmation when drift is ambiguous.
 
-**In auto mode:** Repeated re-entry drift is a signal of a session boundary design problem. Surface it as a warning and recommend switching to supervised mode until the pipeline is stable.
+**In assisted or autopilot mode:** Repeated re-entry drift is a signal of a session boundary design problem. Surface it as a warning and recommend switching to supervised mode until the pipeline is stable.
 
 ---
 
@@ -424,7 +425,7 @@ On tester completion:
 2. If blocked (retry budget exhausted): 
    - **`supervised` / `assisted` mode:** report `blocked_reason` and STOP. User decides next step.
    - **`autopilot` mode:** pipeline-runner routes to Debug (T-28) automatically — invoke Debug immediately with failing test context from `_notes.tester_result`. No user intervention required.
-3. If not blocked, execute the routed handoff (supervised button or auto invoke per `pipeline_mode`).
+3. If not blocked, execute the routed handoff (supervised → button, assisted/autopilot → auto-invoke per `pipeline_mode`).
 
 Do not infer retry routing manually.
 
@@ -519,7 +520,7 @@ Recovery path: see below
 1. Re-read `pipeline-state.json`
 2. Clear `blocked_by: null`
 3. Re-run `notify_orchestrator` or `pipeline-runner next` to recompute transition
-4. If transition is now valid, proceed with routing (supervised button or auto invoke per `pipeline_mode`)
+4. If transition is now valid, proceed with routing (supervised → button, assisted/autopilot → auto-invoke per `pipeline_mode`)
 5. Commit updated `pipeline-state.json`
 
 **Important:** All resumption must go through `@Orchestrator`. Agents must never self-resume.

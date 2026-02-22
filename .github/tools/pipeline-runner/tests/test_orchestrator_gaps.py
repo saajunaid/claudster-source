@@ -132,7 +132,7 @@ class TestSection9Table:  # CR-1
             f"'Rationale' column not found in §9 table headers: {headers}"
         )
 
-    @pytest.mark.parametrize("expected_mode", ["supervised", "either", "auto"])
+    @pytest.mark.parametrize("expected_mode", ["supervised", "either", "assisted"])
     def test_section9_table_contains_mode_values(self, doc: str, expected_mode: str) -> None:
         section = _extract_section(doc, "### 9. Intake Protocol")
         assert expected_mode in section, (

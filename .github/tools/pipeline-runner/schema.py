@@ -7,8 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 StageStatus = Literal["not_started", "in_progress", "complete", "blocked"]
-# "auto" is a deprecated alias for "assisted" — accepted for backwards compat
-PipelineMode = Literal["supervised", "auto", "assisted", "autopilot"]
+PipelineMode = Literal["supervised", "assisted", "autopilot"]
 
 
 class StageState(BaseModel):
@@ -95,7 +94,7 @@ class PipelineState(BaseModel):
     project: str
     feature: str
     pipeline_version: str = "1.0"
-    pipeline_mode: str = "supervised"  # PipelineMode — str to accept deprecated "auto"
+    pipeline_mode: str = "supervised"  # PipelineMode: supervised | assisted | autopilot
     type: str | None = None
     current_stage: str
     stages: dict[str, dict[str, Any]]
@@ -121,7 +120,7 @@ class TransitionResult(BaseModel):
     gate_satisfied: bool = True
     blocked: bool = False
     blocked_reason: str | None = None
-    pipeline_mode: str = "supervised"  # PipelineMode — str to accept deprecated "auto"
+    pipeline_mode: str = "supervised"  # PipelineMode: supervised | assisted | autopilot
     handoff_prompt: str | None = None
     computed_at: datetime | None = None
 
