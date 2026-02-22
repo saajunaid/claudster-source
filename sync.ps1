@@ -16,7 +16,7 @@
 
 $JUNO_POOL = "E:\Projects\junai"
 $JUNO_GITHUB = "$JUNO_POOL\.github"
-$POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "diagrams")
+$POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "diagrams", "tools")
 
 function junai-pull {
     param([string]$ProjectRoot = (Get-Location).Path)
@@ -41,14 +41,6 @@ function junai-pull {
         } else {
             Write-Host "  [--]  $folder - not found in pool, skipped" -ForegroundColor Yellow
         }
-    }
-
-    # Deploy tools/ to project root (pipeline runner + MCP server)
-    $toolsSrc = Join-Path $JUNO_POOL "tools"
-    if (Test-Path $toolsSrc) {
-        $toolsTarget = Join-Path $ProjectRoot "tools"
-        Copy-Item $toolsSrc $toolsTarget -Recurse -Force
-        Write-Host "  [OK]  tools" -ForegroundColor Green
     }
 
     # Deploy .vscode/mcp.json (pre-configured with ${workspaceFolder} — profile-agnostic)
@@ -93,13 +85,6 @@ function junai-push {
         }
     }
 
-    # Sync tools/ back to junai pool
-    $toolsSrc = Join-Path $ProjectRoot "tools"
-    if (Test-Path $toolsSrc) {
-        Copy-Item $toolsSrc $JUNO_POOL -Recurse -Force
-        Write-Host "  [OK]  tools" -ForegroundColor Green
-    }
-
     # Commit and push junai
     Push-Location $JUNO_POOL
 
@@ -111,7 +96,7 @@ function junai-push {
         return
     }
 
-    git add .github/agents .github/skills .github/prompts .github/instructions .github/diagrams tools | Out-Null
+    git add .github/agents .github/skills .github/prompts .github/instructions .github/diagrams .github/tools | Out-Null
 
     if ([string]::IsNullOrWhiteSpace($Message)) {
         $projectName = Split-Path $ProjectRoot -Leaf
@@ -162,13 +147,6 @@ function junai-export {
         } else {
             Write-Host "  [--]  $folder - not found, skipped" -ForegroundColor Yellow
         }
-    }
-
-    # Include tools/
-    $toolsSrc = Join-Path $JUNO_POOL "tools"
-    if (Test-Path $toolsSrc) {
-        Copy-Item $toolsSrc $OutputPath -Recurse -Force
-        Write-Host "  [OK]  tools" -ForegroundColor Green
     }
 
     # Include .vscode/mcp.json
@@ -245,14 +223,6 @@ function junai-import {
         } else {
             Write-Host "  [--]  $folder - not in export, skipped" -ForegroundColor Yellow
         }
-    }
-
-    # Deploy tools/ to project root
-    $toolsSrc = Join-Path $SourcePath "tools"
-    if (Test-Path $toolsSrc) {
-        $toolsTarget = Join-Path $ProjectRoot "tools"
-        Copy-Item $toolsSrc $toolsTarget -Recurse -Force
-        Write-Host "  [OK]  tools" -ForegroundColor Green
     }
 
     # Deploy .vscode/mcp.json
