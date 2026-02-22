@@ -1,7 +1,7 @@
 ---
 name: Tester
 description: Expert in testing Python applications, Streamlit dashboards, and FastAPI backends
-tools: ['codebase', 'search', 'editFiles', 'runCommands', 'testFailure', 'usages', 'problems']
+tools: ['codebase', 'search', 'editFiles', 'runCommands', 'testFailure', 'usages', 'problems', 'junai-mcp/run_command']
 model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator
@@ -31,7 +31,9 @@ When receiving a handoff:
 1a. **Fidelity Check (GAP-I1):** If `_notes.handoff_payload.coverage_requirements[]` is non-empty — list every item, map each to a specific test you will write, and flag any unmapped item as `COVERAGE_GAP: <item>` in your opening response. Do NOT silently skip uncovered items.
 2. Read the implementation context — identify what was created or changed
 3. Check existing tests in `tests/` for patterns and conventions (pytest, AAA pattern)
-4. Run `pytest tests/ --tb=short -q` to establish baseline before adding new tests
+4. Run baseline before adding new tests — use the `run_command` MCP tool:
+   `run_command(command=".venv/Scripts/pytest tests/ --tb=short -q", timeout=120)`
+   Prefer `run_command` over asking the user to run commands manually. Only fall back to manual if the MCP tool is unavailable.
 
 ## Skills and Instructions (Load When Relevant)
 
@@ -142,19 +144,19 @@ def test_null_values():
 
 ## Run Commands
 
-```powershell
-# Run all tests
-pytest tests/ -v
+**Use the `run_command` MCP tool for all test execution — do NOT ask the user to run commands manually.**
 
-# Run with coverage
-pytest tests/ --cov=src --cov-report=html
+| Goal | `run_command` call |
+|------|--------------------|
+| Baseline (all tests, short output) | `run_command(".venv/Scripts/pytest tests/ --tb=short -q", timeout=120)` |
+| Full verbose run | `run_command(".venv/Scripts/pytest tests/ -v", timeout=120)` |
+| With coverage | `run_command(".venv/Scripts/pytest tests/ --cov=src --cov-report=term-missing", timeout=180)` |
+| Specific file | `run_command(".venv/Scripts/pytest tests/test_services.py -v", timeout=60)` |
+| Exclude slow tests | `run_command(".venv/Scripts/pytest tests/ -m 'not slow' -v", timeout=120)` |
+| Playwright E2E | `run_command(".venv/Scripts/pytest tests/e2e/ -v --headed", timeout=300)` |
+| Any other runner | `run_command("<whatever command the project uses>", timeout=<appropriate>)` |
 
-# Run specific test file
-pytest tests/test_services.py -v
-
-# Run marked tests
-pytest tests/ -m "not slow" -v
-```
+> **Stack-agnostic:** `run_command` wraps any test runner. Construct the right command for the project's stack (pytest, playwright, npm test, jest, etc.) — the tool is the same regardless.
 
 ---
 

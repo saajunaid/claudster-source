@@ -1,7 +1,7 @@
 ---
 name: Implement
 description: Elite coding agent - implements features with test-driven development, builds reusable components, and ships production-ready code using systematic methodology
-tools: [vscode/extensions, execute/testFailure, execute/getTerminalOutput, execute/runInTerminal, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, junai-mcp/get_pipeline_status, junai-mcp/notify_orchestrator, junai-mcp/satisfy_gate, junai-mcp/set_pipeline_mode, junai-mcp/validate_deferred_paths]
+tools: [vscode/extensions, execute/testFailure, execute/getTerminalOutput, execute/runInTerminal, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, junai-mcp/get_pipeline_status, junai-mcp/notify_orchestrator, junai-mcp/run_command, junai-mcp/satisfy_gate, junai-mcp/set_pipeline_mode, junai-mcp/validate_deferred_paths]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
@@ -53,7 +53,7 @@ When receiving a handoff:
 1a. **Fidelity Check (GAP-I1):** If `_notes.handoff_payload.coverage_requirements[]` is non-empty — list every item, map each to a specific task in your implementation plan, and flag any unmapped item as `COVERAGE_GAP: <item>` in your opening response. Do NOT silently skip uncovered items.
 2. Read the plan file or architecture doc referenced in the conversation (if present)
 3. Check the prompt/step being implemented — follow it exactly
-4. Run `pytest tests/ --tb=short -q` before AND after changes to verify no regressions
+4. Run `run_command(command=".venv/Scripts/pytest tests/ --tb=short -q", timeout=120)` before AND after changes to verify no regressions — use the MCP tool, not a manual terminal ask
 4. If you spot an issue with the plan itself, use the "Debug Issue" handoff — do NOT edit plan files
 5. For full pipeline context, load `.github/skills/workflow/agent-orchestration/SKILL.md`
 
@@ -75,7 +75,7 @@ When receiving a handoff:
 | Capability | How You Use It |
 |------------|----------------|
 | ✅ Create/edit files | Multi-file edits in parallel when independent |
-| ✅ Run terminal commands | Build, test, lint, format |
+| ✅ Run terminal commands | Build, test, lint, format — use `run_command` MCP tool (hands-free, no user terminal needed) |
 | ✅ Search codebase | Find patterns, usages, dependencies |
 | ✅ Analyze problems | Read and fix compiler/linter errors |
 | ✅ View test failures | Understand and fix failing tests |
