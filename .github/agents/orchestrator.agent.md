@@ -275,13 +275,17 @@ If `pipeline_init` returns `reason: active_pipeline_detected`, **do not proceed 
   Mode:     <current_pipeline.pipeline_mode>
   Updated:  <current_pipeline.last_updated>
 
-Do you want to abandon it and start a new pipeline for "<requested feature>"?
-If yes, I'll call pipeline_reset (which intentionally overwrites the current state).
-If no, I'll route you into the existing pipeline instead.
+Options:
+  A) Keep as-is — proceed with the existing pipeline under "<current feature slug>"
+  B) Abandon & reinitialise — overwrite with a fresh state under "<requested feature>"
+
+Which would you prefer?
 ```
 
-- If user confirms **yes** → call `pipeline_reset` (not `pipeline_init`) with `confirm=True`. `pipeline_reset` bypasses the guard by design.
-- If user confirms **no** → discard the pending init request and run §1 intake on the existing pipeline as-is.
+**Do NOT offer a "rename" option.** Renaming the feature slug requires directly editing `pipeline-state.json` init fields, which is forbidden per §8. The two valid options are keep-as-is (A) or abandon and reinitialise via `pipeline_reset` (B).
+
+- If user chooses **A** → discard the pending init request and run §1 intake on the existing pipeline as-is.
+- If user chooses **B** → call `pipeline_reset` (not `pipeline_init`) with `confirm=True`. `pipeline_reset` bypasses the guard by design.
 
 ### 9.1 Multi-Item Intake (GAP-I5)
 
