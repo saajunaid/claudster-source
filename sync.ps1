@@ -51,6 +51,15 @@ function junai-pull {
         Write-Host "  [OK]  tools" -ForegroundColor Green
     }
 
+    # Deploy .vscode/mcp.json (pre-configured with ${workspaceFolder} — profile-agnostic)
+    $mcpSrc = Join-Path $JUNO_POOL ".vscode\mcp.json"
+    if (Test-Path $mcpSrc) {
+        $vscodeTarget = Join-Path $ProjectRoot ".vscode"
+        if (-not (Test-Path $vscodeTarget)) { New-Item -ItemType Directory -Path $vscodeTarget | Out-Null }
+        Copy-Item $mcpSrc $vscodeTarget -Force
+        Write-Host "  [OK]  .vscode/mcp.json" -ForegroundColor Green
+    }
+
     Write-Host ""
     Write-Host "  Done. project-config.md was NOT overwritten." -ForegroundColor DarkGray
     Write-Host ""
@@ -162,6 +171,15 @@ function junai-export {
         Write-Host "  [OK]  tools" -ForegroundColor Green
     }
 
+    # Include .vscode/mcp.json
+    $mcpSrc = Join-Path $JUNO_POOL ".vscode\mcp.json"
+    if (Test-Path $mcpSrc) {
+        $vscodeDst = Join-Path $OutputPath ".vscode"
+        if (-not (Test-Path $vscodeDst)) { New-Item -ItemType Directory -Path $vscodeDst | Out-Null }
+        Copy-Item $mcpSrc $vscodeDst -Force
+        Write-Host "  [OK]  .vscode/mcp.json" -ForegroundColor Green
+    }
+
     # Include the sync script itself so the target can dot-source it
     Copy-Item (Join-Path $JUNO_POOL "sync.ps1") $OutputPath -Force
     Write-Host "  [OK]  sync.ps1" -ForegroundColor Green
@@ -235,6 +253,15 @@ function junai-import {
         $toolsTarget = Join-Path $ProjectRoot "tools"
         Copy-Item $toolsSrc $toolsTarget -Recurse -Force
         Write-Host "  [OK]  tools" -ForegroundColor Green
+    }
+
+    # Deploy .vscode/mcp.json
+    $mcpSrc = Join-Path $SourcePath ".vscode\mcp.json"
+    if (Test-Path $mcpSrc) {
+        $vscodeTarget = Join-Path $ProjectRoot ".vscode"
+        if (-not (Test-Path $vscodeTarget)) { New-Item -ItemType Directory -Path $vscodeTarget | Out-Null }
+        Copy-Item $mcpSrc $vscodeTarget -Force
+        Write-Host "  [OK]  .vscode/mcp.json" -ForegroundColor Green
     }
 
     if ($tmpExtract -and (Test-Path $tmpExtract)) {
