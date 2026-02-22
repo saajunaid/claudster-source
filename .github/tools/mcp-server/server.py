@@ -11,7 +11,18 @@ from typing import Any
 from fastmcp import FastMCP
 
 
-WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
+def _detect_workspace_root() -> Path:
+    """Find workspace root by searching upward from cwd for .github dir, or use env var."""
+    if "JUNAI_WORKSPACE_ROOT" in os.environ:
+        return Path(os.environ["JUNAI_WORKSPACE_ROOT"]).resolve()
+    current = Path.cwd()
+    for directory in [current, *current.parents]:
+        if (directory / ".github").is_dir():
+            return directory
+    return current
+
+
+WORKSPACE_ROOT = _detect_workspace_root()
 DEFAULT_PIPELINE_STATE = WORKSPACE_ROOT / ".github" / "pipeline-state.json"
 PIPELINE_STATE_PATH = Path(
     os.getenv("PIPELINE_STATE_PATH", str(DEFAULT_PIPELINE_STATE))
@@ -52,12 +63,12 @@ def _run_pipeline_runner(
     result_status: str,
     artefact_path: str | None,
 ) -> dict[str, Any]:
-    runner_path = WORKSPACE_ROOT / "tools" / "pipeline-runner" / "pipeline_runner.py"
+    runner_path = WORKSPACE_ROOT / ".github" / "tools" / "pipeline-runner" / "pipeline_runner.py"
     if not runner_path.exists():
         return {
             "blocked": True,
             "reason": (
-                "pipeline-runner not found at tools/pipeline-runner/pipeline_runner.py"
+                "pipeline-runner not found at .github/tools/pipeline-runner/pipeline_runner.py"
             ),
         }
 
@@ -330,6 +341,7 @@ async def pipeline_init(
 
     Requires confirm=True to proceed — this prevents accidental invocation
     mid-run. Use when starting a brand-new feature or hotfix pipeline.
+
     If a pipeline-state.json already exists, it will be overwritten.
 
     _bypass_active_check is an internal flag used by pipeline_reset to skip
@@ -346,8 +358,6 @@ async def pipeline_init(
         }
 
     # Guard: refuse to overwrite an active (non-closed) pipeline unless bypass is set.
-    # pipeline_reset always passes _bypass_active_check=True — it is the safe path for
-    # intentional restarts. pipeline_init is the strict path for fresh starts.
     if not _bypass_active_check and PIPELINE_STATE_PATH.exists():
         try:
             existing = json.loads(PIPELINE_STATE_PATH.read_text(encoding="utf-8"))
@@ -380,11 +390,11 @@ async def pipeline_init(
             "reason": f"invalid type '{type}'. expected one of: feature, hotfix",
         }
 
-    runner_path = WORKSPACE_ROOT / "tools" / "pipeline-runner" / "pipeline_runner.py"
+    runner_path = WORKSPACE_ROOT / ".github" / "tools" / "pipeline-runner" / "pipeline_runner.py"
     if not runner_path.exists():
         return {
             "success": False,
-            "reason": "pipeline-runner not found at tools/pipeline-runner/pipeline_runner.py",
+            "reason": "pipeline-runner not found at .github/tools/pipeline-runner/pipeline_runner.py",
         }
 
     command = [
