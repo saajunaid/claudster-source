@@ -194,7 +194,7 @@ When context window is limited, read in this order:
 
 When your work is complete:
 
-**Auto mode note:** If `pipeline_mode == auto`: call `notify_orchestrator` MCP tool as final step instead of presenting the button.
+**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: call `notify_orchestrator` MCP tool as final step instead of presenting the Return to Orchestrator button.
 
 1. **Commit** — include `pipeline-state.json`:
    ```

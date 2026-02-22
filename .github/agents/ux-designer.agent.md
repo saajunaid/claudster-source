@@ -245,7 +245,7 @@ When context window is limited, read in this order:
 
 When your work is complete:
 
-**Auto mode note:** If `pipeline_mode == auto`, call `notify_orchestrator` MCP tool instead of presenting Return to Orchestrator button.
+**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: call `notify_orchestrator` MCP tool as final step instead of presenting the Return to Orchestrator button.
 
 1. **Pre-commit checklist:**
   - If the plan introduces new environment variables: write each to `.env` with its default value and a comment before committing
