@@ -74,7 +74,7 @@ Ask the user for information needed to populate the configuration. Skip question
 
 ### Step 3: Populate project-config.md
 
-1. Set the `profile` field (use org name slug, e.g., `acme`, `vmie`, or leave blank if no profile needed)
+1. Set the `profile` field (use org name slug, e.g., `acme`, `myorg`, or leave blank if no profile needed)
 2. If using a profile, create a Profile Definition section with:
    - Core Placeholders table (`<ORG_NAME>`, `<BRAND_PRIMARY>`, `<BRAND_DARK>`, `<BRAND_LIGHT>`, `<DB_TYPE>`, `<DEPLOY_ENV>`, `<LOGGING_LIB>`, `<SHARED_LIBS>`)
    - Brand Color Palette table (if provided)

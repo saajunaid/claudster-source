@@ -158,12 +158,3 @@ These skills have specialized tooling or references and remain in their original
 | MCP Server on Cloudflare | `building-mcp-server-on-cloudflare/` | Building MCP servers on Cloudflare |
 | Game-Changing Features | `game-changing-features/` | Finding 10x product opportunities |
 | Agent MD Refactor | `agent-md-refactor/` | Refactoring bloated agent instruction files |
-
-### Project-Specific (VMIE)
-
-These skills contain project-specific logic for Virgin Media Ireland and are not portable:
-
-| Skill | Path | When to Use |
-|-------|------|-------------|
-| Query Display | `vmie/query-display/` | Dev-mode SQL query transparency for Streamlit KPIs/charts |
-| VM PPT | `vmie/vm-ppt/` | Creating Virgin Media executive presentations |
