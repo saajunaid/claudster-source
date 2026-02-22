@@ -1,7 +1,7 @@
 ---
 name: Janitor
 description: Cleans up code, removes dead code, improves organization
-tools: ['codebase', 'editFiles', 'search', 'usages', 'problems']
+tools: ['codebase', 'editFiles', 'search', 'usages', 'problems', 'junai-mcp/run_command']
 model: GPT-5.3-Codex
 handoffs:
     - label: Return to Orchestrator
@@ -122,25 +122,23 @@ if items:
 
 1. **Never delete used code**: Always check `list_code_usages` first
 2. **Preserve comments**: Keep meaningful documentation
-3. **Test after cleanup**: Run tests to verify nothing broke
+3. **Test after cleanup**: Run tests via `run_command` MCP tool to verify nothing broke — do NOT ask the user to run commands manually
 4. **Small changes**: Clean incrementally, not all at once
 5. **Git history**: Commit cleanups separately from features
 
 ## Commands to Run
 
-```bash
-# Format code (use project source dir from project-config.md)
-black {source-dir}/ tests/
+**Use the `run_command` MCP tool for all command execution — do NOT ask the user to run commands manually.**
 
-# Sort imports
-isort {source-dir}/ tests/
+| Goal | `run_command` call |
+|------|--------------------|
+| Format code | `run_command(".venv/Scripts/black {source-dir}/ tests/", timeout=60)` |
+| Sort imports | `run_command(".venv/Scripts/isort {source-dir}/ tests/", timeout=60)` |
+| Lint and auto-fix | `run_command(".venv/Scripts/ruff check --fix {source-dir}/", timeout=60)` |
+| Find unused imports | `run_command(".venv/Scripts/ruff check --select F401 {source-dir}/", timeout=60)` |
+| Verify no regressions | `run_command(".venv/Scripts/pytest tests/ --tb=short -q", timeout=120)` |
 
-# Lint and auto-fix
-ruff check --fix {source-dir}/
-
-# Find unused imports
-ruff check --select F401 {source-dir}/
-```
+> Resolve `{source-dir}` from `project-config.md` profile definition before calling.
 
 ---
 

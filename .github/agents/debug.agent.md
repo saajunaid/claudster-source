@@ -1,7 +1,7 @@
 ---
 name: Debug
 description: Systematic debugger - diagnoses root causes, fixes bugs, and prevents regressions using methodical investigation
-tools: ['codebase', 'search', 'usages', 'problems', 'runCommands', 'terminalLastCommand', 'testFailure', 'editFiles', 'changes']
+tools: ['codebase', 'search', 'usages', 'problems', 'runCommands', 'terminalLastCommand', 'testFailure', 'editFiles', 'changes', 'junai-mcp/run_command']
 model: Claude Opus 4.6
 handoffs:
   - label: Return to Orchestrator
@@ -124,9 +124,13 @@ def test_regression_null_customer_id():
 
 ### Phase 4: Verify and Report
 
-1. **Run the specific failing test** — Must pass now
-2. **Run the full test suite** — No regressions
-3. **Test edge cases** — Related boundary conditions
+**Use `run_command` MCP tool for all test execution — do NOT ask the user to run commands manually.**
+
+1. **Run the specific failing test** — must pass now:
+   `run_command(command=".venv/Scripts/pytest tests/path/to/test_file.py::test_name -v", timeout=60)`
+2. **Run the full test suite** — no regressions:
+   `run_command(command=".venv/Scripts/pytest tests/ --tb=short -q", timeout=120)`
+3. **Test edge cases** — related boundary conditions
 4. **Generate a fix report**
 
 ---
