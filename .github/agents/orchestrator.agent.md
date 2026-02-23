@@ -96,7 +96,20 @@ After loading state, read `_notes._routing_decision` and branch on `pipeline_mod
    - `pipeline_mode: assisted` → invoke the target agent immediately with the routing prompt.
    - `pipeline_mode: autopilot` → invoke the target agent immediately; most gates are auto-satisfied.
 3. If `_routing_decision` does not exist:
-   - If `current_stage: intent` → fresh intake. Run Intake Protocol (§9).
+   - If `current_stage: intent`:
+     - **Autopilot fast-path (no user prompt needed):** If `pipeline_mode: autopilot` — do NOT run the intake classification interview. Instead: search for artefacts on disk using the `feature` slug from `pipeline-state.json`:
+       - **Plan:** `plans/<feature-slug>.md` (root only — a file in `plans/backlog/` is a backlog item, not a ready plan)
+       - **PRD:** any `.md` file in `agent-docs/prd/` whose filename contains the feature slug
+       - **ADR/arch:** any `.md` file in `agent-docs/architecture/` whose filename contains the feature slug
+
+       Use the table below to determine the correct entry stage, then immediately execute the §9 fast-track advancement procedure. No user message required.
+       | What exists on disk | Auto-detected entry stage |
+       |---|---|
+       | `plans/<feature-slug>.md` exists | `implement` (pre-approve intent, adr, plan gates) |
+       | PRD matching feature slug but no plan | `plan` (pre-approve intent, adr gates) |
+       | ADR/arch matching feature slug but no PRD | `architect` (pre-approve intent gate) |
+       | Nothing matching feature slug | `intent` → `prd` (normal intake, auto-proceed after `intent_approved`) |
+     - **Supervised / assisted:** Run Intake Protocol (§9) — present classification and wait for user input.
    - If `current_stage` is any other stage → possible stage drift or mid-pipeline re-entry. Run Stage Drift / Re-entry Resync (§9.2) **before** any routing.
 
 #### Pipeline Status Banner (required — bottom of every response)
@@ -211,11 +224,25 @@ satisfy_gate(gate="review_approved") # only when reviewer verdict = approved
 If all gates for a stage are already `true` in `pipeline-state.json`, auto-proceed in all modes.
 
 ### 5. Update Pipeline State
-After every routing decision, update `.github/pipeline-state.json`:
-- Set `current_stage` to the stage now in progress
-- Set the previous stage's `status` to `complete` and record `completed_at`
-- Set the new stage's `status` to `in_progress`
-- Clear `blocked_by` if it was set
+After every routing decision, update `.github/pipeline-state.json`.
+
+> **CRITICAL — never directly set `current_stage` via `editFiles`.**
+> `current_stage` is a runner-owned field. It advances only when the pipeline-runner processes a `notify_orchestrator` MCP call. You call `notify_orchestrator`; the runner writes `current_stage`. The only exception is §10 Pipeline Close, which sets `current_stage: closed` directly as the final terminal state.
+
+Fields you MAY set directly (via `editFiles`):
+- `stages[*].status` → set `complete` and record `completed_at`
+- `stages[*].artefact` → record artefact path
+- `blocked_by` → set or clear
+- `_notes.*` → all sub-keys (handoff payloads, routing decisions, hotfix brief, etc.)
+
+Fields you MUST advance via MCP tools:
+| Field | Tool |
+|---|---|
+| `current_stage` (advance one step) | `notify_orchestrator` |
+| `current_stage` (reset to `intent`) | `pipeline_reset` |
+| `pipeline_mode` | `set_pipeline_mode` |
+| `supervision_gates[*]` | `satisfy_gate` |
+| `project`, `feature`, `type` | `pipeline_init` or `pipeline_reset` |
 
 ### 6. Escalation Handling
 If an escalation file exists in `agent-docs/escalations/` with severity `blocking`:
@@ -251,12 +278,13 @@ You MUST **never** directly edit these fields in `pipeline-state.json` — use t
 |---|---|
 | `project`, `feature`, `type` (initialisation) | `pipeline_init` or `pipeline_reset` |
 | `current_stage` reset to `intent` | `pipeline_init` or `pipeline_reset` |
+| `current_stage` advance (intent → prd → … → implement) | `notify_orchestrator` |
 | `pipeline_mode` | `set_pipeline_mode` |
 | `supervision_gates[*]` (satisfying a gate) | `satisfy_gate` |
 
-This restriction applies **only to `pipeline-state.json`**. You may freely use `editFiles` on any other file (artefacts, plans, code, docs, etc.) as needed.
-
-**Rationale:** `pipeline_init` contains an active-pipeline guard that prevents accidental overwrites of non-closed pipelines. Bypassing it via direct `editFiles` on `pipeline-state.json` silently skips that guard. If you feel the need to rename the feature slug or re-initialise the pipeline state, call the appropriate MCP tool — never write those fields directly.
+> **HARD STOP — rogue state-file edit anti-pattern:**
+> If you find yourself about to write `current_stage` or any supervision gate value into `pipeline-state.json` via `editFiles`, STOP. This is always wrong. It does not matter whether a previous tool call appeared to fail, whether you believe the file is stale, or whether §9 says "entry stage: implement." The tool is the authority. If a tool returned success, the field was written — **re-read the file, then call `notify_orchestrator` or `satisfy_gate` as appropriate.**
+> Do not invent a "tool failure" justification to bypass the state machine. If a tool genuinely failed, escalate to the user — do not self-remedy by writing state directly.
 
 ---
 
@@ -273,15 +301,40 @@ When a user initiates a session without an existing pipeline in progress, map th
 | "Bug/hotfix — unknown root cause" | `debug` (fast-track) | All gates auto-approved; note `type: hotfix` in state | supervised | Debug output may need human interpretation before implement |
 | "Deferred items from `pipeline-state.json`" | `implement` (fast-track) | All gates auto-approved; load `deferred[]` as scope | assisted | Scope pre-locked from previous run; low re-entry risk |
 
-**Mode recommendation output (required):**
-After classifying the scenario, output this line before any routing action:
+**Mode recommendation output (supervised/assisted only):**
+In `supervised` or `assisted` mode, output this line before any routing action:
 
 > **Recommended mode: `<supervised|assisted|autopilot>`** — <one-sentence rationale>
 > To switch: say *"Switch pipeline to supervised mode"* or *"Switch pipeline to assisted mode"*
 
 Do not change `pipeline_mode` in `pipeline-state.json` yourself. Only the user switches mode via MCP tool or CLI. You recommend; they decide.
 
+> **In `autopilot` mode:** Skip the mode recommendation output. Proceed directly to the fast-track advancement procedure (described below). Do not ask the user to confirm the entry stage, classification, or mode — they already set autopilot; honour it.
+
 Initialise `pipeline-state.json` at the correct starting stage and pre-set the appropriate auto-approved gates before routing.
+
+#### Fast-track advancement procedure (required when "Entry stage ≠ intent")
+
+When §9 table says "Entry stage: `implement`" (or any stage other than `intent`), the pipeline-runner always starts at `intent` after a reset. You MUST advance through intermediate stages using MCP tools — NEVER write `current_stage` directly viaEditFiles.
+
+The tool call sequence to reach `implement` from a fresh `intent` state:
+
+```
+# 1. Satisfy all pre-approved gates (in any order)
+satisfy_gate(gate="intent_approved")   # required first — also needed in autopilot
+satisfy_gate(gate="adr_approved")      # if pre-approved
+satisfy_gate(gate="plan_approved")     # if pre-approved
+
+# 2. Advance each stage in sequence using notify_orchestrator
+notify_orchestrator(stage_completed="intent",    status="approved")   → current_stage becomes prd
+notify_orchestrator(stage_completed="prd",       status="approved")   → current_stage becomes architect
+notify_orchestrator(stage_completed="architect", status="approved")   → current_stage becomes plan
+notify_orchestrator(stage_completed="plan",      status="approved")   → current_stage becomes implement
+```
+
+> **Why this matters:** "Entry stage: `implement`" means "the pipeline should be at `implement` when work starts." It does NOT mean "write `implement` directly into `current_stage`." The runner advances the field via `notify_orchestrator`. Skipping this and writing the field directly bypasses the transition guard and produces a corrupted state.
+
+**Reality check before fast-track:** After `pipeline_reset`, re-read `pipeline-state.json` to confirm `current_stage: intent` before starting the advancement sequence. If `current_stage` is already at the desired entry stage (e.g. a prior session completed partial advancement), skip the already-passed steps.
 
 #### Handling `active_pipeline_detected` from `pipeline_init`
 
@@ -395,10 +448,12 @@ Shall I start with item 1?
 5. Proceed with normal routing per §1 and §3
 
 **Step 4 — If git history is insufficient to determine actual state:**
-Ask the user directly: *"What stages have been completed since the last Orchestrator session? I'll align the state before routing."*
-Never guess. Never advance a stage without user confirmation when drift is ambiguous.
 
-**In assisted or autopilot mode:** Repeated re-entry drift is a signal of a session boundary design problem. Surface it as a warning and recommend switching to supervised mode until the pipeline is stable.
+**Supervised / assisted mode:** Ask the user directly: *"What stages have been completed since the last Orchestrator session? I'll align the state before routing."* Never guess. Never advance a stage without user confirmation when drift is ambiguous. If re-entry drift is repeated across sessions, surface it as a warning and recommend switching to supervised mode until the pipeline is stable.
+
+**Autopilot mode:**
+- If drift is **unambiguous** — git log contains conventional commits clearly attributable to specific stages for this feature slug (e.g. `feat(prd): distilbert-intent-classifier`, `feat(plan): distilbert-intent-classifier`) and the full stage sequence can be reconstructed without guessing: auto-confirm alignment, run `pipeline advance --stage <actual_current_stage>`, commit the state correction (`chore(pipeline): resync state — drift detected on re-entry`), and proceed. No user message needed.
+- If drift is **ambiguous** — no conventional commits, conflicting signals, or git history is insufficient to reconstruct the stage sequence: write `PIPELINE_HALT.md` with reason `"stage drift — ambiguous re-entry in autopilot; manual resync required"` and halt. Do NOT guess. Treat this identically to any other autopilot halt condition (notify user, do not auto-proceed).
 
 ---
 

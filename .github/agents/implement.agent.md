@@ -51,6 +51,7 @@ You receive work from: **Plan** (implement the plan), **Architect** (build from 
 When receiving a handoff:
 1. Read `.github/pipeline-state.json` first. If `_notes.handoff_payload` exists and `target_agent` is `implement`, treat it as the primary scoped brief.
 1a. **Fidelity Check (GAP-I1):** If `_notes.handoff_payload.coverage_requirements[]` is non-empty — list every item, map each to a specific task in your implementation plan, and flag any unmapped item as `COVERAGE_GAP: <item>` in your opening response. Do NOT silently skip uncovered items.
+1b. **Hotfix scope check:** If `pipeline-state.json` has `"type": "hotfix"`, check `_notes._hotfix_brief` for the changes list — it contains the authoritative scoped brief written by the Orchestrator. If `_hotfix_brief` is absent from `_notes`, check `_notes.handoff_payload` as a secondary source. If **neither** exists: STOP immediately and report `"BLOCKED: Missing hotfix scope. _notes._hotfix_brief was not written by Orchestrator. Cannot implement without a defined scope."` Do NOT infer scope from context, conversation history, or the feature name alone.
 2. Read the plan file or architecture doc referenced in the conversation (if present)
 3. Check the prompt/step being implemented — follow it exactly
 4. Run `run_command(command=".venv/Scripts/pytest tests/ --tb=short -q", timeout=120)` before AND after changes to verify no regressions — use the MCP tool, not a manual terminal ask

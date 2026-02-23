@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,6 +35,22 @@ ALLOWED_SUPERVISION_GATES = {
     "review_approved",
 }
 
+# ── Direct import of pipeline-runner (eliminates subprocess + AV scan) ────────
+_RUNNER_DIR = WORKSPACE_ROOT / ".github" / "tools" / "pipeline-runner"
+_RUNNER_AVAILABLE = False
+_pr: Any = None        # pipeline_runner module
+_schema: Any = None    # schema module
+
+if _RUNNER_DIR.exists() and str(_RUNNER_DIR) not in sys.path:
+    sys.path.insert(0, str(_RUNNER_DIR))
+try:
+    import pipeline_runner as _pr          # type: ignore[import]
+    import schema as _schema               # type: ignore[import]
+    _RUNNER_AVAILABLE = True
+except Exception:  # noqa: BLE001
+    pass  # Falls back to subprocess if import fails
+# ─────────────────────────────────────────────────────────────────────────────
+
 
 def _to_iso_utc() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -58,65 +74,75 @@ def _save_pipeline_state(state: dict[str, Any]) -> None:
     )
 
 
-def _run_pipeline_runner(
+async def _run_pipeline_runner(
     completed_stage: str,
     result_status: str,
     artefact_path: str | None,
 ) -> dict[str, Any]:
+    """Advance pipeline state. Uses direct in-process call when pipeline-runner
+    is importable (no subprocess, no AV scan). Falls back to subprocess otherwise."""
+    if _RUNNER_AVAILABLE:
+        try:
+            state = _pr._load_state(PIPELINE_STATE_PATH)
+            event = _schema.CompletionEvent(
+                stage_completed=completed_stage,
+                result_status=result_status,
+                artefact_path=artefact_path,
+            )
+            result = _pr.compute_next_transition(state, event, WORKSPACE_ROOT)
+            state = _pr._advance_state(state, event, result)
+            _pr._save_state(PIPELINE_STATE_PATH, state)
+            return json.loads(result.model_dump_json(exclude_none=False))
+        except Exception as exc:
+            return {
+                "blocked": True,
+                "reason": f"pipeline-runner error: {exc}",
+            }
+
+    # ── Subprocess fallback (used only if import failed at startup) ───────────
     runner_path = WORKSPACE_ROOT / ".github" / "tools" / "pipeline-runner" / "pipeline_runner.py"
     if not runner_path.exists():
         return {
             "blocked": True,
-            "reason": (
-                "pipeline-runner not found at .github/tools/pipeline-runner/pipeline_runner.py"
-            ),
+            "reason": "pipeline-runner not found at .github/tools/pipeline-runner/pipeline_runner.py",
         }
-
     command = [
-        sys.executable,
-        str(runner_path),
-        "advance",
-        "--state-file",
-        str(PIPELINE_STATE_PATH),
-        "--completed-stage",
-        completed_stage,
-        "--result-status",
-        result_status,
+        sys.executable, str(runner_path), "advance",
+        "--state-file", str(PIPELINE_STATE_PATH),
+        "--completed-stage", completed_stage,
+        "--result-status", result_status,
     ]
     if artefact_path:
         command.extend(["--artefact-path", artefact_path])
-
-    result = subprocess.run(
-        command,
-        cwd=str(WORKSPACE_ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if result.returncode != 0:
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *command,
+            cwd=str(WORKSPACE_ROOT),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=120.0)
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.communicate()
+            return {"blocked": True, "reason": "pipeline-runner subprocess timed out after 120s."}
+    except Exception as exc:
+        return {"blocked": True, "reason": f"failed to launch pipeline runner: {exc}"}
+    if proc.returncode != 0:
         return {
-            "blocked": True,
-            "reason": "pipeline-runner advance failed",
-            "stderr": result.stderr.strip(),
-            "stdout": result.stdout.strip(),
+            "blocked": True, "reason": "pipeline-runner advance failed",
+            "stderr": stderr_bytes.decode("utf-8", errors="replace").strip(),
+            "stdout": stdout_bytes.decode("utf-8", errors="replace").strip(),
         }
-
-    stdout = result.stdout.strip()
+    stdout = stdout_bytes.decode("utf-8", errors="replace").strip()
     if not stdout:
-        return {
-            "blocked": True,
-            "reason": "pipeline-runner returned no output",
-        }
-
+        return {"blocked": True, "reason": "pipeline-runner returned no output"}
     try:
         return json.loads(stdout)
     except json.JSONDecodeError:
-        return {
-            "blocked": True,
-            "reason": "pipeline-runner output is not valid JSON",
-            "stdout": stdout,
-        }
+        return {"blocked": True, "reason": "pipeline-runner output is not valid JSON", "stdout": stdout}
+    # ─────────────────────────────────────────────────────────────────────────
 
 
 def _path_contains_hint(path: Path, hint: str) -> bool:
@@ -187,7 +213,7 @@ async def notify_orchestrator(
 
     _save_pipeline_state(state)
 
-    routing_decision = _run_pipeline_runner(
+    routing_decision = await _run_pipeline_runner(
         completed_stage=stage_completed,
         result_status=result_status,
         artefact_path=artefact_path,
@@ -390,38 +416,29 @@ async def pipeline_init(
             "reason": f"invalid type '{type}'. expected one of: feature, hotfix",
         }
 
-    runner_path = WORKSPACE_ROOT / ".github" / "tools" / "pipeline-runner" / "pipeline_runner.py"
-    if not runner_path.exists():
+    template_path = WORKSPACE_ROOT / ".github" / "pipeline-state.template.json"
+    if not template_path.exists():
         return {
             "success": False,
-            "reason": "pipeline-runner not found at .github/tools/pipeline-runner/pipeline_runner.py",
+            "reason": f"pipeline-state.template.json not found at {template_path}",
         }
 
-    command = [
-        sys.executable,
-        str(runner_path),
-        "init",
-        "--project", project.strip(),
-        "--feature", feature.strip(),
-        "--type", pipeline_type,
-        "--state-file", str(PIPELINE_STATE_PATH),
-        "--force",
-    ]
-
-    result = subprocess.run(
-        command,
-        cwd=str(WORKSPACE_ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if result.returncode != 0:
+    try:
+        template = json.loads(template_path.read_text(encoding="utf-8"))
+        template["project"] = project.strip()
+        template["feature"] = feature.strip()
+        template["pipeline_mode"] = template.get("pipeline_mode") or "supervised"
+        template["type"] = pipeline_type
+        template["last_updated"] = _to_iso_utc()
+        PIPELINE_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        PIPELINE_STATE_PATH.write_text(
+            json.dumps(template, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+    except Exception as exc:
         return {
             "success": False,
-            "reason": "pipeline init failed",
-            "stderr": result.stderr.strip(),
-            "stdout": result.stdout.strip(),
+            "reason": f"pipeline init failed: {exc}",
         }
 
     return {
@@ -495,8 +512,6 @@ async def run_command(
         max_output_chars: Truncate combined output to this many characters to
                           avoid flooding the context window. Default 20000.
     """
-    import asyncio
-
     try:
         process = await asyncio.create_subprocess_shell(
             command,

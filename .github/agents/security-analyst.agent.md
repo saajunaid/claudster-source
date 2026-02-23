@@ -194,6 +194,7 @@ When your work is complete:
   > **No plan? (hotfix / deferred context):** Use the commit message from the orchestrator handoff prompt. If none provided, use: `fix(<scope>): <brief description>` or `chore(<scope>): <brief description>`.
 
 3. **Update `pipeline-state.json`** — set your stage `status: complete`, `completed_at: <ISO-date>`, `artefact: <paths>`.
+   > **Scope restriction (GAP-I2-c):** Only write your own stage's `status`, `completed_at`, and `artefact` fields. Never write `current_stage`, `_notes._routing_decision`, or `supervision_gates` — those belong exclusively to Orchestrator and pipeline-runner.
 
 4. **Output your completion report, then HARD STOP:**
   ```
