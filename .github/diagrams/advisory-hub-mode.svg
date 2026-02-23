@@ -61,17 +61,15 @@
     <text x="502" y="199" fill="#64748b">→ Skips to routing step immediately</text>
   </g>
 
-  <!-- CARD C: Advisory vs Autonomous -->
+  <!-- CARD C: Pipeline Modes -->
   <rect x="938" y="82" width="448" height="122" rx="9" fill="white" filter="url(#shadow)"/>
   <path d="M947,82 h429 q9,0 9,9 v22 h-448 v-22 q0,-9 9,-9 z" fill="#ede9fe"/>
-  <text x="952" y="100" font-size="12" font-weight="700" fill="#4c1d95">Supervisor vs Auto Mode</text>
+  <text x="952" y="100" font-size="12" font-weight="700" fill="#4c1d95">Pipeline Modes</text>
   <g font-size="10.5" fill="#374151">
-    <text x="952" y="122"><tspan font-weight="700" fill="#5b21b6">Supervisor (today)</tspan> — approval gate at each stage</text>
-    <text x="964" y="137" fill="#64748b">AdvisoryHub routes, user confirms, agent executes, user reviews</text>
-    <text x="952" y="153"><tspan font-weight="700" fill="#5b21b6">Auto Mode (future)</tspan> — fully autonomous pipeline</text>
-    <text x="964" y="168" fill="#64748b">PM agent orchestrates full chain without manual gates</text>
-    <text x="952" y="184"><tspan font-weight="700" fill="#5b21b6">Advisory in both</tspan> — AdvisoryHub advises in either mode</text>
-    <text x="964" y="199" fill="#64748b">Boundary rules apply regardless of mode</text>
+    <text x="952" y="122"><tspan font-weight="700" fill="#5b21b6">supervised</tspan> — all gates require manual approval · user reviews every stage</text>
+    <text x="952" y="142"><tspan font-weight="700" fill="#5b21b6">assisted</tspan> — manual gates with AI recommendations at each step</text>
+    <text x="952" y="162"><tspan font-weight="700" fill="#5b21b6">autopilot</tspan> — all gates auto-satisfied (except intent_approved)</text>
+    <text x="952" y="182" fill="#64748b" font-style="italic">AdvisoryHub advises in any mode · boundary rules always apply</text>
   </g>
 
   <!-- ═══════════════════════════════════════════════════════════ -->

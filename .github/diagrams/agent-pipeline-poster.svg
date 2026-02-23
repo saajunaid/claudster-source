@@ -551,9 +551,9 @@
   <text x="60" y="1098" fill="#64748B" font-size="8.5">When: Task spans DB + data pipeline, or UX design → front-end build</text>
 
   <!-- Pattern F -->
-  <text x="780" y="1072" fill="#7C3AED" font-size="10" font-weight="700">F. Supervisor Mode (AdvisoryHub)</text>
+  <text x="780" y="1072" fill="#7C3AED" font-size="10" font-weight="700">F. AdvisoryHub Mode</text>
   <text x="780" y="1086" fill="#374151" font-size="9">AdvisoryHub → Diagnostic Brief → specialist agent  |  OR pipeline stage → @Orchestrator</text>
-  <text x="780" y="1098" fill="#64748B" font-size="8.5">When: Issue raised in conversation · not a scheduled phase · see advisory-hub-mode.svg</text>
+  <text x="780" y="1098" fill="#64748B" font-size="8.5">When: Issue raised in conversation · not a scheduled phase · works in any pipeline mode</text>
 
   <!-- Footer -->
   <text x="800" y="1116" text-anchor="middle" fill="#94A3B8" font-size="9">Generated from .github/diagrams/AGENT_WORKFLOW_CHEATSHEET.md · Print at A3/A2 landscape for wall mounting</text>
