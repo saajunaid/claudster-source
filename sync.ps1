@@ -11,9 +11,9 @@
 # Usage from any project root:
 #   junai-pull                    pull latest pool from junai --> current project
 #   junai-push                    push pool from current project --> junai + commit + push
-#   junai-revert -Sha <sha>       revert a commit in agent-sandbox + cascade to junai
+#   junai-revert -Sha SHA                revert a commit in agent-sandbox + cascade to junai
 #   junai-export [OutputPath]     export pool to a local folder or zip (no GitHub needed)
-#   junai-import <SourcePath>     import pool from a local folder or zip into current project
+#   junai-import SourcePath        import pool from a local folder or zip into current project
 
 $JUNO_POOL = "E:\Projects\junai"
 $JUNO_GITHUB = "$JUNO_POOL\.github"
@@ -194,12 +194,12 @@ function junai-publish-mcp {
 
 function junai-revert {
     # Reverts a commit in agent-sandbox and cascades the revert to junai.
-    # Safe — creates a new revert commit, never rewrites history.
+    # Safe -- creates a new revert commit, never rewrites history.
     #
     # Usage:
-    #   junai-revert -Sha <commit-sha>                   # revert + cascade to junai
-    #   junai-revert -Sha <commit-sha> -NoCascade        # revert agent-sandbox only
-    #   junai-revert -Sha <commit-sha> -Message "msg"    # custom commit message
+    #   junai-revert -Sha SHA                        # revert + cascade to junai
+    #   junai-revert -Sha SHA -NoCascade             # revert agent-sandbox only
+    #   junai-revert -Sha SHA -Message "msg"         # custom commit message
     param(
         [Parameter(Mandatory)][string]$Sha,
         [string]$Message     = "",
@@ -237,7 +237,7 @@ function junai-revert {
     # Revert in agent-sandbox
     git revert --no-edit $Sha | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [ERROR]  git revert failed — resolve conflicts manually." -ForegroundColor Red
+        Write-Host "  [ERROR]  git revert failed -- resolve conflicts manually." -ForegroundColor Red
         Pop-Location; return
     }
 
@@ -253,10 +253,8 @@ function junai-revert {
 
     # Cascade to junai unless suppressed
     if (-not $NoCascade) {
-        $revertMsg = if ([string]::IsNullOrWhiteSpace($Message)) {
-            "revert: undo $Sha"
-        } else { $Message }
-
+        $revertMsg = "revert: undo $Sha"
+        if (-not [string]::IsNullOrWhiteSpace($Message)) { $revertMsg = $Message }
         junai-push -Message $revertMsg
     }
 
@@ -323,7 +321,7 @@ function junai-export {
     }
 
     Write-Host "  On the target machine, run:" -ForegroundColor DarkGray
-        Write-Host "    junai-import <path-to-export-folder>   # from any project root" -ForegroundColor DarkGray
+    Write-Host "    junai-import PATH-TO-EXPORT-FOLDER   # from any project root" -ForegroundColor DarkGray
     Write-Host ""
 }
 
