@@ -194,19 +194,23 @@ function junai-publish-mcp {
 
 function junai-revert {
     # Reverts one or more commits in agent-sandbox and cascades to all downstream
-    # repos (junai, junai-vscode). Safe -- new revert commits, no history rewrite.
+    # repos (junai, junai-vscode, and any explicit project repos).
+    # Safe -- new revert commits, no history rewrite.
     #
     # Usage:
-    #   junai-revert                              # revert HEAD (last commit)
-    #   junai-revert -Last 3                      # revert last 3 commits
-    #   junai-revert -Sha abc123                  # revert one specific commit
-    #   junai-revert -Sha abc123,def456,ghi789    # revert multiple commits
-    #   junai-revert -Last 2 -NoCascade           # revert agent-sandbox only
-    #   junai-revert -Last 3 -Force               # skip confirmation (chat / CI use)
+    #   junai-revert                                         # revert HEAD (last commit)
+    #   junai-revert -Last 3                                 # revert last 3 commits
+    #   junai-revert -Sha abc123                             # revert one specific commit
+    #   junai-revert -Sha abc123,def456,ghi789               # revert multiple commits
+    #   junai-revert -Last 2 -NoCascade                      # revert agent-sandbox only
+    #   junai-revert -Last 3 -Force                          # skip confirmation (chat / CI use)
+    #   junai-revert -Last 3 -Projects "E:\Projects\Foo"     # also restore pool in project repo
+    #   junai-revert -Last 3 -Projects "E:\P\Foo,E:\P\Bar"  # multiple project repos
     param(
         [string[]]$Sha       = @(),
         [int]$Last           = 0,
         [string]$Message     = "",
+        [string[]]$Projects  = @(),
         [switch]$NoCascade,
         [switch]$Force
     )
@@ -244,8 +248,13 @@ function junai-revert {
     }
 
     # Sort newest-first by walking git log order (avoids conflicts on revert)
-    $allHashes  = @(git log --format="%H")
-    $resolved   = $allHashes | Where-Object { $resolved -contains $_ }
+    $allHashes = @(git log --format="%H")
+    $resolved  = $allHashes | Where-Object { $resolved -contains $_ }
+
+    # Expand comma-separated project paths
+    $projectList = $Projects | ForEach-Object { $_ -split ',' } |
+                               ForEach-Object { $_.Trim() } |
+                               Where-Object   { $_ -ne '' }
 
     # -- Show plan -------------------------------------------------------------
     Write-Host ""
@@ -263,6 +272,9 @@ function junai-revert {
         Write-Host "  Cascade   : agent-sandbox only (-NoCascade)" -ForegroundColor DarkGray
     } else {
         Write-Host "  Cascade   : agent-sandbox --> junai --> junai-vscode (at next publish)" -ForegroundColor DarkGray
+        foreach ($proj in $projectList) {
+            Write-Host "              --> $(Split-Path $proj -Leaf)  (junai-pull + commit)" -ForegroundColor DarkGray
+        }
     }
     Write-Host ""
 
@@ -303,8 +315,8 @@ function junai-revert {
         junai-push -Message $revertMsg
 
         # 2. junai root sync.ps1 -- not inside pool folders, synced separately
-        $srcSync  = Join-Path $agentSandbox "sync.ps1"
-        $dstSync  = Join-Path $JUNO_POOL    "sync.ps1"
+        $srcSync = Join-Path $agentSandbox "sync.ps1"
+        $dstSync = Join-Path $JUNO_POOL    "sync.ps1"
         if (Test-Path $srcSync) {
             $srcHash = (Get-FileHash $srcSync -Algorithm SHA256).Hash
             $dstHash = (Get-FileHash $dstSync -Algorithm SHA256).Hash
@@ -324,6 +336,28 @@ function junai-revert {
 
         # 3. junai-vscode -- pool/ is gitignored, rebuilt from agent-sandbox at publish
         Write-Host "  [--]  junai-vscode pool/ is gitignored -- auto-updates at next publish" -ForegroundColor DarkGray
+
+        # 4. Project repos -- restore reverted pool via junai-pull + commit + push
+        foreach ($proj in $projectList) {
+            $githubDir = Join-Path $proj ".github"
+            if (-not (Test-Path $githubDir)) {
+                Write-Host "  [SKIP] $(Split-Path $proj -Leaf) -- no .github/ found" -ForegroundColor Yellow
+                continue
+            }
+            Write-Host "  Restoring pool in $(Split-Path $proj -Leaf) ..." -ForegroundColor DarkGray
+            junai-pull -ProjectRoot $proj
+            Push-Location $proj
+            $dirty = (git status --porcelain) -ne $null
+            if ($dirty) {
+                git add ".github"
+                git commit -m "$revertMsg (pool)" | Out-Null
+                git push | Out-Null
+                Write-Host "  [OK]  $(Split-Path $proj -Leaf) pool reverted and pushed" -ForegroundColor Green
+            } else {
+                Write-Host "  [--]  $(Split-Path $proj -Leaf) -- pool already up to date" -ForegroundColor DarkGray
+            }
+            Pop-Location
+        }
     }
 
     Write-Host ""
