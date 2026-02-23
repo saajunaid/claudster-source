@@ -2,7 +2,7 @@
 name: UX Designer
 description: Expert UX designer specializing in user experience, JTBD framework, and interface design
 tools: ['codebase', 'search', 'fetch', 'usages', 'editFiles', 'runCommands', 'problems', 'terminalLastCommand']
-model: Claude Sonnet 4.6
+model: Gemini 3.1 Pro (Preview)
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

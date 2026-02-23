@@ -2,7 +2,7 @@
 name: PRD
 description: Product Requirements Document generator - captures requirements through discovery and creates formal PRDs
 tools: ['codebase', 'search', 'fetch', 'usages', 'editFiles', 'runCommands', 'problems', 'terminalLastCommand']
-model: Claude Sonnet 4.6
+model: Claude Opus 4.6
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

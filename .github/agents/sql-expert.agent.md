@@ -2,7 +2,7 @@
 name: SQL Expert
 description: Expert in SQL Server database design, queries, stored procedures, and optimization
 tools: ['codebase', 'search', 'editFiles', 'runCommands', 'usages']
-model: Claude Sonnet 4.6
+model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

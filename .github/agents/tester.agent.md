@@ -2,7 +2,7 @@
 name: Tester
 description: Expert in testing Python applications, Streamlit dashboards, and FastAPI backends
 tools: ['codebase', 'search', 'editFiles', 'runCommands', 'testFailure', 'usages', 'problems', 'junai-mcp/run_command']
-model: Claude Sonnet 4.6
+model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

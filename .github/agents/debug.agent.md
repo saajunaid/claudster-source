@@ -2,7 +2,7 @@
 name: Debug
 description: Systematic debugger - diagnoses root causes, fixes bugs, and prevents regressions using methodical investigation
 tools: ['codebase', 'search', 'usages', 'problems', 'runCommands', 'terminalLastCommand', 'testFailure', 'editFiles', 'changes', 'junai-mcp/run_command']
-model: Claude Opus 4.6
+model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

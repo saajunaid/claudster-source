@@ -2,7 +2,7 @@
 name: Data Engineer
 description: Expert in ETL/ELT pipelines, data integration, and database-agnostic data engineering
 tools: ['codebase', 'search', 'editFiles', 'runCommands', 'usages']
-model: Claude Sonnet 4.6
+model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

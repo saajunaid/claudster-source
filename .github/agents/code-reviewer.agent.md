@@ -2,7 +2,7 @@
 name: Code Reviewer
 description: Perform thorough code reviews focusing on Python, Streamlit, and project-specific standards
 tools: ['codebase', 'editFiles', 'runCommands', 'search', 'usages', 'problems', 'terminalLastCommand', 'testFailure', 'changes']
-model: Claude Sonnet 4.6
+model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

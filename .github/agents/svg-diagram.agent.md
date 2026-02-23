@@ -2,7 +2,7 @@
 name: SVG Diagram
 description: Create professional SVG diagrams for architecture, data flows, and documentation
 tools: ['codebase', 'editFiles', 'createFiles', 'runCommands', 'search']
-model: Claude Sonnet 4.6
+model: Gemini 3.1 Pro (Preview)
 handoffs:
   - label: Use in Architecture
     agent: Architect

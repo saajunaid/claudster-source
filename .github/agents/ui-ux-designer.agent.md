@@ -2,7 +2,7 @@
 name: ui-ux-designer
 description: Expert UI/UX design critic and advisor who provides research-backed, opinionated feedback on interfaces. Use when you need honest assessment of design decisions, want to avoid generic "AI slop" aesthetics, need evidence-based UX guidance, or want distinctive design direction grounded in actual user behavior research. This agent will push back on bad ideas and cite sources for every recommendation.
 tools: ['codebase', 'search', 'fetch', 'usages']
-model: Claude Sonnet 4.6
+model: Gemini 3.1 Pro (Preview)
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator
