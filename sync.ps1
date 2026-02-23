@@ -96,6 +96,22 @@ function junai-push {
         return
     }
 
+    # ── PyPI build copy (src/junai_mcp/server.py) ─────────────────────────────
+    $poolServer  = Join-Path $JUNO_GITHUB "tools\mcp-server\server.py"
+    $pypiServer  = Join-Path $JUNO_POOL   "src\junai_mcp\server.py"
+    if ((Test-Path $poolServer) -and (Test-Path $pypiServer)) {
+        $poolHash = (Get-FileHash $poolServer  -Algorithm SHA256).Hash
+        $pypiHash = (Get-FileHash $pypiServer -Algorithm SHA256).Hash
+        if ($poolHash -ne $pypiHash) {
+            Copy-Item $poolServer $pypiServer -Force
+            Write-Host "  [OK]  src/junai_mcp/server.py  (synced from pool)" -ForegroundColor Green
+            Write-Host "  [!!]  server.py changed -- run junai-publish-mcp to bump version + publish to PyPI" -ForegroundColor Yellow
+        } else {
+            Write-Host "  [--]  src/junai_mcp/server.py  (no change)" -ForegroundColor DarkGray
+        }
+    }
+    # ──────────────────────────────────────────────────────────────────────────
+
     git add .github/agents .github/skills .github/prompts .github/instructions .github/diagrams .github/tools | Out-Null
 
     if ([string]::IsNullOrWhiteSpace($Message)) {
@@ -111,6 +127,67 @@ function junai-push {
 
     Write-Host ""
     Write-Host "  Committed and pushed to junai." -ForegroundColor Magenta
+    Write-Host ""
+}
+
+function junai-publish-mcp {
+    # Bumps the version in pyproject.toml and publishes junai-mcp to PyPI.
+    # Requires: pip install build twine (once per machine), PyPI credentials configured.
+    #
+    # Usage:
+    #   junai-publish-mcp           # prompts for new version
+    #   junai-publish-mcp -Version 0.1.2
+    param([string]$Version = "")
+
+    Push-Location $JUNO_POOL
+
+    $pyproject = Join-Path $JUNO_POOL "pyproject.toml"
+    if (-not (Test-Path $pyproject)) {
+        Write-Host "  pyproject.toml not found at $JUNO_POOL" -ForegroundColor Red
+        Pop-Location; return
+    }
+
+    $content     = Get-Content $pyproject -Raw
+    $currentVer  = [regex]::Match($content, 'version\s*=\s*"([^"]+)"').Groups[1].Value
+
+    Write-Host ""
+    Write-Host "  JUNAI PUBLISH MCP  junai-mcp --> PyPI" -ForegroundColor Cyan
+    Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
+    Write-Host "  Current version: $currentVer" -ForegroundColor DarkGray
+
+    if ([string]::IsNullOrWhiteSpace($Version)) {
+        $Version = Read-Host "  New version (blank to keep $currentVer)"
+        if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $currentVer }
+    }
+
+    if ($Version -ne $currentVer) {
+        $content = $content -replace "version\s*=\s*`"$([regex]::Escape($currentVer))`"", "version = `"$Version`""
+        Set-Content $pyproject $content -NoNewline
+        Write-Host "  [OK]  pyproject.toml bumped $currentVer --> $Version" -ForegroundColor Green
+    }
+
+    # Clean old dist/
+    $dist = Join-Path $JUNO_POOL "dist"
+    if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
+
+    Write-Host "  Building..." -ForegroundColor DarkGray
+    python -m build 2>&1 | Where-Object { $_ -match "Successfully|error|ERROR" } | Write-Host
+
+    Write-Host "  Uploading to PyPI..." -ForegroundColor DarkGray
+    twine upload dist\*
+
+    # Commit version bump
+    $hasChanges = (git status --porcelain) -ne $null
+    if ($hasChanges) {
+        git add pyproject.toml
+        git commit -m "chore: bump junai-mcp to v$Version" | Out-Null
+        git push | Out-Null
+        Write-Host "  [OK]  Committed and pushed version bump" -ForegroundColor Green
+    }
+
+    Pop-Location
+    Write-Host ""
+    Write-Host "  Published junai-mcp v$Version to PyPI." -ForegroundColor Cyan
     Write-Host ""
 }
 
