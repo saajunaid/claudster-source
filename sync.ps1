@@ -202,11 +202,13 @@ function junai-revert {
     #   junai-revert -Sha abc123                  # revert one specific commit
     #   junai-revert -Sha abc123,def456,ghi789    # revert multiple commits
     #   junai-revert -Last 2 -NoCascade           # revert agent-sandbox only
+    #   junai-revert -Last 3 -Force               # skip confirmation (chat / CI use)
     param(
         [string[]]$Sha       = @(),
         [int]$Last           = 0,
         [string]$Message     = "",
-        [switch]$NoCascade
+        [switch]$NoCascade,
+        [switch]$Force
     )
 
     $agentSandbox = "E:\Projects\agent-sandbox"
@@ -264,10 +266,12 @@ function junai-revert {
     }
     Write-Host ""
 
-    $confirm = Read-Host "  Proceed? (y/N)"
-    if ($confirm -notmatch '^[Yy]$') {
-        Write-Host "  Cancelled." -ForegroundColor DarkGray
-        Pop-Location; return
+    if (-not $Force) {
+        $confirm = Read-Host "  Proceed? (y/N)"
+        if ($confirm -notmatch '^[Yy]$') {
+            Write-Host "  Cancelled." -ForegroundColor DarkGray
+            Pop-Location; return
+        }
     }
 
     # -- Revert each commit (newest first) -------------------------------------
