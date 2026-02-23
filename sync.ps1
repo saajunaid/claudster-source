@@ -11,7 +11,7 @@
 # Usage from any project root:
 #   junai-pull                    pull latest pool from junai --> current project
 #   junai-push                    push pool from current project --> junai + commit + push
-#   junai-revert -Sha SHA                revert a commit in agent-sandbox + cascade to junai
+#   junai-revert [-Last N] [-Sha SHA[,SHA...]]  revert commits + cascade to all repos
 #   junai-export [OutputPath]     export pool to a local folder or zip (no GitHub needed)
 #   junai-import SourcePath        import pool from a local folder or zip into current project
 
@@ -193,15 +193,18 @@ function junai-publish-mcp {
 }
 
 function junai-revert {
-    # Reverts a commit in agent-sandbox and cascades the revert to junai.
-    # Safe -- creates a new revert commit, never rewrites history.
+    # Reverts one or more commits in agent-sandbox and cascades to all downstream
+    # repos (junai, junai-vscode). Safe -- new revert commits, no history rewrite.
     #
     # Usage:
-    #   junai-revert -Sha SHA                        # revert + cascade to junai
-    #   junai-revert -Sha SHA -NoCascade             # revert agent-sandbox only
-    #   junai-revert -Sha SHA -Message "msg"         # custom commit message
+    #   junai-revert                              # revert HEAD (last commit)
+    #   junai-revert -Last 3                      # revert last 3 commits
+    #   junai-revert -Sha abc123                  # revert one specific commit
+    #   junai-revert -Sha abc123,def456,ghi789    # revert multiple commits
+    #   junai-revert -Last 2 -NoCascade           # revert agent-sandbox only
     param(
-        [Parameter(Mandatory)][string]$Sha,
+        [string[]]$Sha       = @(),
+        [int]$Last           = 0,
         [string]$Message     = "",
         [switch]$NoCascade
     )
@@ -210,21 +213,54 @@ function junai-revert {
 
     Push-Location $agentSandbox
 
-    # Show what is being reverted
-    $target = git log --oneline -1 $Sha 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [ERROR]  Commit not found: $Sha" -ForegroundColor Red
+    # -- Resolve which SHAs to revert ------------------------------------------
+    $resolved = @()
+
+    if ($Sha.Count -gt 0) {
+        # Accept comma-separated values passed as a single string element
+        $expanded = $Sha | ForEach-Object { $_ -split ',' } |
+                           ForEach-Object { $_.Trim() } |
+                           Where-Object   { $_ -ne '' }
+        foreach ($s in $expanded) {
+            $check = git log --oneline -1 $s 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "  [ERROR]  Commit not found: $s" -ForegroundColor Red
+                Pop-Location; return
+            }
+            $resolved += $s
+        }
+    } elseif ($Last -gt 0) {
+        $resolved = @(git log --format="%H" -n $Last)
+    } else {
+        # Default: revert HEAD
+        $resolved = @(git log --format="%H" -n 1)
+    }
+
+    if ($resolved.Count -eq 0) {
+        Write-Host "  [ERROR]  No commits resolved to revert." -ForegroundColor Red
         Pop-Location; return
     }
 
+    # Sort newest-first by walking git log order (avoids conflicts on revert)
+    $allHashes  = @(git log --format="%H")
+    $resolved   = $allHashes | Where-Object { $resolved -contains $_ }
+
+    # -- Show plan -------------------------------------------------------------
     Write-Host ""
     Write-Host "  JUNAI REVERT" -ForegroundColor Yellow
     Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
-    Write-Host "  Reverting : $target" -ForegroundColor Yellow
+    Write-Host "  Commits to revert (newest first):" -ForegroundColor Yellow
+    $n = 1
+    foreach ($s in $resolved) {
+        $line = git log --oneline -1 $s
+        Write-Host "    [$n] $line" -ForegroundColor Yellow
+        $n++
+    }
+    Write-Host ""
     if ($NoCascade) {
-        Write-Host "  Cascade   : agent-sandbox only (--NoCascade)" -ForegroundColor DarkGray
+        Write-Host "  Cascade   : agent-sandbox only (-NoCascade)" -ForegroundColor DarkGray
     } else {
-        Write-Host "  Cascade   : agent-sandbox --> junai" -ForegroundColor DarkGray
+        Write-Host "  Cascade   : agent-sandbox --> junai --> junai-vscode (at next publish)" -ForegroundColor DarkGray
     }
     Write-Host ""
 
@@ -234,30 +270,59 @@ function junai-revert {
         Pop-Location; return
     }
 
-    # Revert in agent-sandbox
-    git revert --no-edit $Sha | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [ERROR]  git revert failed -- resolve conflicts manually." -ForegroundColor Red
-        Pop-Location; return
+    # -- Revert each commit (newest first) -------------------------------------
+    foreach ($s in $resolved) {
+        git revert --no-edit $s | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  [ERROR]  git revert failed on $s -- resolve conflicts manually." -ForegroundColor Red
+            Pop-Location; return
+        }
+        Write-Host "  [OK]  reverted $s" -ForegroundColor Green
     }
 
-    # Apply custom message if provided
+    # Apply custom message to the final revert commit if provided
     if (-not [string]::IsNullOrWhiteSpace($Message)) {
         git commit --amend -m $Message | Out-Null
     }
 
     git push | Out-Null
-    Write-Host "  [OK]  agent-sandbox reverted and pushed" -ForegroundColor Green
+    Write-Host "  [OK]  agent-sandbox pushed" -ForegroundColor Green
 
     Pop-Location
 
-    # Cascade to junai unless suppressed
+    # -- Cascade to downstream repos -------------------------------------------
     if (-not $NoCascade) {
-        $revertMsg = "revert: undo $Sha"
+        $revertMsg = "revert: undo $($resolved.Count) commit(s) from agent-sandbox"
         if (-not [string]::IsNullOrWhiteSpace($Message)) { $revertMsg = $Message }
+
+        # 1. junai -- pool folders + server.py SHA check (handled inside junai-push)
         junai-push -Message $revertMsg
+
+        # 2. junai root sync.ps1 -- not inside pool folders, synced separately
+        $srcSync  = Join-Path $agentSandbox "sync.ps1"
+        $dstSync  = Join-Path $JUNO_POOL    "sync.ps1"
+        if (Test-Path $srcSync) {
+            $srcHash = (Get-FileHash $srcSync -Algorithm SHA256).Hash
+            $dstHash = (Get-FileHash $dstSync -Algorithm SHA256).Hash
+            if ($srcHash -ne $dstHash) {
+                Copy-Item $srcSync $dstSync -Force
+                Push-Location $JUNO_POOL
+                git add sync.ps1
+                $dirty = (git status --porcelain) -ne $null
+                if ($dirty) {
+                    git commit -m "$revertMsg (sync.ps1)" | Out-Null
+                    git push | Out-Null
+                    Write-Host "  [OK]  junai sync.ps1 reverted" -ForegroundColor Green
+                }
+                Pop-Location
+            }
+        }
+
+        # 3. junai-vscode -- pool/ is gitignored, rebuilt from agent-sandbox at publish
+        Write-Host "  [--]  junai-vscode pool/ is gitignored -- auto-updates at next publish" -ForegroundColor DarkGray
     }
 
+    Write-Host ""
     Write-Host "  Done. Revert complete." -ForegroundColor Yellow
     Write-Host ""
 }
