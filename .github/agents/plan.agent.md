@@ -498,13 +498,14 @@ When context window is limited, read in this order:
 When your plan is complete:
 1. Commit with the message from the orchestrator handoff prompt, or fallback: `feat(<feature>): plan — <description>`
 2. Update `.github/pipeline-state.json` — set `plan` stage `status: complete`, `completed_at: <ISO-date>`, `artefact: <path>`
+   > **Scope restriction (GAP-I2-c):** Only write your own stage's `status`, `completed_at`, and `artefact` fields. Never write `current_stage`, `_notes._routing_decision`, or `supervision_gates` — those belong exclusively to Orchestrator and pipeline-runner.
 3. Report completion in this format ONLY:
 
    **Plan complete.**
    - What was produced: <one line>
    - Commit: `<sha>` — `<message>`
    - Artefact: `<path>`
-   - Pipeline state updated: `current_stage: implement`
+   - Pipeline state updated: plan stage marked complete
 
 4. **HARD STOP.** Do NOT offer to proceed to implementation. Do NOT ask if you should continue.
    Present only the **Return to Orchestrator** handoff button.
