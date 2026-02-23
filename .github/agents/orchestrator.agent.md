@@ -1,7 +1,7 @@
 ---
 name: Orchestrator
 description: Pipeline brain - reads pipeline state, validates artefact contracts, and routes between agents. Does not write code or create designs. Manages the supervised-autonomous workflow.
-tools: ['codebase', 'search', 'editFiles', 'fetch', 'usages', 'problems', 'junai-mcp/pipeline_init', 'junai-mcp/pipeline_reset', 'junai-mcp/get_pipeline_status', 'junai-mcp/notify_orchestrator', 'junai-mcp/set_pipeline_mode', 'junai-mcp/satisfy_gate', 'junai-mcp/validate_deferred_paths', 'junai-mcp/run_command']
+tools: [read/problems, read/readFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, junai-pipeline/get_pipeline_status, junai-pipeline/notify_orchestrator, junai-pipeline/pipeline_init, junai-pipeline/pipeline_reset, junai-pipeline/satisfy_gate, junai-pipeline/set_pipeline_mode, junai-pipeline/validate_deferred_paths]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Generate PRD
@@ -160,6 +160,16 @@ Read `pipeline_mode` from `pipeline-state.json` root (default: `supervised`).
 | `autopilot` ⚠️ *beta* | Invoke agents automatically. Only `intent_approved` requires user approval. All other gates auto-satisfied (call `satisfy_gate` immediately after the relevant stage). On tester budget exhaustion, auto-routes to Debug (T-28). On all other halts, write `PIPELINE_HALT.md` + fire desktop notification. See §4 for smart gate rules. |
 
 The mode is evaluated at every transition and can be changed mid-pipeline via `set_pipeline_mode` MCP tool or by saying *"Switch to [mode] mode"* in chat.
+
+> **Mid-pipeline mode change rule (GAP-M1):** If the user switches mode while a routing decision is already pending — i.e., `_routing_decision` exists in `pipeline-state.json` and is not blocked — **immediately re-apply the routing logic under the new mode in the same response.** Do not wait for the next user message. Procedure:
+> 1. Call `set_pipeline_mode` to persist the new mode.
+> 2. Acknowledge: *"Mode changed to `<new_mode>`."*
+> 3. Re-read `_routing_decision` (it has not changed — only the execution behaviour changes).
+> 4. Apply the new mode's routing behaviour:
+>    - `supervised` → present the pending handoff button and wait for user click.
+>    - `assisted` or `autopilot` → invoke the target agent immediately with the stored routing prompt.
+>
+> **Never** acknowledge the mode change and then stop, waiting for the user to repeat themselves. The pending routing decision must be acted on in the same turn.
 
 ### 3.2 Agent Registry
 
