@@ -1,7 +1,7 @@
 ---
 name: Orchestrator
 description: Pipeline brain - reads pipeline state, validates artefact contracts, and routes between agents. Does not write code or create designs. Manages the supervised-autonomous workflow.
-tools: [read/problems, read/readFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, junai-pipeline/get_pipeline_status, junai-pipeline/notify_orchestrator, junai-pipeline/pipeline_init, junai-pipeline/pipeline_reset, junai-pipeline/satisfy_gate, junai-pipeline/set_pipeline_mode, junai-pipeline/validate_deferred_paths]
+tools: [read/problems, read/readFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, junai/get_pipeline_status, junai/notify_orchestrator, junai/pipeline_init, junai/pipeline_reset, junai/satisfy_gate, junai/set_pipeline_mode, junai/validate_deferred_paths]
 model: Claude Opus 4.6
 handoffs:
   - label: Generate PRD
@@ -326,10 +326,12 @@ satisfy_gate(gate="adr_approved")      # if pre-approved
 satisfy_gate(gate="plan_approved")     # if pre-approved
 
 # 2. Advance each stage in sequence using notify_orchestrator
-notify_orchestrator(stage_completed="intent",    status="approved")   → current_stage becomes prd
-notify_orchestrator(stage_completed="prd",       status="approved")   → current_stage becomes architect
-notify_orchestrator(stage_completed="architect", status="approved")   → current_stage becomes plan
-notify_orchestrator(stage_completed="plan",      status="approved")   → current_stage becomes implement
+#    result_status MUST match the transition "event" in agents.registry.json
+#    Standard stage advancement = "complete" (NOT "approved")
+notify_orchestrator(stage_completed="intent",    result_status="complete")   → current_stage becomes prd
+notify_orchestrator(stage_completed="prd",       result_status="complete")   → current_stage becomes architect
+notify_orchestrator(stage_completed="architect", result_status="complete")   → current_stage becomes plan
+notify_orchestrator(stage_completed="plan",      result_status="complete")   → current_stage becomes implement
 ```
 
 > **Why this matters:** "Entry stage: `implement`" means "the pipeline should be at `implement` when work starts." It does NOT mean "write `implement` directly into `current_stage`." The runner advances the field via `notify_orchestrator`. Skipping this and writing the field directly bypasses the transition guard and produces a corrupted state.
