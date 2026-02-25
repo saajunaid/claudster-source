@@ -984,6 +984,8 @@ When your work is complete:
 1. **Pre-commit checklist:**
    - If the plan introduces new environment variables: write each to `.env` with its default value and a comment before committing
    - If this is a multi-phase stage: confirm `current_phase == total_phases` before marking the stage `complete` — do NOT mark complete if more phases remain
+   - **`total_phases` must equal the number of phases you will complete in THIS pipeline run** — not the total phases in the plan. If the plan has Phase 1 and Phase 2 but only Phase 1 is in scope for this run, set `total_phases: 1`. The `all_phases_done` guard checks `current_phase >= total_phases` — if these don't match, the pipeline will block. When using multi-phase loop (`result_status="phase_complete"`), increment `current_phase` after each phase commit.
+   - **Event values for multi-phase:** use `result_status="phase_complete"` after each non-final phase (triggers `implement→implement` loop), and `result_status="complete"` only after the final phase (triggers `implement→tester`). Never send `result_status="complete"` when `current_phase < total_phases`.
 
 2. **Commit** — include `pipeline-state.json` in every phase commit:
    ```

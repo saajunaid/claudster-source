@@ -582,6 +582,14 @@ Recovery path: see below
 | Gate unsatisfied | "Gate `<gate_name>` must be satisfied before advancing." | Review the gate content → say *"Approve <gate_name>"* → orchestrator calls `satisfy_gate` MCP tool |
 | Tester retry budget exhausted (T-15) | "Tester has failed `<retry_count>` times (max: `<max_retries>`). Pipeline blocked." | User reviews failures → say *"Route to debug agent"* → orchestrator manually advances to debug stage |
 | Blocking escalation exists | "A blocking escalation exists in `agent-docs/escalations/`. Pipeline cannot advance." | User resolves escalation → updates severity to `resolved` → say *"Escalation resolved, unblock pipeline"* → orchestrator clears `blocked_by` and re-runs runner |
+| Guard failed on stage completion (e.g. `all_phases_done` — phase count mismatch) | "Pipeline blocked at `<stage>` — guard failed: `<reason>`. `current_stage` is now LOCKED as BLOCKED, blocking all further tool calls." | See **T-27 recovery sequence** below |
+
+> **T-27 recovery sequence** (use when `blocked_by` is set AND `current_stage` is "BLOCKED" due to a phase/guard mismatch, not a true fatal error):
+> 1. Fix the root cause in `pipeline-state.json` via `editFiles` (e.g. correct `total_phases` to match `current_phase`). This is the ONLY permitted `editFiles` touch during recovery.
+> 2. Clear `blocked_by: null` via `editFiles` (permitted — see §8 ownership table).
+> 3. Call `notify_orchestrator(stage_completed="<original_stage>", result_status="recovered")` — this triggers T-27, which resets `current_stage` back to `<original_stage>`.
+> 4. Immediately call `notify_orchestrator(stage_completed="<original_stage>", result_status="complete")` — the guard now passes and the runner advances normally.
+> 5. Do NOT write `current_stage`, `_routing_decision`, or any other runner-owned field. The T-27 path above is the approved escape hatch.
 
 **After user resolves the issue:**
 1. Re-read `pipeline-state.json`
