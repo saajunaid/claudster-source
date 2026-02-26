@@ -84,7 +84,38 @@ When receiving a handoff:
 
 ---
 
-## 🔄 The Implementation Methodology
+## � Task Sizing & Verification Depth
+
+Before writing code, classify the work to scale your verification effort:
+
+| Size | Criteria | Verification |
+|------|----------|--------------|
+| **S** | ≤3 files, isolated change | Run affected tests |
+| **M** | 4–10 files, service/data layers | Full test suite before AND after |
+| **L** | 10+ files, cross-cutting patterns | Full suite + regression sweep + edge cases |
+
+State the size in your first message: `**Task size: M** — 6 files, touches query layer and service.`
+
+For **L** tasks or hotfixes: capture a **Baseline Snapshot** (test results, lint status) before any code changes. Record it so you can compare before vs after. See `@anchor` for the full evidence-first methodology if strict verification is needed.
+
+---
+
+## ⚠️ Pushback Discipline
+
+Before implementing, scan for red flags:
+
+| Red Flag | Action |
+|----------|--------|
+| Request contradicts existing architecture | ⚠️ Flag it, cite the doc, ask for confirmation |
+| Request duplicates existing functionality | ⚠️ Point to existing code, suggest reuse |
+| Request would break existing API contracts | 🛑 STOP — write escalation to `agent-docs/escalations/` |
+| Request introduces hardcoded secrets | 🛑 STOP — refuse, suggest `.env` pattern |
+
+> Pushback is professional judgment, not refusal. ⚠️ = warn and proceed. 🛑 = wait for human confirmation.
+
+---
+
+## �🔄 The Implementation Methodology
 
 **Every implementation follows this 5-phase methodology:**
 
@@ -537,6 +568,7 @@ except Exception as e:
 
 | Task | Skill to Load |
 |------|---------------|
+| Adversarial self-review (L-sized changes) | `.github/skills/anchor-review/SKILL.md` |
 | Streamlit pages, components, charts | `.github/skills/frontend/streamlit-dev/SKILL.md` |
 | Writing SQL queries | `.github/skills/coding/sql/SKILL.md` |
 | Major refactoring | `.github/skills/coding/refactoring/SKILL.md` |
@@ -964,6 +996,12 @@ If you find a problem with an upstream artifact (e.g., plan step is ambiguous, a
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding skill first (`.github/prompts/onboarding.prompt.md`).
 
+### 6.1 Routing Summary (Pipeline Awareness)
+On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
+> **Routed here because:** <`_routing_decision.reason` or inferred from transition>
+
+This gives the user immediate transparency on why this agent was invoked.
+
 ### 7. Context Priority Order
 When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)
@@ -972,6 +1010,9 @@ When context window is limited, read in this order:
 4. **Previous agent's artifact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
+
+### 7.1 Plan > Handoff Reconciliation
+If the Plan contains a `## Scope Changes` section, those changes are **authoritative** over the original PRD/ADR and over `_notes.handoff_payload`. When a conflict exists between the Plan and the handoff payload (e.g., the Plan defers a feature that the handoff says to build), follow the Plan. Flag the discrepancy in your completion report so the Orchestrator can update the handoff.
 
 ---
 

@@ -207,6 +207,12 @@ If you find a problem with an upstream artifact: write an escalation to `agent-d
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding skill first (`.github/prompts/onboarding.prompt.md`).
 
+### 6.1 Routing Summary (Pipeline Awareness)
+On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
+> **Routed here because:** <`_routing_decision.reason` or inferred from transition>
+
+This gives the user immediate transparency on why this agent was invoked.
+
 ### 7. Context Priority Order
 When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)

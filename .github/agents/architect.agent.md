@@ -505,6 +505,27 @@ Keep the `.drawio` source alongside the exported `.png` in `docs/architecture/` 
 
 ---
 
+## Scope Changes Declaration (MANDATORY)
+
+If the architecture deviates from or extends the approved PRD — e.g., adding components not in the PRD, splitting a monolith the PRD described as single-service, or deferring PRD requirements — you MUST include a `## Scope Changes` section in the ADR, before the component details.
+
+**Format:**
+```markdown
+## Scope Changes
+
+| Change | PRD Reference | What Changed | Rationale |
+|--------|---------------|--------------|-----------|
+| Added message queue | PRD §3.1 (sync API) | Architecture uses async via RabbitMQ | Decoupling for scale |
+| Deferred NFR-301 | PRD §4.3 | Not addressed in v1 architecture | Requires vendor decision |
+```
+
+**Rules:**
+- If the architecture is 100% aligned with PRD → write `## Scope Changes\nNone — architecture aligns fully with approved PRD.`
+- Each change must cite the specific PRD section it diverges from
+- The Plan agent will use this section to reconcile its phase breakdown against both PRD and ADR
+
+---
+
 ## Universal Agent Protocols
 
 > **These protocols apply to EVERY task you perform. They are non-negotiable.**
@@ -530,6 +551,12 @@ If you find a problem with an upstream artifact (e.g., PRD has conflicting requi
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding skill first (`.github/prompts/onboarding.prompt.md`).
+
+### 6.1 Routing Summary (Pipeline Awareness)
+On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
+> **Routed here because:** <`_routing_decision.reason` or inferred from transition>
+
+This gives the user immediate transparency on why this agent was invoked.
 
 ### 7. Context Priority Order
 When context window is limited, read in this order:

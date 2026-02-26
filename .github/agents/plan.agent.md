@@ -337,6 +337,29 @@ Before finalizing any plan, validate against these known failure modes:
 
 ---
 
+#### Scope Changes Declaration (MANDATORY)
+
+If the plan deviates from or extends the approved PRD or Architecture (ADR), you MUST include a `## Scope Changes` section at the top of the plan, before Phase 1. This section documents what changed and why, so downstream agents (Implement, Anchor, Orchestrator) can reconcile against the original artefacts.
+
+**Format:**
+```markdown
+## Scope Changes
+
+| Change | PRD/ADR Reference | What Changed | Rationale |
+|--------|--------------------|--------------|-----------|
+| Added caching layer | ADR §4.2 (no cache) | Plan adds Redis caching in Phase 2 | Performance: 500ms → 50ms for hot paths |
+| Dropped NFR-208 | PRD §4.2 | Deferred to v2 | Blocked by vendor API limitation |
+| Split Phase 1 | PRD §3.1 (single phase) | Two phases for incremental delivery | Risk reduction on large scope |
+```
+
+**Rules:**
+- If the plan is 100% aligned with PRD + ADR → write `## Scope Changes\nNone — plan aligns fully with approved PRD and ADR.`
+- Each change must cite the specific PRD/ADR section it diverges from
+- Downstream agents treat this section as authoritative when Plan and PRD/ADR conflict
+- Orchestrator will refresh `_notes.handoff_payload` after Plan completes if scope changes are present
+
+---
+
 #### Plan Amendment Consumption
 
 When invoked via the **"Amend Plan"** handoff from the Debug agent, the Plan agent should:
@@ -484,6 +507,12 @@ If you find a problem with an upstream artifact (e.g., architecture has gaps, PR
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding skill first (`.github/prompts/onboarding.prompt.md`).
+
+### 6.1 Routing Summary (Pipeline Awareness)
+On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
+> **Routed here because:** <`_routing_decision.reason` or inferred from transition>
+
+This gives the user immediate transparency on why this agent was invoked.
 
 ### 7. Context Priority Order
 When context window is limited, read in this order:

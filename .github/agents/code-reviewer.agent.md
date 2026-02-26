@@ -52,6 +52,7 @@ When receiving a handoff:
 | Explaining complex code | `.github/skills/coding/code-explainer/SKILL.md` |
 | Understanding codebase | `.github/skills/docs/documentation-analyzer/SKILL.md` |
 | Security review patterns | `.github/skills/coding/security-review/SKILL.md` |
+| Adversarial review (3-lens) | `.github/skills/anchor-review/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 
@@ -137,6 +138,20 @@ When receiving a handoff:
 
 ---
 
+## Evidence-Based Review
+
+Don't just read code — **verify claims.** When reviewing changes:
+
+1. **Run the tests yourself** using `run_command` — confirm the stated pass count is real
+2. **Check for regressions** — run the full suite, not just the changed tests
+3. **Verify file paths** in deferred items by reading/grepping the actual file before recording
+
+### Adversarial Review (for 🔴 issues or L-sized changes)
+
+When you find 🔴 Critical Issues, or the changeset touches 10+ files, load `.github/skills/anchor-review/SKILL.md` and apply the full 3-lens review with self-challenge protocol. If the change came from `@anchor`, verify their Evidence Bundle claims by re-running the test commands.
+
+---
+
 ## Chain Audit (Feature Completion Review)
 
 When reviewing code for a feature that used the automated pipeline (Intent → PRD → Architecture → Plan → Implementation), perform a **chain audit** before approving:
@@ -176,6 +191,12 @@ If you find a problem with an upstream artifact (e.g., plan was ambiguous causin
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding skill first (`.github/prompts/onboarding.prompt.md`).
+
+### 6.1 Routing Summary (Pipeline Awareness)
+On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
+> **Routed here because:** <`_routing_decision.reason` or inferred from transition>
+
+This gives the user immediate transparency on why this agent was invoked.
 
 ### 7. Context Priority Order
 When context window is limited, read in this order:
