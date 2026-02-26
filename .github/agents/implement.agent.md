@@ -1051,6 +1051,23 @@ When your work is complete:
 
 ---
 
+### 9. Deferred Items Protocol
+
+Any issues out-of-scope for this task but worth tracking:
+
+```yaml
+deferred:
+  - id: DEF-001
+    title: <short title>
+    file: <relative file path>
+    detail: <one or two sentences>
+    severity: security-nit | code-quality | performance | ux
+```
+
+> After completing your work, call `validate_deferred_paths` to verify all deferred items are logged in `pipeline-state.json` before handing off to the Orchestrator.
+
+---
+
 ## Output Contract
 
 | Field | Value |

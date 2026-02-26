@@ -240,6 +240,28 @@ When context window is limited, read in this order:
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
 
+---
+
+### 8. Completion Reporting Protocol (MANDATORY — GAP-001/002/004/008/009/010)
+
+When your work is complete:
+
+**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: call `notify_orchestrator` MCP tool as final step instead of presenting the Return to Orchestrator button.
+
+1. **Update `pipeline-state.json`** — set your stage `status: complete`, `completed_at: <ISO-date>`, `artefact: <paths>`.
+   > **Scope restriction:** Only write your own stage's `status`, `completed_at`, and `artefact` fields. Never write `current_stage`, `_notes._routing_decision`, or `supervision_gates`.
+
+2. **Output your completion report, then HARD STOP:**
+   ```
+   **[Task] complete.**
+   - Delivered: <one-line summary>
+   - pipeline-state.json: updated
+   ```
+
+3. **HARD STOP** — Do NOT offer to proceed to the next task. The Orchestrator owns all routing decisions. Present only the `Return to Orchestrator` handoff button.
+
+---
+
 ## Color Reference
 
 > **Read `project-config.md`** for the brand color palette. Use profile colors for accent and header elements.
@@ -252,6 +274,21 @@ When context window is limited, read in this order:
 | Borders | Gray | #D1D5DB |
 | Background | Light Gray | #F3F4F6 |
 | Arrows | Medium Gray | #9CA3AF |
+
+---
+
+### 9. Deferred Items Protocol
+
+Any issues out-of-scope for this task but worth tracking:
+
+```yaml
+deferred:
+  - id: DEF-001
+    title: <short title>
+    file: <relative file path>
+    detail: <one or two sentences>
+    severity: security-nit | code-quality | performance | ux
+```
 
 ---
 

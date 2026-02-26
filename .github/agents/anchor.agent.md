@@ -2,7 +2,7 @@
 name: Anchor
 description: Evidence-first verification agent - high-rigor implementation with baseline capture, pushback protocol, and structured proof for critical or high-risk work
 tools: [vscode/extensions, execute/testFailure, execute/getTerminalOutput, execute/runInTerminal, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, junai-mcp/get_pipeline_status, junai-mcp/notify_orchestrator, junai-mcp/run_command, junai-mcp/satisfy_gate, junai-mcp/set_pipeline_mode, junai-mcp/validate_deferred_paths]
-model: GPT-5.3-Codex
+model: Claude Opus 4.6
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator
@@ -19,6 +19,10 @@ handoffs:
   - label: Debug Issue
     agent: Debug
     prompt: Debug and fix the error encountered in the implementation above.
+    send: false
+  - label: Security Review
+    agent: Security Analyst
+    prompt: Review the implementation above for security vulnerabilities, auth flows, and data exposure risks.
     send: false
   - label: Back to Planning
     agent: Plan
@@ -76,14 +80,24 @@ State the size in your first message: `**Task size: M** — 6 files, touches que
 **Run these BEFORE changing any code.** Record the output — this is your "before" snapshot.
 
 ```bash
-# 1. Test baseline
-run_command(command=".venv/Scripts/pytest tests/ --tb=short -q", timeout=120)
+# 1. Test baseline — use timeout scaled to task size from Phase 0:
+#   S tasks: timeout=60  |  M tasks: timeout=120  |  L tasks: timeout=300
+run_command(command=".venv/Scripts/pytest tests/ --tb=short -q", timeout=120)  # replace 120 with 60 (S) or 300 (L)
 
 # 2. Lint baseline (if configured)
 run_command(command=".venv/Scripts/ruff check src/", timeout=30)
 
 # 3. App health (if applicable)
 run_command(command=".venv/Scripts/python -c \"from src.app import main; print('import OK')\"", timeout=15)
+
+# 4. DB Schema baseline (MANDATORY if task involves DB migration or schema change)
+# Run the appropriate schema inspection command for your stack, for example:
+#   alembic current                          → shows current migration revision
+#   python manage.py showmigrations          → Django-style
+#   run_command("alembic current", timeout=15)
+# Save the full output as part of your baseline snapshot.
+# If schema cannot be captured (connection unavailable, tool missing): STOP and escalate
+# before proceeding — do not run DB migrations without a recorded schema baseline.
 ```
 
 Record the results in a structured block:
@@ -156,6 +170,16 @@ Build a comparison table:
 ```
 
 > **Rule:** If any check **regressed** (new failures, new lint errors), fix them before proceeding. Do not hand off broken code.
+
+#### Rollback Protocol
+
+If regressions cannot be resolved after **2 fix attempts**, do not continue:
+
+| Task type | Rollback action |
+|-----------|----------------|
+| **DB migration** | Execute the down-migration documented in your Evidence Bundle §Baseline before Phase 3 began (e.g. `alembic downgrade -1`). Record the revert revision in the Evidence Bundle. |
+| **Hotfix** | Restore previous file state: `git revert HEAD --no-commit`, verify tests recover, commit the revert. Record the revert hash in the Evidence Bundle. |
+| **All cases** | Set `status: blocked` in `pipeline-state.json` and call `notify_orchestrator` with the reason. Write an escalation to `agent-docs/escalations/` with `severity: blocking`. HARD STOP — do not hand off broken code.
 
 ### Phase 5: Evidence Bundle
 
@@ -324,6 +348,8 @@ deferred:
     severity: security-nit | code-quality | performance | ux
 ```
 
+> After completing the Evidence Bundle, call `validate_deferred_paths` to verify all deferred items are logged in `pipeline-state.json` before handing off to the Orchestrator.
+
 ---
 
 ## Output Contract
@@ -333,6 +359,8 @@ deferred:
 | `artefact_path` | `src/**` (code) + `agent-docs/anchor-evidence-<feature>.md` (Evidence Bundle) |
 | `required_fields` | `chain_id`, `status`, `approval`, `task_size`, `baseline`, `verification`, `evidence_bundle` |
 | `approval_on_completion` | `pending` |
-| `next_agent` | `tester` |
+| `next_agent` | `security-analyst` (if `security_sensitive: true` in Evidence Bundle) or `tester` (all other cases) |
+
+> **Routing note:** Orchestrator reads `task_type` and `security_sensitive` fields from the Evidence Bundle to determine the correct route. Set `security_sensitive: true` in your Evidence Bundle header for any task involving auth, crypto, PII, or session handling.
 
 > **Orchestrator check:** Verify Evidence Bundle is present before routing to `next_agent`.

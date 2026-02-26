@@ -224,6 +224,21 @@ When your work is complete:
 
 ---
 
+### 9. Deferred Items Protocol
+
+Any issues out-of-scope for this task but worth tracking:
+
+```yaml
+deferred:
+  - id: DEF-001
+    title: <short title>
+    file: <relative file path>
+    detail: <one or two sentences>
+    severity: security-nit | code-quality | performance | ux
+```
+
+---
+
 ## Output Contract
 
 | Field | Value |
