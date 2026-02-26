@@ -12,7 +12,20 @@ This server provides deterministic-routing support tools for the orchestrator.
   - Validates deferred item file paths
   - Attempts filename-based path correction
 - `get_pipeline_status()`
-  - Returns current state summary and latest `_routing_decision`
+  - Returns current state summary, latest `_routing_decision`, and formatted `progress_line`
+- `skip_stage(stage_to_skip, reason)`
+  - Skips the current stage with auto-gate satisfaction
+  - Blocked on unskippable stages: `implement`, `anchor`, `tester`, `closed`, `BLOCKED`
+- `pipeline_init(project_name, feature_slug, pipeline_type?, force?)`
+  - Initialises a new pipeline with active-pipeline guard
+- `pipeline_reset(confirm)`
+  - Force-clears and restarts the pipeline
+- `set_pipeline_mode(mode)`
+  - Switches between `supervised`, `assisted`, `autopilot`
+- `satisfy_gate(gate_name)`
+  - Manually satisfies a named supervision gate
+- `run_command(command)`
+  - Executes a shell command from chat context
 
 ## Configuration
 
