@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs>
+
+    <!-- Arrowhead: orient=auto follows arc tangent direction -->
+    <marker id="arr" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="white" fill-opacity="0.9"/>
+    </marker>
+
+    <!-- Node glow -->
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Hub ambient glow -->
+    <filter id="hub-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="16" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+  </defs>
+
+  <!-- ── Background ─────────────────────────────────────── -->
+  <rect width="600" height="600" rx="64" fill="#07070f"/>
+
+  <!-- ── Faint full orbit ring (static reference) ───────── -->
+  <circle cx="300" cy="300" r="210" fill="none" stroke="white"
+          stroke-width="1" stroke-opacity="0.12" stroke-dasharray="4 8"/>
+
+  <!-- ── Faint crosshair guide lines ───────────────────── -->
+  <line x1="300" y1="66"  x2="300" y2="534" stroke="white" stroke-width="0.8" stroke-opacity="0.07"/>
+  <line x1="66"  y1="300" x2="534" y2="300" stroke="white" stroke-width="0.8" stroke-opacity="0.07"/>
+
+  <!-- ── Animated orbit group (arcs + spokes + nodes all rotate together) ── -->
+  <g>
+    <animateTransform attributeName="transform" type="rotate"
+      from="0 300 300" to="360 300 300" dur="10s" repeatCount="indefinite"/>
+
+    <!-- ── Arc segments with arrowheads, one per inter-node gap ── -->
+    <!-- Arc 0: 14° → 58° (between node 0@0° and node 1@72°) -->
+    <path d="M 350.80,96.16 A 210,210 0 0,1 478.07,188.72"
+          fill="none" stroke="white" stroke-width="1.8" stroke-opacity="0.85"
+          marker-end="url(#arr)"/>
+
+    <!-- Arc 1: 86° → 130° (between node 1@72° and node 2@144°) -->
+    <path d="M 509.49,285.29 A 210,210 0 0,1 460.92,434.99"
+          fill="none" stroke="white" stroke-width="1.8" stroke-opacity="0.85"
+          marker-end="url(#arr)"/>
+
+    <!-- Arc 2: 158° → 202° (between node 2@144° and node 3@216°) -->
+    <path d="M 378.67,494.71 A 210,210 0 0,1 221.33,494.71"
+          fill="none" stroke="white" stroke-width="1.8" stroke-opacity="0.85"
+          marker-end="url(#arr)"/>
+
+    <!-- Arc 3: 230° → 274° (between node 3@216° and node 4@288°) -->
+    <path d="M 139.08,434.99 A 210,210 0 0,1 90.51,285.29"
+          fill="none" stroke="white" stroke-width="1.8" stroke-opacity="0.85"
+          marker-end="url(#arr)"/>
+
+    <!-- Arc 4: 302° → 346° (between node 4@288° and node 0@0°) -->
+    <path d="M 121.93,188.72 A 210,210 0 0,1 249.20,96.16"
+          fill="none" stroke="white" stroke-width="1.8" stroke-opacity="0.85"
+          marker-end="url(#arr)"/>
+
+    <!-- ── Spoke lines: hub edge (r=115) to orbit (r=210) per node ── -->
+    <g stroke="white" stroke-opacity="0.14" stroke-width="0.9">
+      <!-- Node 0 (0°) -->
+      <line x1="300.00" y1="185.00" x2="300.00" y2="90.00"/>
+      <!-- Node 1 (72°) -->
+      <line x1="409.38" y1="264.47" x2="499.73" y2="235.11"/>
+      <!-- Node 2 (144°) -->
+      <line x1="367.60" y1="393.04" x2="423.44" y2="469.89"/>
+      <!-- Node 3 (216°) -->
+      <line x1="232.40" y1="393.04" x2="176.56" y2="469.89"/>
+      <!-- Node 4 (288°) -->
+      <line x1="190.62" y1="264.47" x2="100.27" y2="235.11"/>
+    </g>
+
+    <!-- ── Node glow halos ──────────────────────────────── -->
+    <g filter="url(#glow)">
+      <circle cx="300.00" cy="90.00"  r="11" fill="white" fill-opacity="0.8"/>
+      <circle cx="499.73" cy="235.11" r="11" fill="white" fill-opacity="0.8"/>
+      <circle cx="423.44" cy="469.89" r="11" fill="white" fill-opacity="0.8"/>
+      <circle cx="176.56" cy="469.89" r="11" fill="white" fill-opacity="0.8"/>
+      <circle cx="100.27" cy="235.11" r="11" fill="white" fill-opacity="0.8"/>
+    </g>
+
+    <!-- ── Node crisp cores ────────────────────────────── -->
+    <circle cx="300.00" cy="90.00"  r="6.5" fill="white"/>
+    <circle cx="499.73" cy="235.11" r="6.5" fill="white"/>
+    <circle cx="423.44" cy="469.89" r="6.5" fill="white"/>
+    <circle cx="176.56" cy="469.89" r="6.5" fill="white"/>
+    <circle cx="100.27" cy="235.11" r="6.5" fill="white"/>
+
+  </g><!-- end animated group -->
+
+  <!-- ── Hub ambient glow ────────────────────────────────── -->
+  <circle cx="300" cy="300" r="130" fill="white" fill-opacity="0.03" filter="url(#hub-glow)"/>
+
+  <!-- ── Hub ring ────────────────────────────────────────── -->
+  <circle cx="300" cy="300" r="115" fill="#07070f"
+          stroke="white" stroke-width="1.2" stroke-opacity="0.2"/>
+
+  <!-- ── junai wordmark ──────────────────────────────────── -->
+  <text x="300" y="284"
+    text-anchor="middle"
+    font-family="JetBrains Mono, Cascadia Code, Fira Code, Courier New, monospace"
+    font-size="52" font-weight="800" fill="white">junai</text>
+
+  <!-- Thin rule -->
+  <line x1="248" y1="298" x2="352" y2="298"
+        stroke="white" stroke-width="1" stroke-opacity="0.28"/>
+
+  <!-- LABS -->
+  <text x="300" y="322"
+    text-anchor="middle"
+    font-family="JetBrains Mono, Cascadia Code, Fira Code, Courier New, monospace"
+    font-size="28" font-weight="500" fill="white" fill-opacity="0.55"
+    letter-spacing="7">LABS</text>
+
+  <!-- agentic pipeline -->
+  <text x="300" y="344"
+    text-anchor="middle"
+    font-family="JetBrains Mono, Cascadia Code, Fira Code, Courier New, monospace"
+    font-size="18" font-weight="400" fill="white" fill-opacity="0.32"
+    letter-spacing="1.8">agentic pipeline</text>
+
+</svg>

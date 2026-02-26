@@ -1,0 +1,560 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1122" font-family="Inter, 'Segoe UI', Arial, sans-serif">
+  <!-- ============================================================ -->
+  <!-- AI Agent Pipeline — Wall Poster (Landscape A3/A2)            -->
+  <!-- 22 Agents · 3 Model Tiers · Full Handoff Map                 -->
+  <!-- ============================================================ -->
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M0 1L10 5L0 9z" fill="#64748B"/>
+    </marker>
+    <marker id="a-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M0 1L10 5L0 9z" fill="#1E40AF"/>
+    </marker>
+    <marker id="a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M0 1L10 5L0 9z" fill="#059669"/>
+    </marker>
+    <marker id="a-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M0 1L10 5L0 9z" fill="#7C3AED"/>
+    </marker>
+    <filter id="sh" x="-2%" y="-2%" width="106%" height="108%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.10"/>
+    </filter>
+    <!-- Gradients for tier headers -->
+    <linearGradient id="gOpus" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1E40AF"/><stop offset="100%" stop-color="#1E3A8A"/>
+    </linearGradient>
+    <linearGradient id="gCodex" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="gSonnet" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7C3AED"/><stop offset="100%" stop-color="#6D28D9"/>
+    </linearGradient>
+    <linearGradient id="gHeader" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0F172A"/><stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="1100" rx="12" fill="#F8FAFC"/>
+  <rect x="0" y="0" width="1600" height="72" rx="12" fill="url(#gHeader)"/>
+  <rect x="0" y="60" width="1600" height="12" fill="url(#gHeader)"/>
+
+  <!-- Title Bar -->
+  <text x="40" y="32" fill="white" font-size="22" font-weight="800" letter-spacing="0.5">AI AGENT PIPELINE</text>
+  <text x="40" y="56" fill="#94A3B8" font-size="13" font-weight="500">22 Agents · 3 Model Tiers · Full Handoff Map</text>
+  <text x="1560" y="32" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="600">WALL REFERENCE POSTER</text>
+  <text x="1560" y="52" fill="#64748B" font-size="10" text-anchor="end">Updated 2026-02-19</text>
+
+  <!-- =========================================================== -->
+  <!-- LEGEND BAR -->
+  <!-- =========================================================== -->
+  <rect x="40" y="84" width="1520" height="36" rx="6" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="1"/>
+  <!-- Opus -->
+  <rect x="60" y="92" width="14" height="14" rx="3" fill="#1E40AF"/>
+  <text x="80" y="103" fill="#1E40AF" font-size="11" font-weight="700">Claude Opus 4.6</text>
+  <text x="192" y="103" fill="#64748B" font-size="10">Deep Reasoning (9)</text>
+  <!-- Codex -->
+  <rect x="360" y="92" width="14" height="14" rx="3" fill="#059669"/>
+  <text x="380" y="103" fill="#059669" font-size="11" font-weight="700">GPT-5.3-Codex</text>
+  <text x="485" y="103" fill="#64748B" font-size="10">Multi-File Coding (6)</text>
+  <!-- Sonnet -->
+  <rect x="650" y="92" width="14" height="14" rx="3" fill="#7C3AED"/>
+  <text x="670" y="103" fill="#7C3AED" font-size="11" font-weight="700">Claude Sonnet 4.6</text>
+  <text x="797" y="103" fill="#64748B" font-size="10">Balanced Speed-Quality (7)</text>
+  <!-- Arrow legends -->
+  <line x1="980" y1="99" x2="1010" y2="99" stroke="#1E40AF" stroke-width="2" marker-end="url(#a-blue)"/>
+  <text x="1018" y="103" fill="#64748B" font-size="10">Main pipeline</text>
+  <line x1="1120" y1="99" x2="1150" y2="99" stroke="#64748B" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a)"/>
+  <text x="1158" y="103" fill="#64748B" font-size="10">Specialist handoff</text>
+  <line x1="1290" y1="99" x2="1320" y2="99" stroke="#059669" stroke-width="1.5" marker-end="url(#a-green)"/>
+  <text x="1328" y="103" fill="#64748B" font-size="10">Iteration loop</text>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 1: MAIN PIPELINE (horizontal, center band)          -->
+  <!-- =========================================================== -->
+  <text x="40" y="152" fill="#0F172A" font-size="14" font-weight="800" letter-spacing="0.5">MAIN PIPELINE</text>
+  <text x="202" y="152" fill="#94A3B8" font-size="11">(stay in same chat — context preserved)</text>
+
+  <!-- Pipeline boxes y=166..236 -->
+  <!-- PRD -->
+  <rect x="40" y="166" width="160" height="70" rx="8" fill="white" stroke="#1E40AF" stroke-width="2" filter="url(#sh)"/>
+  <rect x="40" y="166" width="160" height="22" rx="8" fill="#1E40AF"/>
+  <rect x="40" y="178" width="160" height="10" fill="#1E40AF"/>
+  <text x="120" y="182" text-anchor="middle" fill="white" font-size="11" font-weight="700">PRD</text>
+  <text x="120" y="206" text-anchor="middle" fill="#374151" font-size="9">Requirements discovery</text>
+  <text x="120" y="219" text-anchor="middle" fill="#374151" font-size="9">Stakeholder synthesis</text>
+  <text x="120" y="232" text-anchor="middle" fill="#94A3B8" font-size="8">Opus 4.6</text>
+
+  <!-- Arrow PRD→Architect -->
+  <line x1="200" y1="201" x2="240" y2="201" stroke="#1E40AF" stroke-width="2.5" marker-end="url(#a-blue)"/>
+
+  <!-- Architect -->
+  <rect x="248" y="166" width="160" height="70" rx="8" fill="white" stroke="#1E40AF" stroke-width="2" filter="url(#sh)"/>
+  <rect x="248" y="166" width="160" height="22" rx="8" fill="#1E40AF"/>
+  <rect x="248" y="178" width="160" height="10" fill="#1E40AF"/>
+  <text x="328" y="182" text-anchor="middle" fill="white" font-size="11" font-weight="700">ARCHITECT</text>
+  <text x="328" y="206" text-anchor="middle" fill="#374151" font-size="9">System design &amp; trade-offs</text>
+  <text x="328" y="219" text-anchor="middle" fill="#374151" font-size="9">Architecture decisions</text>
+  <text x="328" y="232" text-anchor="middle" fill="#94A3B8" font-size="8">Opus 4.6</text>
+
+  <!-- Arrow Architect→Plan -->
+  <line x1="408" y1="201" x2="448" y2="201" stroke="#1E40AF" stroke-width="2.5" marker-end="url(#a-blue)"/>
+
+  <!-- Plan -->
+  <rect x="456" y="166" width="160" height="70" rx="8" fill="white" stroke="#1E40AF" stroke-width="2" filter="url(#sh)"/>
+  <rect x="456" y="166" width="160" height="22" rx="8" fill="#1E40AF"/>
+  <rect x="456" y="178" width="160" height="10" fill="#1E40AF"/>
+  <text x="536" y="182" text-anchor="middle" fill="white" font-size="11" font-weight="700">PLAN</text>
+  <text x="536" y="206" text-anchor="middle" fill="#374151" font-size="9">Strategic planning</text>
+  <text x="536" y="219" text-anchor="middle" fill="#374151" font-size="9">Technical roadmapping</text>
+  <text x="536" y="232" text-anchor="middle" fill="#94A3B8" font-size="8">Opus 4.6</text>
+
+  <!-- Arrow Plan→Implement -->
+  <line x1="616" y1="201" x2="656" y2="201" stroke="#1E40AF" stroke-width="2.5" marker-end="url(#a-blue)"/>
+
+  <!-- Implement -->
+  <rect x="664" y="166" width="160" height="70" rx="8" fill="white" stroke="#059669" stroke-width="2" filter="url(#sh)"/>
+  <rect x="664" y="166" width="160" height="22" rx="8" fill="#059669"/>
+  <rect x="664" y="178" width="160" height="10" fill="#059669"/>
+  <text x="744" y="182" text-anchor="middle" fill="white" font-size="11" font-weight="700">IMPLEMENT</text>
+  <text x="744" y="206" text-anchor="middle" fill="#374151" font-size="9">Full code implementation</text>
+  <text x="744" y="219" text-anchor="middle" fill="#374151" font-size="9">Refactoring &amp; wiring</text>
+  <text x="744" y="232" text-anchor="middle" fill="#94A3B8" font-size="8">GPT-5.3-Codex</text>
+
+  <!-- Arrow Implement→Tester -->
+  <line x1="824" y1="201" x2="864" y2="201" stroke="#1E40AF" stroke-width="2.5" marker-end="url(#a-blue)"/>
+
+  <!-- Tester -->
+  <rect x="872" y="166" width="160" height="70" rx="8" fill="white" stroke="#059669" stroke-width="2" filter="url(#sh)"/>
+  <rect x="872" y="166" width="160" height="22" rx="8" fill="#059669"/>
+  <rect x="872" y="178" width="160" height="10" fill="#059669"/>
+  <text x="952" y="182" text-anchor="middle" fill="white" font-size="11" font-weight="700">TESTER</text>
+  <text x="952" y="206" text-anchor="middle" fill="#374151" font-size="9">pytest, test strategy</text>
+  <text x="952" y="219" text-anchor="middle" fill="#374151" font-size="9">Coverage analysis</text>
+  <text x="952" y="232" text-anchor="middle" fill="#94A3B8" font-size="8">GPT-5.3-Codex</text>
+
+  <!-- Arrow Tester→Code Reviewer -->
+  <line x1="1032" y1="201" x2="1072" y2="201" stroke="#1E40AF" stroke-width="2.5" marker-end="url(#a-blue)"/>
+
+  <!-- Code Reviewer -->
+  <rect x="1080" y="166" width="170" height="70" rx="8" fill="white" stroke="#1E40AF" stroke-width="2" filter="url(#sh)"/>
+  <rect x="1080" y="166" width="170" height="22" rx="8" fill="#1E40AF"/>
+  <rect x="1080" y="178" width="170" height="10" fill="#1E40AF"/>
+  <text x="1165" y="182" text-anchor="middle" fill="white" font-size="11" font-weight="700">CODE REVIEWER</text>
+  <text x="1165" y="206" text-anchor="middle" fill="#374151" font-size="9">Quality &amp; security review</text>
+  <text x="1165" y="219" text-anchor="middle" fill="#374151" font-size="9">Standards compliance</text>
+  <text x="1165" y="232" text-anchor="middle" fill="#94A3B8" font-size="8">Opus 4.6</text>
+
+  <!-- Arrow Code Reviewer → DONE -->
+  <line x1="1250" y1="201" x2="1290" y2="201" stroke="#1E40AF" stroke-width="2.5" marker-end="url(#a-blue)"/>
+  <rect x="1296" y="186" width="60" height="30" rx="15" fill="#059669"/>
+  <text x="1326" y="206" text-anchor="middle" fill="white" font-size="11" font-weight="700">DONE</text>
+
+  <!-- Iteration loop: PRD ↔ Architect ↔ Plan (curved arrows below) -->
+  <path d="M328,236 C328,260 120,260 120,236" fill="none" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a-green)"/>
+  <text x="224" y="270" text-anchor="middle" fill="#059669" font-size="8" font-weight="600">iterate</text>
+  <path d="M536,236 C536,258 328,258 328,236" fill="none" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a-green)"/>
+  <text x="432" y="266" text-anchor="middle" fill="#059669" font-size="8" font-weight="600">iterate</text>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 2: SPECIALIST BRANCHES (below main pipeline)        -->
+  <!-- =========================================================== -->
+  <text x="40" y="308" fill="#0F172A" font-size="14" font-weight="800" letter-spacing="0.5">SPECIALIST BRANCHES</text>
+  <text x="270" y="308" fill="#94A3B8" font-size="11">(invoked via handoff buttons from main pipeline)</text>
+
+  <!-- Row 1: Design & UX Branch (from Architect/Plan) -->
+  <!-- UX Designer -->
+  <rect x="40" y="324" width="152" height="62" rx="7" fill="white" stroke="#1E40AF" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="40" y="324" width="152" height="20" rx="7" fill="#1E40AF"/>
+  <rect x="40" y="336" width="152" height="8" fill="#1E40AF"/>
+  <text x="116" y="339" text-anchor="middle" fill="white" font-size="10" font-weight="700">UX DESIGNER</text>
+  <text x="116" y="358" text-anchor="middle" fill="#374151" font-size="8.5">UX flows, user goals</text>
+  <text x="116" y="370" text-anchor="middle" fill="#374151" font-size="8.5">Business constraints</text>
+  <text x="116" y="382" text-anchor="middle" fill="#94A3B8" font-size="7.5">Opus 4.6</text>
+
+  <!-- UI/UX Designer -->
+  <rect x="40" y="396" width="152" height="62" rx="7" fill="white" stroke="#1E40AF" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="40" y="396" width="152" height="20" rx="7" fill="#1E40AF"/>
+  <rect x="40" y="408" width="152" height="8" fill="#1E40AF"/>
+  <text x="116" y="411" text-anchor="middle" fill="white" font-size="10" font-weight="700">UI/UX DESIGNER</text>
+  <text x="116" y="430" text-anchor="middle" fill="#374151" font-size="8.5">Design systems</text>
+  <text x="116" y="442" text-anchor="middle" fill="#374151" font-size="8.5">Visual identity, specs</text>
+  <text x="116" y="454" text-anchor="middle" fill="#94A3B8" font-size="7.5">Opus 4.6</text>
+
+  <!-- Dashed lines from Architect/Plan down to UX -->
+  <path d="M328,236 L328,290 L116,290 L116,324" fill="none" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+  <text x="230" y="286" fill="#64748B" font-size="7.5" font-weight="600">Design UX</text>
+
+  <!-- Frontend Developer -->
+  <rect x="220" y="324" width="152" height="62" rx="7" fill="white" stroke="#059669" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="220" y="324" width="152" height="20" rx="7" fill="#059669"/>
+  <rect x="220" y="336" width="152" height="8" fill="#059669"/>
+  <text x="296" y="339" text-anchor="middle" fill="white" font-size="10" font-weight="700">FRONTEND DEV</text>
+  <text x="296" y="358" text-anchor="middle" fill="#374151" font-size="8.5">HTML, CSS, JS</text>
+  <text x="296" y="370" text-anchor="middle" fill="#374151" font-size="8.5">Components &amp; pages</text>
+  <text x="296" y="382" text-anchor="middle" fill="#94A3B8" font-size="7.5">GPT-5.3-Codex</text>
+
+  <!-- Arrow UX→Frontend -->
+  <line x1="192" y1="355" x2="220" y2="355" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+
+  <!-- Accessibility -->
+  <rect x="400" y="324" width="152" height="62" rx="7" fill="white" stroke="#7C3AED" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="400" y="324" width="152" height="20" rx="7" fill="#7C3AED"/>
+  <rect x="400" y="336" width="152" height="8" fill="#7C3AED"/>
+  <text x="476" y="339" text-anchor="middle" fill="white" font-size="10" font-weight="700">ACCESSIBILITY</text>
+  <text x="476" y="358" text-anchor="middle" fill="#374151" font-size="8.5">WCAG 2.2 audit</text>
+  <text x="476" y="370" text-anchor="middle" fill="#374151" font-size="8.5">a11y remediation</text>
+  <text x="476" y="382" text-anchor="middle" fill="#94A3B8" font-size="7.5">Sonnet 4.6</text>
+
+  <!-- Arrow Frontend→Accessibility -->
+  <line x1="372" y1="355" x2="400" y2="355" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+
+  <!-- Streamlit Developer -->
+  <rect x="220" y="396" width="152" height="62" rx="7" fill="white" stroke="#059669" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="220" y="396" width="152" height="20" rx="7" fill="#059669"/>
+  <rect x="220" y="408" width="152" height="8" fill="#059669"/>
+  <text x="296" y="411" text-anchor="middle" fill="white" font-size="10" font-weight="700">STREAMLIT DEV</text>
+  <text x="296" y="430" text-anchor="middle" fill="#374151" font-size="8.5">Streamlit UI &amp; app wiring</text>
+  <text x="296" y="442" text-anchor="middle" fill="#374151" font-size="8.5">Component integration</text>
+  <text x="296" y="454" text-anchor="middle" fill="#94A3B8" font-size="7.5">GPT-5.3-Codex</text>
+
+  <!-- Arrow from Architect/Plan → Streamlit -->
+  <path d="M536,236 L536,278 L296,278 L296,324" fill="none" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3"/>
+  <text x="420" y="274" fill="#64748B" font-size="7.5" font-weight="600">Build Streamlit UI</text>
+
+  <!-- Arrow Streamlit → Accessibility -->
+  <line x1="372" y1="427" x2="400" y2="390" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+
+  <!-- Row 2: Data Branch (from Architect) -->
+  <!-- SQL Expert -->
+  <rect x="600" y="324" width="152" height="62" rx="7" fill="white" stroke="#059669" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="600" y="324" width="152" height="20" rx="7" fill="#059669"/>
+  <rect x="600" y="336" width="152" height="8" fill="#059669"/>
+  <text x="676" y="339" text-anchor="middle" fill="white" font-size="10" font-weight="700">SQL EXPERT</text>
+  <text x="676" y="358" text-anchor="middle" fill="#374151" font-size="8.5">Query optimization</text>
+  <text x="676" y="370" text-anchor="middle" fill="#374151" font-size="8.5">DB troubleshooting</text>
+  <text x="676" y="382" text-anchor="middle" fill="#94A3B8" font-size="7.5">GPT-5.3-Codex</text>
+
+  <!-- Data Engineer -->
+  <rect x="780" y="324" width="152" height="62" rx="7" fill="white" stroke="#059669" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="780" y="324" width="152" height="20" rx="7" fill="#059669"/>
+  <rect x="780" y="336" width="152" height="8" fill="#059669"/>
+  <text x="856" y="339" text-anchor="middle" fill="white" font-size="10" font-weight="700">DATA ENGINEER</text>
+  <text x="856" y="358" text-anchor="middle" fill="#374151" font-size="8.5">ETL pipelines</text>
+  <text x="856" y="370" text-anchor="middle" fill="#374151" font-size="8.5">Data integration</text>
+  <text x="856" y="382" text-anchor="middle" fill="#94A3B8" font-size="7.5">GPT-5.3-Codex</text>
+
+  <!-- Dashed from Architect→SQL/Data -->
+  <path d="M370,236 L370,300 L676,300 L676,324" fill="none" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+  <text x="530" y="296" fill="#64748B" font-size="7.5" font-weight="600">Design DB / Data Pipeline</text>
+  <line x1="752" y1="355" x2="780" y2="355" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+
+  <!-- Row 3: Quality & Security Branch (from Implement/Code Reviewer) -->
+  <!-- Security Analyst -->
+  <rect x="960" y="324" width="152" height="62" rx="7" fill="white" stroke="#1E40AF" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="960" y="324" width="152" height="20" rx="7" fill="#1E40AF"/>
+  <rect x="960" y="336" width="152" height="8" fill="#1E40AF"/>
+  <text x="1036" y="339" text-anchor="middle" fill="white" font-size="10" font-weight="700">SECURITY ANALYST</text>
+  <text x="1036" y="358" text-anchor="middle" fill="#374151" font-size="8.5">Threat modeling</text>
+  <text x="1036" y="370" text-anchor="middle" fill="#374151" font-size="8.5">OWASP, risk analysis</text>
+  <text x="1036" y="382" text-anchor="middle" fill="#94A3B8" font-size="7.5">Opus 4.6</text>
+
+  <!-- Arrow from Code Reviewer → Security -->
+  <path d="M1165,236 L1165,290 L1036,290 L1036,324" fill="none" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+  <text x="1100" y="286" fill="#64748B" font-size="7.5" font-weight="600">Review Security</text>
+
+  <!-- Debug -->
+  <rect x="960" y="396" width="152" height="62" rx="7" fill="white" stroke="#1E40AF" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="960" y="396" width="152" height="20" rx="7" fill="#1E40AF"/>
+  <rect x="960" y="408" width="152" height="8" fill="#1E40AF"/>
+  <text x="1036" y="411" text-anchor="middle" fill="white" font-size="10" font-weight="700">DEBUG</text>
+  <text x="1036" y="430" text-anchor="middle" fill="#374151" font-size="8.5">Root-cause analysis</text>
+  <text x="1036" y="442" text-anchor="middle" fill="#374151" font-size="8.5">Bug fixing, plan amend</text>
+  <text x="1036" y="454" text-anchor="middle" fill="#94A3B8" font-size="7.5">Opus 4.6</text>
+
+  <!-- Arrow from Implement → Debug -->
+  <path d="M744,236 L744,290 L900,290 L900,427 L960,427" fill="none" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+  <text x="780" y="286" fill="#64748B" font-size="7.5" font-weight="600">Debug Issue</text>
+
+  <!-- Debug → Plan (Amend Plan) loop -->
+  <path d="M1036,458 C1036,488 536,488 536,236" fill="none" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a-green)"/>
+  <text x="790" y="494" text-anchor="middle" fill="#059669" font-size="8" font-weight="600">Amend Plan</text>
+
+  <!-- Row 4: Operations Branch (from Code Reviewer/Implement) -->
+  <!-- DevOps -->
+  <rect x="1140" y="324" width="152" height="62" rx="7" fill="white" stroke="#7C3AED" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="1140" y="324" width="152" height="20" rx="7" fill="#7C3AED"/>
+  <rect x="1140" y="336" width="152" height="8" fill="#7C3AED"/>
+  <text x="1216" y="339" text-anchor="middle" fill="white" font-size="10" font-weight="700">DEVOPS</text>
+  <text x="1216" y="358" text-anchor="middle" fill="#374151" font-size="8.5">CI/CD, Docker</text>
+  <text x="1216" y="370" text-anchor="middle" fill="#374151" font-size="8.5">Infrastructure</text>
+  <text x="1216" y="382" text-anchor="middle" fill="#94A3B8" font-size="7.5">Sonnet 4.6</text>
+
+  <!-- Arrow CR → DevOps -->
+  <path d="M1200,236 L1200,260 L1216,260 L1216,324" fill="none" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+  <text x="1250" y="276" fill="#64748B" font-size="7.5" font-weight="600">Deploy</text>
+
+  <!-- Janitor -->
+  <rect x="1140" y="396" width="152" height="62" rx="7" fill="white" stroke="#7C3AED" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="1140" y="396" width="152" height="20" rx="7" fill="#7C3AED"/>
+  <rect x="1140" y="408" width="152" height="8" fill="#7C3AED"/>
+  <text x="1216" y="411" text-anchor="middle" fill="white" font-size="10" font-weight="700">JANITOR</text>
+  <text x="1216" y="430" text-anchor="middle" fill="#374151" font-size="8.5">Code cleanup</text>
+  <text x="1216" y="442" text-anchor="middle" fill="#374151" font-size="8.5">Dead code removal</text>
+  <text x="1216" y="454" text-anchor="middle" fill="#94A3B8" font-size="7.5">Sonnet 4.6</text>
+
+  <!-- Arrow CR → Janitor -->
+  <path d="M1230,236 L1230,272 L1280,272 L1280,427 L1292,427" fill="none" stroke="#64748B" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+  <text x="1310" y="350" fill="#64748B" font-size="7.5" font-weight="600" transform="rotate(90 1310 350)">Clean Up</text>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 3: UTILITY AGENTS (bottom band)                     -->
+  <!-- =========================================================== -->
+  <text x="40" y="500" fill="#0F172A" font-size="14" font-weight="800" letter-spacing="0.5">UTILITY AGENTS</text>
+  <text x="210" y="500" fill="#94A3B8" font-size="11">(invoke directly — not in main pipeline flow)</text>
+
+  <!-- Prompt Engineer -->
+  <rect x="40" y="516" width="148" height="58" rx="7" fill="white" stroke="#1E40AF" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="40" y="516" width="148" height="18" rx="7" fill="#1E40AF"/>
+  <rect x="40" y="528" width="148" height="6" fill="#1E40AF"/>
+  <text x="114" y="530" text-anchor="middle" fill="white" font-size="9.5" font-weight="700">PROMPT ENGINEER</text>
+  <text x="114" y="548" text-anchor="middle" fill="#374151" font-size="8.5">Multi-agent workflows</text>
+  <text x="114" y="560" text-anchor="middle" fill="#374151" font-size="8.5">Prompt design</text>
+  <text x="114" y="571" text-anchor="middle" fill="#94A3B8" font-size="7.5">Opus 4.6</text>
+
+  <!-- Project Manager -->
+  <rect x="200" y="516" width="148" height="58" rx="7" fill="white" stroke="#7C3AED" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="200" y="516" width="148" height="18" rx="7" fill="#7C3AED"/>
+  <rect x="200" y="528" width="148" height="6" fill="#7C3AED"/>
+  <text x="274" y="530" text-anchor="middle" fill="white" font-size="9.5" font-weight="700">PROJECT MANAGER</text>
+  <text x="274" y="548" text-anchor="middle" fill="#374151" font-size="8.5">Work planning, tracking</text>
+  <text x="274" y="560" text-anchor="middle" fill="#374151" font-size="8.5">Status &amp; GitHub issues</text>
+  <text x="274" y="571" text-anchor="middle" fill="#94A3B8" font-size="7.5">Sonnet 4.6</text>
+
+  <!-- Mentor -->
+  <rect x="360" y="516" width="148" height="58" rx="7" fill="white" stroke="#7C3AED" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="360" y="516" width="148" height="18" rx="7" fill="#7C3AED"/>
+  <rect x="360" y="528" width="148" height="6" fill="#7C3AED"/>
+  <text x="434" y="530" text-anchor="middle" fill="white" font-size="9.5" font-weight="700">MENTOR</text>
+  <text x="434" y="548" text-anchor="middle" fill="#374151" font-size="8.5">Teaching, explanations</text>
+  <text x="434" y="560" text-anchor="middle" fill="#374151" font-size="8.5">Step-by-step guidance</text>
+  <text x="434" y="571" text-anchor="middle" fill="#94A3B8" font-size="7.5">Sonnet 4.6</text>
+
+  <!-- SVG Diagram -->
+  <rect x="520" y="516" width="148" height="58" rx="7" fill="white" stroke="#7C3AED" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="520" y="516" width="148" height="18" rx="7" fill="#7C3AED"/>
+  <rect x="520" y="528" width="148" height="6" fill="#7C3AED"/>
+  <text x="594" y="530" text-anchor="middle" fill="white" font-size="9.5" font-weight="700">SVG DIAGRAM</text>
+  <text x="594" y="548" text-anchor="middle" fill="#374151" font-size="8.5">Architecture diagrams</text>
+  <text x="594" y="560" text-anchor="middle" fill="#374151" font-size="8.5">Visual documentation</text>
+  <text x="594" y="571" text-anchor="middle" fill="#94A3B8" font-size="7.5">Sonnet 4.6</text>
+
+  <!-- Mermaid Diagram Specialist -->
+  <rect x="680" y="516" width="148" height="58" rx="7" fill="white" stroke="#7C3AED" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="680" y="516" width="148" height="18" rx="7" fill="#7C3AED"/>
+  <rect x="680" y="528" width="148" height="6" fill="#7C3AED"/>
+  <text x="754" y="530" text-anchor="middle" fill="white" font-size="9" font-weight="700">MERMAID DIAGRAM</text>
+  <text x="754" y="548" text-anchor="middle" fill="#374151" font-size="8.5">Flowcharts, sequences</text>
+  <text x="754" y="560" text-anchor="middle" fill="#374151" font-size="8.5">Class &amp; state diagrams</text>
+  <text x="754" y="571" text-anchor="middle" fill="#94A3B8" font-size="7.5">Sonnet 4.6</text>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 4: CONTEXT RULES (right side)                       -->
+  <!-- =========================================================== -->
+  <rect x="1370" y="130" width="200" height="340" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="1370" y="130" width="200" height="28" rx="8" fill="#0F172A"/>
+  <rect x="1370" y="148" width="200" height="10" fill="#0F172A"/>
+  <text x="1470" y="149" text-anchor="middle" fill="white" font-size="11" font-weight="700">CONTEXT RULES</text>
+
+  <text x="1385" y="180" fill="#059669" font-size="10" font-weight="700">PRESERVED</text>
+  <text x="1390" y="196" fill="#374151" font-size="9">Same chat, switch agents</text>
+  <text x="1390" y="210" fill="#374151" font-size="9">Use handoff buttons</text>
+  <text x="1390" y="224" fill="#374151" font-size="9">AI spawns subagents</text>
+
+  <line x1="1385" y1="234" x2="1555" y2="234" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="1385" y="252" fill="#DC2626" font-size="10" font-weight="700">LOST</text>
+  <text x="1390" y="268" fill="#374151" font-size="9">New chat (Ctrl+L)</text>
+  <text x="1390" y="282" fill="#374151" font-size="9">Close VS Code</text>
+  <text x="1390" y="296" fill="#374151" font-size="9">Different workspace</text>
+
+  <line x1="1385" y1="306" x2="1555" y2="306" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="1385" y="324" fill="#1E40AF" font-size="10" font-weight="700">RECOVERY</text>
+  <text x="1390" y="340" fill="#374151" font-size="9">@mention files</text>
+  <text x="1390" y="354" fill="#374151" font-size="9">Paste context</text>
+  <text x="1390" y="368" fill="#374151" font-size="9">Let agent search</text>
+  <text x="1390" y="382" fill="#374151" font-size="9">/context-handoff</text>
+
+  <line x1="1385" y1="392" x2="1555" y2="392" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="1385" y="410" fill="#7C3AED" font-size="10" font-weight="700">AGENT TYPES</text>
+  <text x="1390" y="426" fill="#374151" font-size="9">LOCAL — Interactive (dropdown)</text>
+  <text x="1390" y="440" fill="#374151" font-size="9">@cli — Background, async</text>
+  <text x="1390" y="454" fill="#374151" font-size="9">@cloud — Team PRs</text>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 5: INVOCATION & DECISION TREE                       -->
+  <!-- =========================================================== -->
+  <rect x="40" y="596" width="760" height="220" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="40" y="596" width="760" height="28" rx="8" fill="#0F172A"/>
+  <rect x="40" y="614" width="760" height="10" fill="#0F172A"/>
+  <text x="420" y="615" text-anchor="middle" fill="white" font-size="11" font-weight="700">WHEN TO USE WHICH AGENT</text>
+
+  <!-- Decision tree -->
+  <text x="60" y="648" fill="#1E40AF" font-size="10" font-weight="700">"I have a vague idea"</text>
+  <text x="310" y="648" fill="#374151" font-size="10">→  PRD</text>
+  <text x="430" y="648" fill="#1E40AF" font-size="10" font-weight="700">"I have requirements"</text>
+  <text x="630" y="648" fill="#374151" font-size="10">→  Architect</text>
+
+  <text x="60" y="672" fill="#1E40AF" font-size="10" font-weight="700">"I have a design"</text>
+  <text x="310" y="672" fill="#374151" font-size="10">→  Plan</text>
+  <text x="430" y="672" fill="#1E40AF" font-size="10" font-weight="700">"I know what to code"</text>
+  <text x="630" y="672" fill="#374151" font-size="10">→  Implement</text>
+
+  <text x="60" y="696" fill="#1E40AF" font-size="10" font-weight="700">"I have a bug"</text>
+  <text x="310" y="696" fill="#374151" font-size="10">→  Debug</text>
+  <text x="430" y="696" fill="#1E40AF" font-size="10" font-weight="700">"Code needs review"</text>
+  <text x="630" y="696" fill="#374151" font-size="10">→  Code Reviewer</text>
+
+  <text x="60" y="720" fill="#1E40AF" font-size="10" font-weight="700">"Need UX/UI design"</text>
+  <text x="310" y="720" fill="#374151" font-size="10">→  UX Designer</text>
+  <text x="430" y="720" fill="#1E40AF" font-size="10" font-weight="700">"Security concerns"</text>
+  <text x="630" y="720" fill="#374151" font-size="10">→  Security Analyst</text>
+
+  <text x="60" y="744" fill="#1E40AF" font-size="10" font-weight="700">"Long task, async"</text>
+  <text x="310" y="744" fill="#374151" font-size="10">→  @cli (Background)</text>
+  <text x="430" y="744" fill="#1E40AF" font-size="10" font-weight="700">"Need team PR review"</text>
+  <text x="630" y="744" fill="#374151" font-size="10">→  @cloud (Cloud)</text>
+
+  <line x1="60" y1="756" x2="780" y2="756" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="60" y="775" fill="#0F172A" font-size="10" font-weight="700">QUICK COMMANDS</text>
+  <text x="60" y="793" fill="#64748B" font-size="9">Open Chat: Ctrl+Alt+I  |  Select Agent: dropdown  |  Background: @cli implement this plan  |  Cloud: @cloud implement and create PR</text>
+  <text x="60" y="807" fill="#64748B" font-size="9">Slash Commands: /plan &lt;feature&gt;  |  /context-handoff  |  /code-review  |  /tdd  |  /verify  |  /generate-hld-lld</text>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 6: 7 UNIVERSAL PROTOCOLS                            -->
+  <!-- =========================================================== -->
+  <rect x="820" y="496" width="750" height="320" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="820" y="496" width="750" height="28" rx="8" fill="#0F172A"/>
+  <rect x="820" y="514" width="750" height="10" fill="#0F172A"/>
+  <text x="1195" y="515" text-anchor="middle" fill="white" font-size="11" font-weight="700">7 UNIVERSAL AGENT PROTOCOLS (all 22 agents)</text>
+
+  <!-- Protocol boxes -->
+  <rect x="840" y="538" width="220" height="42" rx="5" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+  <text x="950" y="555" text-anchor="middle" fill="#1E40AF" font-size="10" font-weight="700">1. Scope Boundary</text>
+  <text x="950" y="570" text-anchor="middle" fill="#64748B" font-size="8.5">Stay in your lane — don't do other agents' work</text>
+
+  <rect x="1080" y="538" width="220" height="42" rx="5" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+  <text x="1190" y="555" text-anchor="middle" fill="#1E40AF" font-size="10" font-weight="700">2. Artifact Output</text>
+  <text x="1190" y="570" text-anchor="middle" fill="#64748B" font-size="8.5">Write to agent-docs/{your-folder}/</text>
+
+  <rect x="1320" y="538" width="230" height="42" rx="5" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+  <text x="1435" y="555" text-anchor="middle" fill="#1E40AF" font-size="10" font-weight="700">3. Chain-of-Origin</text>
+  <text x="1435" y="570" text-anchor="middle" fill="#64748B" font-size="8.5">Preserve intent_id across handoffs</text>
+
+  <rect x="840" y="590" width="220" height="42" rx="5" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+  <text x="950" y="607" text-anchor="middle" fill="#1E40AF" font-size="10" font-weight="700">4. Approval Gates</text>
+  <text x="950" y="622" text-anchor="middle" fill="#64748B" font-size="8.5">Pause before destructive ops</text>
+
+  <rect x="1080" y="590" width="220" height="42" rx="5" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+  <text x="1190" y="607" text-anchor="middle" fill="#1E40AF" font-size="10" font-weight="700">5. Escalation Protocol</text>
+  <text x="1190" y="622" text-anchor="middle" fill="#64748B" font-size="8.5">Escalate blockers to human or agent</text>
+
+  <rect x="1320" y="590" width="230" height="42" rx="5" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+  <text x="1435" y="607" text-anchor="middle" fill="#1E40AF" font-size="10" font-weight="700">6. Bootstrap Check</text>
+  <text x="1435" y="622" text-anchor="middle" fill="#64748B" font-size="8.5">Read project-config.md first</text>
+
+  <rect x="840" y="642" width="220" height="42" rx="5" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+  <text x="950" y="659" text-anchor="middle" fill="#1E40AF" font-size="10" font-weight="700">7. Context Priority</text>
+  <text x="950" y="674" text-anchor="middle" fill="#64748B" font-size="8.5">Chat → Files → Skills → Instructions</text>
+
+  <!-- Key file paths -->
+  <line x1="840" y1="698" x2="1550" y2="698" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="840" y="718" fill="#0F172A" font-size="10" font-weight="700">KEY PATHS</text>
+  <text x="840" y="736" fill="#64748B" font-size="9">Agents:  .github/agents/*.agent.md</text>
+  <text x="840" y="752" fill="#64748B" font-size="9">Skills:    .github/skills/{category}/{name}/SKILL.md</text>
+  <text x="840" y="768" fill="#64748B" font-size="9">Instrs:    .github/instructions/*.instructions.md</text>
+  <text x="1180" y="736" fill="#64748B" font-size="9">Prompts:   .github/prompts/*.prompt.md</text>
+  <text x="1180" y="752" fill="#64748B" font-size="9">Artifacts: agent-docs/{agent-folder}/</text>
+  <text x="1180" y="768" fill="#64748B" font-size="9">Plans:       .github/plans/*.md</text>
+  <text x="1180" y="784" fill="#64748B" font-size="9">Handoffs:  .github/handoffs/*.md</text>
+  <text x="840" y="784" fill="#64748B" font-size="9">Config:    .github/project-config.md</text>
+  <text x="840" y="800" fill="#64748B" font-size="9">Registry: .github/skills/_registry.md</text>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 7: SKILLS VS INSTRUCTIONS (bottom)                  -->
+  <!-- =========================================================== -->
+  <rect x="40" y="830" width="1520" height="126" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="40" y="830" width="1520" height="28" rx="8" fill="#0F172A"/>
+  <rect x="40" y="848" width="1520" height="10" fill="#0F172A"/>
+  <text x="800" y="849" text-anchor="middle" fill="white" font-size="11" font-weight="700">SKILLS vs INSTRUCTIONS vs PROMPTS</text>
+
+  <!-- Three columns -->
+  <!-- Instructions -->
+  <text x="120" y="882" fill="#059669" font-size="11" font-weight="700">INSTRUCTIONS</text>
+  <text x="60" y="900" fill="#374151" font-size="9">.github/instructions/*.instructions.md</text>
+  <text x="60" y="916" fill="#374151" font-size="9">Auto-applied via applyTo glob patterns</text>
+  <text x="60" y="932" fill="#374151" font-size="9">Rules &amp; standards for file types</text>
+  <text x="60" y="948" fill="#64748B" font-size="8.5">e.g. python.instructions.md → **/*.py</text>
+
+  <line x1="510" y1="870" x2="510" y2="950" stroke="#E2E8F0" stroke-width="1"/>
+
+  <!-- Skills -->
+  <text x="600" y="882" fill="#1E40AF" font-size="11" font-weight="700">SKILLS</text>
+  <text x="530" y="900" fill="#374151" font-size="9">.github/skills/{cat}/{name}/SKILL.md</text>
+  <text x="530" y="916" fill="#374151" font-size="9">On-demand — agent reads when needed</text>
+  <text x="530" y="932" fill="#374151" font-size="9">Domain-specific workflows &amp; patterns</text>
+  <text x="530" y="948" fill="#64748B" font-size="8.5">e.g. "Read .github/skills/coding/sql/SKILL.md"</text>
+
+  <line x1="1010" y1="870" x2="1010" y2="950" stroke="#E2E8F0" stroke-width="1"/>
+
+  <!-- Prompts -->
+  <text x="1100" y="882" fill="#7C3AED" font-size="11" font-weight="700">PROMPTS (Slash Commands)</text>
+  <text x="1030" y="900" fill="#374151" font-size="9">.github/prompts/*.prompt.md</text>
+  <text x="1030" y="916" fill="#374151" font-size="9">Quick actions: /plan, /code-review, /tdd</text>
+  <text x="1030" y="932" fill="#374151" font-size="9">Entry points that wire agents + skills</text>
+  <text x="1030" y="948" fill="#64748B" font-size="8.5">e.g. /plan add customer search feature</text>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 8: WORKFLOW PATTERNS (very bottom)                  -->
+  <!-- =========================================================== -->
+  <rect x="40" y="970" width="1520" height="132" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="40" y="970" width="1520" height="28" rx="8" fill="#0F172A"/>
+  <rect x="40" y="988" width="1520" height="10" fill="#0F172A"/>
+  <text x="800" y="989" text-anchor="middle" fill="white" font-size="11" font-weight="700">COMMON WORKFLOW PATTERNS</text>
+
+  <!-- Pattern A -->
+  <text x="60" y="1020" fill="#1E40AF" font-size="10" font-weight="700">A. Full Feature</text>
+  <text x="60" y="1036" fill="#374151" font-size="9">PRD → Architect → Plan → Implement → Tester → Code Reviewer</text>
+  <text x="60" y="1050" fill="#64748B" font-size="8.5">When: Starting from scratch with vague requirements</text>
+
+  <!-- Pattern B -->
+  <text x="440" y="1020" fill="#1E40AF" font-size="10" font-weight="700">B. Quick Implementation</text>
+  <text x="440" y="1036" fill="#374151" font-size="9">Architect → Implement (skip PRD/Plan)</text>
+  <text x="440" y="1050" fill="#64748B" font-size="8.5">When: You already have clear requirements</text>
+
+  <!-- Pattern C -->
+  <text x="780" y="1020" fill="#1E40AF" font-size="10" font-weight="700">C. Bug Fix</text>
+  <text x="780" y="1036" fill="#374151" font-size="9">Debug → (fix code) → Code Reviewer</text>
+  <text x="780" y="1050" fill="#64748B" font-size="8.5">When: Bug spotted, need root-cause analysis</text>
+
+  <!-- Pattern D -->
+  <text x="1080" y="1020" fill="#1E40AF" font-size="10" font-weight="700">D. Background / Cloud</text>
+  <text x="1080" y="1036" fill="#374151" font-size="9">Local plan → @cli implement  |  Local → @cloud PR</text>
+  <text x="1080" y="1050" fill="#64748B" font-size="8.5">When: Long task or team collaboration needed</text>
+
+  <!-- Pattern E -->
+  <text x="60" y="1072" fill="#1E40AF" font-size="10" font-weight="700">E. Cross-Domain</text>
+  <text x="60" y="1086" fill="#374151" font-size="9">Architect → SQL Expert → Data Engineer  |  UX Designer → Frontend Dev → Accessibility</text>
+  <text x="60" y="1098" fill="#64748B" font-size="8.5">When: Task spans DB + data pipeline, or UX design → front-end build</text>
+
+  <!-- Pattern F -->
+  <text x="780" y="1072" fill="#7C3AED" font-size="10" font-weight="700">F. AdvisoryHub Mode</text>
+  <text x="780" y="1086" fill="#374151" font-size="9">AdvisoryHub → Diagnostic Brief → specialist agent  |  OR pipeline stage → @Orchestrator</text>
+  <text x="780" y="1098" fill="#64748B" font-size="8.5">When: Issue raised in conversation · not a scheduled phase · works in any pipeline mode</text>
+
+  <!-- Footer -->
+  <text x="800" y="1116" text-anchor="middle" fill="#94A3B8" font-size="9">Generated from .github/diagrams/AGENT_WORKFLOW_CHEATSHEET.md · Print at A3/A2 landscape for wall mounting</text>
+</svg>

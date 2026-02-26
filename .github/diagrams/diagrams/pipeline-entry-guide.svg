@@ -1,0 +1,253 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 960" font-family="Inter, 'Segoe UI', Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 1.5L9 5L0 8.5z" fill="#64748b"/>
+    </marker>
+    <marker id="arr-dk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 1.5L9 5L0 8.5z" fill="#334155"/>
+    </marker>
+    <filter id="sh">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#94a3b8" flood-opacity="0.18"/>
+    </filter>
+    <filter id="sh-sm">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#94a3b8" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+  <rect width="1400" height="960" fill="#f0f4f8"/>
+  <!-- HEADER -->
+  <rect x="0" y="0" width="1400" height="68" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <rect x="0" y="65" width="1400" height="3" fill="#6366f1"/>
+  <text x="700" y="28" text-anchor="middle" fill="#1e293b" font-size="20" font-weight="800" letter-spacing="0.3">Pipeline Entry Point Guide</text>
+  <text x="700" y="51" text-anchor="middle" fill="#64748b" font-size="12">Always open @Orchestrator in a new session — what changes is what you ATTACH and what you SAY</text>
+  <text x="36" y="95" fill="#475569" font-size="11" font-weight="700" letter-spacing="1">STEP 1 — FIND YOUR SCENARIO</text>
+  <!-- ROW 1: A B C D -->
+  <!-- CARD A -->
+  <rect x="24" y="102" width="318" height="162" rx="10" fill="#ffffff" stroke="#93c5fd" stroke-width="2" filter="url(#sh-sm)"/>
+  <rect x="24" y="102" width="318" height="30" rx="10" fill="#dbeafe"/>
+  <rect x="24" y="118" width="318" height="14" fill="#dbeafe"/>
+  <text x="40" y="122" fill="#1d4ed8" font-size="11" font-weight="800">A — Just an Idea</text>
+  <text x="224" y="121" fill="#60a5fa" font-size="9" font-style="italic">new feature</text>
+  <text x="40" y="148" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">YOU HAVE</text>
+  <text x="40" y="163" fill="#475569" font-size="11">Nothing written down yet</text>
+  <text x="40" y="186" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">SAY TO ORCHESTRATOR</text>
+  <text x="40" y="201" fill="#0369a1" font-size="10" font-style="italic">"I want to add [feature] to [app]"</text>
+  <rect x="40" y="218" width="286" height="34" rx="5" fill="#eff6ff"/>
+  <text x="53" y="230" fill="#1d4ed8" font-size="9" font-weight="700">Starts at:</text>
+  <text x="53" y="245" fill="#334155" font-size="10">Intent → PRD → Architect → Plan → Implement</text>
+  <!-- CARD B -->
+  <rect x="356" y="102" width="318" height="162" rx="10" fill="#ffffff" stroke="#fca5a5" stroke-width="2" filter="url(#sh-sm)"/>
+  <rect x="356" y="102" width="318" height="30" rx="10" fill="#fee2e2"/>
+  <rect x="356" y="118" width="318" height="14" fill="#fee2e2"/>
+  <text x="372" y="122" fill="#b91c1c" font-size="11" font-weight="800">B — Bug / UI Fix</text>
+  <text x="540" y="121" fill="#f87171" font-size="9" font-style="italic">known issue</text>
+  <text x="372" y="148" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">YOU HAVE</text>
+  <text x="372" y="163" fill="#475569" font-size="11">A broken feature or reported error</text>
+  <text x="372" y="186" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">SAY TO ORCHESTRATOR</text>
+  <text x="372" y="201" fill="#b91c1c" font-size="10" font-style="italic">"Fix [symptom] in [component/file]"</text>
+  <rect x="372" y="218" width="286" height="34" rx="5" fill="#fff1f2"/>
+  <text x="385" y="230" fill="#b91c1c" font-size="9" font-weight="700">Starts at:</text>
+  <text x="385" y="245" fill="#334155" font-size="10">Debug → Implement (fix) → Tester</text>
+  <!-- CARD C -->
+  <rect x="688" y="102" width="318" height="162" rx="10" fill="#ffffff" stroke="#fde68a" stroke-width="2" filter="url(#sh-sm)"/>
+  <rect x="688" y="102" width="318" height="30" rx="10" fill="#fef9c3"/>
+  <rect x="688" y="118" width="318" height="14" fill="#fef9c3"/>
+  <text x="704" y="122" fill="#854d0e" font-size="11" font-weight="800">C — Has PRD</text>
+  <text x="800" y="121" fill="#ca8a04" font-size="9" font-style="italic">requirement doc ready</text>
+  <text x="704" y="148" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">YOU HAVE</text>
+  <text x="704" y="163" fill="#475569" font-size="11">A written PRD document</text>
+  <text x="704" y="186" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">ATTACH + SAY</text>
+  <text x="704" y="201" fill="#854d0e" font-size="10" font-style="italic">PRD file + "I have a PRD, skip to architecture"</text>
+  <rect x="704" y="218" width="286" height="34" rx="5" fill="#fefce8"/>
+  <text x="717" y="230" fill="#854d0e" font-size="9" font-weight="700">Starts at:</text>
+  <text x="717" y="245" fill="#334155" font-size="10">Architect → Plan → Implement</text>
+  <!-- CARD D -->
+  <rect x="1020" y="102" width="318" height="162" rx="10" fill="#ffffff" stroke="#86efac" stroke-width="2" filter="url(#sh-sm)"/>
+  <rect x="1020" y="102" width="318" height="30" rx="10" fill="#dcfce7"/>
+  <rect x="1020" y="118" width="318" height="14" fill="#dcfce7"/>
+  <text x="1036" y="122" fill="#166534" font-size="11" font-weight="800">D — Has PRD + Architecture</text>
+  <text x="1036" y="148" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">YOU HAVE</text>
+  <text x="1036" y="163" fill="#475569" font-size="11">PRD + ADR / architecture doc</text>
+  <text x="1036" y="186" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">ATTACH + SAY</text>
+  <text x="1036" y="201" fill="#166534" font-size="10" font-style="italic">Both files + "Skip to planning"</text>
+  <rect x="1036" y="218" width="286" height="34" rx="5" fill="#f0fdf4"/>
+  <text x="1049" y="230" fill="#15803d" font-size="9" font-weight="700">Starts at:</text>
+  <text x="1049" y="245" fill="#334155" font-size="10">Plan → Implement → Tester</text>
+  <!-- ROW 2: E F G H -->
+  <!-- CARD E -->
+  <rect x="24" y="278" width="318" height="162" rx="10" fill="#ffffff" stroke="#a5b4fc" stroke-width="2.5" filter="url(#sh-sm)"/>
+  <rect x="24" y="278" width="318" height="30" rx="10" fill="#e0e7ff"/>
+  <rect x="24" y="294" width="318" height="14" fill="#e0e7ff"/>
+  <text x="40" y="298" fill="#3730a3" font-size="11" font-weight="800">E — Has Full Plan  &#9733; Current session</text>
+  <text x="40" y="324" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">YOU HAVE</text>
+  <text x="40" y="339" fill="#475569" font-size="11">PRD + ADR + Plan file</text>
+  <text x="40" y="362" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">DO FIRST, THEN SAY</text>
+  <text x="40" y="377" fill="#3730a3" font-size="10" font-style="italic">Create pipeline-state.json + "Resume pipeline for [feature]"</text>
+  <rect x="40" y="394" width="286" height="34" rx="5" fill="#eef2ff"/>
+  <text x="53" y="406" fill="#4338ca" font-size="9" font-weight="700">Starts at:</text>
+  <text x="53" y="421" fill="#334155" font-size="10">Implement → Tester → Code Review</text>
+  <!-- CARD F -->
+  <rect x="356" y="278" width="318" height="162" rx="10" fill="#ffffff" stroke="#d8b4fe" stroke-width="2" filter="url(#sh-sm)"/>
+  <rect x="356" y="278" width="318" height="30" rx="10" fill="#f3e8ff"/>
+  <rect x="356" y="294" width="318" height="14" fill="#f3e8ff"/>
+  <text x="372" y="298" fill="#6d28d9" font-size="11" font-weight="800">F — New Project from Scratch</text>
+  <text x="372" y="324" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">YOU HAVE</text>
+  <text x="372" y="339" fill="#475569" font-size="11">A brief or just a project concept</text>
+  <text x="372" y="362" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">ATTACH + SAY</text>
+  <text x="372" y="377" fill="#6d28d9" font-size="10" font-style="italic">Brief (optional) + "New project, start from scratch"</text>
+  <rect x="372" y="394" width="286" height="34" rx="5" fill="#faf5ff"/>
+  <text x="385" y="406" fill="#7c3aed" font-size="9" font-weight="700">Starts at:</text>
+  <text x="385" y="421" fill="#334155" font-size="10">Intent → PRD → Architect → Plan → Implement</text>
+  <!-- CARD G — UI/UX Design (NEW) -->
+  <rect x="688" y="278" width="318" height="162" rx="10" fill="#ffffff" stroke="#f9a8d4" stroke-width="2" filter="url(#sh-sm)"/>
+  <rect x="688" y="278" width="318" height="30" rx="10" fill="#fce7f3"/>
+  <rect x="688" y="294" width="318" height="14" fill="#fce7f3"/>
+  <text x="704" y="298" fill="#9d174d" font-size="11" font-weight="800">G — UI / UX Design Needed</text>
+  <text x="704" y="324" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">YOU HAVE</text>
+  <text x="704" y="339" fill="#475569" font-size="11">Feature but no visual spec or wireframe yet</text>
+  <text x="704" y="362" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">ATTACH + SAY</text>
+  <text x="704" y="377" fill="#9d174d" font-size="10" font-style="italic">Brief + "Design the UI for [feature] first"</text>
+  <rect x="704" y="394" width="286" height="34" rx="5" fill="#fdf2f8"/>
+  <text x="717" y="406" fill="#9d174d" font-size="9" font-weight="700">Starts at:</text>
+  <text x="717" y="421" fill="#334155" font-size="10">@ui-ux-designer → PRD  → Architect → Plan</text>
+  <!-- CARD H — Debug/Investigate (NEW) -->
+  <rect x="1020" y="278" width="318" height="162" rx="10" fill="#ffffff" stroke="#fdba74" stroke-width="2" filter="url(#sh-sm)"/>
+  <rect x="1020" y="278" width="318" height="30" rx="10" fill="#ffedd5"/>
+  <rect x="1020" y="294" width="318" height="14" fill="#ffedd5"/>
+  <text x="1036" y="298" fill="#9a3412" font-size="11" font-weight="800">H — Debug / Investigate</text>
+  <text x="1036" y="324" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">YOU HAVE</text>
+  <text x="1036" y="339" fill="#475569" font-size="11">Unclear error needing root cause analysis</text>
+  <text x="1036" y="362" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.8">ATTACH + SAY</text>
+  <text x="1036" y="377" fill="#9a3412" font-size="10" font-style="italic">Logs/traces + "Investigate [symptom]"</text>
+  <rect x="1036" y="394" width="286" height="34" rx="5" fill="#fff7ed"/>
+  <text x="1049" y="406" fill="#c2410c" font-size="9" font-weight="700">Starts at:</text>
+  <text x="1049" y="421" fill="#334155" font-size="10">@debug agent → diagnosis → Implement (fix)</text>
+  <!-- FUNNEL COLLECTOR -->
+  <line x1="183" y1="440" x2="183" y2="464" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="515" y1="440" x2="515" y2="464" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="847" y1="440" x2="847" y2="464" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="1179" y1="440" x2="1179" y2="464" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="183" y1="464" x2="1179" y2="464" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="700" y1="464" x2="700" y2="492" stroke="#6366f1" stroke-width="2" marker-end="url(#arr-dk)"/>
+  <!-- ORCHESTRATOR -->
+  <rect x="468" y="493" width="464" height="104" rx="12" fill="#ffffff" stroke="#a5b4fc" stroke-width="2.5" filter="url(#sh)"/>
+  <rect x="468" y="493" width="464" height="32" rx="12" fill="#ede9fe"/>
+  <rect x="468" y="509" width="464" height="16" fill="#ede9fe"/>
+  <text x="700" y="513" text-anchor="middle" fill="#4c1d95" font-size="17" font-weight="800">@Orchestrator</text>
+  <text x="700" y="536" text-anchor="middle" fill="#6d28d9" font-size="10.5">Reads pipeline-state.json  ·  Detects scenario  ·  Validates artefacts</text>
+  <text x="700" y="552" text-anchor="middle" fill="#6d28d9" font-size="10.5">Sets supervision gates  ·  Routes to correct first agent</text>
+  <text x="700" y="569" text-anchor="middle" fill="#7c3aed" font-size="9.5" font-style="italic">Never skip @Orchestrator — it is the only agent that creates and tracks pipeline state</text>
+  <text x="700" y="584" text-anchor="middle" fill="#94a3b8" font-size="9">Always open in a NEW session (new chat window)</text>
+  <!-- ARROW TO PIPELINE -->
+  <line x1="700" y1="597" x2="700" y2="617" stroke="#475569" stroke-width="2" marker-end="url(#arr-dk)"/>
+  <!-- PIPELINE SECTION -->
+  <rect x="24" y="620" width="1352" height="178" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#sh-sm)"/>
+  <text x="700" y="639" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="700" letter-spacing="1">PIPELINE STAGES</text>
+  <!-- Optional pre-stage: @ui-ux-designer above Intent area (Intent center ~108) -->
+  <rect x="52" y="645" width="156" height="38" rx="6" fill="#fdf2f8" stroke="#f9a8d4" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="130" y="660" text-anchor="middle" fill="#9d174d" font-size="9.5" font-weight="700">@ui-ux-designer</text>
+  <text x="130" y="675" text-anchor="middle" fill="#be185d" font-size="8.5" font-style="italic">Scenario G — runs before Intent</text>
+  <line x1="130" y1="683" x2="130" y2="695" stroke="#f9a8d4" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Optional pre-stage: @debug above Implement area (Implement center ~744) -->
+  <rect x="666" y="645" width="156" height="38" rx="6" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="744" y="660" text-anchor="middle" fill="#9a3412" font-size="9.5" font-weight="700">@debug agent</text>
+  <text x="744" y="675" text-anchor="middle" fill="#c2410c" font-size="8.5" font-style="italic">Scenario H — feeds into Implement</text>
+  <line x1="744" y1="683" x2="744" y2="695" stroke="#fdba74" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Main stage row: 8 stages, x=40 w=144 gap=11 y=697 h=87 -->
+  <!-- Intent x=40 -->
+  <rect x="40" y="697" width="144" height="87" rx="7" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="112" y="718" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">Intent</text>
+  <text x="112" y="733" text-anchor="middle" fill="#3b82f6" font-size="9">@prompt-engineer</text>
+  <text x="112" y="747" text-anchor="middle" fill="#64748b" font-size="8.5">intent doc</text>
+  <text x="112" y="761" text-anchor="middle" fill="#94a3b8" font-size="8">GATE 1</text>
+  <text x="112" y="777" text-anchor="middle" fill="#94a3b8" font-size="7.5">intent.md</text>
+  <line x1="184" y1="740" x2="195" y2="740" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- PRD x=195 -->
+  <rect x="195" y="697" width="144" height="87" rx="7" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="267" y="718" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">PRD</text>
+  <text x="267" y="733" text-anchor="middle" fill="#3b82f6" font-size="9">@prd</text>
+  <text x="267" y="747" text-anchor="middle" fill="#64748b" font-size="8.5">agent-docs/prd/</text>
+  <text x="267" y="761" text-anchor="middle" fill="#94a3b8" font-size="8">GATE 2</text>
+  <text x="267" y="777" text-anchor="middle" fill="#94a3b8" font-size="7.5">prd.md</text>
+  <line x1="339" y1="740" x2="350" y2="740" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Architect x=350 -->
+  <rect x="350" y="697" width="144" height="87" rx="7" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="422" y="718" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">Architect</text>
+  <text x="422" y="733" text-anchor="middle" fill="#3b82f6" font-size="9">@architect</text>
+  <text x="422" y="747" text-anchor="middle" fill="#64748b" font-size="8.5">architecture/</text>
+  <text x="422" y="761" text-anchor="middle" fill="#94a3b8" font-size="8">GATE 3</text>
+  <text x="422" y="777" text-anchor="middle" fill="#94a3b8" font-size="7.5">ADR</text>
+  <line x1="494" y1="740" x2="505" y2="740" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Plan x=505 -->
+  <rect x="505" y="697" width="144" height="87" rx="7" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="577" y="718" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">Plan</text>
+  <text x="577" y="733" text-anchor="middle" fill="#3b82f6" font-size="9">@plan</text>
+  <text x="577" y="747" text-anchor="middle" fill="#64748b" font-size="8.5">.github/plans/</text>
+  <text x="577" y="761" text-anchor="middle" fill="#94a3b8" font-size="8">GATE 4</text>
+  <text x="577" y="777" text-anchor="middle" fill="#94a3b8" font-size="7.5">plan file</text>
+  <line x1="649" y1="740" x2="660" y2="740" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Implement x=660 -->
+  <rect x="660" y="697" width="168" height="87" rx="7" fill="#f0fdf4" stroke="#86efac" stroke-width="2"/>
+  <text x="744" y="718" text-anchor="middle" fill="#15803d" font-size="11" font-weight="700">Implement</text>
+  <text x="744" y="733" text-anchor="middle" fill="#22c55e" font-size="9">@implement</text>
+  <text x="744" y="747" text-anchor="middle" fill="#64748b" font-size="8.5">phased commits</text>
+  <text x="744" y="761" text-anchor="middle" fill="#94a3b8" font-size="8">per-phase gates</text>
+  <text x="744" y="777" text-anchor="middle" fill="#94a3b8" font-size="7.5">source code</text>
+  <line x1="828" y1="740" x2="839" y2="740" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Tester x=839 -->
+  <rect x="839" y="697" width="144" height="87" rx="7" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="911" y="718" text-anchor="middle" fill="#15803d" font-size="11" font-weight="700">Tester</text>
+  <text x="911" y="733" text-anchor="middle" fill="#22c55e" font-size="9">@tester</text>
+  <text x="911" y="747" text-anchor="middle" fill="#64748b" font-size="8.5">pytest / playwright</text>
+  <text x="911" y="761" text-anchor="middle" fill="#94a3b8" font-size="8">pass / fail</text>
+  <text x="911" y="777" text-anchor="middle" fill="#94a3b8" font-size="7.5">test report</text>
+  <line x1="983" y1="740" x2="994" y2="740" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Code Review x=994 -->
+  <rect x="994" y="697" width="155" height="87" rx="7" fill="#fff1f2" stroke="#fca5a5" stroke-width="1.5"/>
+  <text x="1071" y="718" text-anchor="middle" fill="#be123c" font-size="11" font-weight="700">Code Review</text>
+  <text x="1071" y="733" text-anchor="middle" fill="#f43f5e" font-size="9">@code-reviewer</text>
+  <text x="1071" y="747" text-anchor="middle" fill="#64748b" font-size="8.5">quality + security</text>
+  <text x="1071" y="761" text-anchor="middle" fill="#94a3b8" font-size="8">GATE 5</text>
+  <text x="1071" y="777" text-anchor="middle" fill="#94a3b8" font-size="7.5">review report</text>
+  <line x1="1149" y1="740" x2="1160" y2="740" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Done x=1160 -->
+  <rect x="1160" y="697" width="198" height="87" rx="7" fill="#f0fdf4" stroke="#4ade80" stroke-width="2"/>
+  <text x="1259" y="718" text-anchor="middle" fill="#15803d" font-size="11" font-weight="700">Done &#10003;</text>
+  <text x="1259" y="733" text-anchor="middle" fill="#22c55e" font-size="9">pipeline-state: complete</text>
+  <text x="1259" y="747" text-anchor="middle" fill="#64748b" font-size="8.5">merge / deploy</text>
+  <text x="1259" y="761" text-anchor="middle" fill="#94a3b8" font-size="8">all gates passed</text>
+  <text x="1259" y="777" text-anchor="middle" fill="#94a3b8" font-size="7.5">ARTIFACTS.md updated</text>
+  <!-- BOTTOM PANELS -->
+  <!-- Left: prep table -->
+  <rect x="24" y="814" width="674" height="122" rx="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <rect x="24" y="814" width="674" height="26" rx="10" fill="#f8fafc"/>
+  <rect x="24" y="827" width="674" height="13" fill="#f8fafc"/>
+  <text x="361" y="831" text-anchor="middle" fill="#334155" font-size="11" font-weight="700">What to Create Before Opening @Orchestrator</text>
+  <text x="44" y="854" fill="#64748b" font-size="10" font-weight="700">Scenario</text>
+  <text x="234" y="854" fill="#64748b" font-size="10" font-weight="700">pipeline-state.json</text>
+  <text x="456" y="854" fill="#64748b" font-size="10" font-weight="700">ARTIFACTS.md entry</text>
+  <line x1="38" y1="859" x2="688" y2="859" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="44" y="875" fill="#475569" font-size="10">A, B, F, H — Orchestrator creates automatically</text>
+  <text x="234" y="875" fill="#10b981" font-size="10">No</text>
+  <text x="456" y="875" fill="#10b981" font-size="10">No</text>
+  <text x="44" y="893" fill="#475569" font-size="10">C — Has PRD</text>
+  <text x="234" y="893" fill="#10b981" font-size="10">No</text>
+  <text x="456" y="893" fill="#f59e0b" font-size="10">Yes — register the PRD</text>
+  <text x="44" y="911" fill="#475569" font-size="10">D, G — Has PRD + Architecture</text>
+  <text x="234" y="911" fill="#10b981" font-size="10">No</text>
+  <text x="456" y="911" fill="#f59e0b" font-size="10">Yes — register PRD + ADR</text>
+  <text x="44" y="929" fill="#475569" font-size="10">E — Has full plan  &#9733;</text>
+  <text x="234" y="929" fill="#ef4444" font-size="10" font-weight="700">Yes — create from template manually</text>
+  <text x="456" y="929" fill="#f59e0b" font-size="10">Yes — register plan + ADR</text>
+  <!-- Right: one-liner reference -->
+  <rect x="714" y="814" width="662" height="122" rx="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <rect x="714" y="814" width="662" height="26" rx="10" fill="#f8fafc"/>
+  <rect x="714" y="827" width="662" height="13" fill="#f8fafc"/>
+  <text x="1045" y="831" text-anchor="middle" fill="#334155" font-size="11" font-weight="700">One-Liner Reference Card</text>
+  <text x="734" y="857" fill="#475569" font-size="10.5"><tspan font-weight="700" fill="#1d4ed8">New idea / New project (A/F)</tspan>   "I want to add [feature] to [app]"</text>
+  <text x="734" y="875" fill="#475569" font-size="10.5"><tspan font-weight="700" fill="#b91c1c">Bug / UI fix (B)            </tspan>   "Fix [symptom] in [component]"</text>
+  <text x="734" y="893" fill="#475569" font-size="10.5"><tspan font-weight="700" fill="#9d174d">UI/UX design needed (G)     </tspan>   attach brief + "Design the UI for [feature] first"</text>
+  <text x="734" y="911" fill="#475569" font-size="10.5"><tspan font-weight="700" fill="#c2410c">Debug / investigate (H)     </tspan>   attach logs + "Investigate [symptom]"</text>
+  <text x="734" y="929" fill="#475569" font-size="10.5"><tspan font-weight="700" fill="#4338ca">Resume mid-run              </tspan>   "Phase N complete, resume the pipeline for [feature]"</text>
+  <!-- FOOTER -->
+  <text x="700" y="951" text-anchor="middle" fill="#94a3b8" font-size="9">.github/pipeline/PIPELINE-ENTRY-GUIDE.md  ·  junai agent pool v1.0  ·  2026-02-20</text>
+</svg>
