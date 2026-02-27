@@ -14,8 +14,12 @@ Usage:
 """
 
 from __future__ import annotations
+import json
+import queue
 import re
+import subprocess
 import sys
+import threading
 import yaml
 from pathlib import Path
 
@@ -153,6 +157,162 @@ def validate_agent(path: Path, all_agent_slugs: set[str]) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# MCP Server smoke test
+# ---------------------------------------------------------------------------
+
+# Expected tools registered by server.py — update if tools are added/removed
+EXPECTED_MCP_TOOLS: set[str] = {
+    "notify_orchestrator",
+    "validate_deferred_paths",
+    "get_pipeline_status",
+    "skip_stage",
+    "set_pipeline_mode",
+    "satisfy_gate",
+    "pipeline_init",
+    "pipeline_reset",
+    "run_command",
+}
+
+def _read_lines_into_queue(stream, q: queue.Queue) -> None:
+    """Thread target: read lines from stream and push to queue."""
+    try:
+        for line in stream:
+            q.put(line)
+    except Exception:
+        pass
+    finally:
+        q.put(None)  # sentinel
+
+
+def _send(proc: subprocess.Popen, msg: dict) -> None:
+    proc.stdin.write(json.dumps(msg) + "\n")
+    proc.stdin.flush()
+
+
+def _recv(q: queue.Queue, timeout: float = 8.0) -> dict | None:
+    """Read next non-empty line from the queue, parse as JSON."""
+    deadline = timeout
+    while deadline > 0:
+        try:
+            line = q.get(timeout=min(1.0, deadline))
+        except queue.Empty:
+            deadline -= 1.0
+            continue
+        if line is None:
+            return None  # stream closed
+        line = line.strip()
+        if not line:
+            deadline -= 0.05
+            continue
+        try:
+            return json.loads(line)
+        except json.JSONDecodeError:
+            continue  # log lines from FastMCP — skip and keep reading
+    return None
+
+
+def smoke_test_mcp_server() -> list[str]:
+    """
+    Start server.py via stdio, run initialize + tools/list, verify response.
+    Returns list of error strings (empty = pass).
+    """
+    errors: list[str] = []
+
+    # Resolve paths
+    base = Path(__file__).parent
+    server_py = base / ".github" / "tools" / "mcp-server" / "server.py"
+    # Support both Windows (.venv/Scripts) and Unix (.venv/bin)
+    python_exe = base / ".venv" / "Scripts" / "python.exe"
+    if not python_exe.exists():
+        python_exe = base / ".venv" / "bin" / "python"
+
+    if not server_py.exists():
+        return ["MCP smoke test skipped: server.py not found at .github/tools/mcp-server/server.py"]
+    if not python_exe.exists():
+        return ["MCP smoke test skipped: venv python not found — run: python -m venv .venv && pip install -r requirements.txt"]
+
+    proc = None
+    try:
+        proc = subprocess.Popen(
+            [str(python_exe), str(server_py)],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+        )
+
+        q: queue.Queue = queue.Queue()
+        reader = threading.Thread(target=_read_lines_into_queue, args=(proc.stdout, q), daemon=True)
+        reader.start()
+
+        # ── 1. initialize ──────────────────────────────────────────────────
+        _send(proc, {
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "junai-smoke-test", "version": "1.0"},
+            },
+        })
+
+        init_resp = _recv(q, timeout=10.0)
+        if init_resp is None:
+            errors.append("MCP server did not respond to initialize within 10s — startup error")
+            return errors
+
+        if "error" in init_resp:
+            errors.append(f"MCP initialize error: {init_resp['error']}")
+            return errors
+
+        server_info = init_resp.get("result", {}).get("serverInfo", {})
+        if not server_info.get("name"):
+            errors.append("MCP initialize response missing serverInfo.name")
+
+        # ── 2. notifications/initialized ──────────────────────────────────
+        _send(proc, {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}})
+
+        # ── 3. tools/list ─────────────────────────────────────────────────
+        _send(proc, {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
+
+        list_resp = _recv(q, timeout=8.0)
+        if list_resp is None:
+            errors.append("MCP server did not respond to tools/list within 8s")
+            return errors
+
+        if "error" in list_resp:
+            errors.append(f"MCP tools/list error: {list_resp['error']}")
+            return errors
+
+        registered = {t["name"] for t in list_resp.get("result", {}).get("tools", [])}
+        missing = EXPECTED_MCP_TOOLS - registered
+        if missing:
+            errors.append(f"MCP missing expected tools: {', '.join(sorted(missing))}")
+
+        unexpected = registered - EXPECTED_MCP_TOOLS
+        if unexpected:
+            # Not a failure — just a note that EXPECTED_MCP_TOOLS needs updating
+            errors.append(
+                f"MCP has new tools not in EXPECTED_MCP_TOOLS (update the list): "
+                f"{', '.join(sorted(unexpected))}"
+            )
+
+    except FileNotFoundError:
+        errors.append("MCP smoke test failed: could not launch server.py (python not found)")
+    except Exception as exc:
+        errors.append(f"MCP smoke test exception: {exc}")
+    finally:
+        if proc and proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+
+    return errors
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -192,15 +352,30 @@ def main() -> None:
     print("  -----------------------------------------")
 
     if not failed:
-        print(f"  All {len(agent_files)} agents passed validation.\n")
-        sys.exit(0)
+        print(f"  All {len(agent_files)} agents passed validation.")
     else:
         total_errors = sum(len(e) for e in failed.values())
         print(
             f"  {total_errors} error(s) in {len(failed)} agent(s). "
-            f"Fix before publishing.\n"
+            f"Fix before publishing."
         )
+
+    # ── MCP server smoke test ─────────────────────────────────────────────
+    print("\n  MCP SERVER SMOKE TEST")
+    print("  -----------------------------------------")
+    mcp_errors = smoke_test_mcp_server()
+    if not mcp_errors:
+        print("  [OK]    server.py started, responded to initialize + tools/list")
+    else:
+        for e in mcp_errors:
+            print(f"  [FAIL]  {e}")
+
+    print("")
+
+    if failed or mcp_errors:
         sys.exit(1)
+    else:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
