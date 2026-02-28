@@ -292,6 +292,33 @@ Context health: [Green | Yellow | Red] — [brief assessment]
 
 5. **HARD STOP** — Do NOT offer to proceed to the next phase. Do NOT ask if you should continue. Do NOT suggest what comes next. The Orchestrator owns all routing decisions. Present only the Return to Orchestrator button.
 
+#### Partial Completion Protocol (Token Pressure / Scope Overflow)
+
+If you are running low on context window or realize mid-implementation that the task is larger than one session can complete, **do NOT declare the task complete**. Instead:
+
+1. **Stop implementing.** Commit whatever is stable and passing tests.
+2. **Report partial completion honestly:**
+
+```markdown
+**[Stage/Phase N] PARTIAL — session capacity reached.**
+
+### Completed
+- [ ] Item A — done, grep-verified
+- [ ] Item B — done, grep-verified
+
+### NOT Completed (requires follow-up session)
+- [ ] Item C — not started
+- [ ] Item D — not started
+
+### Recommendation
+Next session should focus on: [specific items with plan section references]
+```
+
+3. Do NOT update `pipeline-state.json` to `status: complete`.
+4. Present the `Return to Orchestrator` button with the partial status.
+
+> **Rule:** Reporting "partially done, here's what remains" is always preferable to reporting "done" when deliverables are missing. The cost of a false completion report far exceeds the cost of an honest partial report.
+
 ---
 
 ### 9. Deferred Items Protocol

@@ -136,6 +136,35 @@ Before implementing, evaluate the request against these red flags:
 
 > **Important:** Pushback is not refusal. It's professional judgment. If the concern is ⚠️ (warning), note it and proceed. If it's 🛑 (stop), wait for human confirmation.
 
+### Phase 2b: Deliverables Extraction (MANDATORY for M/L tasks)
+
+After reading the plan/spec and before writing any code, extract a **concrete deliverables checklist** — not exit criteria (which are outcome-based) but a literal inventory of structural elements the plan requires.
+
+For each step you are implementing, scan the plan for:
+- **New functions/classes** the plan names (e.g., `render_left_column`, `render_center_column`)
+- **Layout structures** the plan specifies (e.g., `st.columns([1.3, 2.0, 1.3])`, `st.expander`)
+- **New files** the plan expects to be created
+- **Wiring/integration** points (e.g., "data flows via `analytics_data_bridge.py`")
+- **Specific replacements** (e.g., "replace `_render_analytics_kpi()` with `render_kpi_card()`")
+
+Record these as a checklist in your first message:
+
+```markdown
+### Deliverables Checklist (from plan §Step X.X)
+- [ ] New function: `render_left_column(d)` in Search.py
+- [ ] New function: `render_center_column(d, customer_360_result)` in Search.py
+- [ ] New function: `render_right_column(d)` in Search.py
+- [ ] Layout: `st.columns([1.3, 2.0, 1.3])` in results section
+- [ ] 3 collapsible `st.expander` sections in center column
+- [ ] Replace: `_render_analytics_kpi()` → `render_kpi_card()`
+```
+
+> **Rule:** If the plan says "REWRITE" for a file, the deliverables checklist must include every structural element from the plan's pseudocode for that file. "REWRITE" ≠ "swap a few function calls" — it means the page architecture changes.
+
+> **Rule:** The Evidence Bundle (Phase 5) MUST include **grep proof** for every item in this checklist. If an item is missing from the final code, it must be explicitly listed as "NOT DONE" with a reason.
+
+---
+
 ### Phase 3: Implement
 
 Follow the same implementation methodology as `@implement`:
@@ -170,6 +199,36 @@ Build a comparison table:
 ```
 
 > **Rule:** If any check **regressed** (new failures, new lint errors), fix them before proceeding. Do not hand off broken code.
+
+#### Structural Verification (MANDATORY for M/L tasks)
+
+In addition to regression checks, verify that every item in the Phase 2b Deliverables Checklist **actually exists in the codebase**. Use `grep` or `search` tools — do not rely on memory of what you wrote.
+
+```bash
+# Example: Verify 3-column layout exists in Search.py
+grep -n "st.columns\(\[1.3" src/pages/1_*Search*.py
+
+# Example: Verify new functions exist
+grep -n "def render_left_column" src/pages/1_*Search*.py
+grep -n "def render_center_column" src/pages/1_*Search*.py
+grep -n "def render_right_column" src/pages/1_*Search*.py
+
+# Example: Verify old pattern was replaced
+grep -n "_render_analytics_kpi" src/pages/2_*Analytics*.py  # Should return 0 matches
+```
+
+Build a **Deliverables Proof Table** in the Evidence Bundle:
+
+```markdown
+### Deliverables Proof
+| # | Required Element | Grep Command | Found? | File:Line |
+|---|-----------------|-------------|--------|----------|
+| 1 | `render_left_column(d)` | `grep -n "def render_left_column"` | ✅ | Search.py:450 |
+| 2 | `st.columns([1.3, 2.0, 1.3])` | `grep -n "st.columns"` | ✅ | Search.py:520 |
+| 3 | 3 `st.expander` sections | `grep -c "st.expander"` | ✅ | 3 matches |
+```
+
+> **Rule:** If any deliverable has `Found? ❌`, the task is **NOT complete**. Either implement it or report partial completion (see Partial Completion Protocol below). Never mark a task complete with missing deliverables.
 
 #### Rollback Protocol
 
@@ -305,21 +364,6 @@ If the Plan contains a `## Scope Changes` section, those changes are **authorita
 
 When your work is complete:
 
-**Context Health Check (multi-phase tasks only):**
-If subsequent phases remain in the current stage, evaluate your context capacity before continuing and include this line in your completion report:
-
-```
-Context health: [Green | Yellow | Red] — [brief assessment]
-```
-
-| Status | Meaning | Action |
-|--------|---------|--------|
-| 🟢 **Green** | Ample room remaining | Proceed normally |
-| 🟡 **Yellow** | Tight but feasible | Proceed efficiently — skip verbose explanations, defer non-critical file reads, summarize rather than quote |
-| 🔴 **Red** | Critically low | HARD STOP — report: *"Context critically low — cannot safely begin Phase N. Recommend starting Phase N in a new session."* Do NOT attempt the next phase. |
-
-> **Rule:** Never silently attempt a phase you don't have room to complete. A truncated phase is harder to recover from than a clean stop.
-
 **Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: call `notify_orchestrator` MCP tool as final step instead of presenting the Return to Orchestrator button.
 
 1. **Pre-commit checklist:**
@@ -347,6 +391,39 @@ Context health: [Green | Yellow | Red] — [brief assessment]
    ```
 
 5. **HARD STOP** — Do NOT offer to proceed to the next phase. Do NOT ask if you should continue. The Orchestrator owns all routing decisions. Present only the `Return to Orchestrator` handoff button.
+
+#### Partial Completion Protocol (Token Pressure / Scope Overflow)
+
+If you are running low on context window or realize mid-implementation that the task is larger than one session can complete, **do NOT declare the task complete**. Instead:
+
+1. **Stop implementing.** Commit whatever is stable and passing tests.
+2. **Report partial completion honestly:**
+
+```markdown
+**[Stage/Phase N] PARTIAL — session capacity reached.**
+
+### Completed
+- [ ] Item A — done, grep-verified
+- [ ] Item B — done, grep-verified
+
+### NOT Completed (requires follow-up session)
+- [ ] Item C — 3-column layout not started
+- [ ] Item D — expander architecture not started
+- [ ] Item E — right column panel not started
+
+### Deliverables Proof (completed items only)
+| # | Element | Found? | File:Line |
+|---|---------|--------|----------|
+| 1 | ... | ✅ | ... |
+
+### Recommendation
+Next session should focus on: [specific items with plan section references]
+```
+
+3. Do NOT update `pipeline-state.json` to `status: complete`.
+4. Present the `Return to Orchestrator` button with the partial status.
+
+> **Rule:** Reporting "partially done, here's what remains" is always preferable to reporting "done" when deliverables are missing. The cost of a false completion report (rework, lost trust, debugging why the UI looks wrong) far exceeds the cost of an honest partial report.
 
 ---
 
