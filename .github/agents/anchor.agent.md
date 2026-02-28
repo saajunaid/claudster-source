@@ -305,6 +305,21 @@ If the Plan contains a `## Scope Changes` section, those changes are **authorita
 
 When your work is complete:
 
+**Context Health Check (multi-phase tasks only):**
+If subsequent phases remain in the current stage, evaluate your context capacity before continuing and include this line in your completion report:
+
+```
+Context health: [Green | Yellow | Red] — [brief assessment]
+```
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| 🟢 **Green** | Ample room remaining | Proceed normally |
+| 🟡 **Yellow** | Tight but feasible | Proceed efficiently — skip verbose explanations, defer non-critical file reads, summarize rather than quote |
+| 🔴 **Red** | Critically low | HARD STOP — report: *"Context critically low — cannot safely begin Phase N. Recommend starting Phase N in a new session."* Do NOT attempt the next phase. |
+
+> **Rule:** Never silently attempt a phase you don't have room to complete. A truncated phase is harder to recover from than a clean stop.
+
 **Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: call `notify_orchestrator` MCP tool as final step instead of presenting the Return to Orchestrator button.
 
 1. **Pre-commit checklist:**
