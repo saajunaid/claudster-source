@@ -118,6 +118,7 @@ async def _run_pipeline_runner(
         proc = await asyncio.create_subprocess_exec(
             *command,
             cwd=str(WORKSPACE_ROOT),
+            stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -356,6 +357,7 @@ async def skip_stage(stage_to_skip: str, reason: str) -> dict[str, Any]:
             proc = await asyncio.create_subprocess_exec(
                 *command,
                 cwd=str(WORKSPACE_ROOT),
+                stdin=asyncio.subprocess.DEVNULL,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -582,6 +584,7 @@ async def run_command(
         process = await asyncio.create_subprocess_shell(
             command,
             cwd=str(WORKSPACE_ROOT),
+            stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
