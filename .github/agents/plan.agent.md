@@ -2,7 +2,7 @@
 name: Plan
 description: Strategic planning assistant - analyzes requirements and creates implementation plans without making code changes
 tools: ['codebase', 'search', 'fetch', 'usages', 'editFiles', 'runCommands', 'problems', 'terminalLastCommand']
-model: Claude Opus 4.6
+model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

@@ -2,7 +2,7 @@
 name: Orchestrator
 description: Pipeline brain - reads pipeline state, validates artefact contracts, and routes between agents. Does not write code or create designs. Manages the supervised-autonomous workflow.
 tools: [read/problems, read/readFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, junai/get_pipeline_status, junai/notify_orchestrator, junai/pipeline_init, junai/pipeline_reset, junai/satisfy_gate, junai/set_pipeline_mode, junai/skip_stage, junai/validate_deferred_paths]
-model: Claude Opus 4.6
+model: Claude Sonnet 4.6
 handoffs:
   - label: Generate PRD
     agent: PRD

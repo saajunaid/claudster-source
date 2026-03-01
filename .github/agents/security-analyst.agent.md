@@ -2,7 +2,7 @@
 name: Security Analyst
 description: Security analyst specializing in OWASP, vulnerability assessment, and secure code practices
 tools: ['codebase', 'search', 'fetch', 'usages', 'editFiles', 'runCommands', 'problems', 'terminalLastCommand']
-model: Claude Opus 4.6
+model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator
