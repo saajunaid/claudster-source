@@ -676,7 +676,7 @@ agent-docs/
 |----------|----------|--------|----------|
 | Track B plan (Juno UX Polish) | `plans/track-b-juno-ux-polish-v2.md` | completed | FEAT-2026-0218-juno-ux-polish-v2 |
 | Track B fix-up plan | `plans/track-b-fixup-post-review.md` | completed | FEAT-2026-0218-juno-ux-polish-v2 |
-| Track A ADR (Chat Widget) | `docs/architecture/ADR-chat-widget-architecture.md` | current/approved | FEAT-2026-0219-chat-widget-extraction |
+| Track A ADR (Chat Widget) | `docs/architecture/agentic-adr/ADR-chat-widget-architecture.md` | current/approved | FEAT-2026-0219-chat-widget-extraction |
 | Track A plan (Chat Widget) | `plans/track-a-chat-widget-microfrontend.md` | current/approved | FEAT-2026-0219-chat-widget-extraction |
 
 **Traceability note added**: Clarifies the three-tier placement system:

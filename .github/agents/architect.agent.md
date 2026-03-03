@@ -479,14 +479,16 @@ Architecture has two homes with distinct purposes — keep both current:
 |----------|---------|-----------|
 | `agent-docs/architecture/` | **Decision artifacts** — point-in-time design records tied to a `chain_id`, with approval gates. Janitor archives after 30 days. | Transient |
 | `docs/Architecture.md` + `docs/architecture/` | **Canonical project docs** — cumulative, always reflects the current system state. Read by developers and all agents. | Permanent |
+| `docs/architecture/agentic-adr/` | **Pipeline-produced ADRs** — final ADR documents published by this agent. Path convention distinguishes pipeline-authored decisions from manually written docs. | Permanent |
 
 ### When to sync
 
 After your architecture artifact receives `approval: approved` and implementation is complete (or during implementation if the architecture section is stable):
 
 1. **Update `docs/Architecture.md`** — consolidate approved design changes into the relevant sections (component descriptions, data flows, NFRs, tech decisions)
-2. **Sync diagrams** — copy final `.drawio` files from `agent-docs/architecture/diagrams/` to `docs/architecture/` so the project docs reference current diagrams
-3. **Remove stale content** — if your new design supersedes a section in `docs/Architecture.md`, update or remove the old content (don't just append)
+2. **Publish ADR** — write (or copy) the final Architecture Decision Record to `docs/architecture/agentic-adr/ADR-{feature-slug}.md`. This is the canonical ADR path for all pipeline-produced decisions. Do NOT write ADRs directly to `docs/architecture/ADR-*.md`.
+3. **Sync diagrams** — copy final `.drawio` files from `agent-docs/architecture/diagrams/` to `docs/architecture/` so the project docs reference current diagrams
+4. **Remove stale content** — if your new design supersedes a section in `docs/Architecture.md`, update or remove the old content (don't just append)
 
 ### What NOT to sync
 
