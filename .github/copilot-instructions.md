@@ -17,7 +17,7 @@ Everything in `.github/` here is the **pool source** that gets bundled into the 
 ```
 agent-sandbox/
 ├── .github/
-│   ├── agents/              ← 24 agent definition files (*.agent.md)
+│   ├── agents/              ← 25 agent definition files (*.agent.md)
 │   ├── skills/              ← Reusable skill bundles (domain knowledge packs)
 │   ├── prompts/             ← Reusable prompt files
 │   ├── instructions/        ← Coding convention files (*.instructions.md)
@@ -32,7 +32,7 @@ agent-sandbox/
 │   ├── diagrams/            ← Architecture and workflow reference diagrams
 │   ├── pipeline-state.json  ← Live pipeline state (gates, routing, artefacts)
 │   └── project-config.md   ← Project-specific token definitions
-├── validate_agents.py       ← Pre-publish gate: checks 24 agents + MCP smoke test
+├── validate_agents.py       ← Pre-publish gate: checks 25 agents + MCP smoke test
 ├── sync.ps1                 ← junai-pull / junai-push sync functions
 └── project-config.md        ← Workspace-level config
 ```
@@ -59,7 +59,7 @@ agent-sandbox  (local only — authoring source)
 
 ---
 
-## The 24 Agents
+## The 25 Agents
 
 Each agent is defined in `.github/agents/<name>.agent.md` with a YAML frontmatter block specifying `name`, `model`, `tools`, `handoffs`, and `description`, followed by detailed behavioral instructions for the agent.
 
@@ -68,7 +68,7 @@ Each agent is defined in `.github/agents/<name>.agent.md` with a YAML frontmatte
 | Model | Agents |
 |-------|--------|
 | Claude Opus 4.6 | `anchor`, `architect` — highest-rigor work |
-| Claude Sonnet 4.6 | `orchestrator`, `plan`, `prd`, `prompt-engineer`, `security-analyst`, `accessibility`, `code-reviewer`, `debug`, `mentor`, `project-manager`, `ux-designer`, `ui-ux-designer` |
+| Claude Sonnet 4.6 | `orchestrator`, `plan`, `prd`, `prompt-engineer`, `security-analyst`, `accessibility`, `code-reviewer`, `debug`, `mentor`, `project-manager`, `ux-designer`, `ui-ux-designer`, `knowledge-transfer` |
 | GPT-5.3-Codex | `implement`, `streamlit-developer`, `frontend-developer`, `data-engineer`, `devops`, `janitor`, `sql-expert`, `tester` |
 | Gemini 3.1 Pro (Preview) | `mermaid-diagram-specialist`, `svg-diagram` — visual artifact generation only |
 
@@ -85,6 +85,7 @@ Each agent is defined in `.github/agents/<name>.agent.md` with a YAML frontmatte
 | **PRD** | Captures requirements into a formal PRD document |
 | **Implement** | Writes production code following the plan |
 | **Tester / Code Reviewer / Debug / Security Analyst** | Quality gates at various pipeline stages |
+| **Knowledge Transfer** | Institutional memory — extracts durable knowledge from completed sessions and writes to `docs/gold-nuggets-log.md` and instruction files |
 | **Janitor** | Housekeeping — archives stale artefacts, removes dead code |
 
 ---
@@ -146,7 +147,7 @@ The server is registered in `.vscode/mcp.json` as `junai` and uses `${workspaceF
 ### Standard publish (after editing agents/skills/instructions):
 
 ```powershell
-# 1. Validate all 24 agents + MCP smoke test
+# 1. Validate all 25 agents + MCP smoke test
 cd E:\Projects\agent-sandbox
 .venv\Scripts\python.exe validate_agents.py
 
@@ -177,7 +178,7 @@ git push
 
 ## validate_agents.py
 
-Pre-publish gate at `E:\Projects\agent-sandbox\validate_agents.py`. Checks all 24 agents for:
+Pre-publish gate at `E:\Projects\agent-sandbox\validate_agents.py`. Checks all 25 agents for:
 - Required frontmatter fields (`name`, `model`, `tools`, `description`)
 - Model is in the known allowlist (`KNOWN_MODELS`)
 - Presence of `## §8` and `## §9` sections (or equivalent)
