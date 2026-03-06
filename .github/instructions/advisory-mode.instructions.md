@@ -48,16 +48,21 @@ A Diagnostic Brief must NOT:
 - Replace `@Orchestrator` routing decisions
 - Contain a full copy-paste phase implementation brief
 
-## Session Mechanics — Supervisor Mode (do not bake into agent definitions)
+## Session Mechanics — by Pipeline Mode
 
-These rules apply in **supervised mode only** and must NOT be written into `orchestrator.agent.md` or any agent definition — they would conflict with the future autonomous pipeline.
+These rules apply in production and must NOT be baked into `orchestrator.agent.md` or any agent definition — they are routing meta-rules, not agent behaviour.
 
-- **Orchestrator handoff buttons (`send: false`)** — clicking a button routes to the named agent **in the same chat session**. Context is preserved. Do NOT tell the user to open a new session for these transitions.
-- **When to start a new session** — only when the user is returning to `@Orchestrator` to begin the *next routing cycle* after a completed stage. A new session keeps Orchestrator's reasoning clean and prevents the previous agent's context from bleeding into routing decisions.
-- **Pattern:**
-  1. `@Orchestrator` routes → user clicks handoff button → `@specialist agent` runs *(same session)*
-  2. Stage completes → user opens **new session** → `@Orchestrator` → "Stage X complete, resume"
-  3. `@Orchestrator` routes again → user clicks handoff button → next agent *(same session)*
+### Supervised mode
+- Orchestrator presents a **handoff button (`send: false`)**; the user must click to approve the routing decision and send context to the specialist.
+- Specialist completes work → presents **Return to Orchestrator button** → user clicks to begin the next routing cycle.
+- **Start a new session** when returning to Orchestrator after a completed stage — keeps Orchestrator's context clean.
+- **Pattern:** `@Orchestrator` (new session) → user clicks button → `@specialist` (same session) → user clicks Return → new session for next cycle.
+
+### Assisted / Autopilot mode
+- Orchestrator **invokes the specialist directly** via VS Code auto-routing (no button click needed).
+- Specialist completes work → **invokes `@Orchestrator` directly** via VS Code auto-routing (no button click needed).
+- The loop `Orchestrator → Specialist → Orchestrator → ...` runs without user intervention for autopilot; assisted pauses at supervision gates only.
+- **Do NOT start a new session** between cycles in autopilot/assisted — the auto-routing chain preserves context across the full pipeline run.
 
 ## Auto-Routing Boundary (VS Code Copilot agent invocation)
 

@@ -105,6 +105,11 @@ Each stage is gated. Gates are stored in `.github/pipeline-state.json`. The Orch
 ### Auto-Routing and Pipeline State
 VS Code Copilot can invoke named agents automatically without a button click. **This does not bypass pipeline gates** — enforcement is via `pipeline-state.json` + MCP `satisfy_gate` calls, not button clicks. However, auto-routing from **outside the pipeline** (i.e. from default Copilot chat rather than from Orchestrator) will not update `pipeline-state.json` and causes state desync. Always enter the pipeline via `@Orchestrator`. See `advisory-mode.instructions.md` for the full boundary rule.
 
+**How it works per mode:**
+- `supervised` — Orchestrator shows handoff button; user clicks = approval. Specialist shows Return button; user clicks to start next cycle.
+- `assisted` — Orchestrator invokes specialist directly via auto-routing. Specialist invokes `@Orchestrator` directly on completion. Stops only at supervision gates.
+- `autopilot` — Fully hands-free loop after `intent_approved`. Orchestrator → Specialist → Orchestrator chains without any button clicks.
+
 ### Key Pipeline Conventions
 - `chain_id` format: `FEAT-YYYY-MMDD-{slug}` — links all artefacts for a feature
 - Artefacts in `agent-docs/` are **transient** (inter-agent working space, not project docs)

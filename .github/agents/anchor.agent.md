@@ -371,7 +371,7 @@ If the Plan contains a `## Scope Changes` section, those changes are **authorita
 
 When your work is complete:
 
-**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: call `notify_orchestrator` MCP tool as final step instead of presenting the Return to Orchestrator button.
+**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: call `notify_orchestrator` MCP tool to record stage completion, then invoke `@Orchestrator` directly — VS Code will auto-route. Do NOT present the Return to Orchestrator button.
 
 1. **Pre-commit checklist:**
    - If the plan introduces new environment variables: write each to `.env` with its default value and a comment before committing
