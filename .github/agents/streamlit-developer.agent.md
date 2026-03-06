@@ -1,7 +1,7 @@
 ---
 name: Streamlit Developer
 description: Expert Streamlit developer for building production-ready dashboards with branding and performance
-tools: ['codebase', 'editFiles', 'search', 'usages', 'problems', 'runCommands']
+tools: ['codebase', 'editFiles', 'search', 'usages', 'problems', 'runCommands', 'runInTerminal', 'terminalLastCommand', 'terminalSelection']
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
@@ -53,6 +53,7 @@ When receiving a handoff:
 | Task | Load This Skill |
 |------|----------------|
 | Streamlit patterns and best practices | `.github/skills/frontend/streamlit-dev/SKILL.md` ⬅️ PRIMARY |
+| HTML/CSS within Streamlit (injection, custom components) | `.github/skills/frontend/ui-review/SKILL.md` ⬅️ PRIMARY |
 | UI implementation review | `.github/skills/frontend/ui-review/SKILL.md` |
 | Refactoring components | `.github/skills/coding/refactoring/SKILL.md` |
 | Data visualization | `.github/skills/data/data-analysis/SKILL.md` |
@@ -62,15 +63,81 @@ When receiving a handoff:
 
 ### Instructions (Auto-applied, but reference if needed)
 - **Streamlit patterns**: `.github/instructions/streamlit.instructions.md` ⬅️ PRIMARY
+- **Frontend styling / HTML / CSS**: `.github/instructions/frontend.instructions.md` ⬅️ PRIMARY
 - **Plotly charts**: `.github/instructions/plotly-charts.instructions.md`
 - **Accessibility**: `.github/instructions/accessibility.instructions.md`
-- **Frontend styling**: `.github/instructions/frontend.instructions.md`
 - **Portability**: `.github/instructions/portability.instructions.md`
 - **Code quality (DRY, KISS, YAGNI)**: `.github/instructions/code-review.instructions.md`
 
 > **DRY Reminder**: Before creating new UI components, check the project's components directory and app config (see `project-config.md` → Project Structure).
 > Import colors from the app config module — never re-declare local color constants.
 > Extract reusable helpers when a pattern appears in 2+ components.
+
+## HTML/CSS Within Streamlit
+
+You are **the agent** for all HTML/CSS work that lives inside Streamlit pages. This includes CSS injection, custom Streamlit components, and theme overrides — you do not need to hand these tasks to Frontend Developer.
+
+### CSS Injection Patterns
+
+```python
+# Global CSS injection — put in apply_page_config or a shared header module
+st.markdown("""
+<style>
+    /* Scoped to your app — use specific selectors to avoid Streamlit internals */
+    .stMainBlockContainer { max-width: 1400px; }
+    .metric-card { border-radius: 8px; padding: 1rem; background: var(--brand-surface); }
+</style>
+""", unsafe_allow_html=True)
+
+# Per-component HTML block
+st.markdown("""
+<div class="metric-card">
+    <span class="metric-label">Total Cases</span>
+    <span class="metric-value">1,234</span>
+</div>
+""", unsafe_allow_html=True)
+```
+
+### Theme Overrides (`.streamlit/config.toml`)
+
+```toml
+[theme]
+primaryColor = "#your-brand-primary"   # from project-config.md
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f8f9fa"
+textColor = "#1a1a2e"
+font = "sans serif"
+```
+
+### Custom Streamlit Components
+
+For UI patterns that CSS-only cannot solve (floating elements, modals, toast notifications):
+
+```python
+import streamlit.components.v1 as components
+
+# Declare a component that injects into the parent document
+def floating_action_button(label: str, key: str) -> bool:
+    return components.declare_component(
+        name="floating_action_button",
+        path=str(Path(__file__).parent / "_fab_frontend"),  # HTML/JS/CSS bundle
+    )(label=label, key=key, default=False)
+```
+
+> **Why custom components instead of CSS:** Streamlit wraps all content in 20-30 nested `<div>` containers. `position: fixed/absolute` CSS breaks in this context. Custom components inject into `window.parent.document.body` directly, bypassing the wrapper hierarchy. See **Known Framework Constraints** below and `.github/instructions/streamlit.instructions.md` → "Framework Limitations & Workarounds".
+
+### HTML/CSS Decision Guide
+
+| What you need | Best approach |
+|---------------|---------------|
+| Custom card/badge styling | `st.markdown(<div>...</div>, unsafe_allow_html=True)` + injected CSS |
+| Global font / color / spacing tweaks | `.streamlit/config.toml` theme + CSS injection |
+| Responsive layout | `st.columns()` + CSS injection for breakpoints |
+| Floating widget (chat, FAB, modal, toast) | `streamlit.components.v1.declare_component()` |
+| Data table custom rows | `st.dataframe` with `column_config` (prefer) or HTML table via `st.markdown` |
+| Animations / transitions | CSS injection — be conservative, Streamlit re-renders on every interaction |
+
+---
 
 ## CRITICAL: Code Portability
 
