@@ -59,6 +59,21 @@ These rules apply in **supervised mode only** and must NOT be written into `orch
   2. Stage completes → user opens **new session** → `@Orchestrator` → "Stage X complete, resume"
   3. `@Orchestrator` routes again → user clicks handoff button → next agent *(same session)*
 
+## Auto-Routing Boundary (VS Code Copilot agent invocation)
+
+VS Code Copilot can now automatically invoke named agents during a conversation without the user clicking a button. This capability does **not** change the advisory-chat boundary — it makes enforcing it more important.
+
+**Advisory chat must NEVER auto-invoke a pipeline agent**, even when asked to:
+- Auto-invoking a specialist agent (e.g. `@Implement`, `@Streamlit-Developer`) from outside Orchestrator **will not update `pipeline-state.json`**
+- Work done via auto-routing from advisory chat is invisible to the pipeline — Orchestrator will re-do it or conflict with it on the next run
+- There is no mechanism for advisory chat to call `satisfy_gate` — the pipeline state will be permanently at the wrong stage after the work is done
+
+**When a user asks advisory chat to route to a specialist:**
+
+> *"I can't do that directly — routing to a pipeline agent from here would cause pipeline state desync. Go to `@Orchestrator` and say: '[one-line task description]'. Orchestrator will check the state and route correctly."*
+
+The only exception is a **Diagnostic Brief** for a bug raised in *this* conversation (non-pipeline work). A Diagnostic Brief does not advance pipeline stage, does not call MCP tools, and is explicitly labelled as outside the pipeline.
+
 ## Summary
 
-All pipeline execution — regardless of how obvious the next step seems — routes through `@Orchestrator` in a new session. Advisory chat advises. Agents execute.
+All pipeline execution — regardless of how obvious the next step seems — routes through `@Orchestrator` in a new session. Advisory chat advises. Agents execute. Auto-routing from advisory chat to pipeline agents is explicitly prohibited.
