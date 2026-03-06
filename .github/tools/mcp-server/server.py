@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import signal as _signal
+import subprocess as _subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -559,6 +561,10 @@ async def pipeline_reset(
     )
 
 
+# Hard cap: prevents agents passing timeout=1200 from freezing the chat for 20 min.
+_RUN_COMMAND_MAX_TIMEOUT = 600
+
+
 @mcp.tool()
 async def run_command(
     command: str,
@@ -569,17 +575,32 @@ async def run_command(
 
     Use this for running tests (pytest, playwright), linters (black, ruff),
     formatters, build steps, or any other shell command the pipeline needs to
-    execute hands-free. Agents should prefer this over asking the user to run
-    commands manually in a terminal.
+    execute hands-free. Intended for use by pipeline agents, not general chat.
+
+    **Windows note:** Do NOT use pytest-xdist parallel flags (-n auto, -n N) in
+    commands passed to this tool. Worker subprocesses inherit stdout/stderr pipe
+    handles and can prevent the tool from returning if a worker exits abnormally.
+    Use plain `pytest tests/ -q` instead.
 
     Args:
-        command: Shell command to run (e.g. ".venv/Scripts/pytest tests/ -v").
+        command: Shell command to run (e.g. ".venv/Scripts/pytest tests/ -q").
                  Executed in the workspace root directory with shell=True.
-        timeout: Seconds before the process is killed. Default 60s. Increase for
-                 long test suites, Playwright runs, or slow build steps.
+        timeout: Seconds before the process is killed. Default 60s. Maximum 600s.
+                 Increase for slow test suites or Playwright runs, but prefer
+                 splitting large suites into smaller targeted runs.
         max_output_chars: Truncate combined output to this many characters to
                           avoid flooding the context window. Default 20000.
     """
+    # Enforce hard cap — ignore caller-supplied values above the maximum.
+    effective_timeout = min(float(timeout), float(_RUN_COMMAND_MAX_TIMEOUT))
+
+    # On Windows, CREATE_NEW_PROCESS_GROUP puts the subprocess into its own
+    # process group. This allows CTRL_BREAK_EVENT to signal the ENTIRE tree
+    # (including pytest-xdist workers) rather than just the shell process,
+    # which is essential for releasing inherited pipe write-end handles so
+    # communicate() can return instead of hanging indefinitely.
+    _flags = _subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
+
     try:
         process = await asyncio.create_subprocess_shell(
             command,
@@ -587,19 +608,36 @@ async def run_command(
             stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            creationflags=_flags,
         )
         try:
             stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                process.communicate(), timeout=float(timeout)
+                process.communicate(), timeout=effective_timeout
             )
         except asyncio.TimeoutError:
-            process.kill()
-            await process.communicate()
+            # Signal the entire process group (kills xdist workers too on Windows),
+            # then give them a short grace period to close their pipe handles.
+            try:
+                if sys.platform == "win32":
+                    os.kill(process.pid, _signal.CTRL_BREAK_EVENT)
+                else:
+                    process.kill()
+            except Exception:
+                process.kill()
+            try:
+                await asyncio.wait_for(process.communicate(), timeout=5.0)
+            except asyncio.TimeoutError:
+                pass  # Workers still alive; accept the orphan and move on
             return {
                 "success": False,
                 "exit_code": -1,
                 "command": command,
-                "reason": f"Command timed out after {timeout}s",
+                "reason": (
+                    f"Command timed out after {effective_timeout:.0f}s. "
+                    "If running pytest, avoid '-n auto' (xdist workers inherit pipe handles "
+                    "on Windows and can prevent this tool from returning). "
+                    "Use plain 'pytest tests/ -q' instead."
+                ),
                 "output": "",
                 "truncated": False,
                 "cwd": str(WORKSPACE_ROOT),
