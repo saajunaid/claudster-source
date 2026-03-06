@@ -13,8 +13,9 @@
     "anchor":      { "agent": "Anchor",          "agent_file": "agents/anchor.agent.md" },
     "tester":      { "agent": "Tester",          "agent_file": "agents/tester.agent.md" },
     "review":      { "agent": "Code Reviewer",   "agent_file": "agents/code-reviewer.agent.md" },
-    "debug":       { "agent": "Debug",           "agent_file": "agents/debug.agent.md" },
-    "devops":      { "agent": "DevOps",          "agent_file": "agents/devops.agent.md" },
+    "debug":             { "agent": "Debug",              "agent_file": "agents/debug.agent.md" },
+    "knowledge_transfer": { "agent": "Knowledge Transfer", "agent_file": "agents/knowledge-transfer.agent.md" },
+    "devops":             { "agent": "DevOps",             "agent_file": "agents/devops.agent.md" },
     "janitor":     { "agent": "Janitor",         "agent_file": "agents/janitor.agent.md" },
     "closed":      { "agent": "None",            "agent_file": null },
     "BLOCKED":     { "agent": "None",            "agent_file": null }
@@ -355,6 +356,39 @@
       "gate": null,
       "hotfix_only": false,
       "priority": 10
+    },
+    {
+      "id": "T-34",
+      "from_stage": "anchor",
+      "to_stage": "knowledge_transfer",
+      "event": "knowledge_capture",
+      "guards": [],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 1,
+      "_comment": "human-triggered optional enrichment: user invokes @knowledge-transfer after Anchor completes. Terminal — no downstream transition. Does not block or advance the main pipeline."
+    },
+    {
+      "id": "T-35",
+      "from_stage": "implement",
+      "to_stage": "knowledge_transfer",
+      "event": "knowledge_capture",
+      "guards": [],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 1,
+      "_comment": "human-triggered optional enrichment: user invokes @knowledge-transfer after Implement completes. Terminal — no downstream transition. Does not block or advance the main pipeline."
+    },
+    {
+      "id": "T-36",
+      "from_stage": "debug",
+      "to_stage": "knowledge_transfer",
+      "event": "knowledge_capture",
+      "guards": [],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 1,
+      "_comment": "human-triggered optional enrichment: user invokes @knowledge-transfer after Debug resolves an incident. Terminal — no downstream transition. Does not block or advance the main pipeline."
     }
   ]
 }
