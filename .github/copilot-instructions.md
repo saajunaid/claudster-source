@@ -106,10 +106,28 @@ Each stage is gated. Gates are stored in `.github/pipeline-state.json`. The Orch
 ### Auto-Routing and Pipeline State
 VS Code Copilot can invoke named agents automatically without a button click. **This does not bypass pipeline gates** — enforcement is via `pipeline-state.json` + MCP `satisfy_gate` calls, not button clicks. However, auto-routing from **outside the pipeline** (i.e. from default Copilot chat rather than from Orchestrator) will not update `pipeline-state.json` and causes state desync. Always enter the pipeline via `@Orchestrator`. See `advisory-mode.instructions.md` for the full boundary rule.
 
+**Routing mechanism:** In `assisted` and `autopilot` modes, agents trigger routing by writing `@AgentName [prompt]` as the final line of their response. VS Code picks up the `@AgentName` reference and auto-invokes that agent. Handoff buttons (`send: false`) are only used for supervised-mode approval clicks — they are never auto-clicked by any automation.
+
 **How it works per mode:**
 - `supervised` — Orchestrator shows handoff button; user clicks = approval. Specialist shows Return button; user clicks to start next cycle.
-- `assisted` — Orchestrator invokes specialist directly via auto-routing. Specialist invokes `@Orchestrator` directly on completion. Stops only at supervision gates.
-- `autopilot` — Fully hands-free loop after `intent_approved`. Orchestrator → Specialist → Orchestrator chains without any button clicks.
+- `assisted` — Orchestrator writes `@[AgentName] [routing prompt]` as its final line; VS Code auto-invokes the specialist. Specialist writes `@Orchestrator Stage complete — [summary]...` when done; VS Code auto-invokes Orchestrator. Stops only at supervision gates.
+- `autopilot` — Identical to assisted routing; additionally, most supervision gates are auto-satisfied. Fully hands-free loop after `intent_approved`.
+
+### VS Code Autopilot Integration
+VS Code introduced a distinct **Autopilot permission level** (Chat view permissions picker, preview) that auto-approves all tool calls, auto-retries errors, and auto-responds to blocking clarification questions. This is separate from junai's `pipeline_mode: autopilot`.
+
+**The two autopilot concepts are complementary, not competing:**
+
+| Layer | Scope | Controls |
+|-------|-------|----------|
+| **VS Code Autopilot** (permission level) | Runtime tool execution | Auto-approves tool calls, auto-retries MCP errors, auto-responds to blocking questions |
+| **junai `pipeline_mode: autopilot`** (state machine) | Pipeline orchestration | Stage routing, artefact contracts, gate enforcement, model-per-specialist, cross-session continuity |
+
+**For fully hands-free pipeline runs**, enable both:
+1. VS Code Chat → permissions picker → **Autopilot (Preview)**
+2. Set `"pipeline_mode": "autopilot"` in `.github/pipeline-state.json`
+
+With both enabled: `@Orchestrator` reads state → writes `@Specialist [routing prompt]` → VS Code invokes specialist → specialist calls MCP tools (auto-approved) → specialist writes `@Orchestrator Stage complete — [summary]...` → VS Code invokes Orchestrator → repeat.
 
 ### Key Pipeline Conventions
 - `chain_id` format: `FEAT-YYYY-MMDD-{slug}` — links all artefacts for a feature

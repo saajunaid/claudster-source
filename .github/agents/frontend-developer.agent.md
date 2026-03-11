@@ -208,7 +208,7 @@ Context health: [Green | Yellow | Red] — [brief assessment]
 
 > **Rule:** Never silently attempt a phase you don't have room to complete. A truncated phase is harder to recover from than a clean stop.
 
-**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: call `notify_orchestrator` MCP tool to record stage completion, then invoke `@Orchestrator` directly — VS Code will auto-route. Do NOT present the Return to Orchestrator button.
+**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: call `notify_orchestrator` MCP tool to record stage completion, then end your response with `@Orchestrator Stage complete — [one-line summary]. Read pipeline-state.json and _routing_decision, then route.` VS Code will invoke Orchestrator automatically — do NOT present the Return to Orchestrator button.
 
 1. **Pre-commit checklist:**
    - If the plan introduces new environment variables: write each to `.env` with its default value and a comment before committing

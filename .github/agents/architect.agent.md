@@ -575,7 +575,7 @@ When context window is limited, read in this order:
 
 When your work is complete:
 
-**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: invoke `@Orchestrator` directly — VS Code will auto-route back without a button click. Do NOT present the Return to Orchestrator button.
+**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: end your response with `@Orchestrator Stage complete — [one-line summary]. Read pipeline-state.json and _routing_decision, then route.` VS Code will invoke Orchestrator automatically — do NOT present the Return to Orchestrator button.
 
 1. **Pre-commit checklist:**
   - If the plan introduces new environment variables: write each to `.env` with its default value and a comment before committing

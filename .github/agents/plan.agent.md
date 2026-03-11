@@ -539,7 +539,7 @@ When your plan is complete:
 4. **HARD STOP.** Do NOT offer to proceed to implementation. Do NOT ask if you should continue.
    Present only the **Return to Orchestrator** handoff button.
 
-> **Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot` in `pipeline-state.json`: invoke `@Orchestrator` directly — VS Code will auto-route back without a button click. Do NOT present the Return to Orchestrator button.
+> **Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot` in `pipeline-state.json`: end your response with `@Orchestrator Stage complete — [one-line summary]. Read pipeline-state.json and _routing_decision, then route.` VS Code will invoke Orchestrator automatically — do NOT present the Return to Orchestrator button.
 
 ---
 

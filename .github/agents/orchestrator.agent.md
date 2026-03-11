@@ -93,8 +93,8 @@ After loading state, read `_notes._routing_decision` and branch on `pipeline_mod
 2. If `_routing_decision` exists and not blocked:
    - **Cross-check (GAP-I2-a):** Run `junai pipeline next` in terminal and compare its `next_stage` against `_routing_decision.next_stage`. If they differ, the stored decision is stale — run §9.2 Stage Drift / Re-entry Resync instead of routing from the stale value.
    - `pipeline_mode: supervised` → present the target handoff button and WAIT for user click.
-   - `pipeline_mode: assisted` → invoke the target agent immediately with the routing prompt.
-   - `pipeline_mode: autopilot` → invoke the target agent immediately; most gates are auto-satisfied.
+   - `pipeline_mode: assisted` → end your response with `@[AgentName] [routing prompt]` on its own line. VS Code routes to the agent automatically — do NOT present a handoff button.
+   - `pipeline_mode: autopilot` → same as assisted; additionally, most supervision gates are auto-satisfied. Write `@[AgentName] [routing prompt]` as the final line of your response.
 3. If `_routing_decision` does not exist:
    - If `current_stage: intent`:
      - **Autopilot fast-path (no user prompt needed):** If `pipeline_mode: autopilot` — do NOT run the intake classification interview. Instead: search for artefacts on disk using the `feature` slug from `pipeline-state.json`:

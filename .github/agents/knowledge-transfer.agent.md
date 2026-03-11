@@ -163,7 +163,7 @@ When extraction is complete, output the following report and then HARD STOP:
 - docs/gold-nuggets-log.md → prepended new entry
 ```
 
-**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: invoke `@Orchestrator` directly — VS Code will auto-route back without a button click. Do NOT present the Return to Orchestrator button.
+**Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot`: end your response with `@Orchestrator Stage complete — [one-line summary]. Read pipeline-state.json and _routing_decision, then route.` VS Code will invoke Orchestrator automatically — do NOT present the Return to Orchestrator button.
 
 **HARD STOP** — Do NOT offer to do more extraction. Do NOT continue scanning. The Orchestrator owns all routing decisions. Present the Return to Orchestrator button (supervised mode only) or the Formalise ADR button if flagged.
 

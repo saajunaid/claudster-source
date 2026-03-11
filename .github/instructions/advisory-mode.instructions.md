@@ -59,8 +59,8 @@ These rules apply in production and must NOT be baked into `orchestrator.agent.m
 - **Pattern:** `@Orchestrator` (new session) → user clicks button → `@specialist` (same session) → user clicks Return → new session for next cycle.
 
 ### Assisted / Autopilot mode
-- Orchestrator **invokes the specialist directly** via VS Code auto-routing (no button click needed).
-- Specialist completes work → **invokes `@Orchestrator` directly** via VS Code auto-routing (no button click needed).
+- Orchestrator **writes `@[AgentName] [routing prompt]` as its final response line** — VS Code picks up the `@AgentName` reference and auto-invokes the specialist (no button click needed).
+- Specialist completes work → **writes `@Orchestrator Stage complete — [summary]. Read pipeline-state.json and _routing_decision, then route.` as its final response line** — VS Code auto-invokes Orchestrator (no button click needed).
 - The loop `Orchestrator → Specialist → Orchestrator → ...` runs without user intervention for autopilot; assisted pauses at supervision gates only.
 - **Do NOT start a new session** between cycles in autopilot/assisted — the auto-routing chain preserves context across the full pipeline run.
 
