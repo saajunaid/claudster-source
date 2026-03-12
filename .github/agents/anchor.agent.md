@@ -298,6 +298,8 @@ Load the same skills and instructions as `@implement`. Key references:
 | Refactoring | `.github/skills/coding/refactoring/SKILL.md` |
 | Verification loop | `.github/skills/workflow/verification-loop/SKILL.md` |
 
+**Mandatory trigger:** For any request involving schema migration, legacy→target table mapping, query parity checks, or old/new column reconciliation, load `.github/skills/data/schema-migration/SKILL.md` before implementation.
+
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values.
 
 ### Auto-Applied Instructions

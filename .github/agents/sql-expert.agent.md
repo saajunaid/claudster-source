@@ -55,6 +55,10 @@ For complex database work, leverage skills and collaborate:
 - **Database connectivity testing**: Read `.github/skills/data/db-testing/SKILL.md` for connection testing patterns
 - **Schema migration**: Read `.github/skills/data/schema-migration/SKILL.md` when migrating queries between schema versions (column mapping, parity testing, query translation)
 
+### Mandatory Skill Triggers
+- **MUST load schema-migration skill first** for schema version transitions, table/column renames, table merges/splits, old→new query rewrites, or parity checks between legacy and target result sets.
+- If migration scope is unclear, begin with `.github/skills/data/schema-migration/SKILL.md` Phase 1 (Schema Forensics) before proposing SQL changes.
+
 ### Instructions
 - **SQL guidelines**: `.github/instructions/sql.instructions.md` ⬅️ PRIMARY
 - **MSSQL DBA patterns**: `.github/instructions/mssql-dba.instructions.md` — SQL Server administration & maintenance

@@ -46,6 +46,10 @@ For complex data work, leverage skills and collaborate:
 - **Database connectivity testing**: Read `.github/skills/data/db-testing/SKILL.md` for connection testing
 - **Schema migration**: Read `.github/skills/data/schema-migration/SKILL.md` when tables are renamed, consolidated, or restructured and the app's queries/mappings must be updated
 
+### Mandatory Skill Triggers
+- **MUST load schema-migration skill first** when requests involve legacy→target table transitions, table consolidation/splitting, renamed columns, query parity validation, or mapping old query outputs to new schemas.
+- If any of the above conditions are present, read `.github/skills/data/schema-migration/SKILL.md` before planning or proposing query rewrites.
+
 ### Instructions
 - **SQL guidelines**: `.github/instructions/sql.instructions.md` ⬅️ PRIMARY
 - **Python patterns**: `.github/instructions/python.instructions.md`
