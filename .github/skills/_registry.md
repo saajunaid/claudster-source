@@ -35,6 +35,7 @@ Load a skill by name from its category folder. See `project-config.md` for proje
 | Data Loader | `data/data-loader/` | Loading and transforming data |
 | Database Design | `data/database-design/` | Designing database schemas |
 | DB Testing | `data/db-testing/` | Testing database connectivity and queries |
+| Schema Migration | `data/schema-migration/` | Migrating app data access layer between schema versions (mapping, parity testing, query translation) |
 
 ### Frontend
 

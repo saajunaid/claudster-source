@@ -44,6 +44,7 @@ For complex data work, leverage skills and collaborate:
 - **Use data-analysis skill**: Read `.github/skills/data/data-analysis/SKILL.md` for analysis patterns
 - **Use data-loader skill**: Read `.github/skills/data/data-loader/SKILL.md` for loading patterns
 - **Database connectivity testing**: Read `.github/skills/data/db-testing/SKILL.md` for connection testing
+- **Schema migration**: Read `.github/skills/data/schema-migration/SKILL.md` when tables are renamed, consolidated, or restructured and the app's queries/mappings must be updated
 
 ### Instructions
 - **SQL guidelines**: `.github/instructions/sql.instructions.md` ⬅️ PRIMARY

@@ -53,6 +53,7 @@ For complex database work, leverage skills and collaborate:
 - **SQL patterns and optimization**: Read `.github/skills/coding/sql/SKILL.md` for query standards and best practices
 - **Use data-analysis skill**: Read `.github/skills/data/data-analysis/SKILL.md` to understand data patterns
 - **Database connectivity testing**: Read `.github/skills/data/db-testing/SKILL.md` for connection testing patterns
+- **Schema migration**: Read `.github/skills/data/schema-migration/SKILL.md` when migrating queries between schema versions (column mapping, parity testing, query translation)
 
 ### Instructions
 - **SQL guidelines**: `.github/instructions/sql.instructions.md` ⬅️ PRIMARY
