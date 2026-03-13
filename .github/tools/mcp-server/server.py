@@ -242,6 +242,30 @@ async def notify_orchestrator(
     refreshed_state = _load_pipeline_state()
     refreshed_notes = refreshed_state.setdefault("_notes", {})
     refreshed_notes["_routing_decision"] = routing_decision
+
+    # ── Append to _routing_history (50-cap with rotation) ─────────────────
+    history = refreshed_notes.setdefault("_routing_history", [])
+    history.append({
+        "timestamp": _to_iso_utc(),
+        "from": stage_completed,
+        "to": routing_decision.get("to_stage") or routing_decision.get("next_stage"),
+        "result_status": result_status,
+        "blocked": routing_decision.get("blocked", False),
+    })
+    if len(history) > 50:
+        refreshed_notes["_routing_history"] = history[-40:]  # Drop oldest 10+
+
+    # ── Append pre-transition snapshot to _stage_history (50-cap) ─────────
+    stage_history = refreshed_notes.setdefault("_stage_history", [])
+    stage_history.append({
+        "timestamp": _to_iso_utc(),
+        "stage": stage_completed,
+        "result_status": result_status,
+        "artefact_path": artefact_path,
+    })
+    if len(stage_history) > 50:
+        refreshed_notes["_stage_history"] = stage_history[-40:]
+
     _save_pipeline_state(refreshed_state)
 
     return routing_decision
@@ -425,6 +449,154 @@ async def satisfy_gate(gate_name: str) -> dict[str, Any]:
         "success": True,
         "supervision_gate": gate,
         "satisfied": True,
+    }
+
+
+@mcp.tool()
+async def update_notes(
+    updates: dict[str, Any],
+) -> dict[str, Any]:
+    """Merge key-value pairs into _notes in pipeline-state.json.
+
+    This is the ONLY correct way to write _notes.* fields. Do not use editFiles
+    for _notes — all pipeline-state writes must go through MCP tools to maintain
+    a single authoritative writer and prevent concurrent-write conflicts.
+
+    Performs a shallow merge at the top level of _notes: each key in ``updates``
+    replaces the corresponding key in _notes (or creates it if absent).
+    Keys not present in ``updates`` are left unchanged.
+
+    Args:
+        updates: Dictionary of key-value pairs to merge into _notes.
+                 Example: {"handoff_payload": {"required_skills": ["pega-read"],
+                           "upstream_artefact": ".github/plans/feature.md"}}
+    """
+    if not updates:
+        return {"success": False, "reason": "updates dict is empty — nothing to write."}
+
+    state = _load_pipeline_state()
+    notes = state.setdefault("_notes", {})
+    notes.update(updates)
+    _save_pipeline_state(state)
+    return {
+        "success": True,
+        "updated_keys": list(updates.keys()),
+    }
+
+
+# Pipeline stage ordering for dependency checks
+_STAGE_ORDER = [
+    "intent", "prd", "architect", "plan", "implement", "tester", "review", "closed",
+]
+
+
+@mcp.tool()
+async def replay_stage(
+    stage_name: str,
+    reason: str,
+) -> dict[str, Any]:
+    """Reset a single stage to not_started for re-execution without clearing the pipeline.
+
+    Only available in supervised mode — too risky for autopilot/assisted.
+    Cannot replay a stage if a downstream stage has already completed
+    (must replay the chain from that point).
+
+    Preserves _notes for continuity. Increments the stage's retry_count.
+    Writes a record to _notes._replay_log[].
+
+    Args:
+        stage_name: The stage to replay (e.g. 'implement', 'tester').
+        reason: Why the replay is needed.
+    """
+    state = _load_pipeline_state()
+
+    # ── Guard: supervised mode only ───────────────────────────────────────
+    mode = state.get("pipeline_mode", "supervised")
+    if mode != "supervised":
+        return {
+            "success": False,
+            "reason": (
+                f"replay_stage is only available in supervised mode "
+                f"(current mode: {mode}). Switch with set_pipeline_mode first."
+            ),
+        }
+
+    # ── Guard: stage must exist ───────────────────────────────────────────
+    stages = state.get("stages", {})
+    if stage_name not in stages:
+        return {
+            "success": False,
+            "reason": f"Unknown stage '{stage_name}'. Known stages: {list(stages.keys())}",
+        }
+
+    # ── Guard: cannot replay if downstream completed stage depends on it ──
+    if stage_name in _STAGE_ORDER:
+        stage_idx = _STAGE_ORDER.index(stage_name)
+        for downstream in _STAGE_ORDER[stage_idx + 1:]:
+            if downstream in stages and stages[downstream].get("status") == "complete":
+                return {
+                    "success": False,
+                    "reason": (
+                        f"Cannot replay '{stage_name}' because downstream stage "
+                        f"'{downstream}' is already complete. Replay from "
+                        f"'{downstream}' first, or use pipeline_reset."
+                    ),
+                }
+
+    # ── Reset the stage ───────────────────────────────────────────────────
+    stage_record = stages[stage_name]
+    old_status = stage_record.get("status")
+    stage_record["status"] = "not_started"
+    stage_record["artefact"] = None
+    stage_record["completed_at"] = None
+    retry_count = stage_record.get("retry_count", 0)
+    stage_record["retry_count"] = retry_count + 1
+
+    # Update current_stage to the replayed stage
+    state["current_stage"] = stage_name
+    state["last_updated"] = _to_iso_utc()
+
+    # ── Restore input snapshot if available ────────────────────────────────
+    notes = state.setdefault("_notes", {})
+    stage_inputs = notes.get("_stage_inputs", {})
+    restored_input = stage_inputs.get(stage_name)
+    if restored_input:
+        notes["handoff_payload"] = restored_input
+
+    # ── Append to _replay_log (50-cap) ────────────────────────────────────
+    replay_log = notes.setdefault("_replay_log", [])
+    replay_log.append({
+        "timestamp": _to_iso_utc(),
+        "stage": stage_name,
+        "reason": reason,
+        "previous_status": old_status,
+        "retry_count": retry_count + 1,
+        "input_restored": restored_input is not None,
+    })
+    if len(replay_log) > 50:
+        notes["_replay_log"] = replay_log[-40:]
+
+    # ── Increment _revision_count ─────────────────────────────────────────
+    revision_count = notes.setdefault("_revision_count", {})
+    revision_count[stage_name] = revision_count.get(stage_name, 0) + 1
+
+    # ── Mark path as exception ────────────────────────────────────────────
+    notes["_current_path"] = f"exception:replay:{stage_name}"
+
+    _save_pipeline_state(state)
+
+    return {
+        "success": True,
+        "stage": stage_name,
+        "new_status": "not_started",
+        "retry_count": retry_count + 1,
+        "input_restored": restored_input is not None,
+        "message": (
+            f"Stage '{stage_name}' reset to not_started (retry #{retry_count + 1}). "
+            f"Reason: {reason}. "
+            + ("Original input snapshot restored to handoff_payload. " if restored_input else "")
+            + "Route to the appropriate agent to re-execute this stage."
+        ),
     }
 
 

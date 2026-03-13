@@ -298,7 +298,22 @@ Load the same skills and instructions as `@implement`. Key references:
 | Refactoring | `.github/skills/coding/refactoring/SKILL.md` |
 | Verification loop | `.github/skills/workflow/verification-loop/SKILL.md` |
 
-**Mandatory trigger:** For any request involving schema migration, legacy→target table mapping, query parity checks, or old/new column reconciliation, load `.github/skills/data/schema-migration/SKILL.md` before implementation.
+### Skill Loading Trace
+
+When you load any skill during this session, record it for observability by calling `update_notes`:
+```
+update_notes({"_skills_loaded": [{"agent": "<your-agent-name>", "skill": "<skill-path>", "trigger": "<why>"}]})
+```
+Append to the existing array — do not overwrite previous entries. If `update_notes` is unavailable or fails, continue without blocking.
+
+### Mandatory Triggers
+
+Auto-load these skills when the condition matches — do not skip.
+
+| Condition | Skill | Rationale |
+|-----------|-------|-----------|
+| Task involves schema migration or table restructuring | .github/skills/data/schema-migration/SKILL.md | Migration safety protocol — baseline capture and parity checks |
+
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values.
 
@@ -328,8 +343,21 @@ Anchor uses the same quality checklist as `@implement` (Security, Performance, C
 
 > **These protocols apply to EVERY task you perform. They are non-negotiable.**
 
+
+## Accepting Handoffs
+
+### Handoff Payload & Skill Loading
+
+On entry, read `_notes.handoff_payload` from `pipeline-state.json`. If `required_skills[]` is present and non-empty:
+
+1. **Load each skill** listed in `required_skills[]` before starting task work.
+2. **Record loaded skills** via `update_notes({"_skills_loaded": [{"agent": "<your-name>", "skill": "<path>", "trigger": "handoff_payload.required_skills"}]})`. Append to existing array — do not overwrite.
+3. **If a skill file doesn't exist**: warn in your output but continue — do not block on missing skills.
+4. **Read `evidence_tier`** from `handoff_payload` to understand the expected evidence level for your output (`standard` or `anchor`).
+5. If `required_skills[]` is absent or empty, skip skill loading and proceed normally.
+
 ### 1. Scope Boundary
-Before accepting any task, verify it falls within your responsibilities (high-rigor implementation, evidence-first coding, critical fixes). If asked to design architecture, create PRDs, or plan features: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work.
+Before accepting any task, verify it falls within your responsibilities (high-rigor implementation, evidence-first coding, critical fixes). If asked to design architecture, create PRDs, or plan features: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artifact Output Protocol
 Your primary artifacts are code files (committed to the repo). Write Evidence Bundles to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts.
@@ -341,6 +369,22 @@ If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/
 3. If your implementation would diverge from original intent, STOP and flag the drift
 4. Carry the same `chain_id` in all artifacts you produce
 
+### 3a. Intent Reference Verification (Cross-Reference Mandate)
+
+When your handoff includes \intent_references\ or \design_intent\:
+
+1. **Read the specific section referenced** (e.g., Architecture §4.2, PRD NFR-3) — not the entire document. The \design_intent\ field is your summary; the referenced section is your verification source.
+2. **Write an Intent Verification section** in your artefact:
+   \\markdown
+   ## Intent Verification
+   **My understanding**: [2-3 sentences interpreting what the referenced documents mean for your work]
+   \3. **Flag divergence** — if your interpretation conflicts with the \design_intent\ from the Plan, HALT and surface the conflict:
+   - What the Plan says
+   - What your analysis suggests
+   - What the referenced document says
+   - If the conflict cannot be resolved from the documents alone → apply the Ambiguity Resolution Protocol (§8)
+4. If no \intent_references\ are present in the handoff, skip this protocol.
+
 ### 4. Approval Gate Awareness
 Before starting work that depends on an upstream artifact (e.g., Plan, Architecture): check if that artifact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
 
@@ -348,7 +392,8 @@ Before starting work that depends on an upstream artifact (e.g., Plan, Architect
 If you find a problem with an upstream artifact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
-First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding skill first (`.github/prompts/onboarding.prompt.md`).
+First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
+Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
@@ -390,6 +435,23 @@ When your work is complete:
 3. **Update `pipeline-state.json`** — set your stage `status: complete`, `completed_at: <ISO-date>`, `artefact: <paths>`.
    > **Scope restriction:** Only write your own stage's `status`, `completed_at`, and `artefact` fields. Never write `current_stage`, `_notes._routing_decision`, or `supervision_gates`.
 
+3b. **Session summary log** — append a stage summary to `_stage_log[]` via `update_notes`:
+   ```json
+   {
+     "_stage_log": [{
+       "agent": "<your-agent-name>",
+       "stage": "<current_stage>",
+       "skills_loaded": "<list from _skills_loaded[] or empty>",
+       "intent_refs_verified": true,
+       "outcome": "complete | partial | blocked"
+     }]
+   }
+   ```
+   - `intent_refs_verified` — set to `true` if you wrote an `## Intent Verification` section (intent_references was non-empty). Set to `false` if intent_references was present but you could not verify (should not happen — §5.4 blocks this). Set to `null` if intent_references was empty or absent (no verification needed).
+   - `outcome` — `"complete"` if you finished all work, `"partial"` if Partial Completion Protocol triggered, `"blocked"` if you could not proceed.
+   - If the `update_notes` call fails, continue to step 4 — do not block completion on a logging failure.
+
+
 4. **Output your completion report with Evidence Bundle, then HARD STOP:**
    ```
    **[Stage/Phase N] complete.**
@@ -401,6 +463,26 @@ When your work is complete:
    ```
 
 5. **HARD STOP** — Do NOT offer to proceed to the next phase. Do NOT ask if you should continue. The Orchestrator owns all routing decisions. Present only the `Return to Orchestrator` handoff button.
+
+#### Ambiguity Resolution Protocol
+
+When you encounter ambiguity in requirements, inputs, or context:
+
+1. **Classify** the ambiguity:
+   - **Blocking** — cannot proceed without answer (data source unknown, conflicting requirements)
+   - **Significant** — multiple valid approaches, choice affects architecture or behaviour
+   - **Minor** — implementation detail with a reasonable default
+
+2. **Always HALT and present choices** (all pipeline modes — autopilot means auto-routing, not auto-deciding):
+
+   | Severity | Action |
+   |----------|--------|
+   | Blocking | HALT + ASK — present the question with context, block until user responds |
+   | Significant | HALT + CHOICES — present numbered options with pros/cons, user selects |
+   | Minor | HALT + CHOICES (with default) — present options, highlight recommended default, user confirms or overrides |
+
+3. **Record**: Write all resolved decisions to your artefact's ## Decisions section.
+   Format: DECISION: [what] — CHOSEN: [option] — REASON: [rationale] — SEVERITY: [level]
 
 #### Partial Completion Protocol (Token Pressure / Scope Overflow)
 
@@ -453,6 +535,29 @@ deferred:
 > After completing the Evidence Bundle, call `validate_deferred_paths` to verify all deferred items are logged in `pipeline-state.json` before handing off to the Orchestrator.
 
 ---
+
+### Intent Verification (Cross-Reference Mandate)
+
+If `handoff_payload.intent_references` is **non-empty**:
+
+1. **Read the referenced documents** — open each document/section listed in `intent_references[]` before starting any task work.
+2. **Read `design_intent`** — this is the Plan agent's one-sentence interpretation of what the upstream documents mean for this phase.
+3. **Write an `## Intent Verification` section** in your output artefact:
+   ```markdown
+   ## Intent Verification
+   **My understanding**: <2-3 sentence interpretation of the design intent and how your work satisfies it>
+   ```
+4. **Flag divergence** — if your interpretation conflicts with the `design_intent` or the referenced documents, HALT and surface the conflict:
+   ```markdown
+   **Intent conflict detected**:
+   - Plan says: "<design_intent>"
+   - My analysis suggests: "<your interpretation>"
+   - Source document says: "<relevant quote>"
+   
+   > <resolution or request for user decision>
+   ```
+   If the conflict cannot be resolved from the documents alone, HALT and present choices to the user (Ambiguity Resolution Protocol).
+5. If `intent_references` is **empty or absent**, skip this section entirely — no intent verification is needed.
 
 ## Output Contract
 

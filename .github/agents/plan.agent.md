@@ -56,7 +56,32 @@ When receiving a handoff:
 
 ---
 
+
+### Handoff Payload & Skill Loading
+
+On entry, read `_notes.handoff_payload` from `pipeline-state.json`. If `required_skills[]` is present and non-empty:
+
+1. **Load each skill** listed in `required_skills[]` before starting task work.
+2. **Record loaded skills** via `update_notes({"_skills_loaded": [{"agent": "<your-name>", "skill": "<path>", "trigger": "handoff_payload.required_skills"}]})`. Append to existing array — do not overwrite.
+3. **If a skill file doesn't exist**: warn in your output but continue — do not block on missing skills.
+4. **Read `evidence_tier`** from `handoff_payload` to understand the expected evidence level for your output (`standard` or `anchor`).
+5. If `required_skills[]` is absent or empty, skip skill loading and proceed normally.
+
 ## Skills and Instructions (Load When Relevant)
+
+### Skill Loading Trace
+
+When you load any skill during this session, record it for observability by calling `update_notes`:
+```
+update_notes({"_skills_loaded": [{"agent": "<your-agent-name>", "skill": "<skill-path>", "trigger": "<why>"}]})
+```
+Append to the existing array — do not overwrite previous entries. If `update_notes` is unavailable or fails, continue without blocking.
+
+### Mandatory Triggers
+
+Auto-load these skills when the condition matches — do not skip.
+
+> No mandatory triggers defined for this agent. All skills above are advisory — load when relevant to the task.
 
 ### Skills
 
@@ -175,6 +200,22 @@ After drafting all phases, perform a systematic audit:
 1. **Walk through every FR, NFR, risk, and design decision** from ALL input documents
 2. **Verify each maps to a specific plan step** with enough detail to implement
 3. **Verify all section references** (§N citations) match the actual source document structure
+3b. **Session summary log** — append a stage summary to `_stage_log[]` via `update_notes`:
+   ```json
+   {
+     "_stage_log": [{
+       "agent": "<your-agent-name>",
+       "stage": "<current_stage>",
+       "skills_loaded": "<list from _skills_loaded[] or empty>",
+       "intent_refs_verified": null,
+       "outcome": "complete | partial | blocked"
+     }]
+   }
+   ```
+   - `intent_refs_verified` — set to `null` until intent references are enabled. Do not fabricate a value.
+   - `outcome` — `"complete"` if you finished all work, `"partial"` if Partial Completion Protocol triggered, `"blocked"` if you could not proceed.
+   - If the `update_notes` call fails, continue to step 4 — do not block completion on a logging failure.
+
 4. **Output a traceability matrix** at the end of the plan (see Output Format → Cross-Reference Audit)
 5. **Fix any gaps** — add missing steps or mark items explicitly "Out of Scope" with rationale
 
@@ -250,6 +291,10 @@ Every plan MUST include a **final phase** for documentation sync. This phase run
 ## Phase N — Documentation Sync
 
 > **Agent**: `@architect`
+> **Required Skills**: `.github/skills/{relevant-skill}/SKILL.md`
+> **Evidence Tier**: `standard`
+> **Intent References**: Architecture: the ADR being updated; PRD: overall feature requirements
+> **Design Intent**: Synchronise living Architecture.md with what was actually built in Phases 1–{N-1}.
 > **Prompt**: Update `docs/Architecture.md` to reflect the changes implemented in Phases 1–{N-1}.
 > Read the plan at `.github/plans/{plan-file}.md` for what was built.
 > Consolidate into the relevant Architecture.md sections (component descriptions, data flows,
@@ -289,6 +334,7 @@ Before finalizing any plan, validate against these known failure modes:
 | 10 | **Cross-DB join cardinality** | **Does any step merge data from a source where the join key is NOT unique (1:N relationship)?** | **Plan must specify deduplication strategy BEFORE the merge (e.g., `drop_duplicates(subset=[key], keep='first')` after sorting by priority column). 1:N joins cause row multiplication that inflates metrics. Check the data analysis output for cardinality findings.** |
 | 11 | **Visual fidelity (UI work with mockups)** | **Does this work involve UI/visual changes where an HTML mockup exists?** | **The plan MUST extract EVERY CSS property from the mockup HTML and embed them as concrete values in the relevant implementation tasks. Never say "match the mockup" or "see mockup" — copy exact hex colors, pixel dimensions, rgba shadows, border-radius values, font sizes, animation durations, and gradients directly into the plan body. Include a CSS property table mapping each element to its mockup values. Document which mockup elements have Streamlit limitations and propose alternatives.** |
 | 12 | **Documentation Sync phase** | **Does the plan have a final phase for updating `docs/Architecture.md`?** | **Every plan MUST include a final Documentation Sync phase assigned to `@architect`. See the mandatory template above. Only skip if the work is pure bug-fix/test/docs that doesn't touch architecture.** |
+| 13 | **Intent References** | **Does every implementation phase include `Intent References` and `Design Intent` in its metadata block?** | **Each phase that receives intent from upstream docs (PRD, Architecture) MUST include `Intent References:` with specific document paths + section refs, and `Design Intent:` with a one-sentence interpretation. Without these, the specialist agent cannot verify it is building the right thing. Omit only for phases with no upstream design dependency (e.g., pure test phases).** |
 
 > **Why this matters**: These gotchas have caused production defects. The plan agent is the last safety net before implementation begins. Catching these here prevents costly rework.
 
@@ -407,6 +453,11 @@ When invoked via the **"Amend Plan"** handoff from the Debug agent, the Plan age
 > **How to use:** Copy the prompt block below (between ═══ START and ═══ END markers) into a new chat session. **Include all code blocks** — they're context for the agent, not for you to apply manually.
 > **Agent:** `@{agent-name}` (see `.github/agents/{agent-name}.agent.md`)
 > **Skills to load:** `.github/skills/{relevant-skill}/SKILL.md`
+> **Evidence Tier:** `standard` or `anchor`
+> **Intent References:**
+>   - Architecture: `{path}` §{section} ({description})
+>   - PRD: `{path}` {requirement-id} ({description})
+> **Design Intent:** {One-sentence summary of what the upstream documents mean for this phase}
 > **Instructions (auto-applied):** `{relevant}.instructions.md`, ...
 > **Project config:** `.github/project-config.md` (profile: `{profile}`)
 
@@ -486,7 +537,7 @@ When invoked via the **"Amend Plan"** handoff from the Debug agent, the Plan age
 > **These protocols apply to EVERY task you perform. They are non-negotiable.**
 
 ### 1. Scope Boundary
-Before accepting any task, verify it falls within your responsibilities (analyzing requirements, creating implementation plans, assigning agents/prompts). If asked to write production code: state clearly what's outside scope, identify the correct agent (typically `@implement`), and do NOT attempt partial work.
+Before accepting any task, verify it falls within your responsibilities (analyzing requirements, creating implementation plans, assigning agents/prompts). If asked to write production code: state clearly what's outside scope, identify the correct agent (typically `@implement`), and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artifact Output Protocol
 Write plans to `.github/plans/`. When producing analysis reports or assessments, write artifacts to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts.
@@ -506,7 +557,8 @@ Before starting work that depends on an upstream artifact (e.g., PRD, Architectu
 If you find a problem with an upstream artifact (e.g., architecture has gaps, PRD requirements are contradictory): write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
-First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding skill first (`.github/prompts/onboarding.prompt.md`).
+First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
+Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
@@ -540,6 +592,26 @@ When your plan is complete:
    Present only the **Return to Orchestrator** handoff button.
 
 > **Assisted/autopilot mode:** If `pipeline_mode` is `assisted` or `autopilot` in `pipeline-state.json`: end your response with `@Orchestrator Stage complete — [one-line summary]. Read pipeline-state.json and _routing_decision, then route.` VS Code will invoke Orchestrator automatically — do NOT present the Return to Orchestrator button.
+
+#### Ambiguity Resolution Protocol
+
+When you encounter ambiguity in requirements, inputs, or context:
+
+1. **Classify** the ambiguity:
+   - **Blocking** — cannot proceed without answer (data source unknown, conflicting requirements)
+   - **Significant** — multiple valid approaches, choice affects architecture or behaviour
+   - **Minor** — implementation detail with a reasonable default
+
+2. **Always HALT and present choices** (all pipeline modes — autopilot means auto-routing, not auto-deciding):
+
+   | Severity | Action |
+   |----------|--------|
+   | Blocking | HALT + ASK — present the question with context, block until user responds |
+   | Significant | HALT + CHOICES — present numbered options with pros/cons, user selects |
+   | Minor | HALT + CHOICES (with default) — present options, highlight recommended default, user confirms or overrides |
+
+3. **Record**: Write all resolved decisions to your artefact's ## Decisions section.
+   Format: DECISION: [what] — CHOSEN: [option] — REASON: [rationale] — SEVERITY: [level]
 
 ---
 

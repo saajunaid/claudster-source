@@ -78,6 +78,10 @@ Polish Phase:      Error handling, edge cases, documentation
 - [ ] Testable outcome (how to verify completion)
 - [ ] No dangling dependencies (works standalone)
 - [ ] **Agent assignment** (which agent executes this phase)
+- [ ] **Required skills** (which `.github/skills/*/SKILL.md` the agent must load)
+- [ ] **Evidence tier** (`standard` or `anchor` — determines verification depth)
+- [ ] **Intent references** (links to specific Architecture/PRD sections this phase implements)
+- [ ] **Design intent** (one-sentence summary of what upstream documents mean for this phase)
 - [ ] **Ready-to-use prompt** (self-contained prompt with `═══ PROMPT START` / `═══ PROMPT END` markers)
 
 ### Documentation Considerations
@@ -155,6 +159,12 @@ Use this template:
 ### Phase 1: {Name} ⏳
 **Goal**: {One sentence}
 **Agent**: `@{agent-name}` (see `.github/agents/{agent-name}.agent.md`)
+**Required Skills**: `{.github/skills/relevant-skill/SKILL.md}` (skills the agent MUST load for this phase)
+**Evidence Tier**: `standard` | `anchor` (standard = artefact exists + fields present; anchor = full 5-phase evidence protocol)
+**Intent References**:
+  - Architecture: `{path-to-ADR}` §{section} ({decision title})
+  - PRD: `{path-to-PRD}` {requirement ID} ({requirement summary})
+**Design Intent**: {One-sentence summary of what upstream documents mean for THIS phase — forces explicit interpretation}
 **Deliverables**:
 - [ ] {File or component 1}
 - [ ] {File or component 2}
