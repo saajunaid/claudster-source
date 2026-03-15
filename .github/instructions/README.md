@@ -41,6 +41,15 @@ Instructions are context-specific guidelines that tell AI assistants how to writ
 | [security.instructions.md](security.instructions.md) | `**/*` | Security best practices |
 | [accessibility.instructions.md](accessibility.instructions.md) | `**/*.html, **/*.py` | WCAG 2.2 compliance |
 
+### Workflow & Execution Instructions
+
+| File | Applies To | Purpose |
+|------|------------|---------|
+| [advisory-mode.instructions.md](advisory-mode.instructions.md) | `**` | Copilot advisory/planning chat boundaries |
+| [plan-mode.instructions.md](plan-mode.instructions.md) | `**` | Requirements discovery before implementation |
+| [large-task-fidelity.instructions.md](large-task-fidelity.instructions.md) | `**` | Execution discipline for large multi-phase outputs |
+| [junai-system.instructions.md](junai-system.instructions.md) | `**` | junai agent pipeline system reference |
+
 ## How Instructions Work
 
 Each instruction file has a YAML frontmatter:

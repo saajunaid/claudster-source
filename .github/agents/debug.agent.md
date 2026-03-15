@@ -1,7 +1,7 @@
 ---
 name: Debug
 description: Systematic debugger - diagnoses root causes, fixes bugs, and prevents regressions using methodical investigation
-tools: ['codebase', 'search', 'usages', 'problems', 'runCommands', 'terminalLastCommand', 'testFailure', 'editFiles', 'changes', 'junai-mcp/run_command']
+tools: [vscode/extensions, execute/testFailure, execute/getTerminalOutput, execute/runInTerminal, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, junai-mcp/get_pipeline_status, junai-mcp/notify_orchestrator, junai-mcp/run_command, junai-mcp/satisfy_gate, junai-mcp/set_pipeline_mode, junai-mcp/validate_deferred_paths]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator
