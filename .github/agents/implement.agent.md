@@ -1,7 +1,7 @@
 ---
 name: Implement
 description: Elite coding agent - implements features with test-driven development, builds reusable components, and ships production-ready code using systematic methodology
-tools: [vscode/extensions, execute/testFailure, execute/getTerminalOutput, execute/runInTerminal, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, junai-mcp/get_pipeline_status, junai-mcp/notify_orchestrator, junai-mcp/run_command, junai-mcp/satisfy_gate, junai-mcp/set_pipeline_mode, junai-mcp/validate_deferred_paths]
+tools: [extensions, testFailure, getTerminalOutput, runInTerminal, problems, readFile, terminalSelection, terminalLastCommand, editFiles, changes, codebase, fileSearch, listDirectory, searchResults, textSearch, usages, fetch, junai/get_pipeline_status, junai/notify_orchestrator, junai/run_command, junai/satisfy_gate, junai/set_pipeline_mode, junai/validate_deferred_paths, junai/update_notes, context7/resolve-library-id, context7/get-library-docs, github/*]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator

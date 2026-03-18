@@ -9,16 +9,19 @@
     "plan":        { "agent": "Plan",            "agent_file": "agents/plan.agent.md" },
     "ux_research": { "agent": "UX Designer",     "agent_file": "agents/ux-designer.agent.md" },
     "ui_design":   { "agent": "UI/UX Designer",  "agent_file": "agents/ui-ux-designer.agent.md" },
-    "implement":   { "agent": "Implement",       "agent_file": "agents/implement.agent.md" },
-    "anchor":      { "agent": "Anchor",          "agent_file": "agents/anchor.agent.md" },
-    "tester":      { "agent": "Tester",          "agent_file": "agents/tester.agent.md" },
+    "implement":   { "agent": "Implement",       "agent_file": "agents/implement.agent.md",       "skippable": false },
+    "anchor":      { "agent": "Anchor",          "agent_file": "agents/anchor.agent.md",          "skippable": false },
+    "tester":      { "agent": "Tester",          "agent_file": "agents/tester.agent.md",          "skippable": false },
     "review":      { "agent": "Code Reviewer",   "agent_file": "agents/code-reviewer.agent.md" },
     "debug":             { "agent": "Debug",              "agent_file": "agents/debug.agent.md" },
-    "knowledge_transfer": { "agent": "Knowledge Transfer", "agent_file": "agents/knowledge-transfer.agent.md" },
-    "devops":             { "agent": "DevOps",             "agent_file": "agents/devops.agent.md" },
+    "knowledge_transfer": { "agent": "Knowledge Transfer", "agent_file": "agents/knowledge-transfer.agent.md", "skippable": true },
+    "devops":             { "agent": "DevOps",             "agent_file": "agents/devops.agent.md",             "skippable": true },
     "janitor":     { "agent": "Janitor",         "agent_file": "agents/janitor.agent.md" },
-    "closed":      { "agent": "None",            "agent_file": null },
-    "BLOCKED":     { "agent": "None",            "agent_file": null }
+    "sql_design":    { "agent": "SQL Expert",      "agent_file": "agents/sql-expert.agent.md",      "skippable": true },
+    "accessibility": { "agent": "Accessibility",   "agent_file": "agents/accessibility.agent.md",   "skippable": true },
+    "data_engineer": { "agent": "Data Engineer",   "agent_file": "agents/data-engineer.agent.md",   "skippable": true },
+    "closed":      { "agent": "None",            "agent_file": null,                                "skippable": false },
+    "BLOCKED":     { "agent": "None",            "agent_file": null,                                "skippable": false }
   },
   "transitions": [
     {
@@ -389,6 +392,116 @@
       "hotfix_only": false,
       "priority": 1,
       "_comment": "human-triggered optional enrichment: user invokes @knowledge-transfer after Debug resolves an incident. Terminal — no downstream transition. Does not block or advance the main pipeline."
+    },
+    {
+      "id": "T-37",
+      "from_stage": "review",
+      "to_stage": "devops",
+      "event": "approved",
+      "guards": ["deploy_enabled"],
+      "gate": "review_approved",
+      "hotfix_only": false,
+      "priority": 5,
+      "_comment": "when deploy_enabled flag is set, route approved review to DevOps instead of closing directly"
+    },
+    {
+      "id": "T-38",
+      "from_stage": "devops",
+      "to_stage": "janitor",
+      "event": "complete",
+      "guards": ["cleanup_enabled"],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 5,
+      "_comment": "post-deploy cleanup via Janitor when cleanup_enabled flag is set"
+    },
+    {
+      "id": "T-39",
+      "from_stage": "devops",
+      "to_stage": "closed",
+      "event": "complete",
+      "guards": [],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 0,
+      "_comment": "default DevOps tail: close pipeline when no cleanup step is required"
+    },
+    {
+      "id": "T-40",
+      "from_stage": "janitor",
+      "to_stage": "closed",
+      "event": "complete",
+      "guards": [],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 0,
+      "_comment": "Janitor completes → pipeline closed"
+    },
+    {
+      "id": "T-41",
+      "from_stage": "architect",
+      "to_stage": "sql_design",
+      "event": "complete",
+      "guards": ["artefact_exists", "artefact_approved", "sql_design_enabled"],
+      "gate": "adr_approved",
+      "hotfix_only": false,
+      "priority": 5,
+      "_comment": "optional stage: Architect routes to SQL Expert for schema design when sql_design_enabled flag is set (takes priority over direct architect→plan T-03)"
+    },
+    {
+      "id": "T-42",
+      "from_stage": "sql_design",
+      "to_stage": "plan",
+      "event": "complete",
+      "guards": ["artefact_exists"],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 0,
+      "_comment": "SQL Expert completes schema design → continue to Plan stage"
+    },
+    {
+      "id": "T-43",
+      "from_stage": "tester",
+      "to_stage": "accessibility",
+      "event": "passed",
+      "guards": ["a11y_audit_enabled"],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 10,
+      "_comment": "optional stage: insert accessibility audit between tester and review when a11y_audit_enabled flag is set (takes priority over T-06 tester→review)"
+    },
+    {
+      "id": "T-44",
+      "from_stage": "accessibility",
+      "to_stage": "review",
+      "event": "complete",
+      "guards": [],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 0,
+      "_comment": "Accessibility audit completes → continue to Code Review"
+    },
+    {
+      "id": "T-45",
+      "from_stage": "plan",
+      "to_stage": "data_engineer",
+      "event": "complete",
+      "guards": ["artefact_exists", "artefact_approved", "data_track_enabled"],
+      "gate": "plan_approved",
+      "hotfix_only": false,
+      "priority": 5,
+      "_comment": "optional stage: route plan to Data Engineer for ETL/pipeline design when data_track_enabled flag is set (takes priority over T-04 plan→implement)"
+    },
+    {
+      "id": "T-46",
+      "from_stage": "data_engineer",
+      "to_stage": "implement",
+      "event": "complete",
+      "guards": ["artefact_exists"],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 0,
+      "_comment": "Data Engineer completes pipeline design → continue to Implement"
     }
   ]
 }

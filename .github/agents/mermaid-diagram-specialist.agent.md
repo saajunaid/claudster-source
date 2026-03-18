@@ -617,6 +617,12 @@ flowchart TD
 
 > **These protocols apply to EVERY task you perform. They are non-negotiable.**
 
+## Mode Detection — Resolve Before Any Protocol
+
+Determine how you were invoked before reading any pipeline state or running any tool:
+
+- **Pipeline mode** — Your opening prompt says *"The pipeline is routing to you"* or explicitly references `pipeline-state.json`. → Follow the **Accepting Handoffs** protocol below. Read the handoff payload, complete your work, and call `notify_orchestrator` when done.
+- **Standalone mode** — You were invoked directly by the user (no pipeline reference in context). → **Do NOT read `pipeline-state.json`. Do NOT call `notify_orchestrator` or `satisfy_gate`.** Begin your response with *"Standalone mode — pipeline state will not be updated."* Then create the requested diagram using your full Mermaid diagramming expertise and standards below.
 
 ## Accepting Handoffs
 

@@ -121,10 +121,13 @@ All inter-agent artefacts are registered here. Status values: `current` | `super
 - ADR path: `docs/architecture/agentic-adr/ADR-{feature-slug}.md`
 - Plans: `.github/plans/<feature-slug>.md`
 
+### Git Commit Convention (all agents)
+When making a git commit at stage completion, always stage `.github/pipeline-state.json` explicitly alongside the code changes. This keeps pipeline state in sync with git history so that `git reset --hard` restores both atomically.
+
 ### Partial Completion Protocol (all agents, §8)
 If an agent runs out of context or token budget mid-task:
 1. Stop immediately — do not attempt to compress or rush
-2. Commit whatever stable work exists
+2. Commit whatever stable work exists (include `.github/pipeline-state.json`)
 3. Report honestly: what is DONE vs what is NOT DONE
 4. Do NOT mark the pipeline stage as complete
 5. User resumes with a fresh session

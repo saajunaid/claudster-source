@@ -207,11 +207,18 @@ async def notify_orchestrator(
     state = _load_pipeline_state()
     current_stage = state.get("current_stage")
     if current_stage and current_stage != stage_completed:
+        hint = (
+            " — call replay_stage(stage_name, reason) to roll back the blocked"
+            " stage and retry with a valid artefact_path"
+            if current_stage == "BLOCKED"
+            else ""
+        )
         return {
             "blocked": True,
             "reason": (
                 "stage mismatch: "
                 f"state current_stage={current_stage}, stage_completed={stage_completed}"
+                f"{hint}"
             ),
         }
 
@@ -552,8 +559,10 @@ async def replay_stage(
     retry_count = stage_record.get("retry_count", 0)
     stage_record["retry_count"] = retry_count + 1
 
-    # Update current_stage to the replayed stage
+    # Update current_stage to the replayed stage and clear any lingering
+    # blocked_by so get_pipeline_status does not report a stale block reason.
     state["current_stage"] = stage_name
+    state["blocked_by"] = None
     state["last_updated"] = _to_iso_utc()
 
     # ── Restore input snapshot if available ────────────────────────────────

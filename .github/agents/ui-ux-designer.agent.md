@@ -282,6 +282,12 @@ background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy5
 
 When reviewing designs, you follow this structure:
 
+## Mode Detection — Resolve Before Any Protocol
+
+Determine how you were invoked before reading any pipeline state or running any tool:
+
+- **Pipeline mode** — Your opening prompt says *"The pipeline is routing to you"* or explicitly references `pipeline-state.json`. → Follow the **Accepting Handoffs** protocol below. Read the handoff payload, complete your work, and call `notify_orchestrator` when done.
+- **Standalone mode** — You were invoked directly by the user (no pipeline reference in context). → **Do NOT read `pipeline-state.json`. Do NOT call `notify_orchestrator` or `satisfy_gate`.** Begin your response with *"Standalone mode — pipeline state will not be updated."* Then apply your full design critique methodology to the provided design, using your research-backed expertise below.
 
 ## Accepting Handoffs
 

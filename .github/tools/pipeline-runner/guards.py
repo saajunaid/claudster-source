@@ -378,6 +378,64 @@ def strict_verification_enabled(
     return False, "strict_verification is not enabled"
 
 
+# ── Optional-stage feature flags ─────────────────────────────────────────
+# Set these as top-level keys in pipeline-state.json, e.g. "deploy_enabled": true
+
+def _flag(state: PipelineState, key: str) -> bool:
+    """Read a boolean feature flag from top-level pipeline-state extras."""
+    return bool((state.model_extra or {}).get(key))
+
+
+def deploy_enabled(
+    state: PipelineState,
+    _event: CompletionEvent,
+    _workspace_root: Path,
+) -> tuple[bool, str | None]:
+    if _flag(state, "deploy_enabled"):
+        return True, None
+    return False, "deploy_enabled flag not set in pipeline-state.json"
+
+
+def cleanup_enabled(
+    state: PipelineState,
+    _event: CompletionEvent,
+    _workspace_root: Path,
+) -> tuple[bool, str | None]:
+    if _flag(state, "cleanup_enabled"):
+        return True, None
+    return False, "cleanup_enabled flag not set in pipeline-state.json"
+
+
+def sql_design_enabled(
+    state: PipelineState,
+    _event: CompletionEvent,
+    _workspace_root: Path,
+) -> tuple[bool, str | None]:
+    if _flag(state, "sql_design_enabled"):
+        return True, None
+    return False, "sql_design_enabled flag not set in pipeline-state.json"
+
+
+def a11y_audit_enabled(
+    state: PipelineState,
+    _event: CompletionEvent,
+    _workspace_root: Path,
+) -> tuple[bool, str | None]:
+    if _flag(state, "a11y_audit_enabled"):
+        return True, None
+    return False, "a11y_audit_enabled flag not set in pipeline-state.json"
+
+
+def data_track_enabled(
+    state: PipelineState,
+    _event: CompletionEvent,
+    _workspace_root: Path,
+) -> tuple[bool, str | None]:
+    if _flag(state, "data_track_enabled"):
+        return True, None
+    return False, "data_track_enabled flag not set in pipeline-state.json"
+
+
 GUARD_REGISTRY: dict[str, GuardFunction] = {
     "artefact_exists": artefact_exists,
     "artefact_approved": artefact_approved,
@@ -403,6 +461,11 @@ GUARD_REGISTRY: dict[str, GuardFunction] = {
     "pipeline_mode_autopilot": pipeline_mode_autopilot,
     "blocked_cleared": blocked_cleared,
     "strict_verification_enabled": strict_verification_enabled,
+    "deploy_enabled": deploy_enabled,
+    "cleanup_enabled": cleanup_enabled,
+    "sql_design_enabled": sql_design_enabled,
+    "a11y_audit_enabled": a11y_audit_enabled,
+    "data_track_enabled": data_track_enabled,
 }
 
 

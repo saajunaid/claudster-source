@@ -603,6 +603,76 @@ def validate_vocabulary(agents_dir: Path) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Skippable Consistency Test
+# ---------------------------------------------------------------------------
+
+def validate_skippable_consistency(agents_dir: Path) -> list[str]:
+    """
+    Cross-check that the `skippable` field in agents.registry.json stages
+    is consistent with `_UNSKIPPABLE_STAGES` in pipeline_runner.py.
+
+    - Stages marked `"skippable": false` in the registry must appear in
+      `_UNSKIPPABLE_STAGES` in the runner (and vice versa).
+
+    Returns a list of warning strings (empty = consistent).
+    """
+    warnings: list[str] = []
+    base = agents_dir.parent.parent  # .github/agents/ -> repo root
+
+    registry_path = base / ".github" / "tools" / "pipeline-runner" / "agents.registry.json"
+    runner_path   = base / ".github" / "tools" / "pipeline-runner" / "pipeline_runner.py"
+
+    if not registry_path.exists():
+        return ["Skippable check skipped: agents.registry.json not found"]
+    if not runner_path.exists():
+        return ["Skippable check skipped: pipeline_runner.py not found"]
+
+    # ── 1. Extract stages with skippable: false from registry ─────────────
+    try:
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [f"Skippable check skipped: registry JSON parse error — {exc}"]
+
+    registry_unskippable: set[str] = {
+        stage
+        for stage, data in registry.get("stages", {}).items()
+        if isinstance(data, dict) and data.get("skippable") is False
+    }
+
+    # ── 2. Extract _UNSKIPPABLE_STAGES from pipeline_runner.py ─────────────
+    runner_text = runner_path.read_text(encoding="utf-8")
+    m = re.search(
+        r"_UNSKIPPABLE_STAGES\s*=\s*\{([^}]+)\}",
+        runner_text,
+    )
+    if not m:
+        return ["Skippable check skipped: could not find _UNSKIPPABLE_STAGES in pipeline_runner.py"]
+
+    runner_unskippable: set[str] = {
+        s.strip().strip("\"'")
+        for s in m.group(1).split(",")
+        if s.strip().strip("\"'")
+    }
+
+    # ── 3. Cross-check ────────────────────────────────────────────────────
+    only_in_registry = registry_unskippable - runner_unskippable
+    only_in_runner   = runner_unskippable - registry_unskippable
+
+    for stage in sorted(only_in_registry):
+        warnings.append(
+            f"Stage '{stage}' has skippable:false in registry but is NOT in "
+            f"_UNSKIPPABLE_STAGES in pipeline_runner.py — add it or correct the registry"
+        )
+    for stage in sorted(only_in_runner):
+        warnings.append(
+            f"Stage '{stage}' is in _UNSKIPPABLE_STAGES (pipeline_runner.py) but "
+            f"lacks skippable:false in agents.registry.json — add '\"skippable\": false' to the registry"
+        )
+
+    return warnings
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -709,6 +779,16 @@ def main() -> None:
     else:
         for e in handoff_errors:
             print(f"  [WARN]  {e}")
+
+    # ── Skippable consistency check ───────────────────────────────────────
+    print("\n  REGISTRY / RUNNER SKIPPABLE CONSISTENCY")
+    print("  -----------------------------------------")
+    skippable_warnings = validate_skippable_consistency(agents_dir)
+    if not skippable_warnings:
+        print("  [OK]    Registry skippable:false matches _UNSKIPPABLE_STAGES in pipeline_runner.py")
+    else:
+        for w in skippable_warnings:
+            print(f"  [WARN]  {w}")
 
     print("")
 

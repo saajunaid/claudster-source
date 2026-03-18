@@ -336,20 +336,43 @@ def _status_payload(state: PipelineState) -> dict[str, Any]:
 
 
 # ── Ordered stage sequence for progress display ──────────────────────────
-_DISPLAY_STAGES = [
+# _CORE_STAGES: always shown in the progress bar.
+# _STAGE_ORDER: full ordered sequence (core + optional) used for skip resolution.
+# Optional stages appear in the progress bar only when active (in state.stages).
+
+_CORE_STAGES = [
     "intent", "prd", "architect", "security", "plan",
     "ux_research", "ui_design", "implement", "anchor",
     "tester", "review", "closed",
 ]
 
+_STAGE_ORDER = [
+    "intent", "prd", "architect", "sql_design", "security", "plan",
+    "data_engineer", "ux_research", "ui_design", "implement", "anchor",
+    "tester", "accessibility", "review", "knowledge_transfer", "devops", "janitor", "closed",
+]
+
 
 def _format_progress_line(state: PipelineState) -> str:
-    """Build a visual progress line like: intent ✅ → prd ✅ → [architect] → plan → ..."""
+    """Build a visual progress line like: intent ✅ → prd ✅ → [architect] → plan → ...
+
+    Optional stages (sql_design, accessibility, data_engineer, devops, janitor,
+    knowledge_transfer) are inserted at their natural position only if they are
+    active (in_progress, complete, or skipped) in the current run.
+    """
+    active_optional = {
+        s for s, data in state.stages.items()
+        if s not in _CORE_STAGES
+        and isinstance(data, dict)
+        and data.get("status") in ("in_progress", "complete", "skipped")
+    }
+    display_stages = [s for s in _STAGE_ORDER if s in _CORE_STAGES or s in active_optional]
+
     parts: list[str] = []
-    for stage in _DISPLAY_STAGES:
+    for stage in display_stages:
         stage_data = state.stages.get(stage, {})
         status = stage_data.get("status", "not_started") if isinstance(stage_data, dict) else "not_started"
-        skipped = stage_data.get("status") == "skipped" if isinstance(stage_data, dict) else False
+        skipped = status == "skipped"
 
         if stage == state.current_stage:
             parts.append(f"[{stage}]")
@@ -450,26 +473,41 @@ def skip_stage(
     }
 
 
-# Default stage ordering for skip resolution
-_STAGE_ORDER = [
-    "intent", "prd", "architect", "security", "plan",
-    "ux_research", "ui_design", "implement", "anchor",
-    "tester", "review", "closed",
-]
+# Optional stages that only activate when a specific feature flag is set.
+# _find_next_stage_for_skip skips these when their flag is absent so that a
+# plain skip chain mirrors the guard-evaluated path (avoids landing on
+# sql_design when sql_design_enabled is not set, for example).
+_OPTIONAL_STAGE_FLAGS: dict[str, str] = {
+    "sql_design": "sql_design_enabled",
+    "data_engineer": "data_track_enabled",
+    "accessibility": "a11y_audit_enabled",
+    "devops": "deploy_enabled",
+    "janitor": "cleanup_enabled",
+}
 
 
 def _find_next_stage_for_skip(state: PipelineState, skipped_stage: str) -> str | None:
-    """Determine the next stage after a skip by following the default stage order."""
+    """Determine the next stage after a skip by following the default stage order.
+
+    Optional stages (sql_design, data_engineer, accessibility, devops, janitor)
+    are skipped over when their enabling feature flag is not present in state,
+    so the skip chain stays on the same conditional path as real routing.
+    """
     try:
         idx = _STAGE_ORDER.index(skipped_stage)
     except ValueError:
         return None
-    # Walk forward to find the next non-skipped, non-complete stage
+    # Walk forward to find the next eligible stage
     for next_stage in _STAGE_ORDER[idx + 1:]:
         stage_data = state.stages.get(next_stage, {})
         status = stage_data.get("status") if isinstance(stage_data, dict) else None
-        if status not in ("complete", "skipped"):
-            return next_stage
+        if status in ("complete", "skipped"):
+            continue
+        # Skip optional stages whose enabling flag is absent from state extras
+        flag = _OPTIONAL_STAGE_FLAGS.get(next_stage)
+        if flag and not bool((state.model_extra or {}).get(flag)):
+            continue
+        return next_stage
     return None
 
 
