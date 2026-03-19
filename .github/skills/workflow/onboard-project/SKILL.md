@@ -121,9 +121,10 @@ Ask the user for information needed to populate the configuration. Skip question
 
 **Merge logic for existing files:**
 1. Parse existing `copilot-instructions.md` into sections (by `##` headings)
-2. For each template section, check if an equivalent heading exists (fuzzy match — "Tech Stack" matches "Technology Stack", "Stack", etc.)
-3. If section exists → **skip it** (preserve user's content entirely)
-4. If section is missing → **append it** at the end with marker:
+2. If the file contains `<!-- junai:start -->` … `<!-- junai:end -->` sentinel markers, leave that block untouched — it is managed by the junai extension
+3. For each template section, check if an equivalent heading exists outside the managed block (fuzzy match — "Tech Stack" matches "Technology Stack", "Stack", etc.)
+4. If section exists → **skip it** (preserve user's content entirely)
+5. If section is missing → **append it** before the managed section (or at the end if no managed section) with marker:
    ```markdown
    <!-- Added by onboard-project — review and customize -->
    ## {Section Title}
@@ -180,5 +181,5 @@ Report what was done:
 ## Important Notes
 
 - All paths in this skill are relative. The skill works regardless of whether the AI resources folder is at `.github/`, `.cursor/`, or any other location.
-- The `copilot-instructions.md` file is project-specific and should NOT be committed to the portable pool. It stays in the project repo.
+- The `copilot-instructions.md` file is project-specific and should NOT be committed to the portable pool. It stays in the project repo. The junai extension manages only a sentinel-delimited `<!-- junai:start -->` … `<!-- junai:end -->` section — never edit content inside those markers (it will be refreshed on the next Update). Add your project content outside the markers.
 - `project-config.md` IS part of the portable pool as a template. When the profile section is filled in, it becomes project-specific.

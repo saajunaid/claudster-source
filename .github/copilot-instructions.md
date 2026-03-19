@@ -1,7 +1,7 @@
 # Project Instructions
 
-> This file is yours — junai will never overwrite it after initial setup. Edit it to document
-> your project's context, conventions, and institutional knowledge for Copilot.
+> This file is yours. The junai extension manages only the `<!-- junai:start -->` … `<!-- junai:end -->`
+> section below; everything else is never read, modified, or deleted by the extension.
 >
 > junai system documentation (25 agents, pipeline flow, MCP tools, routing conventions) is
 > automatically provided by `.github/instructions/junai-system.instructions.md`.
@@ -83,7 +83,7 @@ agent-sandbox  (local only, no remote — authoring source of truth)
 - **junai-vscode** — marketplace extension; bundles and deploys the pool
 - **junai** — public-facing mirror for users to browse/fork agent definitions
 
-**Pool deployment:** Everything in `.github/` is copied verbatim into user workspaces by `bundle-pool.js` on install. `copilot-instructions.md`, `pipeline-state.json`, and `project-config.md` are USER_OWNED and never overwritten by pool updates.
+**Pool deployment:** Everything in `.github/` is copied verbatim into user workspaces by `bundle-pool.js` on install. `pipeline-state.json` and `project-config.md` are USER_OWNED and never overwritten by pool updates. `copilot-instructions.md` is no longer bundled — the extension manages only a sentinel-delimited `<!-- junai:start -->` section programmatically (v0.6.2+).
 
 **MCP server runtime:** `server.py` uses `uv run` (PEP 723 inline deps) — no local `.venv` install needed. `stdin=asyncio.subprocess.DEVNULL` on all subprocess spawns prevents stdio pipe inheritance deadlock (critical fix v0.4.9).
 
@@ -130,7 +130,7 @@ git push
 ## Institutional Knowledge
 
 - PowerShell `git push` exits code 1 even on success (stderr quirk) — not an error; check GitHub to confirm push landed
-- `copilot-instructions.md` became USER_OWNED in v0.5.7 — pool updates no longer overwrite it; junai system docs moved to `junai-system.instructions.md`
+- `copilot-instructions.md` managed-section pattern since v0.6.2 — extension manages only a `<!-- junai:start -->` sentinel block; user content outside markers is never touched. Replaced the v0.5.7 USER_OWNED approach. junai system docs live in `junai-system.instructions.md`.
 - `uv run` replaces `.venv` path in `mcp.json` (introduced v0.5.5) — no local Python install needed for MCP
 - `bundle-pool.js` `dir/dir` nesting guard introduced v0.5.2 — `cmdUpdate` auto-heals legacy nesting on activation
 - Agent file naming: lowercase kebab-case matching the `name` frontmatter field exactly

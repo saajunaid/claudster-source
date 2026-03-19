@@ -5,7 +5,7 @@ applyTo: "**"
 
 # junai Agent Pipeline — System Reference
 
-This file is deployed and maintained by the junai VS Code extension. It is refreshed automatically when you run **Update Agent Pool** — do not edit it by hand. For project-specific context, edit `.github/copilot-instructions.md` instead (that file is yours and is never overwritten).
+This file is deployed and maintained by the junai VS Code extension. It is refreshed automatically when you run **Update Agent Pool** — do not edit it by hand. For project-specific context, edit `.github/copilot-instructions.md` instead (the extension manages only a small `<!-- junai:start -->` … `<!-- junai:end -->` section there; your content outside the markers is never touched).
 
 ---
 

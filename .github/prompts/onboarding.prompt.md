@@ -13,7 +13,7 @@ Read and follow the skill at `skills/workflow/onboard-project/SKILL.md`.
 1. Check what already exists (`project-config.md`, `copilot-instructions.md`, `agent-docs/ARTIFACTS.md`)
 2. Ask the user about their project (tech stack, branding, database, deployment, conventions)
 3. Populate `project-config.md` with the project's profile and values
-4. Create or update `copilot-instructions.md` (append missing sections only — never overwrite existing content)
+4. Create or update `copilot-instructions.md` (append missing sections only — never overwrite existing content; respect the `<!-- junai:start -->` … `<!-- junai:end -->` managed section)
 5. Create `agent-docs/ARTIFACTS.md` manifest if missing
 
 **Important**: This is idempotent. If files already exist, only add what's missing. Never delete or rewrite existing content.
