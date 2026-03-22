@@ -162,19 +162,22 @@ After loading state, read `_notes._routing_decision` and branch on `pipeline_mod
 3. If `_routing_decision` does not exist:
    - **State Health guard:** If state health is NOT `active` (i.e. `file_missing`, `uninitialized`, `closed`, or `corrupted`) → this case was already handled by State Validation above. Do NOT proceed further — do not fall through to the `current_stage` checks below.
    - If `current_stage: intent` (state health is `active`):
-     - **Autopilot fast-path (no user prompt needed):** If `pipeline_mode: autopilot` — do NOT run the intake classification interview. Instead: search for artefacts on disk using the `feature` slug from `pipeline-state.json`:
+     - **Disk-scan (all modes):** Before running any intake interview, search for artefacts on disk using the `feature` slug from `pipeline-state.json`:
        - **Plan:** `plans/<feature-slug>.md` (root only — a file in `plans/backlog/` is a backlog item, not a ready plan)
        - **PRD:** any `.md` file in `agent-docs/prd/` whose filename contains the feature slug
        - **ADR/arch:** any `.md` file in `agent-docs/architecture/` whose filename contains the feature slug
 
-       Use the table below to determine the correct entry stage, then immediately execute the §9 fast-track advancement procedure. No user message required.
+       Use the table below to determine the correct entry stage:
        | What exists on disk | Auto-detected entry stage |
        |---|---|
        | `plans/<feature-slug>.md` exists | `implement` (pre-approve intent, adr, plan gates) |
        | PRD matching feature slug but no plan | `plan` (pre-approve intent, adr gates) |
        | ADR/arch matching feature slug but no PRD | `architect` (pre-approve intent gate) |
-       | Nothing matching feature slug | `intent` → `prd` (normal intake, auto-proceed after `intent_approved`) |
-     - **Supervised / assisted:** Run Intake Protocol (§9) — present classification and wait for user input.
+       | Nothing matching feature slug | `intent` → `prd` (normal intake) |
+
+       Then proceed based on mode:
+       - **`autopilot`:** If artefacts found — immediately execute the §9 fast-track advancement procedure. No user message required. If nothing found — normal intake, auto-proceed after `intent_approved`.
+       - **`supervised` / `assisted`:** If artefacts found — present the detected entry stage to the user: *"I found existing artefacts for `<feature-slug>`: [list]. Recommend entering at `<stage>` and pre-approving upstream gates. Confirm to proceed, or say 'start fresh' to run full intake."* Wait for user confirmation before executing the fast-track. If nothing found — Run Intake Protocol (§9) normally.
    - If `current_stage` is any other known stage (state health is `active`, stage is not `intent`) → possible stage drift or mid-pipeline re-entry. Run Stage Drift / Re-entry Resync (§9.2) **before** any routing.
 
 #### Pipeline Status Banner (required — bottom of every response)

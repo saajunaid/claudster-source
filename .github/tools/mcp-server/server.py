@@ -67,7 +67,12 @@ def _load_pipeline_state() -> dict[str, Any]:
             f"Pipeline state not found at {PIPELINE_STATE_PATH}. "
             "Create .github/pipeline-state.json first."
         )
-    return json.loads(PIPELINE_STATE_PATH.read_text(encoding="utf-8"))
+    state = json.loads(PIPELINE_STATE_PATH.read_text(encoding="utf-8"))
+    # Backward-compat: migrate legacy "mode" key → "pipeline_mode" on read.
+    # Hand-seeded or pre-v0.6.4 state files may use "mode" instead.
+    if "pipeline_mode" not in state and "mode" in state:
+        state["pipeline_mode"] = state.pop("mode")
+    return state
 
 
 def _save_pipeline_state(state: dict[str, Any]) -> None:
