@@ -88,12 +88,66 @@ You work in supervised-autonomous mode by default: auto-proceed on routine trans
 Determine how you were invoked before calling any tool:
 
 - **Auto-routing** — The last specialist message in context contains *"Stage complete"* or *"@Orchestrator"* written by a completing agent. → Proceed directly to reading `pipeline-state.json` and `_routing_decision`, then route per your `## Core Responsibilities` below.
-- **User entry** — You were invoked directly by the user (no completion signal from a specialist in context). → Read `pipeline-state.json` first. If an active pipeline exists, check the current stage and resume routing. If no active pipeline exists, greet the user and help them initialise one with `pipeline_init`.
+- **User entry** — You were invoked directly by the user (no completion signal from a specialist in context). → Read `pipeline-state.json` first. Classify per **State Health Classification** below:
+  - `active` → check the current stage and resume routing per §1.
+  - `uninitialized`, `closed`, or `file_missing` → proceed to §9 Intake Protocol.
+  - `corrupted` → report the issue and ask the user to `pipeline_reset`.
+  - If `.github/PIPELINE_HALT.md` exists → surface the halt reason before proceeding (see **Stale Halt Check** below).
+
+---
+
+## Stale Halt Check — Run After Reading State, Before Classification
+
+After reading `pipeline-state.json` (or confirming it is missing), check whether `.github/PIPELINE_HALT.md` exists on disk.
+
+If the file **exists**:
+1. Read its contents. Surface the halt reason to the user:
+   > ⚠️ A previous session halted the pipeline. Reason: `<contents summary>`
+2. Ask: *"Resume the pipeline (I'll delete the halt file and continue), or reset it (`pipeline_reset`)?"*
+3. **On resume:** Delete `.github/PIPELINE_HALT.md`, then proceed with normal State Health Classification and routing.
+4. **On reset:** Delete `.github/PIPELINE_HALT.md`, then call `pipeline_reset`.
+5. **Autopilot mode:** Treat a stale halt as ambiguous — do NOT auto-resume. Wait for user input.
+
+If the file **does not exist**: proceed to State Health Classification normally.
+
+---
+
+## State Health Classification — Single Source of Truth for Pipeline Readiness
+
+After reading `pipeline-state.json` (and clearing any stale halt above), classify the pipeline into exactly one of these five states. **All downstream routing in §1, §9, and §9.2 references this classification.**
+
+| Health | Condition | Meaning |
+|--------|-----------|--------|
+| `file_missing` | `pipeline-state.json` does not exist on disk | No pipeline has been created |
+| `uninitialized` | `current_stage` is absent, null, or empty string **OR** `project` is absent/null/empty/placeholder (`"<project-name>"`) **OR** `feature` is absent/null/empty/placeholder (`"<feature-slug>"`) **OR** `stages` is `{}` (empty object) | State file exists but no pipeline has been properly initialised |
+| `closed` | `current_stage == "closed"` | Previous pipeline completed; no active work |
+| `active` | `current_stage` is a known stage (`intent`, `prd`, `architect`, `plan`, `implement`, `tester`, `review`) **AND** `stages` is non-empty | Pipeline is in progress |
+| `corrupted` | `current_stage` is non-empty but NOT a known stage name (e.g. typo like `"implment"`) **OR** `_routing_decision` exists but is not a valid object with `next_stage` and `blocked` fields | State is malformed — cannot safely route |
+
+> **Evaluation order:** Check `file_missing` first, then `uninitialized`, then `closed`, then `active`. If none match, classify as `corrupted`.
+
+> **Placeholder detection:** Values starting with `"<"` (e.g. `"<project-name>"`, `"<feature-slug>"`) are template placeholders, not real values. Treat them as absent.
+
+---
 
 ## Core Responsibilities
 
 ### 1. Read Pipeline State First
-**Always** read `.github/pipeline-state.json` before doing anything else. If the file does not exist, initialise it by copying `.github/pipeline-state.template.json` and filling in `project` and `feature`, or ask the user to provide the feature name and starting stage.
+**Always** read `.github/pipeline-state.json` before doing anything else.
+
+#### State Validation (run before any routing decision)
+
+Classify the pipeline per **State Health Classification** above, then branch:
+
+| Health | Action (all modes) | Autopilot-specific |
+|--------|-------------------|-------------------|
+| `file_missing` | Copy `.github/pipeline-state.template.json`, ask user for `project` and `feature`, call `pipeline_init`. Do NOT proceed to routing. | Same — no feature slug available, must ask user. |
+| `uninitialized` | Go to **§9 Intake Protocol**. Do NOT run §9.2. | No feature slug → autopilot disk-scan fast-path cannot run → fall back to normal §9 intake, ask user. |
+| `closed` | Surface the completed pipeline summary (project, feature, stages completed). Ask: *"Start a new feature (`pipeline_init`) or re-open this one (`pipeline_reset`)?"* Do NOT proceed to routing. | Cannot infer new feature → surface summary, WAIT for user input. |
+| `corrupted` | Report the corruption details (unknown stage name, malformed `_routing_decision`, etc.). Ask user to `pipeline_reset` or fix manually. Do NOT proceed to routing. | Write `PIPELINE_HALT.md` with corruption details and **STOP**. |
+| `active` | Proceed to routing logic below. | No change. |
+
+> **Only `active` states reach the routing logic below.** All other states are fully handled by State Validation and do not fall through.
 
 After loading state, read `_notes._routing_decision` and branch on `pipeline_mode`:
 1. If `_routing_decision.blocked == true`: report `blocked_reason` and STOP.
@@ -102,8 +156,12 @@ After loading state, read `_notes._routing_decision` and branch on `pipeline_mod
    - `pipeline_mode: supervised` → present the target handoff button and WAIT for user click.
    - `pipeline_mode: assisted` → end your response with `@[AgentName] [routing prompt]` on its own line. VS Code routes to the agent automatically — do NOT present a handoff button.
    - `pipeline_mode: autopilot` → same as assisted; additionally, most supervision gates are auto-satisfied. Write `@[AgentName] [routing prompt]` as the final line of your response.
+
+   > **`_routing_decision` field validation (branches 1–2):** Before reading `.blocked` or `.next_stage`, verify that `_routing_decision` is a valid object containing both `next_stage` (string) and `blocked` (boolean) fields. If either field is missing or the value is not a dict → treat as a corrupted routing decision: clear `_routing_decision` to `null` via `update_notes({"_routing_decision": null})` and fall through to branch 3 for fresh classification.
+
 3. If `_routing_decision` does not exist:
-   - If `current_stage: intent`:
+   - **State Health guard:** If state health is NOT `active` (i.e. `file_missing`, `uninitialized`, `closed`, or `corrupted`) → this case was already handled by State Validation above. Do NOT proceed further — do not fall through to the `current_stage` checks below.
+   - If `current_stage: intent` (state health is `active`):
      - **Autopilot fast-path (no user prompt needed):** If `pipeline_mode: autopilot` — do NOT run the intake classification interview. Instead: search for artefacts on disk using the `feature` slug from `pipeline-state.json`:
        - **Plan:** `plans/<feature-slug>.md` (root only — a file in `plans/backlog/` is a backlog item, not a ready plan)
        - **PRD:** any `.md` file in `agent-docs/prd/` whose filename contains the feature slug
@@ -117,7 +175,7 @@ After loading state, read `_notes._routing_decision` and branch on `pipeline_mod
        | ADR/arch matching feature slug but no PRD | `architect` (pre-approve intent gate) |
        | Nothing matching feature slug | `intent` → `prd` (normal intake, auto-proceed after `intent_approved`) |
      - **Supervised / assisted:** Run Intake Protocol (§9) — present classification and wait for user input.
-   - If `current_stage` is any other stage → possible stage drift or mid-pipeline re-entry. Run Stage Drift / Re-entry Resync (§9.2) **before** any routing.
+   - If `current_stage` is any other known stage (state health is `active`, stage is not `intent`) → possible stage drift or mid-pipeline re-entry. Run Stage Drift / Re-entry Resync (§9.2) **before** any routing.
 
 #### Pipeline Status Banner (required — bottom of every response)
 
@@ -614,8 +672,9 @@ Shall I start with item 1?
 
 | Condition | Type | Action |
 |---|---|---|
-| `_routing_decision: null` + `current_stage: intent` | Fresh intake | Run §9 Intake Protocol |
-| `_routing_decision: null` + `current_stage != intent` | Post-reset re-entry | Drift reconciliation (Step 3) |
+| State health: `file_missing`, `uninitialized`, or `closed` | Not a drift scenario | Do NOT run §9.2. These states are handled by **State Validation** in §1. Go to §9 Intake Protocol (for `uninitialized`) or follow the State Validation table (for `closed`/`file_missing`). |
+| `_routing_decision: null` + `current_stage: intent` (state health: `active`) | Fresh intake | Run §9 Intake Protocol |
+| `_routing_decision: null` + `current_stage != intent` (state health: `active`) | Post-reset re-entry | Drift reconciliation (Step 3) |
 | `_routing_decision` exists + not blocked | Clean re-entry | Read it and branch per §1 normally |
 | State stage X, git shows stages X+N complete | Stage drift | Drift reconciliation (Step 3) |
 

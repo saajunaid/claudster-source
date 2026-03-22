@@ -342,6 +342,20 @@ async def validate_deferred_paths(
 @mcp.tool()
 async def get_pipeline_status() -> dict[str, Any]:
     """Return current pipeline status and best-effort next transition summary."""
+    if not PIPELINE_STATE_PATH.exists():
+        return {
+            "project": None,
+            "feature": None,
+            "current_stage": None,
+            "pipeline_mode": "supervised",
+            "state_health": "file_missing",
+            "stages_summary": {},
+            "blocked_by": None,
+            "next_transition": None,
+            "progress_line": "📍 No pipeline state file found",
+            "state_file": str(PIPELINE_STATE_PATH),
+        }
+
     state = _load_pipeline_state()
     notes = state.get("_notes") or {}
 
@@ -359,6 +373,7 @@ async def get_pipeline_status() -> dict[str, Any]:
         "feature": state.get("feature"),
         "current_stage": state.get("current_stage"),
         "pipeline_mode": state.get("pipeline_mode", "supervised"),
+        "state_health": _classify_state_health(state),
         "stages_summary": stages_summary,
         "blocked_by": state.get("blocked_by"),
         "next_transition": notes.get("_routing_decision"),
@@ -495,6 +510,32 @@ async def update_notes(
 _STAGE_ORDER = [
     "intent", "prd", "architect", "plan", "implement", "tester", "review", "closed",
 ]
+_KNOWN_ACTIVE_STAGES = set(_STAGE_ORDER)
+
+
+def _classify_state_health(state: dict[str, Any]) -> str:
+    """Classify pipeline state health — mirrors orchestrator State Health Classification."""
+    current = state.get("current_stage")
+    project = state.get("project")
+    feature = state.get("feature")
+    stages = state.get("stages")
+
+    # uninitialized: missing/empty/placeholder fields or empty stages
+    if (
+        not current
+        or not project or (isinstance(project, str) and project.startswith("<"))
+        or not feature or (isinstance(feature, str) and feature.startswith("<"))
+        or stages == {} or stages is None
+    ):
+        return "uninitialized"
+
+    if current == "closed":
+        return "closed"
+
+    if current in _KNOWN_ACTIVE_STAGES and stages:
+        return "active"
+
+    return "corrupted"
 
 
 @mcp.tool()
