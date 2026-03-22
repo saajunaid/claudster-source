@@ -648,4 +648,15 @@ deferred:
 | `approval_on_completion` | `pending` |
 | `next_agent` | `implement` |
 
+> **File format requirement (CRITICAL):** The plan file MUST begin with a YAML frontmatter block — NOT blockquote-style metadata:
+> ```yaml
+> ---
+> chain_id: <chain_id>
+> type: plan
+> status: current
+> approval: pending
+> ---
+> ```
+> Blockquote-style metadata (e.g. `> **approval:** pending`) is NOT valid — the Orchestrator's `_read_frontmatter()` parser only reads `---`-delimited YAML.
+
 > **Orchestrator check:** Verify `approval: approved` in the artefact YAML header before routing to `next_agent`.

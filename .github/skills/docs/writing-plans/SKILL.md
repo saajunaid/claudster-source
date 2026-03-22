@@ -28,9 +28,16 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 ## Plan Document Header
 
-**Every plan MUST start with this header:**
+**Every plan MUST start with this header (YAML frontmatter first, then title):**
 
 ```markdown
+---
+chain_id: <chain_id>
+type: plan
+status: current
+approval: pending
+---
+
 # [Feature Name] Implementation Plan
 
 > **For the implementing agent:** Follow this plan task-by-task, executing each step sequentially.
@@ -43,6 +50,8 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 ---
 ```
+
+> ⚠️ The YAML frontmatter block (`---` delimiters) is required for Orchestrator artefact contract validation. Do NOT use blockquote-style metadata (`> **approval:** pending`) — it will not be parsed.
 
 ## Task Structure
 
