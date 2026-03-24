@@ -18,6 +18,8 @@
 $JUNO_POOL = "E:\Projects\junai"
 $JUNO_GITHUB = "$JUNO_POOL\.github"
 $POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "diagrams", "tools")
+# Fully-managed folders: wiped before copy so renamed/moved/deleted files don't persist
+$CLEAN_FOLDERS = @("agents", "skills", "prompts", "instructions", "tools")
 
 function junai-pull {
     param([string]$ProjectRoot = (Get-Location).Path)
@@ -37,6 +39,13 @@ function junai-pull {
     foreach ($folder in $POOL_FOLDERS) {
         $src = Join-Path $JUNO_GITHUB $folder
         if (Test-Path $src) {
+            # Clean deploy for fully-managed dirs: wipe first to remove stale files
+            if ($CLEAN_FOLDERS -contains $folder) {
+                $dest = Join-Path $target $folder
+                if (Test-Path $dest) {
+                    Remove-Item $dest -Recurse -Force
+                }
+            }
             Copy-Item $src $target -Recurse -Force
             Write-Host "  [OK]  $folder" -ForegroundColor Green
         } else {
