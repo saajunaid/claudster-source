@@ -31,7 +31,7 @@ height       = ceil(baseHeight * 1.1)        // ~10% vertical padding
 
 1. Two-line feature label
 
-- Text: `"Lane 2: New Feature\n@plan -> @implement -> @tester"` (two lines; longest line length 32).
+- Text: `"Lane 2: New Feature\n@planner -> @implement -> @tester"` (two lines; longest line length 32).
 - fontSize: 16.
 - **Width (min):** `32 × 16 × 0.7 ≈ 358` → `≈ 374` after padding → **use 380+**.
 - **Height (min):** `16 × 1.2 × 2 ≈ 38` → `≈ 42` after padding → **use 44+**.

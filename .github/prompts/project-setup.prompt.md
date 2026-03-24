@@ -281,7 +281,7 @@ python -m streamlit run src/app.py
 | Resource | Purpose |
 |----------|---------|
 | `@project-manager` | Interactive project setup guidance |
-| `@plan` | Strategic planning before coding |
+| `@planner` | Strategic planning before coding |
 | `@prd` | Generate Product Requirements Document |
 | `/first-ask` | Comprehensive requirements gathering |
 | `developer-handbook.md` | Complete AI resource usage guide |

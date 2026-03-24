@@ -13,7 +13,7 @@ handoffs:
     prompt: Design the system architecture based on the PRD above.
     send: false
   - label: Create Implementation Plan
-    agent: Plan
+    agent: Planner
     prompt: Create a detailed implementation plan based on the PRD above.
     send: false
 ---
@@ -147,13 +147,13 @@ Before presenting the PRD, complete this audit:
 
 ### Step 5: Downstream Readiness Check
 
-Before handoff, verify the PRD is consumable by Architect and Plan agents:
+Before handoff, verify the PRD is consumable by Architect and Planner agents:
 
 - [ ] Every FR has a unique ID (FR-001+) — Architect maps each to a component
 - [ ] Every NFR has a unique ID (NFR-001+) with measurable target — Architect builds compliance matrix
 - [ ] Section numbers (`§1`, `§2.1`) are present — downstream agents can cite precisely
 - [ ] Data Sources table is complete — Architect designs data layer from it
-- [ ] User Stories have acceptance criteria — Plan agent creates test steps from them
+- [ ] User Stories have acceptance criteria — Planner agent creates test steps from them
 - [ ] Out of Scope is explicit — prevents scope creep during implementation
 
 > **Known failure mode**: In a prior project, the Architect agent's NFR Compliance Matrix skipped NFR-208 and NFR-209 because the PRD lacked section numbering and the Architect had no cross-reference mandate. The fixes to the Architect agent mitigate this downstream, but a well-structured PRD prevents the issue at source.

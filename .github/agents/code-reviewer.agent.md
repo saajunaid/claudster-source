@@ -66,7 +66,7 @@ On entry, read `_notes.handoff_payload` from `pipeline-state.json`. If `required
 If `handoff_payload.intent_references` is **non-empty**:
 
 1. **Read the referenced documents** — open each document/section listed in `intent_references[]` before starting any task work.
-2. **Read `design_intent`** — this is the Plan agent's one-sentence interpretation of what the upstream documents mean for this phase.
+2. **Read `design_intent`** — this is the Planner agent's one-sentence interpretation of what the upstream documents mean for this phase.
 3. **Write an `## Intent Verification` section** in your output artefact:
    ```markdown
    ## Intent Verification
@@ -109,7 +109,7 @@ Auto-load these skills when the condition matches — do not skip.
 | Explaining complex code | `.github/skills/coding/code-explainer/SKILL.md` |
 | Understanding codebase | `.github/skills/docs/documentation-analyzer/SKILL.md` |
 | Security review patterns | `.github/skills/coding/security-review/SKILL.md` |
-| Adversarial review (3-lens) | `.github/skills/anchor-review/SKILL.md` |
+| Adversarial review (3-lens) | `.github/skills/workflow/anchor-review/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 
@@ -205,7 +205,7 @@ Don't just read code — **verify claims.** When reviewing changes:
 
 ### Adversarial Review (for 🔴 issues or L-sized changes)
 
-When you find 🔴 Critical Issues, or the changeset touches 10+ files, load `.github/skills/anchor-review/SKILL.md` and apply the full 3-lens review with self-challenge protocol. If the change came from `@anchor`, verify their Evidence Bundle claims by re-running the test commands.
+When you find 🔴 Critical Issues, or the changeset touches 10+ files, load `.github/skills/workflow/anchor-review/SKILL.md` and apply the full 3-lens review with self-challenge protocol. If the change came from `@anchor`, verify their Evidence Bundle claims by re-running the test commands.
 
 ---
 

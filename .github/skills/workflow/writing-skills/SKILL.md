@@ -653,3 +653,58 @@ Same cycle: RED (baseline) â†’ GREEN (write skill) â†’ REFACTOR (close loopholes
 Same benefits: Better quality, fewer surprises, bulletproof results.
 
 If you follow TDD for code, follow it for skills. It's the same discipline applied to documentation.
+
+---
+
+## Skill Creation Reference
+
+> Appended from skill-creator: guides for authoring new skill packages.
+
+### Anatomy of a Skill
+
+`
+skill-name/
++-- SKILL.md (required)
+¦   +-- YAML frontmatter (name, description)
+¦   +-- Markdown instructions
++-- Bundled Resources (optional)
+    +-- scripts/      - Executable code
+    +-- references/   - Documentation
+    +-- assets/       - Templates, images
+`
+
+### Frontmatter Field Requirements
+
+| Field | Required | Constraints |
+|-------|----------|-------------|
+| `name` | **Yes** | 1-64 chars, lowercase letters/numbers/hyphens only, must match folder name |
+| `description` | **Yes** | 1-1024 chars, must describe WHAT it does AND WHEN to use it |
+| `category` | No | Organizational grouping (coding, testing, workflow, docs) |
+| `license` | No | License name or reference to bundled LICENSE.txt |
+| `source` | No | Attribution for adapted skills |
+
+### Optional Resource Folders
+
+| Folder | Purpose | When to Use |
+|--------|---------|-------------|
+| `scripts/` | Executable code (Python, Bash, JS) | Automation that performs operations |
+| `references/` | Documentation agent reads | API references, schemas, guides |
+| `assets/` | Static files used AS-IS | Images, fonts, templates |
+| `templates/` | Starter code agent modifies | Scaffolds to extend |
+
+### Skill Creation Process (5 Steps)
+
+1. **Understand with Examples** — Gather concrete usage examples; ask "What would a user say to trigger this skill?"
+2. **Plan Reusable Contents** — Identify what is scripts vs references vs assets vs templates
+3. **Initialize** — Create the directory structure and SKILL.md
+4. **Implement** — Start with resources, write SKILL.md with proper frontmatter, test scripts
+5. **Iterate** — Use on real tasks, notice struggles, improve
+
+### Validation Checklist
+
+- [ ] Folder name is lowercase with hyphens
+- [ ] `name` field matches folder name exactly
+- [ ] `description` is 10-1024 characters, explains WHAT and WHEN
+- [ ] Body content is under 500 lines
+- [ ] Bundled assets are under 5MB each
+- [ ] All scripts are tested and runnable

@@ -21,7 +21,7 @@ handoffs:
     prompt: Check if the bug or fix has security implications.
     send: false
   - label: Amend Plan
-    agent: Plan
+    agent: Planner
     prompt: Apply the plan amendment brief created during debugging. Read the amendment file in .github/handoffs/ for details.
     send: false
 ---
@@ -68,7 +68,7 @@ On entry, read `_notes.handoff_payload` from `pipeline-state.json`. If `required
 If `handoff_payload.intent_references` is **non-empty**:
 
 1. **Read the referenced documents** — open each document/section listed in `intent_references[]` before starting any task work.
-2. **Read `design_intent`** — this is the Plan agent's one-sentence interpretation of what the upstream documents mean for this phase.
+2. **Read `design_intent`** — this is the Planner agent's one-sentence interpretation of what the upstream documents mean for this phase.
 3. **Write an `## Intent Verification` section** in your output artefact:
    ```markdown
    ## Intent Verification
@@ -106,7 +106,7 @@ Auto-load these skills when the condition matches — do not skip.
 
 | Task | Load This Skill |
 |------|----------------|
-| Adversarial fix verification | `.github/skills/anchor-review/SKILL.md` |
+| Adversarial fix verification | `.github/skills/workflow/anchor-review/SKILL.md` |
 | Agent orchestration methodology | `.github/skills/workflow/agent-orchestration/SKILL.md` |
 | Database connectivity issues | `.github/skills/data/db-testing/SKILL.md` |
 | Understanding unfamiliar code | `.github/skills/coding/code-explainer/SKILL.md` |
@@ -312,13 +312,13 @@ Create a file in `.github/handoffs/` with this format:
 
 After creating the brief:
 1. Tell the user: "Plan amendment brief saved. Use the **Amend Plan** handoff to apply it."
-2. Use the "Amend Plan" handoff button → Plan agent reads the brief and applies the change.
+2. Use the "Amend Plan" handoff button → Planner agent reads the brief and applies the change.
 
 ### Rules
 
-- Keep briefs **under 20 lines** — enough for Plan agent to act, not a full redesign
+- Keep briefs **under 20 lines** — enough for Planner agent to act, not a full redesign
 - One brief per issue — don't batch unrelated amendments
-- Always include the **exact section heading** so Plan agent can find it in the large file
+- Always include the **exact section heading** so Planner agent can find it in the large file
 - If multiple plan sections need changes, create **one brief per section**
 
 ---

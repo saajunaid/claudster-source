@@ -115,9 +115,9 @@ When the PRD agent is invoked, it should:
 2. If not, enter discovery phase first
 3. If yes, use gathered information to generate PRD
 
-### With Plan Agent
+### With Planner agent
 
-The Plan agent already follows "Think First, Code Later" philosophy. Plan mode instructions reinforce this across ALL agents.
+The Planner agent already follows "Think First, Code Later" philosophy. Plan mode instructions reinforce this across ALL agents.
 
 ### With Architect Agent
 

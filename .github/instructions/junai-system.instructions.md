@@ -18,7 +18,7 @@ Each agent lives in `.github/agents/<name>.agent.md`. Each has a YAML frontmatte
 | Model | Agents |
 |-------|--------|
 | Claude Opus 4.6 | `anchor`, `architect` — highest-rigor work |
-| Claude Sonnet 4.6 | `orchestrator`, `plan`, `prd`, `prompt-engineer`, `security-analyst`, `accessibility`, `code-reviewer`, `debug`, `mentor`, `project-manager`, `ux-designer`, `ui-ux-designer`, `knowledge-transfer` |
+| Claude Sonnet 4.6 | `orchestrator`, `planner`, `prd`, `prompt-engineer`, `security-analyst`, `accessibility`, `code-reviewer`, `debug`, `mentor`, `project-manager`, `ux-designer`, `ui-ux-designer`, `knowledge-transfer` |
 | GPT-5.3-Codex | `implement`, `streamlit-developer`, `frontend-developer`, `data-engineer`, `devops`, `janitor`, `sql-expert`, `tester` |
 | Gemini 3.1 Pro (Preview) | `mermaid-diagram-specialist`, `svg-diagram` — visual artifact generation only |
 
@@ -29,7 +29,7 @@ Each agent lives in `.github/agents/<name>.agent.md`. Each has a YAML frontmatte
 | **Orchestrator** | Pipeline brain — reads `pipeline-state.json`, validates artefact contracts, routes to next agent. Never writes code. |
 | **Anchor** | Evidence-first implementation — captures baseline, verifies every deliverable exists with grep proof, applies Partial Completion Protocol when context runs low |
 | **Architect** | System design, ADR authoring, diagrams. Writes ADRs to `docs/architecture/agentic-adr/ADR-{feature-slug}.md` |
-| **Plan** | Breaks approved architecture into phased implementation plans in `.github/plans/` |
+| **Planner** | Breaks approved architecture into phased implementation plans in `.github/plans/` |
 | **PRD** | Captures requirements into a formal PRD document |
 | **Implement** | Writes production code following the plan |
 | **Tester / Code Reviewer / Debug / Security Analyst** | Quality gates at various pipeline stages |
@@ -41,7 +41,7 @@ Each agent lives in `.github/agents/<name>.agent.md`. Each has a YAML frontmatte
 ## The Pipeline Flow
 
 ```
-Intent → PRD → Architecture/ADR → Plan → Implement → Test → Review → (Security) → Done
+Intent → PRD → Architecture/ADR → Planner → Implement → Test → Review → (Security) → Done
 ```
 
 Each stage is gated. Gates are stored in `.github/pipeline-state.json`. The Orchestrator reads the state, satisfies gates (manually in supervised mode, automatically in autopilot mode), and routes to the next agent.

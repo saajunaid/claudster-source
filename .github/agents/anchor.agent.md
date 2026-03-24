@@ -25,7 +25,7 @@ handoffs:
     prompt: Review the implementation above for security vulnerabilities, auth flows, and data exposure risks.
     send: false
   - label: Back to Planning
-    agent: Plan
+    agent: Planner
     prompt: Review the implementation and update the plan if needed.
     send: false
 ---
@@ -293,7 +293,7 @@ Load the same skills and instructions as `@implement`. Key references:
 
 | Task | Load |
 |------|------|
-| Adversarial review (3-lens) | `.github/skills/anchor-review/SKILL.md` |
+| Adversarial review (3-lens) | `.github/skills/workflow/anchor-review/SKILL.md` |
 | Streamlit pages/components | `.github/skills/frontend/streamlit-dev/SKILL.md` |
 | SQL queries | `.github/skills/coding/sql/SKILL.md` |
 | Schema migration (old→new tables) | `.github/skills/data/schema-migration/SKILL.md` |
@@ -543,7 +543,7 @@ deferred:
 If `handoff_payload.intent_references` is **non-empty**:
 
 1. **Read the referenced documents** — open each document/section listed in `intent_references[]` before starting any task work.
-2. **Read `design_intent`** — this is the Plan agent's one-sentence interpretation of what the upstream documents mean for this phase.
+2. **Read `design_intent`** — this is the Planner agent's one-sentence interpretation of what the upstream documents mean for this phase.
 3. **Write an `## Intent Verification` section** in your output artefact:
    ```markdown
    ## Intent Verification

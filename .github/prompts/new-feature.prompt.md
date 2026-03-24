@@ -102,7 +102,7 @@ You are here
     ↓
 [@architect] → creates architecture from PRD + intent → user approves
     ↓
-[@plan] → creates phased plan → user approves
+[@planner] → creates phased plan → user approves
     ↓
 [Implementation agents] → execute plan phases
     ↓

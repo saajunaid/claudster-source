@@ -60,7 +60,7 @@ On entry, read `_notes.handoff_payload` from `pipeline-state.json`. If `required
 If `handoff_payload.intent_references` is **non-empty**:
 
 1. **Read the referenced documents** — open each document/section listed in `intent_references[]` before starting any task work.
-2. **Read `design_intent`** — this is the Plan agent's one-sentence interpretation of what the upstream documents mean for this phase.
+2. **Read `design_intent`** — this is the Planner agent's one-sentence interpretation of what the upstream documents mean for this phase.
 3. **Write an `## Intent Verification` section** in your output artefact:
    ```markdown
    ## Intent Verification

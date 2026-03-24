@@ -129,7 +129,7 @@ You can include docs in a Polish Phase, or add doc tasks as deliverables within 
 
 5. **Include a Traceability Matrix** in the plan (see template in Step 3)
 
-> **Why this step exists**: The Plan agent has historically acknowledged requirements during analysis (Step 1b) but failed to create actionable plan steps for them. This audit catches those gaps before implementation begins.
+> **Why this step exists**: The Planner agent has historically acknowledged requirements during analysis (Step 1b) but failed to create actionable plan steps for them. This audit catches those gaps before implementation begins.
 
 ---
 

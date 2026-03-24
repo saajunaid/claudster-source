@@ -24,8 +24,8 @@ This directory also hosts **plan amendment briefs** written by the Debug agent w
 **Lifecycle:**
 ```
 🐛 Created    → Debug agent finds plan issue, writes brief
-📋 Active     → Waiting for Plan agent to apply
-✅ Applied    → Renamed to *-APPLIED.md after Plan agent processes it
+📋 Active     → Waiting for Planner agent to apply
+✅ Applied    → Renamed to *-APPLIED.md after Planner agent processes it
 🗑️ Archived  → Delete after 7 days
 ```
 

@@ -38,7 +38,7 @@ The operator (human) acts as **orchestrator**. Agents act as an **advisory board
 │                                                         │
 │   Operator ◄──► PRD Agent        (requirements)        │
 │   Operator ◄──► Architect Agent  (design decisions)     │
-│   Operator ◄──► Plan Agent       (implementation plan)  │
+│   Operator ◄──► Planner agent       (implementation plan)  │
 │   Operator ◄──► Implement Agent  (code generation)      │
 │   Operator ◄──► Tester Agent     (test coverage)        │
 │   Operator ◄──► Code Reviewer    (quality gate)         │
@@ -87,7 +87,7 @@ Spec Input
          │
          ▼
 ┌─────────────────┐
-│ Stage 2: Plan   │  ← Plan Agent writes phased plan + fidelity audit
+│ Stage 2: Plan   │  ← Planner agent writes phased plan + fidelity audit
 └────────┬────────┘
          │
          ▼
@@ -115,7 +115,7 @@ Spec Input
 
 ### Stage 0: Triage & Quick Wins
 
-**Agent:** Plan Agent (read-only analysis) → Implement Agent (execute)
+**Agent:** Planner agent (read-only analysis) → Implement Agent (execute)
 
 **Purpose:** Before any heavy planning, scan the spec for low-effort / high-value items that can be shipped in a single session.
 
@@ -163,7 +163,7 @@ Spec Input
 
 ### Stage 2: Plan Creation & Verification
 
-**Agent:** Plan Agent
+**Agent:** Planner agent
 
 **Purpose:** Create a comprehensive, phased implementation plan that any agent can follow without ad-hoc interpretation.
 
@@ -222,7 +222,7 @@ Score each identified risk:
 
 ### Stage 3: Mid-Flight Absorption (When Needed)
 
-**Agent:** Plan Agent (or operator + Advisory Hub)
+**Agent:** Planner agent (or operator + Advisory Hub)
 
 **Purpose:** Handle changes that arrive after the plan is created but before or during implementation. This is inevitable in real projects.
 
@@ -242,7 +242,7 @@ Score each identified risk:
 
 **Example from practice:**
 > Operator added `SCORE_TOOLTIPS` dict to the Pydantic model independently.
-> Plan Agent traced 16 affected steps, updated them to reference the new dict,
+> Planner agent traced 16 affected steps, updated them to reference the new dict,
 > fixed band name inconsistencies exposed by the change, and regenerated 5 prompts.
 
 **Anti-pattern:** Implementing against a stale plan. Always check if the plan reflects current reality before starting a phase.
@@ -359,7 +359,7 @@ The plan document should contain **copy-paste prompts** for each phase. This rem
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │  "I have a raw spec / feature request"                  │
-│   → Plan Agent (triage quick wins, then plan)           │
+│   → Planner agent (triage quick wins, then plan)           │
 │                                                         │
 │  "I need to choose between design approaches"           │
 │   → Architect Agent (ADR with scored options)           │
@@ -377,7 +377,7 @@ The plan document should contain **copy-paste prompts** for each phase. This rem
 │   → Debug Agent (cross-component audit)                 │
 │                                                         │
 │  "I changed the model / data independently"             │
-│   → Plan Agent (absorb changes into plan)               │
+│   → Planner agent (absorb changes into plan)               │
 │                                                         │
 │  "I need database schema changes"                       │
 │   → SQL Expert Agent                                    │
@@ -399,7 +399,7 @@ The plan document should contain **copy-paste prompts** for each phase. This rem
 |----------------|-----------|
 | Jumping straight to code without a plan | Triage → ADR (if needed) → Plan → Implement |
 | Implementing all phases in one session | One phase per session — clean context, focused work |
-| Letting agents edit the plan document | Only the Plan Agent (or operator) edits plans |
+| Letting agents edit the plan document | Only the Planner agent (or operator) edits plans |
 | Ignoring mid-flight changes | Absorb changes into the plan before continuing |
 | Skipping fidelity audit | Audit every plan — 0 gaps required |
 | Committing without tests | Tests pass before every commit |

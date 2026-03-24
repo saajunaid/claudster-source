@@ -25,7 +25,7 @@ handoffs:
     prompt: Perform security analysis on the implementation above.
     send: false
   - label: Back to Planning
-    agent: Plan
+    agent: Planner
     prompt: Review the implementation and update the plan if needed.
     send: false
   - label: Deploy
@@ -85,7 +85,7 @@ On entry, read `_notes.handoff_payload` from `pipeline-state.json`. If `required
 If `handoff_payload.intent_references` is **non-empty**:
 
 1. **Read the referenced documents** — open each document/section listed in `intent_references[]` before starting any task work.
-2. **Read `design_intent`** — this is the Plan agent's one-sentence interpretation of what the upstream documents mean for this phase.
+2. **Read `design_intent`** — this is the Planner agent's one-sentence interpretation of what the upstream documents mean for this phase.
 3. **Write an `## Intent Verification` section** in your output artefact:
    ```markdown
    ## Intent Verification
@@ -600,7 +600,7 @@ except Exception as e:
 2. Search codebase for similar implementations
 3. Check project documentation
 4. Simplify: implement a minimal version first
-5. Consider handoff to Plan agent for clarity
+5. Consider handoff to Planner agent for clarity
 ```
 
 ---
@@ -628,7 +628,7 @@ Auto-load these skills when the condition matches — do not skip.
 
 | Task | Skill to Load |
 |------|---------------|
-| Adversarial self-review (L-sized changes) | `.github/skills/anchor-review/SKILL.md` |
+| Adversarial self-review (L-sized changes) | `.github/skills/workflow/anchor-review/SKILL.md` |
 | Streamlit pages, components, charts | `.github/skills/frontend/streamlit-dev/SKILL.md` |
 | Writing SQL queries | `.github/skills/coding/sql/SKILL.md` |
 | Major refactoring | `.github/skills/coding/refactoring/SKILL.md` |

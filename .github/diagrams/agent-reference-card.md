@@ -9,11 +9,11 @@
 
 | Agent | Purpose | Hands Off To | Skills Loaded | Instructions Used |
 |-------|---------|-------------|---------------|-------------------|
-| **PRD** | Requirements discovery, stakeholder synthesis | Architect, Plan | prd-to-code, documentation-analyzer, github-issues | — |
-| **Architect** | System design, trade-offs, architecture decisions | Plan, Implement, PRD, SQL Expert, Data Engineer, Streamlit Dev, SVG Diagram, UX Designer | sql, data-analysis, draw-io, context-handoff | sql, security, performance-optimization, code-review |
-| **Plan** | Strategic planning, technical roadmapping (read-only) | Implement, Architect, PRD, Streamlit Dev, Data Engineer, SQL Expert, Prompt Engineer, UX Designer | writing-plans, documentation-analyzer, code-explainer | python, portability, code-review |
+| **PRD** | Requirements discovery, stakeholder synthesis | Architect, Planner | prd-to-code, documentation-analyzer, github-issues | — |
+| **Architect** | System design, trade-offs, architecture decisions | Planner, Implement, PRD, SQL Expert, Data Engineer, Streamlit Dev, SVG Diagram, UX Designer | sql, data-analysis, draw-io, context-handoff | sql, security, performance-optimization, code-review |
+| **Planner** | Strategic planning, technical roadmapping (read-only) | Implement, Architect, PRD, Streamlit Dev, Data Engineer, SQL Expert, Prompt Engineer, UX Designer | writing-plans, documentation-analyzer, code-explainer | python, portability, code-review |
 | **Code Reviewer** | Quality, security, standards review | Implement, Security Analyst, Janitor, DevOps | refactoring, code-explainer, documentation-analyzer, security-review | code-review, security, python, portability, performance-optimization |
-| **Debug** | Root-cause analysis, bug fixing, plan amendment briefs | Tester, Code Reviewer, Security Analyst, Plan | db-testing, code-explainer, refactoring | testing, python, security |
+| **Debug** | Root-cause analysis, bug fixing, Planner amendment briefs | Tester, Code Reviewer, Security Analyst, Planner | db-testing, code-explainer, refactoring | testing, python, security |
 | **Security Analyst** | Threat modeling, OWASP review, risk analysis | Implement, Architect | security-review | security, code-review, sql, python, performance-optimization |
 | **UX Designer** | UX flows, user goals, business constraints (JTBD) | Streamlit Dev, Accessibility, Frontend Dev | ui-review, mockup, frontend-design, brand-guidelines, theme-factory, ui-testing | accessibility, frontend, streamlit |
 | **UI/UX Designer** | Design systems, visual identity, component specs | UX Designer, Frontend Dev, Accessibility, Architect | — | — |
@@ -23,7 +23,7 @@
 
 | Agent | Purpose | Hands Off To | Skills Loaded | Instructions Used |
 |-------|---------|-------------|---------------|-------------------|
-| **Implement** | Full code implementation, refactoring, shipping | Code Reviewer, Tester, Debug, Security Analyst, Plan, DevOps, Prompt Engineer | streamlit-dev, sql, refactoring, code-explainer, data-analysis, git-commit, ui-review, svg-create | security, portability, code-review |
+| **Implement** | Full code implementation, refactoring, shipping | Code Reviewer, Tester, Debug, Security Analyst, Planner, DevOps, Prompt Engineer | streamlit-dev, sql, refactoring, code-explainer, data-analysis, git-commit, ui-review, svg-create | security, portability, code-review |
 | **Streamlit Developer** | Streamlit UI, app wiring, component integration | Code Reviewer, Tester, Accessibility, Debug | streamlit-dev, ui-review, refactoring, data-analysis, sql | streamlit, plotly-charts, accessibility, frontend, portability, code-review |
 | **Frontend Developer** | HTML, CSS, JS, components & pages | Code Reviewer, Accessibility, Debug | ui-review, ui-testing | frontend, accessibility, streamlit, portability, code-review |
 | **Data Engineer** | ETL pipelines, data integration | SQL Expert, Security Analyst, Architect, Tester, Debug | data-analysis, data-loader, db-testing | sql, python, testing, security, code-review |
@@ -38,7 +38,7 @@
 | **Accessibility** | WCAG 2.2 audit, a11y remediation | Implement, UX Designer, Tester | ui-review, ui-testing | accessibility, frontend, streamlit |
 | **Janitor** | Code cleanup, dead code removal | Code Reviewer, Debug | refactoring, security-review, code-explainer | code-review, performance-optimization, python, portability |
 | **Mentor** | Teaching, step-by-step explanations | Implement, Debug | code-explainer, documentation-analyzer, refactoring | — |
-| **Project Manager** | Work planning, status tracking, GitHub issues | PRD, Plan | github-issues, gh-cli, git-commit, documentation-analyzer | — |
+| **Project Manager** | Work planning, status tracking, GitHub issues | PRD, Planner | github-issues, gh-cli, git-commit, documentation-analyzer | — |
 | **SVG Diagram** | Architecture diagrams, visual documentation | Architect | svg-create | — |
 | **Mermaid Diagram** | Flowcharts, sequence diagrams, ERDs | Architect | — | — |
 
@@ -47,10 +47,10 @@
 ## Main Pipeline Flow
 
 ```
-PRD ──► Architect ──► Plan ──► Implement ──► Tester ──► Code Reviewer ──► ✅ DONE
+PRD ──► Architect ──► Planner ──► Implement ──► Tester ──► Code Reviewer ──► ✅ DONE
  ◄─iterate──►          ◄─iterate──►                               │
                                             │                      ├──► Security Analyst
-                                            ├──► Debug ──► Plan    ├──► DevOps
+                                            ├──► Debug ──► Planner    ├──► DevOps
                                             └──► Tester            └──► Janitor
 ```
 
@@ -58,18 +58,18 @@ PRD ──► Architect ──► Plan ──► Implement ──► Tester ─�
 
 | Branch | Flow | Triggered From |
 |--------|------|----------------|
-| **UX/Frontend** | UX Designer → Frontend Dev → Accessibility | Architect, Plan |
-| **Streamlit** | Streamlit Dev → Accessibility | Architect, Plan |
+| **UX/Frontend** | UX Designer → Frontend Dev → Accessibility | Architect, Planner |
+| **Streamlit** | Streamlit Dev → Accessibility | Architect, Planner |
 | **Data** | SQL Expert ↔ Data Engineer | Architect |
 | **Security** | Security Analyst → Implement | Code Reviewer |
 | **Ops** | DevOps → Security Analyst | Code Reviewer, Implement |
-| **Debug** | Debug → Plan (amend) | Implement |
+| **Debug** | Debug → Planner (amend) | Implement |
 
 ## Prompts (Slash Commands)
 
 | Command | Purpose | Wires To |
 |---------|---------|----------|
-| `/plan` | Create phased execution plan | Plan agent + writing-plans skill |
+| `/planner` | Create phased execution plan | Planner agent + writing-plans skill |
 | `/code-review` | Start code review | Code Reviewer agent |
 | `/tdd` | Test-driven development | Tester agent + tdd-workflow skill |
 | `/verify` | Verify implementation | Tester agent + verification-loop skill |

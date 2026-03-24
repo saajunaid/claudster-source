@@ -13,7 +13,7 @@ handoffs:
     prompt: The pipeline is routing to you. Read pipeline-state.json and the approved PRD first, then design the system architecture.
     send: false
   - label: Create Plan
-    agent: Plan
+    agent: Planner
     prompt: The pipeline is routing to you. Read pipeline-state.json and the approved Architecture doc first, then create the implementation plan.
     send: false
   - label: Implement
@@ -322,7 +322,7 @@ Before routing to the Tester agent, perform a cumulative intent audit across all
 |------|---------|--------------------------|-------------|
 | `intent_approved` | Before starting the PRD | Show intent summary, **ask for approval** | Same — always requires human approval |
 | `adr_approved` | After Architect completes | Show architecture summary + ADR list, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="adr_approved")` immediately after Architect stage completes, then invoke Plan |
-| `plan_approved` | After Plan agent completes | Show phase breakdown + agent assignments, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="plan_approved")` immediately after Plan stage completes, then invoke Implement |
+| `plan_approved` | After Planner agent completes | Show phase breakdown + agent assignments, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="plan_approved")` immediately after Plan stage completes, then invoke Implement |
 | `review_approved` | After Code Reviewer returns result | Show result, **ask for approval** | **Conditional** — if verdict=`approved`: call `satisfy_gate(gate="review_approved")` and close. If verdict=`revision-requested`: retry loop (T-16) up to `review.max_retries`. If budget exhausted (T-29): HALT + write `PIPELINE_HALT.md` + notify |
 
 **`autopilot` gate auto-satisfaction procedure** (never use `editFiles` — always call `satisfy_gate` MCP tool):
@@ -389,13 +389,13 @@ When routing to a specialist agent after Plan stage is complete, construct the `
      "required_skills": [".github/skills/<path>/SKILL.md"],
      "evidence_tier": "standard | anchor",
      "intent_references": ["<doc_path> <section> (<description>)", ...],
-     "design_intent": "<Plan agent's one-sentence interpretation of upstream intent for this phase>"
+     "design_intent": "<Planner agent's one-sentence interpretation of upstream intent for this phase>"
    }
    ```
    - `required_skills[]` — skill paths from the Plan phase metadata. If the Plan doesn't specify skills, use an empty array.
    - `evidence_tier` — from the Plan phase metadata. Default: `"standard"`. Use `"anchor"` for database schema changes, security-critical code, and infrastructure/deployment.
    - `intent_references[]` — from the Plan phase's **Intent References** block. Each entry is a document path + section reference. If the Plan phase has no Intent References block, use an empty array. **Do not fabricate references** — only propagate what the Plan explicitly declares.
-   - `design_intent` — from the Plan phase's **Design Intent** field. This is the Plan agent's one-sentence summary of what the upstream documents mean for this phase. If the Plan phase has no Design Intent field, set to `null`.
+   - `design_intent` — from the Plan phase's **Design Intent** field. This is the Planner agent's one-sentence summary of what the upstream documents mean for this phase. If the Plan phase has no Design Intent field, set to `null`.
 
 3. **Write via MCP**: `update_notes({"handoff_payload": <payload>})`
 

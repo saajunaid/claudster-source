@@ -119,7 +119,7 @@ Based on context, determine which pipeline stage applies and recommend the appro
 {Brief description of the advisory work for this stage}
 
 ### What You'll Need to Do
-{Any actions the user needs to take — e.g., "Open a new Plan Agent chat with this prompt"}
+{Any actions the user needs to take — e.g., "Open a new Planner agent chat with this prompt"}
 
 Shall I proceed?
 ```
@@ -140,7 +140,7 @@ Depending on the stage, do the appropriate work:
 - Generate a prompt for the Architect Agent with the specific decision to be made
 
 ### If Planning (Stage 2)
-- Either create the plan directly (if in project workspace) or generate a Plan Agent prompt
+- Either create the plan directly (if in project workspace) or generate a Planner agent prompt
 - Always include: fidelity audit, risk assessment, embedded phase prompts
 
 ### If Absorption (Stage 3)

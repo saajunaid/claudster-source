@@ -169,7 +169,7 @@ START: What do you need?
 │   └─► Use Architect Agent
 │
 ├─► Need step-by-step plan?
-│   └─► Use Plan Agent
+│   └─► Use Planner agent
 │
 ├─► Ready to code?
 │   └─► Use Implement Agent
@@ -178,7 +178,7 @@ START: What do you need?
 │   └─► Use Debug Agent (Opus 4.6)
 │       ├─► Code-only fix? → Debug fixes, done
 │       └─► Plan also wrong? → Debug writes amendment brief
-│           └─► "Amend Plan" handoff → Plan Agent applies it
+│           └─► "Amend Plan" handoff → Planner agent applies it
 │
 ├─► Long autonomous task?
 │   └─► Use @cli (Background)
@@ -257,7 +257,7 @@ START: What do you need?
 
 ```
 ┌─────────────────┐     ┌──────────────┐     ┌──────────────┐
-│ Implementation  │     │    Debug     │     │  Plan Agent  │
+│ Implementation  │     │    Debug     │     │  Planner agent  │
 │ (Codex agent)   │────►│  (Opus 4.6)  │────►│  (Opus 4.6)  │
 │                 │     │              │     │              │
 │ Spots issue →   │     │ 1. Diagnose  │     │ 1. Read brief│
@@ -274,7 +274,7 @@ START: What do you need?
 ```
 
 **When**: Bug during implementation reveals the plan has wrong or missing info
-**Key rule**: Debug agent NEVER edits plan files directly — writes a brief, hands off to Plan agent
+**Key rule**: Debug agent NEVER edits plan files directly — writes a brief, hands off to Planner agent
 **Handoff chain**: Implementation → "Debug Issue" → Debug → "Amend Plan" → Plan
 
 ## Pattern F: Cross-Domain Collaboration
@@ -308,7 +308,7 @@ START: What do you need?
 | Security Review | Any → Security Analyst | "Review Security" |
 | Code Cleanup | Code Reviewer → Janitor | "Clean Up Code" |
 | Deploy | Implement/CR → DevOps | "Deploy" |
-| Plan Fix | Debug → Plan Agent | "Amend Plan" |
+| Plan Fix | Debug → Planner agent | "Amend Plan" |
 
 ### Skills in Collaboration
 

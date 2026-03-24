@@ -25,7 +25,7 @@ The `.github/` folder contains 22 agents, 40+ skills, 22 instructions, and 25 pr
 4. **`skills/vmie/` folder**: DELETE entirely. Promote unique skills to generic categories with placeholder tokens. Remove the profile-based skill fallback system (all skills become generic).
 5. **`agent-docs/` folder**: New folder for inter-agent artifacts (not `docs/`). Agents write structured output here with lifecycle metadata (current/superseded/archived).
 6. **Every agent gets 7 universal protocols** (see Universal Agent Protocols section below).
-7. **Plan agent**: Move agent/prompt block to TOP of each phase (before implementation details).
+7. **Planner agent**: Move agent/prompt block to TOP of each phase (before implementation details).
 8. **`360Customer-newchat.prompt.md`**: DELETE (100% project-specific, duplicates `copilot-instructions.md`).
 9. **Onboard skill behavior**: Idempotent — create `copilot-instructions.md` if missing, merge/append if exists. NEVER overwrite or degrade existing content.
 10. **Current project**: We ARE inside Customer360's `.github/`. After fixing the portable pool, update `project-config.md` in-place (no need to run onboard skill for this project).
@@ -62,7 +62,7 @@ User input (freetext / idea / backlog item)
     │                                     │   GATE 3    │ User approves Architecture
     │                                     └──────┬──────┘
     │                                            │
-    │                                     Plan Agent ──► .github/plans/
+    │                                     Planner agent ──► .github/plans/
     │                                            │
     │                                     ┌──────┴──────┐
     │                                     │   GATE 4    │ User approves Plan
@@ -637,7 +637,7 @@ Captures the **Advisory Hub methodology** — a reusable orchestration pattern f
 Entry point for Advisory Hub mode — auto-detects session type:
 - **Fresh Start** → intake questions (what are we building? constraints? existing artifacts?)
 - **Continuation** → scans `plans/`, `handoffs/`, git log → presents status dashboard
-- **Directed** → routes to appropriate pipeline stage (e.g., "plan Track A" → Plan Agent)
+- **Directed** → routes to appropriate pipeline stage (e.g., "plan Track A" → Planner agent)
 
 Includes: status dashboard format, pipeline stage routing table, session rules.
 

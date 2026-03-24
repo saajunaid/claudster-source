@@ -63,7 +63,7 @@ Every agent should have **mandatory trigger rules** that auto-load skills based 
 
 #### Layer 2: Structured Phase Metadata (Plan-Level)
 
-The Plan agent should produce **machine-readable phase metadata** for every phase it writes — not just prose instructions. Each phase specifies:
+The Planner agent should produce **machine-readable phase metadata** for every phase it writes — not just prose instructions. Each phase specifies:
 
 ```markdown
 ## Phase N — {Title}
@@ -74,7 +74,7 @@ The Plan agent should produce **machine-readable phase metadata** for every phas
 > **Acceptance Criteria**: [list of verifiable conditions]
 ```
 
-This is what the Plan agent is currently NOT doing — it writes agent names in prose but doesn't prescribe skills or evidence requirements per phase.
+This is what the Planner agent is currently NOT doing — it writes agent names in prose but doesn't prescribe skills or evidence requirements per phase.
 
 #### Layer 3: Strict Propagation & Enforcement (Orchestrator-Level)
 
@@ -136,7 +136,7 @@ The full chain: **Plan prescribes → Orchestrator propagates → Specialist loa
 2. **Significant** — Multiple valid approaches, choice affects architecture or behavior (e.g., "REST vs GraphQL?", "pagination vs infinite scroll?").
 3. **Minor** — Implementation detail with a reasonable default, but user should be aware of the choice (e.g., "ascending or descending sort default?", "UTC or local timezone for display?").
 
-**Choice Presentation Format** (modeled after VS Code Copilot Plan agent):
+**Choice Presentation Format** (modeled after VS Code Copilot Planner agent):
 
 When an agent encounters Significant or Minor ambiguity, it presents choices like this:
 
@@ -265,7 +265,7 @@ Reliability Tests:      validate_agents.py (pre-publish gate, runs separately)
    - The target agent's required skills exist on disk (new — catches renamed/deleted skills)
    - The handoff payload is well-formed (chain_id present, artifact path resolves)
 
-2. **Plan agent pre-flight** — Before generating a plan, verify:
+2. **Planner agent pre-flight** — Before generating a plan, verify:
    - PRD artifact exists and is `current` in ARTIFACTS.md
    - Architecture artifact exists (if architectural work was done)
    - All agents referenced in planned handoffs exist as `.agent.md` files
@@ -291,7 +291,7 @@ This workstream implements the three-layer contractual glue described in Q3. The
    anchor: standard + anchor-evidence-*.md exists with Baseline, Verification, Evidence Bundle sections
    ```
 
-2. **Plan agent metadata** — Plan MUST produce structured phase headers with `Agent`, `Skills`, `Evidence Tier`, and `Acceptance Criteria` for every phase. Not just prose — machine-readable metadata that Orchestrator can parse and propagate.
+2. **Planner agent metadata** — Plan MUST produce structured phase headers with `Agent`, `Skills`, `Evidence Tier`, and `Acceptance Criteria` for every phase. Not just prose — machine-readable metadata that Orchestrator can parse and propagate.
 
    ```markdown
    ## Phase N — {Title}
@@ -421,7 +421,7 @@ The "Mandatory Triggers" section uses signal words that agents can pattern-match
 
 #### Layer 2: Plan-Level Skill Prescription
 
-Plan agent already specifies agent per phase. Extend to include skills:
+Planner agent already specifies agent per phase. Extend to include skills:
 
 ```markdown
 ## Phase 2 — Backend API
@@ -668,7 +668,7 @@ Every Plan phase must include an **intent reference** section that links back to
 > **Design Intent**: Use Redis as a shared cache layer with 15-min TTL to meet NFR-3. NOT in-memory caching (multi-process requirement from Architecture §4.2).
 ```
 
-The **Design Intent** field is the Plan agent's one-sentence summary of *what the upstream documents actually mean for this phase*. This is the critical bridge — it forces the Plan to interpret the Architecture explicitly, rather than leaving interpretation to the Implement agent.
+The **Design Intent** field is the Planner agent's one-sentence summary of *what the upstream documents actually mean for this phase*. This is the critical bridge — it forces the Plan to interpret the Architecture explicitly, rather than leaving interpretation to the Implement agent.
 
 Orchestrator propagates `intent_references` and `design_intent` in the handoff payload, same as `required_skills`.
 
@@ -727,7 +727,7 @@ At the end of multi-phase implementation (before routing to Tester), Orchestrato
 
 This is the last chance to catch intent drift before the code is tested and reviewed. It takes seconds to scan and catches the "I didn't realize Phase 3 was supposed to use Redis" problem.
 
-**Hotfix exception**: If `pipeline-state.json` has `"type": "hotfix"`, hotfixes have no PRD or Architecture doc — there are no `intent_references` to verify. Skip §11b (Cross-Reference Mandate) and §11c (Intent Verification Gate) for hotfix pipelines. §11a and §11d are also skipped since the Plan agent is bypassed in hotfix flow.
+**Hotfix exception**: If `pipeline-state.json` has `"type": "hotfix"`, hotfixes have no PRD or Architecture doc — there are no `intent_references` to verify. Skip §11b (Cross-Reference Mandate) and §11c (Intent Verification Gate) for hotfix pipelines. §11a and §11d are also skipped since the Planner agent is bypassed in hotfix flow.
 
 **Effort**: Medium — Plan template update (intent references + design intent) + all specialist agents add cross-reference mandate + Orchestrator adds intent verification gate + cumulative audit  
 **Risk if skipped**: This is THE risk. Without intent integrity, every other reliability improvement (contracts, skills, evidence, vocabulary) can be mechanically perfect and still produce the wrong output. The pipeline passes all gates but delivers something the user didn't ask for.

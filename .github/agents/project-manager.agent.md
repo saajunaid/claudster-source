@@ -9,7 +9,7 @@ handoffs:
     prompt: Create a PRD based on the requirements above.
     send: false
   - label: Plan Implementation
-    agent: Plan
+    agent: Planner
     prompt: Create an implementation plan for the requirements above.
     send: false
 ---

@@ -27,7 +27,7 @@ agent-sandbox/
 │   ├── agent-docs/
 │   │   ├── ARTIFACTS.md     ← Artefact registry (inter-agent working files)
 │   │   └── *.md             ← Pipeline schema docs, artefact templates
-│   ├── plans/               ← Implementation plans produced by the Plan agent
+│   ├── plans/               ← Implementation plans produced by the Planner agent
 │   ├── handoffs/            ← Agent-to-agent handoff templates
 │   ├── diagrams/            ← Architecture and workflow reference diagrams
 │   ├── pipeline-state.json  ← Live pipeline state (gates, routing, artefacts)

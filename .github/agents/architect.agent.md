@@ -9,7 +9,7 @@ handoffs:
     prompt: Stage complete. Read pipeline-state.json and _routing_decision, then route.
     send: false
   - label: Create Implementation Plan
-    agent: Plan
+    agent: Planner
     prompt: Create a detailed implementation plan for the architecture outlined above.
     send: false
   - label: Start Implementation
@@ -471,7 +471,7 @@ Architecture documents are referenced by downstream agents (Plan, Implement) usi
 3. Never re-number sections after the document is published — add new sections at the end (e.g., `## 14. Addendum`)
 4. Sub-sections use dot notation: `### 7.1 Model Design`, `### 7.2 Service Design`
 
-**Why**: The Plan agent has cited incorrect section references (e.g., "§4" instead of "§8") because the architecture doc lacked a clear ToC. A stable numbering scheme with a ToC prevents this.
+**Why**: The Planner agent has cited incorrect section references (e.g., "§4" instead of "§8") because the architecture doc lacked a clear ToC. A stable numbering scheme with a ToC prevents this.
 
 ---
 
@@ -507,7 +507,7 @@ If unexpectedly interrupted or context nearly exhausted:
 
 ## Living Documentation Sync
 
-> **Reminder to Plan Agent**: Every implementation plan MUST include a final Documentation Sync phase assigned to `@architect` for updating `docs/Architecture.md`. If you are reviewing a plan that lacks this phase, escalate.
+> **Reminder to Planner agent**: Every implementation plan MUST include a final Documentation Sync phase assigned to `@architect` for updating `docs/Architecture.md`. If you are reviewing a plan that lacks this phase, escalate.
 
 Architecture has two homes with distinct purposes — keep both current:
 
@@ -560,7 +560,7 @@ If the architecture deviates from or extends the approved PRD — e.g., adding c
 **Rules:**
 - If the architecture is 100% aligned with PRD → write `## Scope Changes\nNone — architecture aligns fully with approved PRD.`
 - Each change must cite the specific PRD section it diverges from
-- The Plan agent will use this section to reconcile its phase breakdown against both PRD and ADR
+- The Planner agent will use this section to reconcile its phase breakdown against both PRD and ADR
 
 ---
 
