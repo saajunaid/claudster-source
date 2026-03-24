@@ -280,7 +280,7 @@ Every prompt MUST include this mapping table:
 **Rules:**
 - Every FR/NFR assigned to the phase MUST appear in the table
 - ❌ entries MUST have justification (deferred to which phase, or why excluded)
-- The table is part of the prompt deliverable, not optional metadata
+- The table is part of the prompt artefact, not optional metadata
 
 ---
 
@@ -291,15 +291,15 @@ Every prompt MUST include this mapping table:
 ### 1. Scope Boundary
 Before accepting any task, verify it falls within your responsibilities (prompt design, prompt optimization, LLM interaction patterns). If asked to implement code, create PRDs, or design architecture: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
-### 2. Artifact Output Protocol
-When creating prompts or prompt templates for other agents, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts.
+### 2. Artefact Output Protocol
+When creating prompts or prompt templates for other agents, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
 If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
-1. Read the Intent Document FIRST — before any other agent's artifacts
+1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your prompt design against the Intent Document's Goal and Constraints
 3. If your prompts would diverge from original intent, STOP and flag the drift
-4. Carry the same `chain_id` in all artifacts you produce
+4. Carry the same `chain_id` in all artefacts you produce
 5. When refining vague user input, consider using the Intent Writer skill to create a proper Intent Document
 
 ### 3a. Intent Reference Verification (Cross-Reference Mandate)
@@ -319,10 +319,10 @@ When your handoff includes \intent_references\ or \design_intent\:
 4. If no \intent_references\ are present in the handoff, skip this protocol.
 
 ### 4. Approval Gate Awareness
-Before starting work that depends on an upstream artifact: check if that artifact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
+Before starting work that depends on an upstream artefact: check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artifact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
@@ -339,7 +339,7 @@ When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)
 2. **Plan (your phase/step)** — what to do RIGHT NOW (MUST READ if exists)
 3. **`project-config.md`** — project constraints (MUST READ)
-4. **Previous agent's artifact** — what's been decided (SHOULD READ)
+4. **Previous agent's artefact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
 

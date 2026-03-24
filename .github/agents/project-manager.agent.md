@@ -170,20 +170,20 @@ Auto-load these skills when the condition matches — do not skip.
 ### 1. Scope Boundary
 Before accepting any task, verify it falls within your responsibilities (project coordination, work breakdown, progress tracking, risk management). If asked to implement code, design architecture, or write PRDs: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
-### 2. Artifact Output Protocol
-When producing status reports, work breakdowns, or coordination documents for other agents, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts.
+### 2. Artefact Output Protocol
+When producing status reports, work breakdowns, or coordination documents for other agents, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
 If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
-1. Read the Intent Document FIRST — before any other agent's artifacts
+1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Ensure all task breakdowns and status tracking align with the original intent
-3. Carry the same `chain_id` in all artifacts you produce
+3. Carry the same `chain_id` in all artefacts you produce
 
 ### 4. Approval Gate Awareness
-When tracking progress, verify that upstream artifacts have `approval: approved` before marking dependent tasks as ready to start. Flag any `pending` or `revision-requested` artifacts as blockers.
+When tracking progress, verify that upstream artefacts have `approval: approved` before marking dependent tasks as ready to start. Flag any `pending` or `revision-requested` artefacts as blockers.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artifact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
@@ -200,7 +200,7 @@ When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)
 2. **Plan (your phase/step)** — what to do RIGHT NOW (MUST READ if exists)
 3. **`project-config.md`** — project constraints (MUST READ)
-4. **Previous agent's artifact** — what's been decided (SHOULD READ)
+4. **Previous agent's artefact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
 

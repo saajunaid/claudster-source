@@ -47,6 +47,7 @@ For complex data work, leverage skills and collaborate:
 - **Use data-loader skill**: Read `.github/skills/data/data-loader/SKILL.md` for loading patterns
 - **Database connectivity testing**: Read `.github/skills/data/db-testing/SKILL.md` for connection testing
 - **Schema migration**: Read `.github/skills/data/schema-migration/SKILL.md` when tables are renamed, consolidated, or restructured and the app's queries/mappings must be updated
+- **Data validation**: Read `.github/skills/data/data-validation/SKILL.md` for validation rules, data quality checks, and data contracts
 
 ### Skill Loading Trace
 
@@ -249,15 +250,15 @@ def get_daily_volume_cases(self):
 ### 1. Scope Boundary
 Before accepting any task, verify it falls within your responsibilities (ETL/ELT pipelines, data integration, data loading, data transformation). If asked to create PRDs, design UI, or build frontend components: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
-### 2. Artifact Output Protocol
-Your primary artifacts are code files (committed to the repo). When producing pipeline documentation or data flow designs for other agents, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts.
+### 2. Artefact Output Protocol
+Your primary artefacts are code files (committed to the repo). When producing pipeline documentation or data flow designs for other agents, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
 If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
-1. Read the Intent Document FIRST — before any other agent's artifacts
+1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your implementation against the Intent Document's Goal and Constraints
 3. If your implementation would diverge from original intent, STOP and flag the drift
-4. Carry the same `chain_id` in all artifacts you produce
+4. Carry the same `chain_id` in all artefacts you produce
 
 ### 3a. Intent Reference Verification (Cross-Reference Mandate)
 
@@ -276,10 +277,10 @@ When your handoff includes \intent_references\ or \design_intent\:
 4. If no \intent_references\ are present in the handoff, skip this protocol.
 
 ### 4. Approval Gate Awareness
-Before starting work that depends on an upstream artifact: check if that artifact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
+Before starting work that depends on an upstream artefact: check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artifact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
@@ -296,7 +297,7 @@ When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)
 2. **Plan (your phase/step)** — what to do RIGHT NOW (MUST READ if exists)
 3. **`project-config.md`** — project constraints (MUST READ)
-4. **Previous agent's artifact** — what's been decided (SHOULD READ)
+4. **Previous agent's artefact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
 
@@ -328,7 +329,7 @@ Context health: [Green | Yellow | Red] — [brief assessment]
 
 2. **Commit** — include `pipeline-state.json`:
    ```
-   git add <deliverable files> .github/pipeline-state.json
+   git add <artefact files> .github/pipeline-state.json
    git commit -m "<exact message specified in the plan>"
    ```
    > **No plan? (hotfix / deferred context):** Use the commit message from the orchestrator handoff prompt. If none provided, use: `fix(<scope>): <brief description>` or `chore(<scope>): <brief description>`.

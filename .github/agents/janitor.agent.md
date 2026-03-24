@@ -174,15 +174,15 @@ if items:
 
 ---
 
-## Artifact Hygiene (Agent-Docs Maintenance)
+## Artefact Hygiene (Agent-Docs Maintenance)
 
 In addition to code cleanup, you are responsible for maintaining the `agent-docs/` folder:
 
 1. **Scan `agent-docs/ARTIFACTS.md`** for entries with `status: superseded` or `status: archived` that are older than 30 days
-2. **Move stale artifacts** to `agent-docs/.archive/` (preserve the file, just relocate it)
+2. **Move stale artefacts** to `agent-docs/.archive/` (preserve the file, just relocate it)
 3. **Update the manifest** — remove the moved entry from the active table and note it was archived
 4. **Resolve cleared escalations** — check `agent-docs/escalations/` for items marked as resolved and archive them
-5. **Never delete artifacts** — always archive, never permanently remove
+5. **Never delete artefacts** — always archive, never permanently remove
 
 ---
 
@@ -191,16 +191,16 @@ In addition to code cleanup, you are responsible for maintaining the `agent-docs
 > **These protocols apply to EVERY task you perform. They are non-negotiable.**
 
 ### 1. Scope Boundary
-Before accepting any task, verify it falls within your responsibilities (code cleanup, formatting, dead code removal, import organization, artifact hygiene). If asked to implement features, fix bugs, or design systems: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
+Before accepting any task, verify it falls within your responsibilities (code cleanup, formatting, dead code removal, import organization, artefact hygiene). If asked to implement features, fix bugs, or design systems: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
-### 2. Artifact Output Protocol
-When producing cleanup reports or artifact hygiene summaries, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts.
+### 2. Artefact Output Protocol
+When producing cleanup reports or artefact hygiene summaries, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
 If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
-1. Read the Intent Document FIRST — before any other agent's artifacts
+1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your cleanup work against the Intent Document's Constraints
-3. Carry the same `chain_id` in all artifacts you produce
+3. Carry the same `chain_id` in all artefacts you produce
 
 ### 3a. Intent Reference Verification (Cross-Reference Mandate)
 
@@ -219,10 +219,10 @@ When your handoff includes \intent_references\ or \design_intent\:
 4. If no \intent_references\ are present in the handoff, skip this protocol.
 
 ### 4. Approval Gate Awareness
-Before starting work that depends on an upstream artifact: check if that artifact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
+Before starting work that depends on an upstream artefact: check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artifact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
@@ -239,7 +239,7 @@ When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)
 2. **Plan (your phase/step)** — what to do RIGHT NOW (MUST READ if exists)
 3. **`project-config.md`** — project constraints (MUST READ)
-4. **Previous agent's artifact** — what's been decided (SHOULD READ)
+4. **Previous agent's artefact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
 

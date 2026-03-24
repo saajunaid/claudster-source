@@ -94,15 +94,15 @@ Auto-load these skills when the condition matches — do not skip.
 |-----------|-------|-----------|
 | Writing Playwright browser tests | .github/skills/testing/playwright/SKILL.md | Playwright patterns and selector strategies |
 | Testing React/JS components (not E2E) | .github/skills/testing/component-testing/SKILL.md | Vitest + Testing Library patterns |
-| Testing React/JS components (not E2E) | .github/skills/testing/component-testing/SKILL.md | Vitest + Testing Library patterns |
 
 ### Skills (Read for specialized testing tasks)
 | Task | Load This Skill |
 |------|----------------|
 | UI/E2E testing | `.github/skills/testing/ui-testing/SKILL.md` ⬅️ PRIMARY |
+| Test planning and strategy | `.github/skills/testing/test-strategy/SKILL.md` |
+| Performance / load testing | `.github/skills/testing/performance-testing/SKILL.md` |
 | TDD workflow (red-green-refactor) | `.github/skills/testing/tdd-workflow/SKILL.md` |
 | Verification loops | `.github/skills/workflow/verification-loop/SKILL.md` |
-| Playwright E2E testing | `.github/skills/testing/playwright/SKILL.md` |
 | Understanding code under test | `.github/skills/coding/code-explainer/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
@@ -314,15 +314,15 @@ If the prompt lacks an explicit exit gate or `**Scope boundary:**` section, cont
 ### 1. Scope Boundary
 Before accepting any task, verify it falls within your responsibilities (test writing, test execution, coverage analysis, test infrastructure). If asked to design architecture, create PRDs, or build production features: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
-### 2. Artifact Output Protocol
-Your primary artifacts are test files (committed to the repo). When producing test reports or coverage analysis for other agents, write them to `agent-docs/testing/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts.
+### 2. Artefact Output Protocol
+Your primary artefacts are test files (committed to the repo). When producing test reports or coverage analysis for other agents, write them to `agent-docs/testing/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
 If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
-1. Read the Intent Document FIRST — before any other agent's artifacts
+1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your tests against the Intent Document's Goal and Constraints
 3. If your tests would miss requirements from the original intent, STOP and flag the gap
-4. Carry the same `chain_id` in all artifacts you produce
+4. Carry the same `chain_id` in all artefacts you produce
 
 ### 3a. Intent Reference Verification (Cross-Reference Mandate)
 
@@ -341,10 +341,10 @@ When your handoff includes \intent_references\ or \design_intent\:
 4. If no \intent_references\ are present in the handoff, skip this protocol.
 
 ### 4. Approval Gate Awareness
-Before starting work that depends on an upstream artifact: check if that artifact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
+Before starting work that depends on an upstream artefact: check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artifact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
@@ -361,7 +361,7 @@ When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)
 2. **Plan (your phase/step)** — what to do RIGHT NOW (MUST READ if exists)
 3. **`project-config.md`** — project constraints (MUST READ)
-4. **Previous agent's artifact** — what's been decided (SHOULD READ)
+4. **Previous agent's artefact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
 

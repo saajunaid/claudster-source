@@ -156,8 +156,8 @@ Auto-load these skills when the condition matches — do not skip.
 ### 1. Scope Boundary
 Before accepting any task, verify it falls within your responsibilities (teaching, explaining concepts, guiding learning). If asked to implement production code, create PRDs, or design architecture: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
-### 2. Artifact Output Protocol
-Your primary artifacts are explanations in conversation (not persisted). If you create teaching materials or guides for reuse, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts.
+### 2. Artefact Output Protocol
+Your primary artefacts are explanations in conversation (not persisted). If you create teaching materials or guides for reuse, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
 If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
@@ -165,10 +165,10 @@ If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/
 2. Tailor your teaching to the original goal described in the Intent Document
 
 ### 4. Approval Gate Awareness
-Not typically applicable to teaching tasks, but if referencing upstream artifacts, verify their approval status before teaching from them.
+Not typically applicable to teaching tasks, but if referencing upstream artefacts, verify their approval status before teaching from them.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artifact while explaining it: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently teach around known problems.
+If you find a problem with an upstream artefact while explaining it: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently teach around known problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
@@ -185,7 +185,7 @@ When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)
 2. **Plan (your phase/step)** — what to do RIGHT NOW (MUST READ if exists)
 3. **`project-config.md`** — project constraints (MUST READ)
-4. **Previous agent's artifact** — what's been decided (SHOULD READ)
+4. **Previous agent's artefact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
 

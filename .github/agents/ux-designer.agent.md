@@ -243,15 +243,15 @@ On hover over ⓘ:
 ### 1. Scope Boundary
 Before accepting any task, verify it falls within your responsibilities (UX design, wireframes, user research, design specifications). If asked to write production code or perform architecture: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. For any UI/visual design, verify the proposed solution is feasible in the project's tech stack before finalizing — warn about known framework limitations. Do not delete files outside your artefact scope without explicit user approval.
 
-### 2. Artifact Output Protocol
-When producing UX designs, wireframes, or mockups, write structured artifacts to `agent-docs/ux/` (mockups to `agent-docs/ux/mockups/`, reviews to `agent-docs/ux/reviews/`) with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts.
+### 2. Artefact Output Protocol
+When producing UX designs, wireframes, or mockups, write structured artefacts to `agent-docs/ux/` (mockups to `agent-docs/ux/mockups/`, reviews to `agent-docs/ux/reviews/`) with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
 If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
-1. Read the Intent Document FIRST — before any other agent's artifacts
+1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your design against the Intent Document's Goal and Constraints
 3. If your design would diverge from original intent, STOP and flag the drift
-4. Carry the same `chain_id` in all artifacts you produce
+4. Carry the same `chain_id` in all artefacts you produce
 
 ### 3a. Intent Reference Verification (Cross-Reference Mandate)
 
@@ -270,10 +270,10 @@ When your handoff includes \intent_references\ or \design_intent\:
 4. If no \intent_references\ are present in the handoff, skip this protocol.
 
 ### 4. Approval Gate Awareness
-Before starting work that depends on an upstream artifact: check if that artifact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user. After completing your design: set your artifact to `approval: pending` for user review.
+Before starting work that depends on an upstream artefact: check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user. After completing your design: set your artefact to `approval: pending` for user review.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artifact (e.g., PRD requirements are contradictory, architecture proposes unfeasible UI): write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact (e.g., PRD requirements are contradictory, architecture proposes unfeasible UI): write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
@@ -290,7 +290,7 @@ When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)
 2. **Plan (your phase/step)** — what to do RIGHT NOW (MUST READ if exists)
 3. **`project-config.md`** — project constraints (MUST READ)
-4. **Previous agent's artifact** — what's been decided (SHOULD READ)
+4. **Previous agent's artefact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
 
@@ -323,7 +323,7 @@ Context health: [Green | Yellow | Red] — [brief assessment]
 
 2. **Commit** — include `pipeline-state.json` in every phase commit:
   ```
-  git add <deliverable files> .github/pipeline-state.json
+  git add <artefact files> .github/pipeline-state.json
   git commit -m "<exact message specified in the plan>"
   ```
   > **No plan? (hotfix / deferred context):** Use the commit message from the orchestrator handoff prompt. If none provided, use: `fix(<scope>): <brief description>` or `chore(<scope>): <brief description>`.

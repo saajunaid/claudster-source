@@ -43,7 +43,7 @@ When receiving a pipeline handoff:
 1. Read `.github/pipeline-state.json` to understand what was just completed
 2. Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there.
 3. Identify the source agent from the handoff context (Anchor, Implement, Debug, etc.)
-4. Load the session context — the conversation summary, artefacts, or deliverable description provided
+4. Load the session context — the conversation summary, artefacts, or artefact description provided
 5. Apply the extraction protocol for that source agent type (see below)
 6. Run the golden-nuggets extraction procedure
 

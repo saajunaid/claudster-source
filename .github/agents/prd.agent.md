@@ -6,15 +6,15 @@ model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator
-    prompt: Stage complete. Read pipeline-state.json and _routing_decision, then route.
+    prompt: Stage complete. PRD artefact written to docs/prd/prd.md. Read pipeline-state.json and _routing_decision, then route.
     send: false
   - label: Design Architecture
     agent: Architect
-    prompt: Design the system architecture based on the PRD above.
+    prompt: Design the system architecture based on the PRD at docs/prd/prd.md.
     send: false
   - label: Create Implementation Plan
     agent: Planner
-    prompt: Create a detailed implementation plan based on the PRD above.
+    prompt: Create a detailed implementation plan based on the PRD at docs/prd/prd.md.
     send: false
 ---
 
@@ -292,22 +292,22 @@ Use concrete, measurable criteria. Avoid vague terms.
 ### 1. Scope Boundary
 Before accepting any task, verify it falls within your responsibilities (requirements gathering, PRD creation, discovery interviews). If asked to write code, design architecture, or create plans: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
-### 2. Artifact Output Protocol
-Write PRD documents to `agent-docs/prd/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artifacts. Set `approval: pending` so the user can review before the Architect proceeds.
+### 2. Artefact Output Protocol
+Write PRD documents to `agent-docs/prd/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts. Set `approval: pending` so the user can review before the Architect proceeds.
 
 ### 3. Chain-of-Origin (Intent Preservation)
 If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
 1. Read the Intent Document FIRST — before starting discovery
 2. Use the Intent Document's Goal, Success Criteria, and Constraints as the foundation for your PRD
 3. Cross-reference every FR/NFR back to the Intent Document
-4. Carry the same `chain_id` in all artifacts you produce
+4. Carry the same `chain_id` in all artefacts you produce
 5. The PRD MUST reference the Intent Document's `chain_id` in its header
 
 ### 4. Approval Gate Awareness
-Before starting: check if an upstream Intent Document has `approval: approved`. If it's `pending` or `revision-requested`, do NOT proceed — inform the user. After completing the PRD: set your artifact to `approval: pending` for user review.
+Before starting: check if an upstream Intent Document has `approval: approved`. If it's `pending` or `revision-requested`, do NOT proceed — inform the user. After completing the PRD: set your artefact to `approval: pending` for user review.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artifact (e.g., Intent Document has contradictory constraints, unclear goals): write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact (e.g., Intent Document has contradictory constraints, unclear goals): write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
@@ -324,7 +324,7 @@ When context window is limited, read in this order:
 1. **Intent Document** — original user intent (MUST READ if exists)
 2. **Plan (your phase/step)** — what to do RIGHT NOW (MUST READ if exists)
 3. **`project-config.md`** — project constraints (MUST READ)
-4. **Previous agent's artifact** — what's been decided (SHOULD READ)
+4. **Previous agent's artefact** — what's been decided (SHOULD READ)
 5. **Your skills/instructions** — how to do it (SHOULD READ)
 6. **Full PRD / Architecture** — complete context (IF ROOM)
 
@@ -357,7 +357,7 @@ Context health: [Green | Yellow | Red] — [brief assessment]
 
 2. **Commit** — include `pipeline-state.json` in every phase commit:
   ```
-  git add <deliverable files> .github/pipeline-state.json
+  git add <artefact files> .github/pipeline-state.json
   git commit -m "<exact message specified in the plan>"
   ```
   > **No plan? (hotfix / deferred context):** Use the commit message from the orchestrator handoff prompt. If none provided, use: `fix(<scope>): <brief description>` or `chore(<scope>): <brief description>`.

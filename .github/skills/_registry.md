@@ -1,6 +1,6 @@
 # Skills Registry
 
-> **106 skills** across 12 categories — full reconciliation against disk state (`vmie/` excluded).  
+> **112 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
 > Load a skill by reading its `SKILL.md`. See `project-config.md` for project-specific placeholder values.
 
 ---
@@ -22,14 +22,17 @@
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
+| Anchor Review | `coding/anchor-review/` | Single-model adversarial review with 3-lens analysis and confidence scoring |
 | API Client Patterns | `coding/api-client-patterns/` | Typed fetch wrappers, TanStack Query, tRPC, and OpenAPI codegen |
+| API Design | `coding/api-design/` | REST/GraphQL API design — naming, pagination, versioning, error responses, OpenAPI |
 | Architecture Design | `coding/architecture-design/` | Designing system architecture with C4 diagrams and layered patterns |
 | Backend Development | `coding/backend-development/` | Backend API development patterns and microservices |
-| ↳ Backend-to-Frontend Handoff | `coding/backend-development/backend-to-frontend-handoff-docs/` | Generating API handoff docs for frontend integration (sub-skill) |
+| Backend-to-Frontend Handoff | `coding/backend-to-frontend-handoff/` | Generating API handoff docs for frontend integration |
 | Caching Patterns | `coding/caching-patterns/` | Caching strategies for Streamlit/FastAPI applications |
 | Codebase Audit | `coding/codebase-audit/` | Auditing unfamiliar codebases — 20 audit areas, 6-step method, findings report |
 | Code Explainer | `coding/code-explainer/` | Explaining code with diagrams and analogies |
 | Code Review | `coding/code-review/` | Performing code reviews for quality, security, and performance |
+| Error Handling | `coding/error-handling/` | Error hierarchies, retry logic, error boundaries, and logging strategies |
 | FastAPI Dev | `coding/fastapi-dev/` | Building FastAPI backends with standard patterns |
 | JavaScript/TypeScript | `coding/javascript-typescript/` | JS/TS development patterns and best practices |
 | LLM Application Dev | `coding/llm-application-dev/` | Building LLM-powered applications with prompt engineering and RAG |
@@ -39,7 +42,6 @@
 | Refactoring | `coding/refactoring/` | Safe code refactoring while maintaining behavior |
 | Security Review | `coding/security-review/` | Security review using OWASP Top 10 + cloud security best practices |
 | SQL | `coding/sql/` | Writing optimized SQL queries (database-agnostic) |
-| Webapp Development | `coding/webapp-development/` | End-to-end web application development workflow |
 
 ### Data
 
@@ -47,6 +49,7 @@
 |-------|------|-------------|
 | Data Analysis | `data/data-analysis/` | Analyzing datasets with 5-phase methodology |
 | Data Loader | `data/data-loader/` | Loading data from Excel, JSON, CSV into databases |
+| Data Validation | `data/data-validation/` | Data quality checks, Pydantic validation, SQL constraints, and data contracts |
 | Database Design | `data/database-design/` | Designing database schemas |
 | DB Testing | `data/db-testing/` | Testing database connectivity and queries |
 | Schema Migration | `data/schema-migration/` | Migrating app data access layer between schema versions (mapping, parity testing, query translation) |
@@ -56,6 +59,7 @@
 | Skill | Path | When to Use |
 |-------|------|-------------|
 | Changelog Generator | `devops/changelog-generator/` | Generating changelogs from git commits |
+| CI/CD Pipeline | `devops/ci-cd-pipeline/` | Pipeline design for GitHub Actions and Azure DevOps — quality gates, environments, caching |
 | GitHub CLI | `devops/gh-cli/` | GitHub CLI operations (PRs, issues, releases, actions) |
 | Git Commit | `devops/git-commit/` | Writing conventional commit messages |
 | Monorepo | `devops/monorepo/` | pnpm workspaces + Turborepo for monorepo CI/CD and shared packages |
@@ -75,12 +79,14 @@
 | XLSX | `docs/document-skills/xlsx/` | Spreadsheets with financial model standards |
 | Naming Analyzer | `docs/naming-analyzer/` | Suggesting better variable, function, and class names |
 | PRD to Code | `docs/prd-to-code/` | Converting PRDs to application code (6-phase process) |
+| Technical Writing | `docs/technical-writing/` | READMEs, API docs, ADRs, runbooks, and developer guides |
 | Writing Plans | `docs/writing-plans/` | Creating phased execution plans before implementation |
 
 ### Frontend
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
+| Artifacts Builder | `frontend/artifacts-builder/` | Building multi-component HTML artifacts (React, Tailwind, shadcn) |
 | Brand Guidelines | `frontend/brand-guidelines/` | Applying brand colors and typography consistently |
 | Canvas Design | `frontend/canvas-design/` | Creating canvas-based visual art in PNG and PDF |
 | CSS Architecture | `frontend/css-architecture/` | Design token hierarchy, Tailwind config, CSS Modules, responsive and animation patterns |
@@ -97,22 +103,25 @@
 | Theme Factory | `frontend/theme-factory/` | Creating and managing UI themes with pre-set color/font combos |
 | UI Review | `frontend/ui-review/` | Reviewing UI against design, WCAG 2.2 AA, and brand guidelines |
 | UX Design | `frontend/ux-design/` | Designing user experiences with brand color system and accessibility standards |
+| Webapp Development | `frontend/webapp-development/` | End-to-end web application development workflow |
 
 ### Testing
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
 | Component Testing | `testing/component-testing/` | Vitest + Testing Library for React component unit and integration testing |
+| Performance Testing | `testing/performance-testing/` | Load testing, benchmarking, and profiling with Locust, k6, pytest-benchmark |
 | Playwright | `testing/playwright/` | Browser automation and E2E testing with auto-detection |
 | TDD Workflow | `testing/tdd-workflow/` | Red-green-refactor cycle for test-driven development |
+| Test Strategy | `testing/test-strategy/` | Test planning, risk-based prioritisation, coverage goals, and test pyramids |
 | UI Testing | `testing/ui-testing/` | Automated Playwright UI tests for Streamlit and web apps |
 
 ### Workflow
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
+| Agent MD Refactor | `workflow/agent-md-refactor/` | Refactoring bloated agent instruction files to follow progressive disclosure principles |
 | Agent Orchestration | `workflow/agent-orchestration/` | End-to-end multi-agent pipeline from spec to production |
-| Anchor Review | `workflow/anchor-review/` | Single-model adversarial review with 3-lens analysis and confidence scoring |
 | Asking Questions | `workflow/asking-questions/` | When and how to ask clarifying questions before implementing |
 | Best Practices | `workflow/best-practices/` | Transform vague prompts into optimised AI prompts |
 | Brainstorming | `workflow/brainstorming/` | Structured ideation before implementing features or changes |
@@ -120,20 +129,19 @@
 | Context Handoff | `workflow/context-handoff/` | Preserving context between sessions (emergency handoff) |
 | Developer Growth | `workflow/developer-growth-analysis/` | Analyzing coding patterns and curating personalized learning resources |
 | File Organizer | `workflow/file-organizer/` | Organizing files, finding duplicates, suggesting structure |
+| Game-Changing Features | `workflow/game-changing-features/` | Finding 10x product opportunities and high-leverage improvements |
 | Intent Writer | `workflow/intent-writer/` | Structuring freetext ideas into formal Intent Documents for the agent pipeline |
 | Onboard Project | `workflow/onboard-project/` | Bootstrapping AI configuration (copilot-instructions.md, project-config.md) |
 | Pipeline State | `workflow/pipeline-state/` | Reading and writing `.github/pipeline-state.json` for pipeline tracking |
 | Receiving Code Review | `workflow/receiving-code-review/` | Processing code review feedback with technical rigor |
 | Requesting Code Review | `workflow/requesting-code-review/` | Verifying work and preparing it for review before merging |
 | Verification Loop | `workflow/verification-loop/` | Systematic lint, test, type-check, and review cycle |
-| Writing Skills | `workflow/writing-skills/` | Creating, editing, and verifying skill files before deployment |
 
 ### Media
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
 | Algorithmic Art | `media/algorithmic-art/` | Generating p5.js algorithmic artwork with seeded randomness |
-| Artifacts Builder | `media/artifacts-builder/` | Building multi-component HTML artifacts (React, Tailwind, shadcn) |
 | Draw.io | `media/draw-io/` | .drawio XML editing, PNG conversion, layout adjustment, and AWS icons |
 | Excalidraw | `media/excalidraw/` | Brand-themed Excalidraw diagrams for documentation |
 | Image Enhancer | `media/image-enhancer/` | Improving screenshot quality — resolution, sharpness, contrast |
@@ -145,12 +153,6 @@
 | Video Downloader | `media/video-downloader/` | Downloading and processing video for offline viewing |
 | YouTube Transcript | `media/youtube-transcript/` | Extracting YouTube captions and subtitles |
 
-### Meta
-
-| Skill | Path | When to Use |
-|-------|------|-------------|
-| Agent MD Refactor | `meta/agent-md-refactor/` | Refactoring bloated agent instruction files to follow progressive disclosure principles |
-
 ### Productivity
 
 | Skill | Path | When to Use |
@@ -158,7 +160,6 @@
 | Competitive Ads | `productivity/competitive-ads-extractor/` | Extracting and analyzing competitor ads from ad libraries |
 | Content Research | `productivity/content-research-writer/` | Researching and writing high-quality content with citations |
 | Domain Brainstormer | `productivity/domain-name-brainstormer/` | Brainstorming creative domain names and checking availability |
-| Game-Changing Features | `productivity/game-changing-features/` | Finding 10x product opportunities and high-leverage improvements |
 | GitHub Issues | `productivity/github-issues/` | Writing well-structured GitHub issues with acceptance criteria |
 | Internal Comms | `productivity/internal-comms/` | Writing status reports, newsletters, and incident reports |
 | Invoice Organizer | `productivity/invoice-organizer/` | Organizing invoices and receipts for tax preparation |
