@@ -46,7 +46,7 @@ Every agent's contract follows this schema:
 
 ---
 
-### Architect → Plan
+### Architect → Planner
 
 | Field | Value |
 |-------|-------|
@@ -56,15 +56,15 @@ Every agent's contract follows this schema:
 | `approval_on_completion` | `pending` |
 | `next_agent` | `plan` |
 
-> **Orchestrator check:** Verify `approval: approved` in architecture doc before routing to Plan.
+> **Orchestrator check:** Verify `approval: approved` in architecture doc before routing to Planner.
 
 ---
 
-### Plan → Implement
+### Planner → Implement
 
 | Field | Value |
 |-------|-------|
-| **Agent** | Plan |
+| **Agent** | Planner |
 | `artefact_path` | `.github/plans/<feature-slug>.md` |
 | `required_fields` | `chain_id`, `status`, `approval`, `phases`, `agent_assignments`, `track_labels` |
 | `approval_on_completion` | `pending` |
@@ -404,7 +404,7 @@ This is revision awareness (not full version numbering) — the pipeline knows "
 ## Handoff Chain Summary
 
 ```
-PRD ──→ Architect ──→ Plan ──→ Implement ──→ Tester ──→ Code Reviewer ──→ Done
+PRD ──→ Architect ──→ Planner ──→ Implement ──→ Tester ──→ Code Reviewer ──→ Done
                                     │                        │
                                     │            ┌───────────┘ (revision-requested)
                                     ▼            ▼

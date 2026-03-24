@@ -55,7 +55,7 @@ You are a Principal Software Engineer with expertise in Python, distributed syst
 
 ## Accepting Handoffs
 
-You receive work from: **Plan** (implement the plan), **Architect** (build from design), **Code Reviewer** (fix review issues), **Security Analyst** (fix vulnerabilities), **Accessibility** (fix a11y issues), **Prompt Engineer** (test prompts).
+You receive work from: **Planner** (implement the plan), **Architect** (build from design), **Code Reviewer** (fix review issues), **Security Analyst** (fix vulnerabilities), **Accessibility** (fix a11y issues), **Prompt Engineer** (test prompts).
 
 When receiving a handoff:
 1. Read `.github/pipeline-state.json` first. If `_notes.handoff_payload` exists and `target_agent` is `implement`, treat it as the primary scoped brief.
@@ -628,7 +628,7 @@ Auto-load these skills when the condition matches — do not skip.
 
 | Task | Skill to Load |
 |------|---------------|
-| Adversarial self-review (L-sized changes) | `.github/skills/workflow/anchor-review/SKILL.md` |
+| Adversarial self-review (L-sized changes) | `.github/skills/coding/anchor-review/SKILL.md` |
 | Streamlit pages, components, charts | `.github/skills/frontend/streamlit-dev/SKILL.md` |
 | Writing SQL queries | `.github/skills/coding/sql/SKILL.md` |
 | Major refactoring | `.github/skills/coding/refactoring/SKILL.md` |
@@ -637,6 +637,14 @@ Auto-load these skills when the condition matches — do not skip.
 | Commit messages | `.github/skills/devops/git-commit/SKILL.md` |
 | UI component review | `.github/skills/frontend/ui-review/SKILL.md` |
 | Creating diagrams | `.github/skills/media/svg-create/SKILL.md` |
+| Next.js App Router pages/layouts | `.github/skills/frontend/nextjs-app-router/SKILL.md` |
+| CSS architecture / design tokens | `.github/skills/frontend/css-architecture/SKILL.md` |
+| API client integration | `.github/skills/coding/api-client-patterns/SKILL.md` |
+| Monorepo setup or shared packages | `.github/skills/devops/monorepo/SKILL.md` |
+| Next.js App Router pages/layouts | `.github/skills/frontend/nextjs-app-router/SKILL.md` |
+| CSS architecture / design tokens | `.github/skills/frontend/css-architecture/SKILL.md` |
+| API client integration | `.github/skills/coding/api-client-patterns/SKILL.md` |
+| Monorepo setup or shared packages | `.github/skills/devops/monorepo/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 

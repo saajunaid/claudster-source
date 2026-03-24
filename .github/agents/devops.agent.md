@@ -41,6 +41,10 @@ Auto-load these skills when the condition matches — do not skip.
 | Git commit messages | `.github/skills/devops/git-commit/SKILL.md` |
 | Changelog generation | `.github/skills/devops/changelog-generator/SKILL.md` |
 | GitHub CLI operations | `.github/skills/devops/gh-cli/SKILL.md` |
+| Monorepo CI/CD and workspace config | `.github/skills/devops/monorepo/SKILL.md` |
+| Observability / monitoring setup | `.github/skills/coding/observability/SKILL.md` |
+| Monorepo CI/CD and workspace config | `.github/skills/devops/monorepo/SKILL.md` |
+| Observability / monitoring setup | `.github/skills/coding/observability/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 

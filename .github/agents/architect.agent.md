@@ -65,7 +65,7 @@ Determine how you were invoked before reading any pipeline state or running any 
 
 ## Accepting Handoffs
 
-You receive work from: **PRD** (design for requirements), **Plan** (review architecture), **Security Analyst** (architecture review), **Data Engineer** / **SQL Expert** (validate design), **SVG Diagram** (incorporate diagram).
+You receive work from: **PRD** (design for requirements), **Planner** (review architecture), **Security Analyst** (architecture review), **Data Engineer** / **SQL Expert** (validate design), **SVG Diagram** (incorporate diagram).
 
 When receiving a handoff:
 1. Read the PRD or plan context provided — identify key constraints and non-functional requirements
@@ -112,6 +112,12 @@ Auto-load these skills when the condition matches — do not skip.
 | Data analysis patterns | `.github/skills/data/data-analysis/SKILL.md` |
 | Architecture diagrams (draw.io) | `.github/skills/media/draw-io/SKILL.md` |
 | Context handoff | `.github/skills/workflow/context-handoff/SKILL.md` |
+| Working with unfamiliar codebase | `.github/skills/coding/codebase-audit/SKILL.md` |
+| Observability / monitoring design | `.github/skills/coding/observability/SKILL.md` |
+| Monorepo architecture decisions | `.github/skills/devops/monorepo/SKILL.md` |
+| Working with unfamiliar codebase | `.github/skills/coding/codebase-audit/SKILL.md` |
+| Observability / monitoring design | `.github/skills/coding/observability/SKILL.md` |
+| Monorepo architecture decisions | `.github/skills/devops/monorepo/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 

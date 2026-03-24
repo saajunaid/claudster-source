@@ -109,7 +109,11 @@ Auto-load these skills when the condition matches — do not skip.
 | Explaining complex code | `.github/skills/coding/code-explainer/SKILL.md` |
 | Understanding codebase | `.github/skills/docs/documentation-analyzer/SKILL.md` |
 | Security review patterns | `.github/skills/coding/security-review/SKILL.md` |
-| Adversarial review (3-lens) | `.github/skills/workflow/anchor-review/SKILL.md` |
+| Adversarial review (3-lens) | `.github/skills/coding/anchor-review/SKILL.md` |
+| Pre-implementation codebase audit | `.github/skills/coding/codebase-audit/SKILL.md` |
+| Reviewing observability / logging | `.github/skills/coding/observability/SKILL.md` |
+| Pre-implementation codebase audit | `.github/skills/coding/codebase-audit/SKILL.md` |
+| Reviewing observability / logging | `.github/skills/coding/observability/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 
@@ -205,7 +209,7 @@ Don't just read code — **verify claims.** When reviewing changes:
 
 ### Adversarial Review (for 🔴 issues or L-sized changes)
 
-When you find 🔴 Critical Issues, or the changeset touches 10+ files, load `.github/skills/workflow/anchor-review/SKILL.md` and apply the full 3-lens review with self-challenge protocol. If the change came from `@anchor`, verify their Evidence Bundle claims by re-running the test commands.
+When you find 🔴 Critical Issues, or the changeset touches 10+ files, load `.github/skills/coding/anchor-review/SKILL.md` and apply the full 3-lens review with self-challenge protocol. If the change came from `@anchor`, verify their Evidence Bundle claims by re-running the test commands.
 
 ---
 

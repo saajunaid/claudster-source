@@ -95,12 +95,24 @@ Auto-load these skills when the condition matches — do not skip.
 | Condition | Skill | Rationale |
 |-----------|-------|-----------|
 | Task involves React components | .github/skills/frontend/react-best-practices/SKILL.md | Framework-specific patterns and hook rules |
+| Task involves Next.js App Router | .github/skills/frontend/nextjs-app-router/SKILL.md | App Router conventions and SSR patterns |
+| Task involves shadcn/ui components | .github/skills/frontend/shadcn-radix/SKILL.md | Component composition and theming |
 
 ### Skills (Read for specialized tasks)
 | Task | Load This Skill |
-|------|----------------|
+|------|-----------------|
 | UI implementation review | `.github/skills/frontend/ui-review/SKILL.md` |
 | UI testing | `.github/skills/testing/ui-testing/SKILL.md` |
+| Premium visual design / animation | `.github/skills/frontend/premium-react/SKILL.md` |
+| CSS architecture decisions | `.github/skills/frontend/css-architecture/SKILL.md` |
+| API consumption / typed clients | `.github/skills/coding/api-client-patterns/SKILL.md` |
+| Component unit/integration testing | `.github/skills/testing/component-testing/SKILL.md` |
+| UI implementation review | `.github/skills/frontend/ui-review/SKILL.md` |
+| UI testing | `.github/skills/testing/ui-testing/SKILL.md` |
+| Premium visual design / animation | `.github/skills/frontend/premium-react/SKILL.md` |
+| CSS architecture decisions | `.github/skills/frontend/css-architecture/SKILL.md` |
+| API consumption / typed clients | `.github/skills/coding/api-client-patterns/SKILL.md` |
+| Component unit/integration testing | `.github/skills/testing/component-testing/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 

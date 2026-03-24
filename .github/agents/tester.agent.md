@@ -93,6 +93,8 @@ Auto-load these skills when the condition matches — do not skip.
 | Condition | Skill | Rationale |
 |-----------|-------|-----------|
 | Writing Playwright browser tests | .github/skills/testing/playwright/SKILL.md | Playwright patterns and selector strategies |
+| Testing React/JS components (not E2E) | .github/skills/testing/component-testing/SKILL.md | Vitest + Testing Library patterns |
+| Testing React/JS components (not E2E) | .github/skills/testing/component-testing/SKILL.md | Vitest + Testing Library patterns |
 
 ### Skills (Read for specialized testing tasks)
 | Task | Load This Skill |

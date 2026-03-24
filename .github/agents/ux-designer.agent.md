@@ -37,7 +37,7 @@ Determine how you were invoked before reading any pipeline state or running any 
 
 ## Accepting Handoffs
 
-You receive work from: **Architect** (design UX for architecture), **Plan** (design UX for planned UI phases), **Accessibility** (UX review after audit).
+You receive work from: **Architect** (design UX for architecture), **Planner** (design UX for planned UI phases), **Accessibility** (UX review after audit).
 
 When receiving a handoff:
 1. Read the incoming context — identify accessibility findings or design requirements

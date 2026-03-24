@@ -56,7 +56,7 @@ agent-docs/
 
 | Date | Agent | Type | Description | Path | Status | Approval | Chain ID |
 |------|-------|------|-------------|------|--------|----------|----------|
-| 2026-02-19 | Plan | plan | Track B — Insight/FCard/Identity redesign (5 phases) | `.github/plans/2026-02-19-insight-cards-fcard-identity-redesign.md` | completed | approved | FEAT-2026-0219-track-b-redesign |
+| 2026-02-19 | Planner | plan | Track B — Insight/FCard/Identity redesign (5 phases) | `.github/plans/2026-02-19-insight-cards-fcard-identity-redesign.md` | completed | approved | FEAT-2026-0219-track-b-redesign |
 | 2026-02-19 | Debug | fix-up | Post-Track B cross-component polish (7 issues A–G) | `.github/plans/PostTrackB-Cross-Component-Fix-Up.md` | completed | approved | FEAT-2026-0219-track-b-redesign |
 | 2026-02-19 | Architect | ADR | Chat widget architecture — Option B (micro-frontend hybrid) | `docs/architecture/agentic-adr/ADR-chat-widget-architecture.md` | current | approved | FEAT-2026-0219-track-a-chat-widget |
-| 2026-02-19 | Plan | plan | Track A — Chat widget micro-frontend migration (5 phases) | `.github/plans/track-a-chat-widget-microfrontend.md` | current | approved | FEAT-2026-0219-track-a-chat-widget |
+| 2026-02-19 | Planner | plan | Track A — Chat widget micro-frontend migration (5 phases) | `.github/plans/track-a-chat-widget-microfrontend.md` | current | approved | FEAT-2026-0219-track-a-chat-widget |

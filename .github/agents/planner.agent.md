@@ -100,6 +100,8 @@ Auto-load these skills when the condition matches — do not skip.
 | Agent orchestration methodology | `.github/skills/workflow/agent-orchestration/SKILL.md` |
 | Analyzing existing codebase | `.github/skills/docs/documentation-analyzer/SKILL.md` |
 | Understanding complex code | `.github/skills/coding/code-explainer/SKILL.md` |
+| Planning changes to unfamiliar codebase | `.github/skills/coding/codebase-audit/SKILL.md` |
+| Planning changes to unfamiliar codebase | `.github/skills/coding/codebase-audit/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 

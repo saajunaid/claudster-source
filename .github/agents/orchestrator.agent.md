@@ -321,14 +321,14 @@ Before routing to the Tester agent, perform a cumulative intent audit across all
 | Gate | Trigger | `supervised` / `assisted` | `autopilot` |
 |------|---------|--------------------------|-------------|
 | `intent_approved` | Before starting the PRD | Show intent summary, **ask for approval** | Same — always requires human approval |
-| `adr_approved` | After Architect completes | Show architecture summary + ADR list, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="adr_approved")` immediately after Architect stage completes, then invoke Plan |
-| `plan_approved` | After Planner agent completes | Show phase breakdown + agent assignments, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="plan_approved")` immediately after Plan stage completes, then invoke Implement |
+| `adr_approved` | After Architect completes | Show architecture summary + ADR list, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="adr_approved")` immediately after Architect stage completes, then invoke Planner |
+| `plan_approved` | After Planner agent completes | Show phase breakdown + agent assignments, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="plan_approved")` immediately after Planner stage completes, then invoke Implement |
 | `review_approved` | After Code Reviewer returns result | Show result, **ask for approval** | **Conditional** — if verdict=`approved`: call `satisfy_gate(gate="review_approved")` and close. If verdict=`revision-requested`: retry loop (T-16) up to `review.max_retries`. If budget exhausted (T-29): HALT + write `PIPELINE_HALT.md` + notify |
 
 **`autopilot` gate auto-satisfaction procedure** (never use `editFiles` — always call `satisfy_gate` MCP tool):
 ```
 satisfy_gate(gate="adr_approved")   # immediately after Architect completes
-satisfy_gate(gate="plan_approved")  # immediately after Plan completes
+satisfy_gate(gate="plan_approved")  # immediately after Planner completes
 satisfy_gate(gate="review_approved") # only when reviewer verdict = approved
 ```
 

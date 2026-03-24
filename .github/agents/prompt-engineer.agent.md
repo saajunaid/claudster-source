@@ -27,7 +27,7 @@ Determine how you were invoked before reading any pipeline state or running any 
 
 ## Accepting Handoffs
 
-You receive work from: **Plan** (design prompts for plan steps), **Implement** (refine prompts).
+You receive work from: **Planner** (design prompts for plan steps), **Implement** (refine prompts).
 
 When receiving a handoff:
 1. Read the incoming context — identify the LLM task, target model, and quality requirements

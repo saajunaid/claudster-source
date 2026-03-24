@@ -43,7 +43,7 @@ Determine how you were invoked before reading any pipeline state or running any 
 
 ## Accepting Handoffs
 
-You receive work from: **Data Engineer** (design schema), **Plan** (SQL tasks), **Architect** (validate database design).
+You receive work from: **Data Engineer** (design schema), **Planner** (SQL tasks), **Architect** (validate database design).
 
 When receiving a handoff:
 1. Read the incoming context — identify tables, query patterns, and performance requirements

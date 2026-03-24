@@ -293,7 +293,7 @@ Load the same skills and instructions as `@implement`. Key references:
 
 | Task | Load |
 |------|------|
-| Adversarial review (3-lens) | `.github/skills/workflow/anchor-review/SKILL.md` |
+| Adversarial review (3-lens) | `.github/skills/coding/anchor-review/SKILL.md` |
 | Streamlit pages/components | `.github/skills/frontend/streamlit-dev/SKILL.md` |
 | SQL queries | `.github/skills/coding/sql/SKILL.md` |
 | Schema migration (old→new tables) | `.github/skills/data/schema-migration/SKILL.md` |

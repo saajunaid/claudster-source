@@ -33,7 +33,7 @@ Determine how you were invoked before reading any pipeline state or running any 
 
 ## Accepting Handoffs
 
-You receive work from: **Plan** (refine requirements), **Architect** (formalize design into PRD), **Project Manager** (kickoff new feature).
+You receive work from: **Planner** (refine requirements), **Architect** (formalize design into PRD), **Project Manager** (kickoff new feature).
 
 When receiving a handoff:
 1. Review any architecture or plan context provided in the conversation
@@ -160,7 +160,7 @@ Before handoff, verify the PRD is consumable by Architect and Planner agents:
 
 ## PRD Output Format
 
-All sections MUST be numbered with `§` prefixes. Downstream agents (Architect, Plan) reference sections by number.
+All sections MUST be numbered with `§` prefixes. Downstream agents (Architect, Planner) reference sections by number.
 
 ```markdown
 # PRD: {Feature/Project Name}

@@ -1,30 +1,44 @@
 # Skills Registry
 
-Master index of all available skills. Load a skill by reading its `SKILL.md` file.
-
-Load a skill by name from its category folder. See `project-config.md` for project-specific placeholder values.
+> **106 skills** across 12 categories — full reconciliation against disk state (`vmie/` excluded).  
+> Load a skill by reading its `SKILL.md`. See `project-config.md` for project-specific placeholder values.
 
 ---
 
 ## Skills by Category
 
+### Cloud
+
+| Skill | Path | When to Use |
+|-------|------|-------------|
+| AWS Agentic AI | `cloud/aws-agentic-ai/` | Building agentic AI systems on AWS Bedrock AgentCore (Gateway, Runtime, Memory, Identity) |
+| AWS CDK Development | `cloud/aws-cdk-development/` | Building cloud infrastructure as code with AWS CDK in TypeScript/Python |
+| AWS Cost Operations | `cloud/aws-cost-operations/` | AWS cost optimization, monitoring, and operational best practices |
+| AWS Serverless EDA | `cloud/aws-serverless-eda/` | Event-driven architectures using Lambda, API Gateway, SQS, SNS, Step Functions |
+| AI Agent on Cloudflare | `cloud/building-ai-agent-on-cloudflare/` | Building stateful AI agents on Cloudflare Workers with WebSockets and tool integration |
+| MCP Server on Cloudflare | `cloud/building-mcp-server-on-cloudflare/` | Building remote MCP servers on Cloudflare Workers with OAuth authentication |
+
 ### Coding
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Python | `coding/python/` | Python development patterns and best practices |
-| SQL | `coding/sql/` | Writing optimized SQL queries (database-agnostic) |
-| JavaScript/TypeScript | `coding/javascript-typescript/` | JS/TS development patterns |
-| Refactoring | `coding/refactoring/` | Code refactoring techniques |
-| Code Review | `coding/code-review/` | Performing code reviews |
-| Code Explainer | `coding/code-explainer/` | Explaining code with diagrams and analogies |
-| Backend Development | `coding/backend-development/` | Backend API development patterns |
-| LLM Application Dev | `coding/llm-application-dev/` | Building LLM-powered applications |
-| MCP Builder | `coding/mcp-builder/` | Building MCP (Model Context Protocol) servers |
-| Security Review | `coding/security-review/` | Security review using OWASP Top 10 + cloud security best practices |
-| Architecture Design | `coding/architecture-design/` | Designing system architecture with C4 diagrams |
+| API Client Patterns | `coding/api-client-patterns/` | Typed fetch wrappers, TanStack Query, tRPC, and OpenAPI codegen |
+| Architecture Design | `coding/architecture-design/` | Designing system architecture with C4 diagrams and layered patterns |
+| Backend Development | `coding/backend-development/` | Backend API development patterns and microservices |
+| ↳ Backend-to-Frontend Handoff | `coding/backend-development/backend-to-frontend-handoff-docs/` | Generating API handoff docs for frontend integration (sub-skill) |
 | Caching Patterns | `coding/caching-patterns/` | Caching strategies for Streamlit/FastAPI applications |
+| Codebase Audit | `coding/codebase-audit/` | Auditing unfamiliar codebases — 20 audit areas, 6-step method, findings report |
+| Code Explainer | `coding/code-explainer/` | Explaining code with diagrams and analogies |
+| Code Review | `coding/code-review/` | Performing code reviews for quality, security, and performance |
 | FastAPI Dev | `coding/fastapi-dev/` | Building FastAPI backends with standard patterns |
+| JavaScript/TypeScript | `coding/javascript-typescript/` | JS/TS development patterns and best practices |
+| LLM Application Dev | `coding/llm-application-dev/` | Building LLM-powered applications with prompt engineering and RAG |
+| MCP Builder | `coding/mcp-builder/` | Building MCP (Model Context Protocol) servers |
+| Observability | `coding/observability/` | Structured logging, distributed tracing, metrics, health checks, and error tracking |
+| Python | `coding/python/` | Python development patterns and best practices |
+| Refactoring | `coding/refactoring/` | Safe code refactoring while maintaining behavior |
+| Security Review | `coding/security-review/` | Security review using OWASP Top 10 + cloud security best practices |
+| SQL | `coding/sql/` | Writing optimized SQL queries (database-agnostic) |
 | Webapp Development | `coding/webapp-development/` | End-to-end web application development workflow |
 
 ### Data
@@ -32,131 +46,124 @@ Load a skill by name from its category folder. See `project-config.md` for proje
 | Skill | Path | When to Use |
 |-------|------|-------------|
 | Data Analysis | `data/data-analysis/` | Analyzing datasets with 5-phase methodology |
-| Data Loader | `data/data-loader/` | Loading and transforming data |
+| Data Loader | `data/data-loader/` | Loading data from Excel, JSON, CSV into databases |
 | Database Design | `data/database-design/` | Designing database schemas |
 | DB Testing | `data/db-testing/` | Testing database connectivity and queries |
 | Schema Migration | `data/schema-migration/` | Migrating app data access layer between schema versions (mapping, parity testing, query translation) |
-
-### Frontend
-
-| Skill | Path | When to Use |
-|-------|------|-------------|
-| Streamlit Dev | `frontend/streamlit-dev/` | Building Streamlit dashboards (generic) |
-| Frontend Design | `frontend/frontend-design/` | Frontend design patterns |
-| React Best Practices | `frontend/react-best-practices/` | React development best practices |
-| UI Review | `frontend/ui-review/` | Reviewing UI against design and accessibility |
-| Brand Guidelines | `frontend/brand-guidelines/` | Applying brand guidelines to UI |
-| Canvas Design | `frontend/canvas-design/` | Creating canvas-based designs |
-| UX Design | `frontend/ux-design/` | Designing user experiences with brand color system |
-| Theme Factory | `frontend/theme-factory/` | Creating and managing UI themes |
-
-### Testing
-
-| Skill | Path | When to Use |
-|-------|------|-------------|
-| UI Testing | `testing/ui-testing/` | Testing user interfaces |
-| QA Regression | `testing/qa-regression/` | QA regression test planning |
-| TDD Workflow | `testing/tdd-workflow/` | TDD red-green-refactor workflow |
-| Playwright | `testing/playwright/` | Playwright E2E browser testing (moved from `playwright-skill/`) |
 
 ### DevOps
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Git Commit | `devops/git-commit/` | Writing conventional commits |
-| Using Git Worktrees | `devops/using-git-worktrees/` | Managing parallel branches with worktrees |
-| Changelog Generator | `devops/changelog-generator/` | Generating changelogs from commits |
+| Changelog Generator | `devops/changelog-generator/` | Generating changelogs from git commits |
 | GitHub CLI | `devops/gh-cli/` | GitHub CLI operations (PRs, issues, releases, actions) |
+| Git Commit | `devops/git-commit/` | Writing conventional commit messages |
+| Monorepo | `devops/monorepo/` | pnpm workspaces + Turborepo for monorepo CI/CD and shared packages |
+| Using Git Worktrees | `devops/using-git-worktrees/` | Managing parallel branches with git worktrees |
 
 ### Docs
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Documentation Analyzer | `docs/documentation-analyzer/` | Analyzing and generating code documentation |
-| Code Documentation | `docs/code-documentation/` | Writing code-level documentation |
-| Doc Co-authoring | `docs/doc-coauthoring/` | Collaborative document editing |
-| PRD to Code | `docs/prd-to-code/` | Converting PRDs to application code |
-| Architecture Document | `docs/architecture-document/` | Generate enterprise-grade HLD/LLD documents from Architecture.md |
-| Writing Plans | `docs/writing-plans/` | Creating phased execution plans |
+| Architecture Document | `docs/architecture-document/` | Generating enterprise-grade HLD/LLD documents from Architecture.md |
+| Code Documentation | `docs/code-documentation/` | Writing API docs, README files, and inline comments |
+| Doc Co-authoring | `docs/doc-coauthoring/` | Collaborative document editing workflow |
+| Documentation Analyzer | `docs/documentation-analyzer/` | Analyzing codebases and generating documentation |
+| DOCX | `docs/document-skills/docx/` | Word documents with tracked changes and OOXML |
+| PDF | `docs/document-skills/pdf/` | PDF manipulation with pypdf, pdfplumber, reportlab |
+| PPTX | `docs/document-skills/pptx/` | PowerPoint creation/editing with html2pptx |
+| XLSX | `docs/document-skills/xlsx/` | Spreadsheets with financial model standards |
+| Naming Analyzer | `docs/naming-analyzer/` | Suggesting better variable, function, and class names |
+| PRD to Code | `docs/prd-to-code/` | Converting PRDs to application code (6-phase process) |
+| Writing Plans | `docs/writing-plans/` | Creating phased execution plans before implementation |
+
+### Frontend
+
+| Skill | Path | When to Use |
+|-------|------|-------------|
+| Brand Guidelines | `frontend/brand-guidelines/` | Applying brand colors and typography consistently |
+| Canvas Design | `frontend/canvas-design/` | Creating canvas-based visual art in PNG and PDF |
+| CSS Architecture | `frontend/css-architecture/` | Design token hierarchy, Tailwind config, CSS Modules, responsive and animation patterns |
+| Frontend Design | `frontend/frontend-design/` | Production-grade frontend interfaces |
+| Mockup | `frontend/mockup/` | Framework-aware UI mockups with feasibility checks |
+| Next.js App Router | `frontend/nextjs-app-router/` | Next.js 13+ App Router, Server Components, Server Actions, Route Handlers |
+| Premium React | `frontend/premium-react/` | High-quality animated React UIs with Framer Motion, GSAP, and Tailwind |
+| React Best Practices | `frontend/react-best-practices/` | Modern React hooks, component patterns, and state management |
+| React Dev | `frontend/react-dev/` | Type-safe React 18-19 patterns and TypeScript integration |
+| React useEffect | `frontend/react-useeffect/` | When NOT to use Effect — official React best practices |
+| shadcn/Radix | `frontend/shadcn-radix/` | shadcn/ui component system, Radix primitives, theming, and form patterns |
+| Streamlit Animate | `frontend/streamlit-animate/` | Enterprise-safe animations and micro-interactions for Streamlit apps |
+| Streamlit Dev | `frontend/streamlit-dev/` | Production Streamlit dashboards with caching and theming |
+| Theme Factory | `frontend/theme-factory/` | Creating and managing UI themes with pre-set color/font combos |
+| UI Review | `frontend/ui-review/` | Reviewing UI against design, WCAG 2.2 AA, and brand guidelines |
+| UX Design | `frontend/ux-design/` | Designing user experiences with brand color system and accessibility standards |
+
+### Testing
+
+| Skill | Path | When to Use |
+|-------|------|-------------|
+| Component Testing | `testing/component-testing/` | Vitest + Testing Library for React component unit and integration testing |
+| Playwright | `testing/playwright/` | Browser automation and E2E testing with auto-detection |
+| TDD Workflow | `testing/tdd-workflow/` | Red-green-refactor cycle for test-driven development |
+| UI Testing | `testing/ui-testing/` | Automated Playwright UI tests for Streamlit and web apps |
 
 ### Workflow
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Agent Orchestration | `workflow/agent-orchestration/` | End-to-end multi-agent pipeline — spec to production |
-| Context Handoff | `workflow/context-handoff/` | Preserving context between sessions |
-| Best Practices | `workflow/best-practices/` | AI development best practices |
-| Skill Creator | `workflow/skill-creator/` | Creating new skills |
-| Writing Skills | `workflow/writing-skills/` | Writing effective skill files |
-| Asking Questions | `workflow/asking-questions/` | When to ask clarifying questions |
-| File Organizer | `workflow/file-organizer/` | Organizing files and folders |
-| Receiving Code Review | `workflow/receiving-code-review/` | Handling code review feedback |
-| Requesting Code Review | `workflow/requesting-code-review/` | Preparing code for review |
-| Verification Loop | `workflow/verification-loop/` | Systematic code verification (lint, test, type-check) |
-| Anchor Review | `anchor-review/` | Single-model adversarial review — 3-lens analysis with confidence scoring and self-challenge |
-| Pipeline State | `workflow/pipeline-state/` | Read/write `.github/pipeline-state.json` for pipeline tracking |
+| Agent Orchestration | `workflow/agent-orchestration/` | End-to-end multi-agent pipeline from spec to production |
+| Anchor Review | `workflow/anchor-review/` | Single-model adversarial review with 3-lens analysis and confidence scoring |
+| Asking Questions | `workflow/asking-questions/` | When and how to ask clarifying questions before implementing |
+| Best Practices | `workflow/best-practices/` | Transform vague prompts into optimised AI prompts |
+| Brainstorming | `workflow/brainstorming/` | Structured ideation before implementing features or changes |
 | Context Curator | `workflow/context-curator/` | Compress and prioritise codebase context before feeding reasoning agents |
+| Context Handoff | `workflow/context-handoff/` | Preserving context between sessions (emergency handoff) |
+| Developer Growth | `workflow/developer-growth-analysis/` | Analyzing coding patterns and curating personalized learning resources |
+| File Organizer | `workflow/file-organizer/` | Organizing files, finding duplicates, suggesting structure |
+| Intent Writer | `workflow/intent-writer/` | Structuring freetext ideas into formal Intent Documents for the agent pipeline |
+| Onboard Project | `workflow/onboard-project/` | Bootstrapping AI configuration (copilot-instructions.md, project-config.md) |
+| Pipeline State | `workflow/pipeline-state/` | Reading and writing `.github/pipeline-state.json` for pipeline tracking |
+| Receiving Code Review | `workflow/receiving-code-review/` | Processing code review feedback with technical rigor |
+| Requesting Code Review | `workflow/requesting-code-review/` | Verifying work and preparing it for review before merging |
+| Verification Loop | `workflow/verification-loop/` | Systematic lint, test, type-check, and review cycle |
+| Writing Skills | `workflow/writing-skills/` | Creating, editing, and verifying skill files before deployment |
 
 ### Media
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Image Enhancer | `media/image-enhancer/` | Enhancing and processing images |
-| Video Downloader | `media/video-downloader/` | Downloading and processing video |
-| Slack GIF Creator | `media/slack-gif-creator/` | Creating GIFs for Slack |
-| Algorithmic Art | `media/algorithmic-art/` | Generating algorithmic artwork |
-| Artifacts Builder | `media/artifacts-builder/` | Building reusable artifacts |
+| Algorithmic Art | `media/algorithmic-art/` | Generating p5.js algorithmic artwork with seeded randomness |
+| Artifacts Builder | `media/artifacts-builder/` | Building multi-component HTML artifacts (React, Tailwind, shadcn) |
+| Draw.io | `media/draw-io/` | .drawio XML editing, PNG conversion, layout adjustment, and AWS icons |
 | Excalidraw | `media/excalidraw/` | Brand-themed Excalidraw diagrams for documentation |
+| Image Enhancer | `media/image-enhancer/` | Improving screenshot quality — resolution, sharpness, contrast |
+| Mermaid Diagrams | `media/mermaid-diagrams/` | Class, sequence, flowchart, ERD, C4, state, and gantt diagrams |
+| NotebookLM | `media/notebooklm/` | Querying Google NotebookLM for source-grounded answers |
 | PlantUML | `media/plantuml/` | Brand-themed PlantUML diagrams for documentation |
+| Slack GIF Creator | `media/slack-gif-creator/` | Creating animated GIFs optimized for Slack |
 | SVG Create | `media/svg-create/` | Brand-themed SVG diagrams with accessible design |
-| YouTube Transcript | `media/youtube-transcript/` | Extracting YouTube transcripts |
-| NotebookLM | `media/notebooklm/` | Google NotebookLM generation (moved from `notebooklm-skill/`) |
-
-### Productivity
-
-| Skill | Path | When to Use |
-|-------|------|-------------|
-| GitHub Issues | `productivity/github-issues/` | Managing GitHub issues |
-| Jira Issues | `productivity/jira-issues/` | Managing Jira tickets |
-| Meeting Insights | `productivity/meeting-insights-analyzer/` | Analyzing meeting notes/transcripts |
-| Content Research | `productivity/content-research-writer/` | Researching and writing content |
-| Lead Research | `productivity/lead-research-assistant/` | Researching leads and prospects |
-| Competitive Ads | `productivity/competitive-ads-extractor/` | Extracting competitor ad data |
-| Domain Brainstormer | `productivity/domain-name-brainstormer/` | Brainstorming domain names |
-| Job Application | `productivity/job-application/` | Preparing job applications |
-| Raffle Winner | `productivity/raffle-winner-picker/` | Picking raffle winners |
-| Internal Comms | `productivity/internal-comms/` | Writing internal communications |
-| Invoice Organizer | `productivity/invoice-organizer/` | Organizing and processing invoices |
-
-### Document Skills (Advanced)
-
-| Skill | Path | When to Use |
-|-------|------|-------------|
-| DOCX | `document-skills/docx/` | Word documents with tracked changes, OOXML |
-| PDF | `document-skills/pdf/` | PDF manipulation with pypdf, pdfplumber, reportlab |
-| PPTX | `document-skills/pptx/` | PowerPoint creation/editing with html2pptx |
-| XLSX | `document-skills/xlsx/` | Spreadsheets with financial model standards |
+| Video Downloader | `media/video-downloader/` | Downloading and processing video for offline viewing |
+| YouTube Transcript | `media/youtube-transcript/` | Extracting YouTube captions and subtitles |
 
 ### Meta
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Developer Growth | `meta/developer-growth-analysis/` | Analyzing developer growth metrics |
+| Agent MD Refactor | `meta/agent-md-refactor/` | Refactoring bloated agent instruction files to follow progressive disclosure principles |
 
----
-
-## Uncategorized Skills
-
-These skills have specialized tooling or references and remain in their original locations:
+### Productivity
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| AWS Agentic AI | `aws-agentic-ai/` | Building agentic AI on AWS |
-| AWS CDK Development | `aws-cdk-development/` | AWS CDK infrastructure development |
-| AWS Cost Operations | `aws-cost-operations/` | AWS cost optimization |
-| AWS Serverless EDA | `aws-serverless-eda/` | Event-driven architecture on AWS |
-| Brainstorming | `brainstorming/` | Structured brainstorming sessions |
-| AI Agent on Cloudflare | `building-ai-agent-on-cloudflare/` | Building AI agents on Cloudflare |
-| MCP Server on Cloudflare | `building-mcp-server-on-cloudflare/` | Building MCP servers on Cloudflare |
-| Game-Changing Features | `game-changing-features/` | Finding 10x product opportunities |
-| Agent MD Refactor | `agent-md-refactor/` | Refactoring bloated agent instruction files |
+| Competitive Ads | `productivity/competitive-ads-extractor/` | Extracting and analyzing competitor ads from ad libraries |
+| Content Research | `productivity/content-research-writer/` | Researching and writing high-quality content with citations |
+| Domain Brainstormer | `productivity/domain-name-brainstormer/` | Brainstorming creative domain names and checking availability |
+| Game-Changing Features | `productivity/game-changing-features/` | Finding 10x product opportunities and high-leverage improvements |
+| GitHub Issues | `productivity/github-issues/` | Writing well-structured GitHub issues with acceptance criteria |
+| Internal Comms | `productivity/internal-comms/` | Writing status reports, newsletters, and incident reports |
+| Invoice Organizer | `productivity/invoice-organizer/` | Organizing invoices and receipts for tax preparation |
+| Jira Issues | `productivity/jira-issues/` | Creating and managing Jira tickets from natural language |
+| Job Application | `productivity/job-application/` | Preparing tailored cover letters and job applications |
+| Lead Research | `productivity/lead-research-assistant/` | Identifying high-quality leads for business development |
+| Meeting Insights | `productivity/meeting-insights-analyzer/` | Analyzing meeting notes and transcripts for patterns and feedback |
+| Raffle Winner | `productivity/raffle-winner-picker/` | Random winner selection from lists and spreadsheets |

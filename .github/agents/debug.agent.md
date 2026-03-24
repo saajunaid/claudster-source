@@ -106,7 +106,7 @@ Auto-load these skills when the condition matches — do not skip.
 
 | Task | Load This Skill |
 |------|----------------|
-| Adversarial fix verification | `.github/skills/workflow/anchor-review/SKILL.md` |
+| Adversarial fix verification | `.github/skills/coding/anchor-review/SKILL.md` |
 | Agent orchestration methodology | `.github/skills/workflow/agent-orchestration/SKILL.md` |
 | Database connectivity issues | `.github/skills/data/db-testing/SKILL.md` |
 | Understanding unfamiliar code | `.github/skills/coding/code-explainer/SKILL.md` |
