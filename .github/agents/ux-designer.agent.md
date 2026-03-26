@@ -82,6 +82,10 @@ Auto-load these skills when the condition matches — do not skip.
 | Frontend design patterns | `.github/skills/frontend/frontend-design/SKILL.md` |
 | Brand guidelines & visual identity | `.github/skills/frontend/brand-guidelines/SKILL.md` |
 | Theme creation & design tokens | `.github/skills/frontend/theme-factory/SKILL.md` |
+| Data-backed design decisions (palettes, fonts, UX rules) | `.github/skills/frontend/ui-ux-intelligence/SKILL.md` |
+| Brand voice and messaging frameworks | `.github/skills/frontend/brand-voice/SKILL.md` |
+| Design token architecture | `.github/skills/frontend/design-system-tokens/SKILL.md` |
+| Word cloud and text visualization | `.github/skills/frontend/word-cloud/SKILL.md` |
 | UI testing patterns | `.github/skills/testing/ui-testing/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.

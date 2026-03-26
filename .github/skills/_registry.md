@@ -1,6 +1,6 @@
 # Skills Registry
 
-> **112 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
+> **121 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
 > Load a skill by reading its `SKILL.md`. See `project-config.md` for project-specific placeholder values.
 
 ---
@@ -86,10 +86,15 @@
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
+| Algorithmic Art | `frontend/algorithmic-art/` | Generating p5.js algorithmic artwork with seeded randomness |
 | Artifacts Builder | `frontend/artifacts-builder/` | Building multi-component HTML artifacts (React, Tailwind, shadcn) |
+| Banner Design | `frontend/banner-design/` | Banners for social media, ads, website heroes, and print (22 styles, multi-platform) |
+| Brand Design | `frontend/brand-design/` | Logo generation (55 styles), corporate identity program, icon design, social photos |
 | Brand Guidelines | `frontend/brand-guidelines/` | Applying brand colors and typography consistently |
+| Brand Voice | `frontend/brand-voice/` | Brand voice, visual identity, messaging frameworks, and brand consistency |
 | Canvas Design | `frontend/canvas-design/` | Creating canvas-based visual art in PNG and PDF |
 | CSS Architecture | `frontend/css-architecture/` | Design token hierarchy, Tailwind config, CSS Modules, responsive and animation patterns |
+| Design System Tokens | `frontend/design-system-tokens/` | Three-layer token architecture (primitive → semantic → component), CSS variables, spacing/typography scales |
 | Frontend Design | `frontend/frontend-design/` | Production-grade frontend interfaces |
 | Mockup | `frontend/mockup/` | Framework-aware UI mockups with feasibility checks |
 | Next.js App Router | `frontend/nextjs-app-router/` | Next.js 13+ App Router, Server Components, Server Actions, Route Handlers |
@@ -98,12 +103,16 @@
 | React Dev | `frontend/react-dev/` | Type-safe React 18-19 patterns and TypeScript integration |
 | React useEffect | `frontend/react-useeffect/` | When NOT to use Effect — official React best practices |
 | shadcn/Radix | `frontend/shadcn-radix/` | shadcn/ui component system, Radix primitives, theming, and form patterns |
+| Slides | `frontend/slides/` | Strategic HTML presentations with Chart.js, design tokens, and copywriting formulas |
 | Streamlit Animate | `frontend/streamlit-animate/` | Enterprise-safe animations and micro-interactions for Streamlit apps |
 | Streamlit Dev | `frontend/streamlit-dev/` | Production Streamlit dashboards with caching and theming |
 | Theme Factory | `frontend/theme-factory/` | Creating and managing UI themes with pre-set color/font combos |
 | UI Review | `frontend/ui-review/` | Reviewing UI against design, WCAG 2.2 AA, and brand guidelines |
+| UI Styling Patterns | `frontend/ui-styling-patterns/` | shadcn/ui + Tailwind CSS utility styling, accessible components, dark mode, and canvas visuals |
+| UI/UX Intelligence | `frontend/ui-ux-intelligence/` | Data-backed design decisions: 161 color palettes, 57 font pairings, 99 UX guidelines, 25 chart types |
 | UX Design | `frontend/ux-design/` | Designing user experiences with brand color system and accessibility standards |
 | Webapp Development | `frontend/webapp-development/` | End-to-end web application development workflow |
+| Word Cloud | `frontend/word-cloud/` | Generate static or animated word clouds from text/files with theming and shape masking |
 
 ### Testing
 
@@ -141,7 +150,6 @@
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Algorithmic Art | `media/algorithmic-art/` | Generating p5.js algorithmic artwork with seeded randomness |
 | Draw.io | `media/draw-io/` | .drawio XML editing, PNG conversion, layout adjustment, and AWS icons |
 | Excalidraw | `media/excalidraw/` | Brand-themed Excalidraw diagrams for documentation |
 | Image Enhancer | `media/image-enhancer/` | Improving screenshot quality — resolution, sharpness, contrast |

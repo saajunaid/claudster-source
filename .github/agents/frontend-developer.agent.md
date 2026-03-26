@@ -108,6 +108,12 @@ Auto-load these skills when the condition matches — do not skip.
 | API consumption / typed clients | `.github/skills/coding/api-client-patterns/SKILL.md` |
 | Component unit/integration testing | `.github/skills/testing/component-testing/SKILL.md` |
 | Frontend design systems / tokens | `.github/skills/frontend/frontend-design/SKILL.md` |
+| Data-backed design decisions (palettes, fonts) | `.github/skills/frontend/ui-ux-intelligence/SKILL.md` |
+| Banner/header design for social and web | `.github/skills/frontend/banner-design/SKILL.md` |
+| HTML slide presentations | `.github/skills/frontend/slides/SKILL.md` |
+| UI styling with shadcn/ui + Tailwind | `.github/skills/frontend/ui-styling-patterns/SKILL.md` |
+| Word cloud and text visualization | `.github/skills/frontend/word-cloud/SKILL.md` |
+| Algorithmic art / generative visuals | `.github/skills/frontend/algorithmic-art/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 

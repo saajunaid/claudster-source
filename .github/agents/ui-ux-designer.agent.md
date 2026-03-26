@@ -723,7 +723,25 @@ Append to the existing array — do not overwrite previous entries. If `update_n
 
 Auto-load these skills when the condition matches — do not skip.
 
-> No mandatory triggers defined for this agent. All skills above are advisory — load when relevant to the task.
+| Condition | Skill | Rationale |
+|-----------|-------|----------|
+| Task involves color palette or font pairing decisions | .github/skills/frontend/ui-ux-intelligence/SKILL.md | Data-backed design decisions from CSV knowledge bases |
+| Task involves logo, CIP, or icon design | .github/skills/frontend/brand-design/SKILL.md | Structured brand identity and logo generation workflows |
+
+### Skills
+
+| Task | Load This Skill |
+|------|----------------|
+| Data-backed design decisions (palettes, fonts, UX rules) | `.github/skills/frontend/ui-ux-intelligence/SKILL.md` ⬅️ PRIMARY |
+| Logo, CIP, icon, and social photo design | `.github/skills/frontend/brand-design/SKILL.md` |
+| Brand voice and messaging frameworks | `.github/skills/frontend/brand-voice/SKILL.md` |
+| Design token architecture | `.github/skills/frontend/design-system-tokens/SKILL.md` |
+| UI styling with shadcn/ui + Tailwind | `.github/skills/frontend/ui-styling-patterns/SKILL.md` |
+| Banner/header design for social and web | `.github/skills/frontend/banner-design/SKILL.md` |
+| HTML slide presentations | `.github/skills/frontend/slides/SKILL.md` |
+| Frontend design patterns | `.github/skills/frontend/frontend-design/SKILL.md` |
+| Brand guidelines & visual identity | `.github/skills/frontend/brand-guidelines/SKILL.md` |
+| Word cloud and text visualization | `.github/skills/frontend/word-cloud/SKILL.md` |
 
 ---
 
