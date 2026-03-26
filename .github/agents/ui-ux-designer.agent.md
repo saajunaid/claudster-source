@@ -741,6 +741,7 @@ Auto-load these skills when the condition matches — do not skip.
 | HTML slide presentations | `.github/skills/frontend/slides/SKILL.md` |
 | Frontend design patterns | `.github/skills/frontend/frontend-design/SKILL.md` |
 | Brand guidelines & visual identity | `.github/skills/frontend/brand-guidelines/SKILL.md` |
+| Warm editorial design system (cream, Syne, DM Sans) | `.github/skills/frontend/warm-editorial-ui/SKILL.md` |
 | Word cloud and text visualization | `.github/skills/frontend/word-cloud/SKILL.md` |
 
 ---

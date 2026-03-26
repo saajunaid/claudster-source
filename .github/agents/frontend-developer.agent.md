@@ -112,6 +112,7 @@ Auto-load these skills when the condition matches — do not skip.
 | Banner/header design for social and web | `.github/skills/frontend/banner-design/SKILL.md` |
 | HTML slide presentations | `.github/skills/frontend/slides/SKILL.md` |
 | UI styling with shadcn/ui + Tailwind | `.github/skills/frontend/ui-styling-patterns/SKILL.md` |
+| Warm editorial design system (cream, Syne, DM Sans) | `.github/skills/frontend/warm-editorial-ui/SKILL.md` |
 | Word cloud and text visualization | `.github/skills/frontend/word-cloud/SKILL.md` |
 | Algorithmic art / generative visuals | `.github/skills/frontend/algorithmic-art/SKILL.md` |
 

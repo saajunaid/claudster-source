@@ -111,6 +111,7 @@
 | UI Styling Patterns | `frontend/ui-styling-patterns/` | shadcn/ui + Tailwind CSS utility styling, accessible components, dark mode, and canvas visuals |
 | UI/UX Intelligence | `frontend/ui-ux-intelligence/` | Data-backed design decisions: 161 color palettes, 57 font pairings, 99 UX guidelines, 25 chart types |
 | UX Design | `frontend/ux-design/` | Designing user experiences with brand color system and accessibility standards |
+| Warm Editorial UI | `frontend/warm-editorial-ui/` | Warm editorial design system — cream surfaces, Syne + DM Sans typography, multi-layer shadows, generous radius |
 | Webapp Development | `frontend/webapp-development/` | End-to-end web application development workflow |
 | Word Cloud | `frontend/word-cloud/` | Generate static or animated word clouds from text/files with theming and shape masking |
 
