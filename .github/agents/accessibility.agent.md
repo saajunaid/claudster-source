@@ -1,7 +1,7 @@
 ---
 name: Accessibility
 description: Expert in web accessibility, WCAG 2.2 compliance, and inclusive design
-tools: ['codebase', 'search', 'usages', 'problems']
+tools: [read, search, problems]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Fix Issues

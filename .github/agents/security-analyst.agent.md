@@ -1,7 +1,7 @@
 ---
 name: Security Analyst
 description: Security analyst specializing in OWASP, vulnerability assessment, and secure code practices
-tools: ['codebase', 'search', 'fetch', 'usages', 'editFiles', 'runCommands', 'problems', 'terminalLastCommand', 'github/*']
+tools: [read, search, edit, execute, web, problems, github/*]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator

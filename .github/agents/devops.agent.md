@@ -1,7 +1,7 @@
 ---
 name: DevOps
 description: Expert DevOps engineer for CI/CD, containerization, and deployment
-tools: ['codebase', 'search', 'editFiles', 'runCommands', 'fetch', 'github/*']
+tools: [read, search, edit, execute, web, github/*]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator

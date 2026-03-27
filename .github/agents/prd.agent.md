@@ -1,7 +1,7 @@
 ---
 name: PRD
 description: Product Requirements Document generator - captures requirements through discovery and creates formal PRDs
-tools: ['codebase', 'search', 'fetch', 'usages', 'editFiles', 'runCommands', 'problems', 'terminalLastCommand', 'microsoft/markitdown/*']
+tools: [read, search, edit, execute, web, problems, microsoft/markitdown/*]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator

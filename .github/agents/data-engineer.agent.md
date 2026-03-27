@@ -1,7 +1,7 @@
 ---
 name: Data Engineer
 description: Expert in ETL/ELT pipelines, data integration, and database-agnostic data engineering
-tools: ['codebase', 'search', 'editFiles', 'runCommands', 'usages', 'problems', 'terminalLastCommand', 'context7/resolve-library-id', 'context7/get-library-docs']
+tools: [read, search, edit, execute, problems, context7/*]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator

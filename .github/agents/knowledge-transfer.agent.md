@@ -2,7 +2,7 @@
 name: Knowledge Transfer
 description: Extracts durable knowledge from completed implementation and debugging sessions and writes it into the project's golden nuggets log. Acts as the institutional memory layer of the pipeline.
 model: Claude Sonnet 4.6
-tools: ['codebase', 'editFiles', 'search', 'changes', 'listDirectory', 'fileSearch', 'usages', 'fetch', 'microsoft/markitdown/*']
+tools: [read, search, edit, web, changes, microsoft/markitdown/*]
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

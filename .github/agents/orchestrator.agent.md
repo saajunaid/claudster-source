@@ -1,7 +1,7 @@
 ---
 name: Orchestrator
 description: Pipeline brain - reads pipeline state, validates artefact contracts, and routes between agents. Does not write code or create designs. Manages the supervised-autonomous workflow.
-tools: [problems, readFile, editFiles, changes, codebase, fileSearch, listDirectory, searchResults, textSearch, usages, fetch, junai/get_pipeline_status, junai/notify_orchestrator, junai/pipeline_init, junai/pipeline_reset, junai/satisfy_gate, junai/set_pipeline_mode, junai/skip_stage, junai/update_notes, junai/validate_deferred_paths, junai/replay_stage, github/*]
+tools: [read, search, web, problems, changes, junai-mcp/*, github/*]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Generate PRD

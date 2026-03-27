@@ -1,7 +1,7 @@
 ---
 name: Janitor
 description: Cleans up code, removes dead code, improves organization
-tools: ['codebase', 'editFiles', 'search', 'usages', 'problems', 'runCommands', 'junai/run_command', 'junai/get_pipeline_status', 'junai/notify_orchestrator']
+tools: [read, search, edit, execute, problems, junai-mcp/*]
 model: GPT-5.3-Codex
 handoffs:
     - label: Return to Orchestrator

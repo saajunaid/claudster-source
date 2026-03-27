@@ -1,7 +1,7 @@
 ---
 name: Architect
 description: Solution architecture expert - designs systems, creates diagrams, and provides architectural guidance
-tools: ['codebase', 'search', 'fetch', 'usages', 'editFiles', 'runCommands', 'problems', 'terminalLastCommand', 'context7/resolve-library-id', 'context7/get-library-docs', 'microsoft/markitdown/*']
+tools: [read, search, edit, execute, web, problems, context7/*, microsoft/markitdown/*]
 model: Claude Opus 4.6
 handoffs:
   - label: Return to Orchestrator

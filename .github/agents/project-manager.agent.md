@@ -1,7 +1,7 @@
 ---
 name: Project Manager
 description: Organizes work, tracks progress, and facilitates team coordination
-tools: ['codebase', 'search', 'fetch']
+tools: [read, search, web]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Create PRD

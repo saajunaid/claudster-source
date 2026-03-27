@@ -1,7 +1,7 @@
 ---
 name: SVG Diagram
 description: Create professional SVG diagrams for architecture, data flows, and documentation
-tools: ['codebase', 'editFiles', 'createFile', 'runCommands', 'search']
+tools: [read, search, edit, execute]
 model: Gemini 3.1 Pro (Preview)
 handoffs:
   - label: Use in Architecture

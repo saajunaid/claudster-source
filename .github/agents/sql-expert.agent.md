@@ -1,7 +1,7 @@
 ---
 name: SQL Expert
 description: Expert in SQL Server database design, queries, stored procedures, and optimization
-tools: ['codebase', 'search', 'editFiles', 'runCommands', 'usages', 'problems', 'context7/resolve-library-id', 'context7/get-library-docs']
+tools: [read, search, edit, execute, problems, context7/*]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator

@@ -1,7 +1,7 @@
 ---
 name: Code Reviewer
 description: Perform thorough code reviews focusing on Python, Streamlit, and project-specific standards
-tools: ['codebase', 'search', 'usages', 'problems', 'terminalLastCommand', 'testFailure', 'changes', 'github/*']
+tools: [read, search, problems, testFailure, changes, github/*]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator

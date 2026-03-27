@@ -1,7 +1,7 @@
 ---
 name: Prompt Engineer
 description: Expert in designing effective prompts for LLMs and AI systems
-tools: ['codebase', 'search', 'fetch', 'editFiles']
+tools: [read, search, web, edit]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Test Prompts

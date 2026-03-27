@@ -1,7 +1,7 @@
 ---
 name: UX Designer
 description: Expert UX designer specializing in user experience, JTBD framework, and interface design
-tools: ['codebase', 'search', 'fetch', 'usages', 'editFiles', 'runCommands', 'problems', 'terminalLastCommand']
+tools: [read, search, web, edit, execute, problems]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator

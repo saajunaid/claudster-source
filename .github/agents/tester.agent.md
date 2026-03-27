@@ -1,7 +1,7 @@
 ---
 name: Tester
 description: Expert in testing Python applications, Streamlit dashboards, and FastAPI backends
-tools: ['codebase', 'search', 'editFiles', 'runCommands', 'testFailure', 'usages', 'problems', 'runInTerminal', 'terminalLastCommand', 'junai/run_command', 'junai/get_pipeline_status', 'junai/notify_orchestrator', 'junai/validate_deferred_paths', 'context7/resolve-library-id', 'context7/get-library-docs']
+tools: [read, search, edit, execute, problems, testFailure, junai-mcp/*, context7/*]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator

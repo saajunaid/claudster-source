@@ -1,7 +1,7 @@
 ---
 name: Anchor
 description: Evidence-first verification agent - high-rigor implementation with baseline capture, pushback protocol, and structured proof for critical or high-risk work
-tools: [extensions, testFailure, getTerminalOutput, runInTerminal, problems, readFile, terminalSelection, terminalLastCommand, editFiles, changes, codebase, fileSearch, listDirectory, searchResults, textSearch, usages, fetch, junai/get_pipeline_status, junai/notify_orchestrator, junai/run_command, junai/satisfy_gate, junai/set_pipeline_mode, junai/validate_deferred_paths, junai/update_notes, junai/replay_stage, context7/resolve-library-id, context7/get-library-docs]
+tools: [read, search, edit, execute, web, problems, testFailure, changes, junai-mcp/*, context7/*]
 model: Claude Opus 4.6
 handoffs:
   - label: Return to Orchestrator

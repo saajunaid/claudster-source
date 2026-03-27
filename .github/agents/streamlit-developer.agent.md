@@ -1,7 +1,7 @@
 ---
 name: Streamlit Developer
 description: Expert Streamlit developer for building production-ready dashboards with branding and performance
-tools: ['codebase', 'editFiles', 'search', 'usages', 'problems', 'runCommands', 'runInTerminal', 'terminalLastCommand', 'terminalSelection', 'context7/resolve-library-id', 'context7/get-library-docs']
+tools: [read, search, edit, execute, problems, context7/*]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
