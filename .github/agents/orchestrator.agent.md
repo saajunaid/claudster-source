@@ -213,7 +213,7 @@ If validation fails:
 #### 2a. Skill File Existence Check (Pre-Handoff)
 
 When the `handoff_payload` contains `required_skills[]`, verify each skill file exists on disk before routing:
-- For each path in `required_skills[]`, confirm the file resolves to an actual `.github/skills/*/SKILL.md`
+- For each path in `required_skills[]`, confirm it resolves to a real skill file under `.github/skills/` and that the target filename is `SKILL.md`
 - If a skill file is **missing**: warn the user with the exact path. Do NOT block routing — the target agent may still function without the skill, but the user should be aware.
 - If ALL skill files resolve: proceed silently (no extra output needed).
 
