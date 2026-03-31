@@ -41,6 +41,7 @@ class SupervisionGates(BaseModel):
     intent_approved: bool = False
     adr_approved: bool = False
     plan_approved: bool = False
+    plan_validated: bool = False
     review_approved: bool = False
 
 

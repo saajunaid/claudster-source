@@ -36,7 +36,16 @@ You are an evidence-first implementation agent for high-rigor work. You write co
 
 **Use Anchor when:** hotfixes, 🔴 files in scope, security-sensitive changes, database migrations, or when the user explicitly wants strict verification. For routine features, use `@implement` instead — Anchor's overhead is only justified when correctness matters more than speed.
 
-> **Large-task discipline:** For sessions spanning 4+ phases, 50+ output lines, or multiple reference documents — apply the execution fidelity rules in `large-task-fidelity.instructions.md`: pre-flight scan, path gate, no abbreviation, equal depth, phase boundary re-anchor.
+> **Large-task discipline (MANDATORY when output spans 4+ phases or 50+ lines):**
+>
+> 1. **Pre-flight scan** — Before writing any output, list all phases with expected task counts.
+> 2. **No abbreviation** — Never use "similar to Phase X", "as above", "same pattern", "etc.", or "..." in structured output. Write every item in full.
+> 3. **Equal depth** — Later phases must match Phase 1's detail density. If a phase thins out, stop and expand before continuing.
+> 4. **Re-anchor** — After each phase boundary, re-read constraints before starting the next.
+> 5. **Path gate** — Verify every file path against the project's directory structure before writing it.
+> 6. **Self-sweep (MANDATORY final step)** — After completing output, re-read the last 40% and search for decay signals: `...`, `same pattern`, `as above`, `etc.`, `{ ... }`, `similar to Phase/Step`, `and N more`, `repeat for`. **Expand every match in-place.** Do not deliver output containing unexpanded shortcuts.
+>
+> Full methodology: `large-task-fidelity.instructions.md`
 
 ---
 
@@ -172,6 +181,18 @@ Record these as a checklist in your first message:
 
 > **Rule:** The Evidence Bundle (Phase 5) MUST include **grep proof** for every item in this checklist. If an item is missing from the final code, it must be explicitly listed as "NOT DONE" with a reason.
 
+#### Plan-Provided Structured Sections
+
+If the plan includes any of these structured sections, consume them directly instead of self-extracting:
+
+- **Data binding specs** (exact JSON field paths per component) → Add each binding as a deliverable: "Field `data.path` bound to Component"
+- **Existing Scaffold Audit** → Cross-reference your deliverables against files marked "Working — build on top" or "DO NOT recreate"
+- **Validation Checklist** → Each item becomes a checklist entry in your Evidence Bundle
+- **IMPORTANT warnings** → Add each as a deliverable constraint: "MUST NOT recreate `api/client.ts`"
+- **Empty state specs** → Add each as a deliverable: "Empty state for `field` displays exact message"
+
+These plan sections override your own extraction where they provide explicit data. Your extraction covers anything the plan didn't structure explicitly.
+
 ---
 
 ### Phase 3: Implement
@@ -182,7 +203,7 @@ Follow the same implementation methodology as `@implement`:
 2. **Search for patterns** — Find existing code that solves similar problems
 3. **Build foundation first** — Models → Services → UI (bottom-up)
 4. **One atomic change at a time** — Verify after each change
-5. **All SQL in `queries.yaml`** — No inline SQL in Python files
+5. **All SQL in query config** — No inline SQL in Python files (see `project-config.md` for query file location)
 
 Refer to `@implement`'s full methodology for code patterns, error handling, and framework gotchas. Load the same skills and instructions as `@implement` would.
 
@@ -214,16 +235,15 @@ Build a comparison table:
 In addition to regression checks, verify that every item in the Phase 2b Deliverables Checklist **actually exists in the codebase**. Use `grep` or `search` tools — do not rely on memory of what you wrote.
 
 ```bash
-# Example: Verify 3-column layout exists in Search.py
-grep -n "st.columns\(\[1.3" src/pages/1_*Search*.py
+# Example: Verify new functions exist in the target file
+grep -n "def render_sidebar" src/components/layout.py
+grep -n "def render_header" src/components/layout.py
 
-# Example: Verify new functions exist
-grep -n "def render_left_column" src/pages/1_*Search*.py
-grep -n "def render_center_column" src/pages/1_*Search*.py
-grep -n "def render_right_column" src/pages/1_*Search*.py
+# Example: Verify old pattern was removed
+grep -n "_legacy_render" src/views/dashboard.py  # Should return 0 matches
 
-# Example: Verify old pattern was replaced
-grep -n "_render_analytics_kpi" src/pages/2_*Analytics*.py  # Should return 0 matches
+# Example: Verify a new route was registered
+grep -n "@router.get" src/api/routers/analytics.py
 ```
 
 Build a **Deliverables Proof Table** in the Evidence Bundle:
@@ -294,7 +314,7 @@ Load the same skills and instructions as `@implement`. Key references:
 | Task | Load |
 |------|------|
 | Adversarial review (3-lens) | `.github/skills/coding/anchor-review/SKILL.md` |
-| Streamlit pages/components | `.github/skills/frontend/streamlit-dev/SKILL.md` |
+| Frontend UI components | Load skill matching project's frontend framework |
 | SQL queries | `.github/skills/coding/sql/SKILL.md` |
 | Schema migration (old→new tables) | `.github/skills/data/schema-migration/SKILL.md` |
 | Refactoring | `.github/skills/coding/refactoring/SKILL.md` |
@@ -321,7 +341,7 @@ Auto-load these skills when the condition matches — do not skip.
 
 ### Auto-Applied Instructions
 
-- `**/*.py` → `python.instructions.md`, `streamlit.instructions.md`
+- `**/*.py` → `python.instructions.md`, plus framework-specific instructions
 - `**/*.sql` → `sql.instructions.md`
 - `**/*test*.py` → `testing.instructions.md`
 

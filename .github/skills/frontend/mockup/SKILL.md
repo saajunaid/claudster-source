@@ -18,7 +18,7 @@ Create visual mockups (HTML/SVG) for UI features with **mandatory framework feas
 - Creating a UI mockup for a proposed feature
 - Visualizing a design before implementation
 - Producing a reference artifact for implementing agents
-- When `@ux-designer` or `@ui-ux-designer` routes mockup creation here
+- When `@ux-designer` routes mockup creation here
 
 ---
 
@@ -108,12 +108,91 @@ Run through this checklist:
 </html>
 ```
 
+### Step 3b: Implementation-Annotated Mockup (MANDATORY for handoff to implementing agents)
+
+When the mockup will be handed off to `@implement`, `@frontend-developer`, or `@streamlit-developer`, embed **implementation annotations** throughout the HTML so the implementing agent knows exactly what to build without guessing.
+
+#### Annotation Types
+
+Use these four comment patterns consistently:
+
+**1. Component annotations** — Which framework component implements this visual element:
+```html
+<!-- React: <KpiFlipCard product="broadband" data={surveys.broadband}
+     trendData={trend.historicalNPS.byProduct.broadband} /> -->
+<!-- React: <ResponsiveContainer width="100%" height={260}>
+     <AreaChart data={trendData}><Area type="monotone" dataKey="nps" ... /></AreaChart>
+     </ResponsiveContainer> -->
+<!-- React: import { ScoreChip, DeltaBadge, SparkBar, TrendDot } from '@/components/table-cells' -->
+```
+
+**2. Data source annotations** — Which JSON key / API response field provides the data:
+```html
+<!-- DATA-SOURCE: surveys.broadband.nps, surveys.broadband.responses -->
+<!-- DATA-SOURCE: trend.historicalNPS.byProduct.broadband (array of monthly values) -->
+<!-- DATA-SOURCE: ceoInsight.headline, ceoInsight.keyFindings[] (objects with title, detail) -->
+```
+
+**3. Implementation notes** — Broader guidance for the implementing agent:
+```html
+<!-- IMPLEMENTATION NOTE [DATA-SOURCE]: This section uses hardcoded mock values for
+     layout reference. React implementation must fetch period-filtered data from the
+     /api/nps/overview endpoint and compute all KPIs dynamically. -->
+<!-- IMPLEMENTATION NOTE [CHART]: Use Recharts AreaChart with gradient fill.
+     Spread CHART_DEFAULTS from chartTheme.ts. No axes/grid for sparkline variant. -->
+<!-- IMPLEMENTATION NOTE [ANIMATION]: Use framer-motion rotateY for card flip.
+     duration: 0.52, ease: [0.4, 0.2, 0.2, 1]. backfaceVisibility: "hidden". -->
+```
+
+**4. Styling annotations** — Which design tokens, CSS vars, or Tailwind classes to use:
+```html
+<!-- STYLE: bg-surface-card (var(--surface-card)), shadow-card, rounded-lg (var(--r-lg)) -->
+<!-- STYLE: Fill color uses var(--status-red) for detractor, var(--status-green) for promoter -->
+<!-- STYLE: Tailwind: text-ink-primary font-heading text-2xl font-bold -->
+```
+
+#### Annotation Placement Rules
+
+1. Place **component annotations** directly above or inside the HTML element that the component replaces
+2. Place **data source annotations** on the element that displays the data value
+3. Place **implementation notes** at the top of each major section (tab, panel, card group)
+4. Place **styling annotations** on elements where the visual appearance matters and the token name isn't obvious from the CSS
+5. Every hardcoded value in the mockup (numbers, text, colors) that will be dynamic in production MUST have a data source annotation
+
+#### Example: Annotated KPI Card
+
+```html
+<!-- React: <KpiFlipCard product="broadband" data={surveys.broadband}
+     trendData={trend.historicalNPS.byProduct.broadband} color={COLORS.broadband} /> -->
+<!-- DATA-SOURCE: surveys.broadband.nps (current score), surveys.broadband.responses (count) -->
+<!-- STYLE: var(--surface-card) bg, var(--shadow-card) shadow, 3px left border using COLORS.broadband -->
+<div class="kpi-card">
+    <div class="kpi-score">+32</div>  <!-- DATA-SOURCE: surveys.broadband.nps -->
+    <div class="kpi-delta">▲ 2.1</div>  <!-- DATA-SOURCE: deriveMom(trend.historicalNPS.byProduct.broadband) -->
+    <div class="kpi-responses">1,247 responses</div>  <!-- DATA-SOURCE: surveys.broadband.responses -->
+    <div class="sparkline">
+        <!-- React: <Sparkline data={trend.historicalNPS.byProduct.broadband}
+             color={COLORS.broadband} height={72} /> -->
+        <!-- IMPLEMENTATION NOTE [CHART]: Recharts AreaChart, no axes/grid/tooltip,
+             gradient fill from color at opacity 0.3 to opacity 0. -->
+    </div>
+</div>
+```
+
+#### Completeness Check
+
+Before saving the mockup, verify:
+- [ ] Every visual section has at least one **component annotation**
+- [ ] Every dynamic value has a **data source annotation** with the exact JSON path
+- [ ] Every chart/graph has an **implementation note** specifying the chart library and config
+- [ ] The implementing agent can build the feature using ONLY the mockup + annotations (no guessing)
+
 ### Step 4: Write Artifact
 
 1. Save the mockup file to `agent-docs/ux/mockups/{feature-slug}.html` (or `.svg`)
 2. Add YAML header to a companion markdown file or embed as HTML comment:
    ```yaml
-   agent: ux-designer (or ui-ux-designer)
+   agent: ux-designer
    created: {date}
    status: current
    chain_id: {chain_id if provided}
@@ -158,6 +237,6 @@ Provide:
 
 ## Important Notes
 
-- This skill is designed to be loaded by `@ux-designer`, `@ui-ux-designer`, or `@frontend-developer` agents
+- This skill is designed to be loaded by `@ux-designer` or `@frontend-developer` agents
 - The framework constraint tables should be extended as new frameworks and gotchas are discovered
 - Always check `project-config.md` for the deployment environment — air-gapped deployments restrict external dependencies

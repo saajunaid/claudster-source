@@ -37,6 +37,7 @@ ALLOWED_SUPERVISION_GATES = {
     "intent_approved",
     "adr_approved",
     "plan_approved",
+    "plan_validated",
     "review_approved",
 }
 

@@ -43,7 +43,7 @@ Determine how you were invoked before reading any pipeline state or running any 
 
 ## Accepting Handoffs
 
-You receive work from: **All Codex agents** (Implement, Streamlit Dev, Data Engineer, Frontend Dev, SQL Expert) via "Debug Issue", **Tester** (fix failing tests), **Mentor** (debug together).
+You receive work from: **All coding agents** (Implement, Frontend Dev, Data Engineer, SQL Expert) via "Debug Issue", **Tester** (fix failing tests), **Mentor** (debug together).
 
 When receiving a handoff:
 1. Read the error message and stack trace provided in conversation context
@@ -256,13 +256,12 @@ print(f"CWD: {os.getcwd()}")
 print(f"Script: {Path(__file__).resolve()}")
 ```
 
-### Streamlit Session State Bugs
+### UI State Bugs
 
 ```python
-# Debug session state
-import streamlit as st
-st.write("Session state:", dict(st.session_state))
-# Common: widget key collision, missing initialization
+# Debug application state
+# Common: state key collision, missing initialization, stale state
+# Check the framework's state management docs for debugging tools
 ```
 
 ### Data Pipeline Issues
@@ -328,7 +327,7 @@ After creating the brief:
 When debugging project-specific applications, consider:
 - **Database**: Check connection strings, authentication method, server availability
 - **Paths**: Use `Path(__file__)` patterns, never absolute paths
-- **Caching**: `@st.cache_data` can mask bugs — clear cache to reproduce
+- **Caching**: Framework caching can mask bugs — clear cache to reproduce
 - **Logging**: Check loguru output for prior warnings hinting at the root cause
 
 ---

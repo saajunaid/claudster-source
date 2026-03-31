@@ -9,6 +9,7 @@
     "plan":        { "agent": "Plan",            "agent_file": "agents/plan.agent.md" },
     "ux_research": { "agent": "UX Designer",     "agent_file": "agents/ux-designer.agent.md" },
     "ui_design":   { "agent": "UI/UX Designer",  "agent_file": "agents/ui-ux-designer.agent.md" },
+    "preflight":   { "agent": "Preflight",      "agent_file": "agents/preflight.agent.md" },
     "implement":   { "agent": "Implement",       "agent_file": "agents/implement.agent.md",       "skippable": false },
     "anchor":      { "agent": "Anchor",          "agent_file": "agents/anchor.agent.md",          "skippable": false },
     "tester":      { "agent": "Tester",          "agent_file": "agents/tester.agent.md",          "skippable": false },
@@ -57,12 +58,13 @@
     {
       "id": "T-04",
       "from_stage": "plan",
-      "to_stage": "implement",
+      "to_stage": "preflight",
       "event": "complete",
       "guards": ["artefact_exists", "artefact_approved", "ui_track_not_enabled"],
       "gate": "plan_approved",
       "hotfix_only": false,
-      "priority": 0
+      "priority": 0,
+      "_comment": "plan → preflight (validates plan against codebase before implementation)"
     },
     {
       "id": "T-05",
@@ -137,12 +139,13 @@
     {
       "id": "T-12",
       "from_stage": "ui_design",
-      "to_stage": "implement",
+      "to_stage": "preflight",
       "event": "complete",
       "guards": ["artefact_exists", "artefact_approved"],
       "gate": "plan_approved",
       "hotfix_only": false,
-      "priority": 0
+      "priority": 0,
+      "_comment": "ui_design → preflight (validates plan against codebase before implementation)"
     },
     {
       "id": "T-13",
@@ -308,6 +311,39 @@
       "hotfix_only": false,
       "priority": 15,
       "_comment": "anchor multi-phase loop"
+    },
+    {
+      "id": "T-34",
+      "from_stage": "preflight",
+      "to_stage": "implement",
+      "event": "passed",
+      "guards": ["artefact_exists"],
+      "gate": "plan_validated",
+      "hotfix_only": false,
+      "priority": 0,
+      "_comment": "preflight passed → proceed to implementation"
+    },
+    {
+      "id": "T-35",
+      "from_stage": "preflight",
+      "to_stage": "plan",
+      "event": "failed",
+      "guards": [],
+      "gate": null,
+      "hotfix_only": false,
+      "priority": 0,
+      "_comment": "preflight failed → return to planner for corrections"
+    },
+    {
+      "id": "T-36",
+      "from_stage": "preflight",
+      "to_stage": "anchor",
+      "event": "passed",
+      "guards": ["artefact_exists", "strict_verification_enabled"],
+      "gate": "plan_validated",
+      "hotfix_only": false,
+      "priority": 15,
+      "_comment": "preflight passed + strict verification → route to anchor instead of implement"
     },
     {
       "id": "T-33",

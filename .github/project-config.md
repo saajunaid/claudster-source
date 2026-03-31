@@ -24,7 +24,7 @@ Copy this file to your project's `.github/` folder. Set the profile and you're d
 
 **Project/stack profiles:**
 
-`streamlit-mssql-enterprise`, `streamlit-postgres-analytics`, `fastapi-postgres-service`, `fastapi-mssql-internal-api`, `react-node-saas`, `nextjs-postgres-saas`, `data-pipeline-python-mssql`, `data-pipeline-python-snowflake`, `ml-training-python-pytorch`, `mcp-server-python`, `vscode-extension-typescript`, `telecom-appointment-intelligence`
+`streamlit-mssql-enterprise`, `streamlit-postgres-analytics`, `fastapi-postgres-service`, `fastapi-mssql-internal-api`, `react-node-saas`, `react-fastapi-vite-mssql`, `nextjs-postgres-saas`, `data-pipeline-python-mssql`, `data-pipeline-python-snowflake`, `ml-training-python-pytorch`, `mcp-server-python`, `vscode-extension-typescript`, `telecom-appointment-intelligence`
 
 **Organization profiles (dummy names):**
 
@@ -176,6 +176,46 @@ Add project profiles here. Each profiled project adds its own section.
 | `<DEPLOY_ENV>` | React + Node |
 | `<LOGGING_LIB>` | pino |
 | `<SHARED_LIBS>` | packages/shared |
+
+### react-fastapi-vite-mssql
+
+#### Core Placeholders
+
+| Placeholder | Value |
+|-------------|-------|
+| `<ORG_NAME>` | Internal Team |
+| `<BRAND_PRIMARY>` | #2563EB |
+| `<BRAND_DARK>` | #1E293B |
+| `<BRAND_LIGHT>` | #F8FAFC |
+| `<DB_TYPE>` | SQL Server |
+| `<DEPLOY_ENV>` | React + FastAPI |
+| `<LOGGING_LIB>` | loguru |
+| `<SHARED_LIBS>` | src/shared |
+
+#### Stack Details
+
+| Component | Technology |
+|-----------|-----------|
+| Frontend | React, TypeScript, Vite, Tailwind CSS |
+| Routing | TanStack Router |
+| State | React Query (server), Zustand (client) |
+| Components | shadcn/ui (Radix primitives) |
+| Backend API | FastAPI, uvicorn |
+| ORM | SQLAlchemy (async), aioodbc |
+| Migrations | Alembic |
+| Auth | JWT + bcrypt (local SQLite user store) |
+| Database | SQL Server (MSSQL) |
+| Dependency mgmt | pyproject.toml (Python), package.json (JS) |
+
+#### Key Conventions
+
+| Convention | Value |
+|------------|-------|
+| Query config file | N/A — SQL via SQLAlchemy ORM or repository layer |
+| App entry (backend) | `uvicorn src.api.main:app --reload` |
+| App entry (frontend) | `cd frontend && npm run dev` |
+| Test command | `pytest tests/` |
+| Lint command | `ruff check src/` |
 
 ### nextjs-postgres-saas
 

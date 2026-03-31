@@ -129,21 +129,21 @@ Attach the Prompt-to-Requirement Mapping table to the prompt output.
 
 ```markdown
 ❌ BAD: Prescribes implementation details
-"Create `get_cached_user_profile()` using `@st.cache_data(ttl=timedelta(minutes=30))`
+"Create `get_cached_user_profile()` using `@lru_cache(maxsize=256)`
 that returns a `UserProfile` Pydantic model."
 
 Why this is bad:
-- @st.cache_data uses pickle, which breaks with Pydantic computed fields
+- Some caching mechanisms use pickle, which breaks with Pydantic computed fields
 - Prescribing the decorator removes the coding agent's ability to choose the right pattern
 - If the prescribed approach has a gotcha, the agent follows it anyway
 
 ✅ GOOD: Specifies requirements, lets agent choose implementation
 "Cache user profile lookups with a 30-minute TTL. The profile includes computed fields.
-Ensure the caching strategy is compatible with Streamlit's serialization requirements."
+Ensure the caching strategy is compatible with the framework's serialization requirements."
 
 Why this is better:
-- Agent will check if computed fields are pickle-safe (they're not)
-- Agent will choose JSON serialization layer instead
+- Agent will check if computed fields are serialization-safe
+- Agent will choose the appropriate serialization layer
 - Requirements are met without prescribing a broken approach
 ```
 
@@ -151,9 +151,9 @@ Why this is better:
 
 | DO specify | Do NOT specify |
 |-----------|---------------|
-| Performance requirements (TTL, latency targets) | Specific decorators (`@st.cache_data`, `@lru_cache`) |
+| Performance requirements (TTL, latency targets) | Specific caching decorators |
 | Data contracts (what fields a model must have) | Specific function names (unless matching existing API) |
-| Layout requirements ("phone and email on one line") | Exact `st.` call counts |
+| Layout requirements ("phone and email on one line") | Exact UI component call counts |
 | Business rules (deduplication, validation) | Internal implementation patterns |
 | Integration points (which service to call) | How the service caches/serializes internally |
 

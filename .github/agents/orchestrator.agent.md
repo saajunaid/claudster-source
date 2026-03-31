@@ -16,6 +16,10 @@ handoffs:
     agent: Planner
     prompt: The pipeline is routing to you. Read pipeline-state.json and the approved Architecture doc first, then create the implementation plan.
     send: false
+  - label: Validate Plan
+    agent: Preflight
+    prompt: The pipeline is routing to you. Read pipeline-state.json first, then validate the plan against the codebase.
+    send: false
   - label: Implement
     agent: Implement
     prompt: The pipeline is routing to you. Read pipeline-state.json first — hotfix: read _notes._hotfix_brief for full scope. If a Plan exists, read it. Then begin implementation of the current phase.
@@ -36,13 +40,9 @@ handoffs:
     agent: Security Analyst
     prompt: The pipeline is routing to you. Read pipeline-state.json and the Architecture doc first, then perform a threat analysis.
     send: false
-  - label: UX Research
+  - label: UX Design
     agent: UX Designer
-    prompt: The pipeline is routing to you. Read pipeline-state.json and the PRD first, then conduct UX research for the feature.
-    send: false
-  - label: UI/UX Design
-    agent: ui-ux-designer
-    prompt: The pipeline is routing to you. Read pipeline-state.json and the UX research doc first, then produce the UI/UX design spec.
+    prompt: The pipeline is routing to you. Read pipeline-state.json, the PRD, and any existing design docs first, then conduct UX research and produce the design spec or review.
     send: false
   - label: Build Frontend
     agent: Frontend Developer
@@ -322,7 +322,8 @@ Before routing to the Tester agent, perform a cumulative intent audit across all
 |------|---------|--------------------------|-------------|
 | `intent_approved` | Before starting the PRD | Show intent summary, **ask for approval** | Same — always requires human approval |
 | `adr_approved` | After Architect completes | Show architecture summary + ADR list, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="adr_approved")` immediately after Architect stage completes, then invoke Planner |
-| `plan_approved` | After Planner agent completes | Show phase breakdown + agent assignments, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="plan_approved")` immediately after Planner stage completes, then invoke Implement |
+| `plan_approved` | After Planner agent completes | Show phase breakdown + agent assignments, **ask for approval** | **Auto-satisfied** — call `satisfy_gate(gate="plan_approved")` immediately after Planner stage completes, then invoke Preflight |
+| `plan_validated` | After Preflight passes | Show preflight report summary, **ask for approval** | **Auto-satisfied if PASS** — call `satisfy_gate(gate="plan_validated")` immediately and invoke Implement. **Block if FAIL** — route to Planner for corrections |
 | `review_approved` | After Code Reviewer returns result | Show result, **ask for approval** | **Conditional** — if verdict=`approved`: call `satisfy_gate(gate="review_approved")` and close. If verdict=`revision-requested`: retry loop (T-16) up to `review.max_retries`. If budget exhausted (T-29): HALT + write `PIPELINE_HALT.md` + notify |
 
 **`autopilot` gate auto-satisfaction procedure** (never use `editFiles` — always call `satisfy_gate` MCP tool):
@@ -368,38 +369,85 @@ This prevents downstream agents (Implement, Anchor) from working against stale s
 
 ### 5.2 Handoff Payload Construction (Plan-to-Agent Contract)
 
-When routing to a specialist agent after Plan stage is complete, construct the `handoff_payload` with these fields:
+When routing to a specialist agent after Plan stage is complete, construct the `handoff_payload` by extracting metadata from the Plan artefact's current phase section.
 
-1. **Read the Plan artefact** for the current phase's metadata block:
-   ```markdown
-   > **Agent**: `@implement`
-   > **Skills**: `coding/fastapi-dev/SKILL.md`, `coding/security-review/SKILL.md`
-   > **Evidence Tier**: `standard`
-   > **Intent References**:
-   >   - Architecture: `docs/architecture/agentic-adr/ADR-feature.md` §4.2 (Caching Decision)
-   >   - PRD: `docs/prd/prd.md` NFR-3 (Response time < 200ms under load)
-   > **Design Intent**: Use Redis as a shared cache layer with 15-min TTL to meet NFR-3.
-   ```
+**Determining the current phase number:** Read `stages.implement.current_phase` from `pipeline-state.json`. The next phase to execute is `current_phase + 1` (since `current_phase` is 0-indexed and incremented *after* each phase completes). Find the matching `## Phase {current_phase + 1}` heading (or `### Phase {current_phase + 1}`) in the plan. If the plan uses non-numeric phase headers (e.g., `## Phase 1: Setup`), match on the leading number. For standalone/manual execution (no `pipeline-state.json`), the user specifies which phase to work on.
 
-2. **Build the payload** with the extracted fields plus existing ones:
+#### 5.2.1 Format-Flexible Extraction
+
+Plans may use **any** of these metadata formats. Extract from whichever is present:
+
+| Field | Format A (blockquote) | Format B (inline bold) | Format C (heading sections) |
+|-------|----------------------|------------------------|----------------------------|
+| Agent | `> **Agent**: \`@name\`` | `**Agent:** \`@name\`` | `**Agent:** \`@name\`` |
+| Skills | `> **Skills**: \`path\`, \`path\`` | `**Required Skills**: \`path\`` | `#### Skills to load` or `### Skills to load` (bullet list below) |
+| Instructions | `> **Instructions**: \`path\`` | `**Instructions**: \`path\`` | `#### Instructions to follow` or `### Instructions to follow` (bullet list below) |
+| Files to attach | `> **Files**: \`path\`` | `**Files**: \`path\`` | `#### Files to attach` or `### Files to attach` (bullet list below) |
+| Evidence Tier | `> **Evidence Tier**: \`standard\`` | `**Evidence Tier**: \`standard\`` | Same (inline bold only) |
+| Intent References | `> **Intent References**:` (indented list) | `**Intent References**:` (indented list) | Same (inline bold + list) |
+| Design Intent | `> **Design Intent**: text` | `**Design Intent**: text` | Same (inline bold only) |
+
+**Extraction rules:**
+1. **Scan the phase section** (from `## Phase N` to the next `## Phase` or end of file) for each field using all three format columns.
+2. **First match wins** — stop scanning for a field once found in any format.
+3. **Bullet list sections** (`#### Skills to load`, `### Skills to load`, etc.): extract every `- \`path\`` or `- path` entry from the bullet list following the heading. Strip trailing descriptions after ` — ` or ` - `.
+4. **Inline comma-separated**: split on `,` and trim each path.
+5. **If a field is absent from the phase section entirely**: use the fallback default (see §5.2.2).
+
+#### 5.2.2 Fallback Defaults
+
+Every field has a safe default when the plan doesn't include it. **Never fabricate values** — use the default and move on.
+
+| Field | Fallback | Rationale |
+|-------|----------|-----------|
+| `required_skills` | `[]` | Agent uses built-in expertise |
+| `instructions_to_follow` | `[]` | VS Code auto-applies by `applyTo` patterns |
+| `files_to_attach` | `[]` | Agent reads files as needed |
+| `evidence_tier` | `"standard"` | Default verification depth |
+| `intent_references` | `[]` | No upstream traceability required |
+| `design_intent` | `null` | No explicit interpretation provided |
+
+#### 5.2.3 Build the Payload
+
+Assemble the extracted values into the handoff payload:
+
+```json
+{
+  "upstream_artefact": "<path to plan artefact>",
+  "coverage_requirements": ["<from PRD/Plan deliverables>"],
+  "required_skills": ["<extracted or []>"],
+  "instructions_to_follow": ["<extracted or []>"],
+  "files_to_attach": ["<extracted or []>"],
+  "evidence_tier": "<extracted or 'standard'>",
+  "intent_references": ["<extracted or []>"],
+  "design_intent": "<extracted or null>"
+}
+```
+
+Field notes:
+- `upstream_artefact` — always the plan file path (e.g., `.github/plans/feature.md`)
+- `coverage_requirements[]` — extracted from the phase's **Deliverables** list (checkbox items)
+- `required_skills[]` — skill `.md` paths. Strip descriptions: `".github/skills/foo/SKILL.md — rationale"` → `".github/skills/foo/SKILL.md"`
+- `instructions_to_follow[]` — `.instructions.md` file paths
+- `files_to_attach[]` — file paths the user should include in the specialist's chat context. Always include the plan file itself even if not listed.
+- `evidence_tier` — `"standard"` or `"anchor"`. If the plan says `anchor` for database schema changes, security-critical code, or infrastructure, use it.
+- `intent_references[]` — document path + section references. **Only propagate what the plan explicitly declares.** Do not fabricate references.
+- `design_intent` — the planner's one-sentence interpretation. If absent, `null`.
+
+#### 5.2.4 Write and Verify
+
+1. **Write via MCP**: `update_notes({"handoff_payload": <payload>})`
+2. **Log extraction gaps**: If any field used a fallback default, include a `_extraction_notes` field:
    ```json
-   {
-     "upstream_artefact": "<path to source artefact>",
-     "coverage_requirements": ["<from PRD/Plan>"],
-     "required_skills": [".github/skills/<path>/SKILL.md"],
-     "evidence_tier": "standard | anchor",
-     "intent_references": ["<doc_path> <section> (<description>)", ...],
-     "design_intent": "<Planner agent's one-sentence interpretation of upstream intent for this phase>"
-   }
+   "_extraction_notes": "evidence_tier not found in phase — defaulted to standard"
    ```
-   - `required_skills[]` — skill paths from the Plan phase metadata. If the Plan doesn't specify skills, use an empty array.
-   - `evidence_tier` — from the Plan phase metadata. Default: `"standard"`. Use `"anchor"` for database schema changes, security-critical code, and infrastructure/deployment.
-   - `intent_references[]` — from the Plan phase's **Intent References** block. Each entry is a document path + section reference. If the Plan phase has no Intent References block, use an empty array. **Do not fabricate references** — only propagate what the Plan explicitly declares.
-   - `design_intent` — from the Plan phase's **Design Intent** field. This is the Planner agent's one-sentence summary of what the upstream documents mean for this phase. If the Plan phase has no Design Intent field, set to `null`.
+   This helps diagnose plan format issues without blocking execution.
 
-3. **Write via MCP**: `update_notes({"handoff_payload": <payload>})`
+#### 5.2.5 Special Cases
 
-4. **For hotfix pipelines** (`"type": "hotfix"`): `required_skills` and `evidence_tier` may not exist in a Plan. Use empty array and `"standard"` respectively. `intent_references` and `design_intent` are always empty/null for hotfixes — hotfixes bypass PRD/Architecture, so there are no upstream intent documents to reference.
+- **Hotfix pipelines** (`"type": "hotfix"`): `required_skills`, `intent_references`, and `design_intent` are typically absent — use defaults. Hotfixes bypass PRD/Architecture.
+- **Multi-agent phases**: If a phase lists multiple agents (e.g., `@Implement` then `@Frontend Developer`), build separate payloads for each routing step.
+- **Phase 0 (Context & Decisions)**: This is a reference section, not an implementation phase. Do not route to an agent for Phase 0 — its content is consumed by subsequent phases.
 
 ### 5.3 Evidence Tier Verification (On Return)
 

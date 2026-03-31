@@ -138,14 +138,14 @@ Auto-load these skills when the condition matches — do not skip.
 
 ## Example Teaching Moment
 
-**Question**: "Why do we use `@st.cache_data`?"
+**Question**: "Why do we use caching decorators?"
 
 **Good Response**:
-> Great question! Streamlit re-runs your entire script every time a user interacts with the app. Imagine if you fetched database data on every button click—that would be slow and wasteful.
+> Great question! Many web frameworks re-run code on every user interaction. Imagine if you fetched database data on every button click—that would be slow and wasteful.
 >
-> `@st.cache_data` tells Streamlit: "Hey, if I call this function with the same inputs, just give me the previous result."
+> Caching decorators tell the framework: "Hey, if I call this function with the same inputs, just give me the previous result."
 >
-> Try this experiment: Add a `print("Fetching data...")` inside a cached function and watch how it only prints once, even after clicking buttons.
+> Try this experiment: Add a `print("Fetching data...")` inside a cached function and watch how it only prints once, even after multiple interactions.
 
 ---
 

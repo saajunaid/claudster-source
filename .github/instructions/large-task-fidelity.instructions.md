@@ -111,6 +111,35 @@ If the reference documents contain open questions (e.g. §7.8 OQ-1 through OQ-5)
 
 ---
 
+## Rule 8 — Post-Generation Self-Sweep (Mandatory Final Step)
+
+After completing any large structured output (plan, implementation sequence, test suite, migration set, report), run a self-sweep for output decay patterns before declaring the work complete.
+
+**Scan the last 40% of your output for these decay signals:**
+
+| Signal | Regex pattern | Example |
+|--------|--------------|---------|
+| Ellipsis placeholders | `\.{3,}` | `// ... similar tests for each function` |
+| Same-pattern shortcuts | `same pattern` | `same pattern × 3 rows` |
+| As-above references | `as above` | `as above for remaining endpoints` |
+| Etc. in task lines | `\betc\b\.?` | `deriveDeltas, deriveYtd, etc.` |
+| Pseudo-code bodies | `\{ ?\.\.\. ?\}` | `expect(result).toBe({ ... })` |
+| Phase/step cross-refs | `similar to (Phase\|Step\|Section)` | `similar to Phase 2` |
+| Collapsed lists | `and \d+ more\|and others\|and the rest` | `and 3 more` |
+| Implied continuation | `repeat for\|do the same for` | `repeat for remaining products` |
+
+**Execution:**
+
+1. After writing the output, re-read the last 40% of the document
+2. Search for each decay signal above
+3. If ANY match is found: **stop and expand the shortcut in-place** — write the full content that was compressed
+4. If you cannot expand (context lost): flag with `[DECAY: needs expansion]` and include in your completion summary
+5. Do NOT deliver output containing unexpanded decay markers as a completed artefact
+
+**Why:** Output decay is the most common fidelity failure in large outputs. These patterns are mechanically detectable. A self-sweep takes seconds and prevents hours of downstream rework. The decay signals above were empirically identified from real agent outputs that passed semantic review but failed structural completeness.
+
+---
+
 ## Anti-Pattern Summary
 
 | Anti-pattern | Symptom | Correct behaviour |
@@ -121,6 +150,7 @@ If the reference documents contain open questions (e.g. §7.8 OQ-1 through OQ-5)
 | Constraint fade | Phase 7 uses f-string SQL | Re-anchor — constraints apply to every phase |
 | Chat-only output | Deliverable only in response, no file | Named output file — write to disk |
 | Scope blindness | Agent starts writing before reading all phases | Pre-flight scan — summarise all phases first |
+| Output decay | `...`, `same pattern`, `as above`, `{ ... }` in later sections | Self-sweep — expand every shortcut before delivering |
 
 ---
 
@@ -136,4 +166,7 @@ EXECUTION FIDELITY RULES — apply from first line to last:
 5. RE-ANCHOR: After each phase, re-read the fidelity constraints before starting the next.
 6. EQUAL DEPTH: Final phases must be as thorough as Phase 1 — do not summarise late phases.
 7. FLAG BLOCKERS: Mark open-question-dependent tasks with [OQ-N BLOCKER] inline.
+8. SELF-SWEEP: After completing output, scan the last 40% for decay signals ("...",
+   "same pattern", "as above", "etc.", "{ ... }", "similar to Phase N").
+   Expand every match in-place. Do not deliver output with unexpanded shortcuts.
 ```

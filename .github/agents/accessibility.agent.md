@@ -33,7 +33,7 @@ Determine how you were invoked before reading any pipeline state or running any 
 
 ## Accepting Handoffs
 
-You receive work from: **Frontend Developer** (check accessibility), **Streamlit Developer** (check accessibility), **UX Designer** (check accessibility).
+You receive work from: **Frontend Developer** (check accessibility), **Implement** (check accessibility), **UX Designer** (check accessibility).
 
 When receiving a handoff:
 1. Read the incoming context — identify which components or pages need audit
@@ -109,7 +109,7 @@ Auto-load these skills when the condition matches — do not skip.
 |--------|-----------|
 | Accessibility standards | `.github/instructions/accessibility.instructions.md` ⬅️ PRIMARY |
 | Frontend patterns | `.github/instructions/frontend.instructions.md` |
-| Streamlit UI | `.github/instructions/streamlit.instructions.md` |
+| Framework-specific UI | Load from `.github/instructions/` based on `project-config.md` stack |
 
 ---
 

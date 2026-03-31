@@ -1,6 +1,6 @@
 # Skills Registry
 
-> **121 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
+> **122 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
 > Load a skill by reading its `SKILL.md`. See `project-config.md` for project-specific placeholder values.
 
 ---
@@ -63,6 +63,7 @@
 | GitHub CLI | `devops/gh-cli/` | GitHub CLI operations (PRs, issues, releases, actions) |
 | Git Commit | `devops/git-commit/` | Writing conventional commit messages |
 | Monorepo | `devops/monorepo/` | pnpm workspaces + Turborepo for monorepo CI/CD and shared packages |
+| Windows Deployment | `devops/windows-deployment/` | Deploy FastAPI + React/Vite apps to Windows Server with NSSM, nginx reverse proxy, and Gitea |
 | Using Git Worktrees | `devops/using-git-worktrees/` | Managing parallel branches with git worktrees |
 
 ### Docs
@@ -146,6 +147,7 @@
 | Receiving Code Review | `workflow/receiving-code-review/` | Processing code review feedback with technical rigor |
 | Requesting Code Review | `workflow/requesting-code-review/` | Verifying work and preparing it for review before merging |
 | Verification Loop | `workflow/verification-loop/` | Systematic lint, test, type-check, and review cycle |
+| Preflight | `workflow/preflight/` | Plan-vs-codebase validation — verifies API contracts, types, fields, dependencies, and paths before implementation |
 
 ### Media
 

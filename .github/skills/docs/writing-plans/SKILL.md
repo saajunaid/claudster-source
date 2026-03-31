@@ -96,6 +96,172 @@ git commit -m "feat: add specific feature"
 ```
 ```
 
+## Manual Execution Protocol
+
+**Every plan MUST include a Manual Execution Protocol section** at the top (after header, before phases). This tells the user exactly how to run each phase session:
+
+```markdown
+## Manual Execution Protocol
+
+For each phase below, follow this workflow:
+
+1. **Open** a new chat session with the agent specified in the phase header
+2. **Load skills** listed in the phase's "Skills to load" section
+3. **Attach files** listed in the phase's "Files to attach" section
+4. **Paste** the self-contained Phase Prompt into the chat
+5. **Validate** using the phase's Validation Checklist — every item must pass
+6. **Get green light** before moving to the next phase
+
+**Drift rule:** If you find bugs introduced by Phase N, fix them in the SAME session
+before starting Phase N+1. Never carry implementation debt forward between phases.
+```
+
+## Phase 0 — Context & Decisions
+
+**Every multi-phase plan MUST include a Phase 0** before the implementation phases. Phase 0 is not an implementation phase — it is a ground-truth inventory that prevents agents from making assumptions.
+
+Phase 0 contains four mandatory tables:
+
+### Technology Decision Table
+
+```markdown
+### Technology Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Charting library | Recharts | Tree-shakeable, React-native, typed API |
+| Animation | Framer Motion | AnimatePresence for tab transitions, spring physics |
+| State management | Zustand | Lightweight, no boilerplate, devtools support |
+| ... | ... | ... |
+```
+
+Every technology choice that is NOT already in `project-config.md` must appear here with a rationale.
+
+### Data Parity / Availability Matrix
+
+```markdown
+### Data Availability
+
+| Feature / Tab | Data Field | Available? | Strategy |
+|---------------|-----------|------------|----------|
+| Executive Overview | `ceoInsight` | ✅ Full | Live API |
+| Product Deep-Dive | `satisfactionScores` | ❌ Empty `{}` | Show empty state: "Coming in future release" |
+| Geography | `byGeography` | ⚠️ Partial (was present May-Oct) | Show empty state with explanation |
+| ... | ... | ... | ... |
+```
+
+For any data field that may be empty, partial, or absent: document the exact empty state message text.
+
+### Existing Scaffold Audit
+
+```markdown
+### Existing Scaffold — DO NOT Recreate
+
+| File | Purpose | Current State |
+|------|---------|---------------|
+| `frontend/src/api/client.ts` | API client with JWT auth | ✅ Working — build on top |
+| `frontend/src/types/nps.ts` | 30+ TypeScript interfaces | ✅ Working — import, don't recreate |
+| `frontend/src/components/layout/AppShell.tsx` | App shell | ⚠️ Cold zinc theme — needs warm overhaul |
+| ... | ... | ... |
+```
+
+The "Current State" column tells agents what exists and whether to modify or leave it alone.
+
+### Dependency Split
+
+```markdown
+### Dependencies
+
+**Already installed** (DO NOT reinstall):
+- react, react-dom, typescript, vite
+- @tanstack/react-query, @tanstack/react-router
+- tailwindcss, zustand
+
+**Not yet installed** (install in Phase 1):
+- recharts, framer-motion, leaflet, react-leaflet
+- d3-force, d3-scale
+```
+
+## Enhanced Per-Phase Template
+
+**Every implementation phase MUST use this structure.** The sections OUTSIDE the prompt block are for the user (what to prepare before opening a session). The prompt block is for the agent (what to paste into the session).
+
+```markdown
+## Phase N — {Name}
+
+**Agent:** `@{agent-name}`
+**Objective:** {One sentence describing what this phase builds}
+
+### Skills to load
+
+- `.github/skills/{path}/SKILL.md` — {why}
+- `.github/skills/{path}/SKILL.md` — {why}
+
+### Instructions to follow
+
+- `.github/instructions/{name}.instructions.md`
+- `.github/instructions/{name}.instructions.md`
+
+### Files to attach
+
+- `path/to/file.ext` — {why this file is needed}
+- `path/to/file.ext` (from Phase N-1)
+- `.github/plans/{this-plan}.md` (this file)
+
+### Phase Prompt
+
+\`\`\`
+{Self-contained prompt — copy-paste ready. 30-60 lines.
+References plan sections for detail. Does NOT duplicate code blocks.
+Includes PRINCIPLES, SKILLS TO READ, IMPORTANT warnings, and numbered deliverable list.}
+\`\`\`
+
+### What to build
+
+#### N.1 {Deliverable Name}
+
+**File:** `exact/path/to/file.ext`
+
+{Component interface / function signature}
+
+**Data binding:**
+- Uses `data.field.path` for {purpose}
+- Uses `data.other.field` for {purpose}
+
+**Behavior:**
+- {Specific interactive behavior}
+- {Animation spec with exact values}
+
+**Empty state:** When `data.field` is `{}` or `[]`:
+> "{Exact message text to display}"
+
+**IMPORTANT:** {Trap-specific warning — e.g., "DO NOT recreate api/client.ts",
+"field uses snake_case in BOTH API and TS types — no transformation needed"}
+
+#### N.2 {Next Deliverable}
+...
+
+### Validation Checklist — Phase N complete when
+
+- [ ] `npm run build` succeeds (or equivalent build command)
+- [ ] {Specific behavioral criterion — e.g., "KpiFlipCard flip animation works independently on each card"}
+- [ ] {Data binding criterion — e.g., "NpsSummaryTable renders 5 rows with correct data from surveys + trend"}
+- [ ] {Visual criterion — e.g., "Dark mode: all components render correctly with soft dark tokens"}
+- [ ] {Integration criterion — e.g., "Row click switches to Tab 2 and scrolls to chart"}
+- [ ] Zero hardcoded data — all from props/hooks
+- [ ] Zero hardcoded colors — all from CSS vars or constants
+```
+
+### Key rules for the "What to build" subsections
+
+1. **Data binding is mandatory for UI components.** Every component spec must list the exact JSON field paths it consumes (e.g., `surveys.{product}.nps`, `trend.historicalNPS.byProduct.{product}`). This eliminates the #1 implementer failure mode: guessing which field to bind.
+
+2. **Empty state specs are mandatory.** For every data field that might be empty, specify the exact message text. Do NOT say "show appropriate empty state" — write the message.
+
+3. **IMPORTANT warnings for traps.** If a file already exists and must NOT be recreated, say so. If a field uses unexpected casing (snake_case where camelCase is expected), warn explicitly. These prevent the most common implementation errors.
+
+4. **Complete code blocks when the component is foundational.** For theme files, config files, utility functions, and CSS — include the full source code in the plan. For application components — specify interface, behavior, and data binding; let the agent write the implementation.
+
 ## Remember
 - Exact file paths always
 - Complete code in plan (not "add validation")
@@ -106,6 +272,10 @@ git commit -m "feat: add specific feature"
 - **Every phase/step must specify the executing agent and include a ready-to-use prompt with `═══ PROMPT START` / `═══ PROMPT END` markers**
 - **Use 4-backtick fences (`` ```` ``) for the outer prompt block** so nested code blocks render correctly
 - **After writing all phases, run the Cross-Reference Audit against ALL source documents**
+- **Every plan MUST include a Manual Execution Protocol and Phase 0 — Context & Decisions**
+- **Every UI phase MUST include data binding specs (exact JSON paths) per component**
+- **Every data field that might be empty MUST have an explicit empty state message**
+- **Drift rule: fix bugs from Phase N before starting Phase N+1**
 
 ## Cross-Reference Audit
 

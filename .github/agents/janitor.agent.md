@@ -4,10 +4,10 @@ description: Cleans up code, removes dead code, improves organization
 tools: [read, search, edit, execute, problems, junai-mcp/*]
 model: GPT-5.3-Codex
 handoffs:
-    - label: Return to Orchestrator
-        agent: Orchestrator
-            prompt: Stage complete. Read pipeline-state.json and _routing_decision, then route.
-        send: false
+  - label: Return to Orchestrator
+    agent: Orchestrator
+    prompt: Stage complete. Read pipeline-state.json and _routing_decision, then route.
+    send: false
   - label: Review Changes
     agent: Code Reviewer
     prompt: Review the cleanup changes above for safety.

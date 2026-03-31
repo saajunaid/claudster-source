@@ -79,10 +79,14 @@ Polish Phase:      Error handling, edge cases, documentation
 - [ ] No dangling dependencies (works standalone)
 - [ ] **Agent assignment** (which agent executes this phase)
 - [ ] **Required skills** (which `.github/skills/*/SKILL.md` the agent must load)
+- [ ] **Instructions to follow** (which `.github/instructions/*.instructions.md` apply to this phase)
+- [ ] **Files to attach** (exactly which files the user must include in the chat context)
 - [ ] **Evidence tier** (`standard` or `anchor` — determines verification depth)
 - [ ] **Intent references** (links to specific Architecture/PRD sections this phase implements)
 - [ ] **Design intent** (one-sentence summary of what upstream documents mean for this phase)
 - [ ] **Ready-to-use prompt** (self-contained prompt with `═══ PROMPT START` / `═══ PROMPT END` markers)
+- [ ] **Data binding spec** (for UI phases: exact JSON field paths per component, empty state messages)
+- [ ] **Validation checklist** (behavioral, testable criteria — not generic "tests pass")
 
 ### Documentation Considerations
 
@@ -154,7 +158,46 @@ Use this template:
 
 {Brief description of relevant existing code/state}
 
+## Manual Execution Protocol
+
+For each phase below, follow this workflow:
+
+1. **Open** a new chat session with the agent specified in the phase header
+2. **Load skills** listed in the phase's "Skills to load" section
+3. **Attach files** listed in the phase's "Files to attach" section
+4. **Paste** the Ready-to-Use Prompt into the chat
+5. **Validate** using the phase's Validation Checklist — every item must pass
+6. **Get green light** before moving to the next phase
+
+**Drift rule:** If you find bugs introduced by Phase N, fix them in the SAME session
+before starting Phase N+1. Never carry implementation debt forward between phases.
+
 ## Phases
+
+### Phase 0: Context & Decisions
+**Goal**: Establish ground truth before implementation begins
+**This is NOT an implementation phase** — it is a reference section consumed by all subsequent phases.
+
+**Technology Decisions:**
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| {e.g., Charting library} | {e.g., Recharts} | {e.g., Tree-shakeable, React-native, typed API} |
+
+**Data Availability:**
+| Feature / Tab | Data Field | Available? | Strategy |
+|---------------|-----------|------------|----------|
+| {Feature} | `{json.path}` | ✅ Full / ⚠️ Partial / ❌ Empty | {Live API / Empty state: "message text"} |
+
+**Existing Scaffold — DO NOT Recreate:**
+| File | Purpose | Current State |
+|------|---------|---------------|
+| `{path}` | {purpose} | ✅ Working — build on top / ⚠️ Needs overhaul |
+
+**Dependencies:**
+- **Already installed:** {list}
+- **Not yet installed (install in Phase 1):** {list}
+
+---
 
 ### Phase 1: {Name} ⏳
 **Goal**: {One sentence}
@@ -165,11 +208,44 @@ Use this template:
   - Architecture: `{path-to-ADR}` §{section} ({decision title})
   - PRD: `{path-to-PRD}` {requirement ID} ({requirement summary})
 **Design Intent**: {One-sentence summary of what upstream documents mean for THIS phase — forces explicit interpretation}
+
+#### Skills to load
+- `.github/skills/{path}/SKILL.md` — {rationale}
+
+#### Instructions to follow
+- `.github/instructions/{name}.instructions.md`
+
+#### Files to attach
+- `{path/to/file}` — {why this file is needed in the chat context}
+- `.github/plans/{plan-file}.md` — this plan
+
 **Deliverables**:
 - [ ] {File or component 1}
 - [ ] {File or component 2}
 
 **Verification**: {How to test this phase is complete}
+
+#### What to build
+
+##### 1.1 {Deliverable Name}
+**File:** `{exact/path/to/file.ext}`
+
+**Data binding:**
+- `{data.field.path}` → {what it displays}
+- `{data.other.field}` → {what it displays}
+
+**Empty state:** When `{data.field}` is `{}` or `[]`:
+> "{Exact message text}"
+
+**IMPORTANT:** {Trap-specific warning if applicable}
+
+##### 1.2 {Next Deliverable}
+...
+
+#### Validation Checklist — Phase 1 complete when
+- [ ] {Specific behavioral criterion}
+- [ ] {Data binding criterion}
+- [ ] {Build/lint passes}
 
 **Key Details**:
 ```
