@@ -118,6 +118,34 @@ Where `x` is the app number. Prod API ports increment per app on the shared serv
 6. Verify
 ```
 
+### 3.1 Remote Capability Handshake (Required Before Saying "Can't Access Prod")
+
+When a user asks for remote prod actions, do **not** assume remote access is unavailable.
+
+Run this handshake first:
+
+```powershell
+$server = "{hostname}"
+
+# 1) Reachability
+Test-Connection -ComputerName $server -Count 1
+
+# 2) WinRM availability
+Test-WSMan -ComputerName $server
+
+# 3) Actual command execution
+Invoke-Command -ComputerName $server -ScriptBlock {
+  hostname
+  Get-Location
+}
+```
+
+Decision rule:
+- If steps 1-3 succeed, proceed with remote deploy actions.
+- If any step fails, report the exact failing step and provide fallback instructions.
+
+**Hard rule:** Never claim "I can't remote into prod" until this probe fails in the current session.
+
 ---
 
 ## 4. Common Steps (Both Strategies)
@@ -624,6 +652,7 @@ nssm start $svcName
 | `ENOTEMPTY: rmdir dist/assets` | Process has `dist/` files locked | Stop service → build → restart |
 | Service starts then stops immediately | Bad path or missing dependency | Check NSSM stderr log: `Get-Content logs\vmie-{short}-api-prod-stderr.log -Tail 50` |
 | `git pull` fails with auth error | Credentials expired or GCM_PROVIDER not set | `git config credential.helper store` + `GCM_PROVIDER=generic` as user env var |
+| Unclear whether remote control works | Assumed lack of access without probing | Run Remote Capability Handshake (§3.1) before deciding |
 | Frontend shows blank page | SPA routing broken (no catch-all) | IIS: check FastAPI SPA catch-all (§5.4). nginx: check `try_files` (§6.2) |
 | Frontend shows "Not Found" on subpath | Client-side router missing `basepath` | Add `basepath: import.meta.env.BASE_URL` to router config (§7.2) |
 | `Unexpected token '<'` parsing JSON | Static asset fetch uses root-absolute path (`/file.json`) under subpath | Use `toAppUrl()` helper for all `public/` file fetches (§7.4) |
@@ -670,6 +699,7 @@ nssm start $svcName
 ### Subsequent Deploy (Both Strategies)
 
 ```
+- [ ] Remote Capability Handshake run (ping + WSMan + Invoke-Command) (§3.1)
 - [ ] git pull on prod
 - [ ] pip install -e . (if deps changed)
 - [ ] cd frontend && npm ci && npm run build:prod (if FE changed, IIS strategy)
@@ -713,3 +743,5 @@ Hard-won lessons from real deployments:
 14. **Path traversal guard on SPA catch-all.** The `serve_spa` endpoint resolves file paths from user-supplied URL segments. Always `.resolve()` the path and verify it starts with the `dist/` directory to prevent path traversal attacks (OWASP A04).
 
 15. **Static asset fetches are the hidden third subpath trap.** Router basepath and API baseURL are well-documented. Runtime `fetch("/config.json")` or `fetch("/data.geojson")` from `public/` are not — they work in dev (base is `/`) and silently break in prod under a subpath. The symptom is `Unexpected token '<'` because the root-absolute URL hits the wrong app or fallback page, returning HTML instead of JSON. Prevention: create a `toAppUrl()` helper and audit with `grep -rn 'fetch("/' frontend/src/`.
+
+16. **Probe remote capability before declaring no access.** In Windows environments, agents may be able to execute remote commands via WinRM (`Invoke-Command`) even when interactive RDP control is not available. Always run the Remote Capability Handshake (§3.1) before stating remote access is unavailable.

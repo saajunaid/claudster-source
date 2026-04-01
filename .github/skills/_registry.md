@@ -141,12 +141,14 @@
 | Developer Growth | `workflow/developer-growth-analysis/` | Analyzing coding patterns and curating personalized learning resources |
 | File Organizer | `workflow/file-organizer/` | Organizing files, finding duplicates, suggesting structure |
 | Game-Changing Features | `workflow/game-changing-features/` | Finding 10x product opportunities and high-leverage improvements |
+| Golden Plan | `workflow/golden-plan/` | Comprehensive, evidence-gated implementation plans for large builds (8+ phases, full-stack, complex data binding) |
 | Intent Writer | `workflow/intent-writer/` | Structuring freetext ideas into formal Intent Documents for the agent pipeline |
 | Onboard Project | `workflow/onboard-project/` | Bootstrapping AI configuration (copilot-instructions.md, project-config.md) |
 | Pipeline State | `workflow/pipeline-state/` | Reading and writing `.github/pipeline-state.json` for pipeline tracking |
 | Receiving Code Review | `workflow/receiving-code-review/` | Processing code review feedback with technical rigor |
 | Requesting Code Review | `workflow/requesting-code-review/` | Verifying work and preparing it for review before merging |
 | Verification Loop | `workflow/verification-loop/` | Systematic lint, test, type-check, and review cycle |
+| Data Contract Pipeline | `workflow/data-contract-pipeline/` | Build/audit typed data pipelines from source to frontend with drift detection |
 | Preflight | `workflow/preflight/` | Plan-vs-codebase validation — verifies API contracts, types, fields, dependencies, and paths before implementation |
 
 ### Media
