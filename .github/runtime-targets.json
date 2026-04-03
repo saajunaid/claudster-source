@@ -23,7 +23,8 @@
         {"source": "plans", "destination": "plans"},
         {"source": "handoffs", "destination": "handoffs"},
         {"source": "diagrams", "destination": "diagrams"},
-        {"source": "tools", "destination": "tools"}
+        {"source": "tools", "destination": "tools"},
+        {"source": "recipes", "destination": "recipes"}
       ]
     },
     {
