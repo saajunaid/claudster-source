@@ -17,9 +17,11 @@
 
 $JUNO_POOL = "E:\Projects\junai"
 $JUNO_GITHUB = "$JUNO_POOL\.github"
-$POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "diagrams", "tools")
+$POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "diagrams", "tools", "recipes")
+$POOL_FILES = @("runtime-targets.json")
+$ROOT_PUSH_FILES = @("export_runtime_resources.py")
 # Fully-managed folders: wiped before copy so renamed/moved/deleted files don't persist
-$CLEAN_FOLDERS = @("agents", "skills", "prompts", "instructions", "tools")
+$CLEAN_FOLDERS = @("agents", "skills", "prompts", "instructions", "tools", "recipes")
 
 function junai-pull {
     param([string]$ProjectRoot = (Get-Location).Path)
@@ -50,6 +52,17 @@ function junai-pull {
             Write-Host "  [OK]  $folder" -ForegroundColor Green
         } else {
             Write-Host "  [--]  $folder - not found in pool, skipped" -ForegroundColor Yellow
+        }
+    }
+
+    foreach ($file in $POOL_FILES) {
+        $src = Join-Path $JUNO_GITHUB $file
+        $dest = Join-Path $target $file
+        if (Test-Path $src) {
+            Copy-Item $src $dest -Force
+            Write-Host "  [OK]  $file" -ForegroundColor Green
+        } else {
+            Write-Host "  [--]  $file - not found in pool, skipped" -ForegroundColor Yellow
         }
     }
 
@@ -95,6 +108,28 @@ function junai-push {
         }
     }
 
+    foreach ($file in $POOL_FILES) {
+        $src = Join-Path $source $file
+        $dest = Join-Path $JUNO_GITHUB $file
+        if (Test-Path $src) {
+            Copy-Item $src $dest -Force
+            Write-Host "  [OK]  $file" -ForegroundColor Green
+        } else {
+            Write-Host "  [--]  $file - not in project, skipped" -ForegroundColor DarkGray
+        }
+    }
+
+    foreach ($file in $ROOT_PUSH_FILES) {
+        $src = Join-Path $ProjectRoot $file
+        $dest = Join-Path $JUNO_POOL $file
+        if (Test-Path $src) {
+            Copy-Item $src $dest -Force
+            Write-Host "  [OK]  $file" -ForegroundColor Green
+        } else {
+            Write-Host "  [--]  $file - not in project root, skipped" -ForegroundColor DarkGray
+        }
+    }
+
     # Commit and push junai
     Push-Location $JUNO_POOL
 
@@ -122,7 +157,7 @@ function junai-push {
     }
     # ──────────────────────────────────────────────────────────────────────────
 
-    git add .github/agents .github/skills .github/prompts .github/instructions .github/diagrams .github/tools | Out-Null
+    git add .github/agents .github/skills .github/prompts .github/instructions .github/diagrams .github/tools .github/recipes .github/runtime-targets.json export_runtime_resources.py | Out-Null
 
     if ([string]::IsNullOrWhiteSpace($Message)) {
         $projectName = Split-Path $ProjectRoot -Leaf

@@ -96,6 +96,7 @@ On entry, read `_notes.handoff_payload` from `pipeline-state.json`. If `required
 3. **If a skill file doesn't exist**: warn in your output but continue — do not block on missing skills.
 4. **Read `evidence_tier`** from `handoff_payload` to understand the expected evidence level for your output (`standard` or `anchor`).
 5. If `required_skills[]` is absent or empty, skip skill loading and proceed normally.
+6. **Recipe skills (cross-project baseline):** After loading handoff skills, read `project-config.md`. If `recipe` is set, read `.github/recipes/{recipe}.recipe.md` and load any mandatory skills listed for your role (IMPLEMENT or VERIFY phases) that are not already loaded. Record with trigger `"recipe:{recipe}"`.
 
 ### Intent Verification (Cross-Reference Mandate)
 

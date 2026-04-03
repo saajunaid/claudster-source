@@ -9,10 +9,13 @@ Copy this file to your project's `.github/` folder. Set the profile and you're d
 | Setting | Value |
 |---------|-------|
 | **profile** | `` |
+| **recipe** | `` |
 
 > **For profiled projects:** Set `profile` to the matching profile name below. Agents will use that profile's values for all `<PLACEHOLDER>` tokens.
 >
 > **For new projects:** Set `profile` to blank, then fill in Step 2 with your project values.
+>
+> **Recipe (optional):** If set, agents load the recipe's mandatory skills and follow its delivery workflow automatically. Available recipes are in `.github/recipes/`. Example: `enterprise-dashboard` for data-to-UI dashboard products.
 
 ### Which profile strategy should I use?
 
@@ -196,16 +199,29 @@ Add project profiles here. Each profiled project adds its own section.
 
 | Component | Technology |
 |-----------|-----------|
-| Frontend | React, TypeScript, Vite, Tailwind CSS |
-| Routing | TanStack Router |
-| State | React Query (server), Zustand (client) |
-| Components | shadcn/ui (Radix primitives) |
-| Backend API | FastAPI, uvicorn |
-| ORM | SQLAlchemy (async), aioodbc |
+| Frontend framework | React 19 |
+| Build tool | Vite 6+ |
+| CSS framework | Tailwind CSS 3.4+ |
+| Component library | shadcn/ui (Radix primitives) |
+| Routing | TanStack Router (file-based) |
+| Server state | TanStack React Query 5+ |
+| Client state | Zustand 5+ |
+| Charts | Recharts 3+ |
+| Maps | React-Leaflet + Leaflet |
+| Animation | Framer Motion 12+ |
+| Forms | react-hook-form + zod |
+| Backend API | FastAPI + uvicorn |
+| ORM | SQLAlchemy (async) + aioodbc |
 | Migrations | Alembic |
-| Auth | JWT + bcrypt (local SQLite user store) |
 | Database | SQL Server (MSSQL) |
-| Dependency mgmt | pyproject.toml (Python), package.json (JS) |
+| Python pkg mgr | uv |
+| Python linter | ruff |
+| Frontend test | Vitest + Testing Library |
+| E2E test | Playwright (Chromium) |
+| Backend test | pytest + pytest-asyncio |
+| Heading font | DM Sans |
+| Mono font | JetBrains Mono |
+| Design system | Warm Editorial (`warm-editorial-ui` skill) |
 
 #### Key Conventions
 
@@ -214,8 +230,14 @@ Add project profiles here. Each profiled project adds its own section.
 | Query config file | N/A — SQL via SQLAlchemy ORM or repository layer |
 | App entry (backend) | `uvicorn src.api.main:app --reload` |
 | App entry (frontend) | `cd frontend && npm run dev` |
-| Test command | `pytest tests/` |
-| Lint command | `ruff check src/` |
+| Test command (backend) | `pytest tests/` |
+| Test command (frontend) | `npx vitest run` |
+| E2E test command | `npx playwright test` |
+| Lint command (backend) | `ruff check src/` |
+| Lint command (frontend) | `eslint src/` |
+| Format command (frontend) | `prettier --write src/` |
+| Design system skill | `.github/skills/frontend/warm-editorial-ui/SKILL.md` |
+| Recipe | `enterprise-dashboard` |
 
 ### nextjs-postgres-saas
 

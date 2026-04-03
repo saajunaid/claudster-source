@@ -71,6 +71,7 @@ Ask the user for information needed to populate the configuration. Skip question
 | **Data Sources** | Database name(s)? Connection method? Key tables? |
 | **Key Conventions** | Query externalization? Path resolution patterns? CSS scoping method? Component reuse patterns? |
 | **Commands** | How to run the app? Run tests? Lint? Build? |
+| **Recipe** | Delivery workflow pattern? (`enterprise-dashboard` for data-to-UI dashboards, or blank for generic projects) |
 
 ### Step 3: Populate project-config.md
 
@@ -83,6 +84,10 @@ Ask the user for information needed to populate the configuration. Skip question
    - Project Structure block
    - Key Conventions list
 3. If not using a profile, fill in the "Step 2: Project Values" table directly
+4. If user specified a recipe:
+   - Verify `.github/recipes/{recipe}.recipe.md` exists in the pool
+   - Set the `recipe` field in the Step 1 table: `| **recipe** | {recipe} |`
+   - If recipe file is missing, warn but continue — recipe is optional
 
 ### Step 4: Create or Update copilot-instructions.md
 
@@ -183,3 +188,4 @@ Report what was done:
 - All paths in this skill are relative. The skill works regardless of whether the AI resources folder is at `.github/`, `.cursor/`, or any other location.
 - The `copilot-instructions.md` file is project-specific and should NOT be committed to the portable pool. It stays in the project repo. The junai extension manages only a sentinel-delimited `<!-- junai:start -->` … `<!-- junai:end -->` section — never edit content inside those markers (it will be refreshed on the next Update). Add your project content outside the markers.
 - `project-config.md` IS part of the portable pool as a template. When the profile section is filled in, it becomes project-specific.
+- The `recipe` field in `project-config.md` is optional. Projects without a recipe work exactly as before — agents use their built-in expertise and plan-embedded skills. Recipes add automatic cross-project baseline loading for repeatable delivery patterns.

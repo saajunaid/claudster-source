@@ -217,6 +217,15 @@ When the `handoff_payload` contains `required_skills[]`, verify each skill file 
 - If a skill file is **missing**: warn the user with the exact path. Do NOT block routing — the target agent may still function without the skill, but the user should be aware.
 - If ALL skill files resolve: proceed silently (no extra output needed).
 
+#### 2a.1 Recipe Skill Augmentation (Pre-Handoff)
+
+After constructing `handoff_payload` (§5.2), if `project-config.md` specifies a `recipe`:
+1. Read `.github/recipes/{recipe}.recipe.md`
+2. Determine which recipe phase maps to the current plan phase (by matching phase name or description)
+3. Append the recipe's mandatory skills for that phase to `handoff_payload.required_skills[]` (deduplicate against existing entries)
+4. Record via `update_notes({"_recipe_applied": "{recipe}", "_recipe_phase": "{phase}"})`
+5. If no recipe is set, skip this step entirely — no regression from existing behaviour.
+
 ### 2b. Input Snapshot & Path Tracking
 
 Before routing to the next agent:

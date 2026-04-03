@@ -1,7 +1,5 @@
----
 description: "Large-task execution discipline — pre-flight scan, path gate, anti-drift rules, and equal-depth enforcement for multi-phase planning and implementation sessions"
-applyTo: "**"
----
+applyTo: ".github/agents/*.agent.md, .github/instructions/*.md, .github/plans/*.md"
 
 # Large-Task Fidelity Instructions
 

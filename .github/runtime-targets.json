@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "canonical_root": ".github",
+  "output_root": "dist/runtime-resources",
+  "exclusions": {
+    "skills": [
+      "vmie"
+    ]
+  },
+  "targets": [
+    {
+      "name": "copilot",
+      "workspace_root": ".github",
+      "files": [
+        {"source": "project-config.md", "destination": "project-config.md"}
+      ],
+      "copies": [
+        {"source": "agents", "destination": "agents"},
+        {"source": "skills", "destination": "skills"},
+        {"source": "prompts", "destination": "prompts"},
+        {"source": "instructions", "destination": "instructions"},
+        {"source": "agent-docs", "destination": "agent-docs"},
+        {"source": "plans", "destination": "plans"},
+        {"source": "handoffs", "destination": "handoffs"},
+        {"source": "diagrams", "destination": "diagrams"},
+        {"source": "tools", "destination": "tools"}
+      ]
+    },
+    {
+      "name": "claude",
+      "workspace_root": ".claude",
+      "copies": [
+        {"source": "skills", "destination": "skills"}
+      ],
+      "transforms": [
+        {"type": "agents_to_claude", "source": "agents", "destination": "agents"},
+        {"type": "instructions_to_rules", "source": "instructions", "destination": "rules"}
+      ]
+    },
+    {
+      "name": "codex",
+      "workspace_root": ".codex",
+      "copies": [
+        {"source": "skills", "destination": "skills"}
+      ]
+    }
+  ]
+}

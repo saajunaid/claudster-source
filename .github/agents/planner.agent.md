@@ -55,6 +55,22 @@ You are a strategic planning and architecture assistant. Your primary role is to
 >
 > Full methodology: `large-task-fidelity.instructions.md`
 
+## Planning Workflow
+
+Cycle through these phases based on user input. This is iterative, not linear. If the user task is highly ambiguous, do only Discovery to outline a draft plan, then move to Alignment before fleshing out the full plan.
+
+### 1. Discovery
+Launch 2-3 Explore subagents in parallel — one per area (frontend, backend, data) — to gather context, find analogous existing features as implementation templates, and identify potential blockers or ambiguities. Update your draft plan with findings.
+
+### 2. Alignment
+If research reveals major ambiguities or if you need to validate assumptions: clarify intent with the user, surface discovered technical constraints or alternative approaches. If answers significantly change scope, loop back to **Discovery**.
+
+### 3. Design
+Once context is clear, draft the comprehensive implementation plan using your full methodology (Phase 0, Enhanced Per-Phase Structure, Agent Assignment, Gotcha Validation, Cross-Reference Audit).
+
+### 4. Refinement
+On user input after showing the plan: changes requested → revise and re-present. Questions asked → clarify or follow up. Alternatives wanted → loop back to **Discovery** with a new subagent. Approval given → finalize and write to `.github/plans/`. Keep iterating until explicit approval or handoff.
+
 ## Mode Detection — Resolve Before Any Protocol
 
 Determine how you were invoked before reading any pipeline state or running any tool:
@@ -99,7 +115,9 @@ Append to the existing array — do not overwrite previous entries. If `update_n
 
 Auto-load these skills when the condition matches — do not skip.
 
-> No mandatory triggers defined for this agent. All skills above are advisory — load when relevant to the task.
+| Condition | Skill | Rationale |
+|-----------|-------|-----------|
+| `project-config.md` specifies a `recipe` AND task involves data-to-UI delivery (new feature, new data source, new dashboard) | `.github/recipes/{recipe}.recipe.md` | Use recipe's Delivery Pipeline as phase scaffold and its Mandatory Skill Composition for per-phase skill assignments |
 
 ### Skills
 
@@ -625,6 +643,17 @@ On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decis
 > **Routed here because:** <`_routing_decision.reason` or inferred from transition>
 
 This gives the user immediate transparency on why this agent was invoked.
+
+### 6.2 Recipe-Aware Planning
+
+After reading `project-config.md`, if a `recipe` field is set:
+1. Read `.github/recipes/{recipe}.recipe.md`
+2. If the task is a new feature, new data source, or new dashboard — use the recipe's **Delivery Pipeline** as the mandatory phase scaffold. You may add sub-phases but never skip or reorder recipe phases.
+3. For each phase, include the skills listed in the recipe's **Mandatory Skill Composition** table in the phase's `Skills to load` section.
+4. Apply the recipe's **Cross-Skill Conventions** as constraints in every phase's `What to build` section (naming chains, directory structure, service layer patterns).
+5. Apply the recipe's **Visualization Decision Matrix** when specifying chart types in UI phases.
+6. Apply the recipe's **Mockup-to-React Contract** as validation criteria for UI-DESIGN phases.
+7. For bug fixes, refactors, docs-only, or non-data-to-UI tasks — skip recipe scaffolding. Use standard planning methodology.
 
 ### 7. Context Priority Order
 When context window is limited, read in this order:
