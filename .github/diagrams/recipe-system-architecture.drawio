@@ -145,26 +145,26 @@
           <mxGeometry x="170" y="365" width="200" height="24" as="geometry"/>
         </mxCell>
 
-        <mxCell id="L2_pathA_box1" value="Create new repo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="150" y="400" width="140" height="36" as="geometry"/>
+        <mxCell id="L2_pathA_box1" value="new-vmie-project.ps1&lt;br&gt;&lt;i&gt;platform-infra bootstrap&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="130" y="400" width="170" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="L2_pathA_arr1" style="html=1;endArrow=block;endFill=1;strokeColor=#82B366;strokeWidth=1.5;" edge="1" source="L2_pathA_box1" target="L2_pathA_box2" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="L2_pathA_box2" value="junai-pull" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="320" y="400" width="140" height="36" as="geometry"/>
+        <mxCell id="L2_pathA_box2" value="Open in VS Code&lt;br&gt;&lt;i&gt;junai extension activates&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="330" y="400" width="170" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="L2_pathA_arr2" style="html=1;endArrow=block;endFill=1;strokeColor=#82B366;strokeWidth=1.5;" edge="1" source="L2_pathA_box2" target="L2_pathA_box3" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="L2_pathA_box3" value="Run onboard-project skill" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="150" y="460" width="170" height="36" as="geometry"/>
+        <mxCell id="L2_pathA_box3" value="cmdInit — Deploy pool&lt;br&gt;&lt;i&gt;agents, skills, recipes, instructions&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="130" y="460" width="200" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="L2_pathA_arr3" style="html=1;endArrow=block;endFill=1;strokeColor=#82B366;strokeWidth=1.5;" edge="1" source="L2_pathA_box3" target="L2_pathA_box4" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="L2_pathA_box4" value="project-config.md&lt;br&gt;&lt;i&gt;profile + recipe set&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D6A656;fontSize=12;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="350" y="460" width="170" height="40" as="geometry"/>
+        <mxCell id="L2_pathA_box4" value="QuickPick: Profile + Recipe&lt;br&gt;&lt;i&gt;→ project-config.md&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D6A656;fontSize=12;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="355" y="460" width="180" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="L2_pathA_arr4" style="html=1;endArrow=block;endFill=1;strokeColor=#82B366;strokeWidth=1.5;" edge="1" source="L2_pathA_box4" target="L2_pathA_box5" parent="1">
           <mxGeometry relative="1" as="geometry"/>
@@ -210,8 +210,8 @@
         </mxCell>
 
         <!-- Universal Entry Point callout -->
-        <mxCell id="L3_universal" value="&lt;b&gt;copilot-instructions.md&lt;/b&gt;&lt;br&gt;&lt;i&gt;Universal entry point — read by ALL AI tools&lt;br&gt;(Copilot, Claude, Cursor, Windsurf, Codex)&lt;/i&gt;" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;size=20;position=0.5;position2=1;base=30;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;fontFamily=Arial;rounded=1;" vertex="1" parent="1">
-          <mxGeometry x="450" y="655" width="300" height="75" as="geometry"/>
+        <mxCell id="L3_universal" value="&lt;b&gt;copilot-instructions.md&lt;/b&gt;&lt;br&gt;&lt;i&gt;Universal entry point — read by ALL AI tools&lt;br&gt;(Copilot, Claude, Cursor, Windsurf, Codex)&lt;br&gt;Recipe discovery instruction embedded in&lt;br&gt;junai-managed sentinel section&lt;/i&gt;" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;size=20;position=0.5;position2=1;base=30;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;fontFamily=Arial;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="650" width="340" height="90" as="geometry"/>
         </mxCell>
 
         <mxCell id="L3_frame" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F4FF;strokeColor=#4472C4;strokeWidth=2;arcSize=6;" vertex="1" parent="1">

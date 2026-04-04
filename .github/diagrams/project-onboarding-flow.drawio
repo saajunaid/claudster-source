@@ -1,0 +1,130 @@
+<mxfile>
+  <diagram name="Project Onboarding Flow" id="onboarding-flow">
+    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="0" pageWidth="920" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- TITLE                                           -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <mxCell id="title" value="Project Onboarding — junai Agent Pipeline" style="text;html=1;fontSize=22;fontStyle=1;fontFamily=Arial;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="15" width="760" height="42" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- ARROWS (back layer)                             -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <mxCell id="arr_1_2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#82B366;strokeWidth=2;rounded=1;" edge="1" source="step1" target="step2" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_2_3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#555555;strokeWidth=2;rounded=1;" edge="1" source="step2" target="step3" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_3_4" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#6C8EBF;strokeWidth=2;rounded=1;" edge="1" source="step3" target="step4" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_4_5" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#6C8EBF;strokeWidth=2;rounded=1;" edge="1" source="step4" target="step5" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_5_6" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#555555;strokeWidth=2;rounded=1;" edge="1" source="step5" target="step6" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_6_7" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#D6A656;strokeWidth=2;rounded=1;" edge="1" source="step6" target="step7" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_7_8" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#D6A656;strokeWidth=2;rounded=1;" edge="1" source="step7" target="step8" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_8_9" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#555555;strokeWidth=2;rounded=1;" edge="1" source="step8" target="step9" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_9_10" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;strokeColor=#B85450;strokeWidth=2;rounded=1;" edge="1" source="step9" target="step10" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- PHASE 1 — SCAFFOLD (green)                      -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <mxCell id="phase1_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="20" y="70" width="865" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="phase1_lbl" value="SCAFFOLD" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#A9D18E;strokeColor=#82B366;strokeWidth=1;fontSize=13;fontStyle=1;fontFamily=Arial;fontColor=#1E4620;rotation=-90;arcSize=0;" vertex="1" parent="1">
+          <mxGeometry x="20" y="70" width="60" height="220" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="step1" value="&lt;b&gt;① new-vmie-project.ps1&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;-ProjectName · -ProjectShort · -Description · -Port 0 (auto)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="100" width="775" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="step2" value="&lt;b&gt;② Project scaffold created&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;project-template copied → new folder · venv + npm install · Gitea repo created &amp;amp; pushed&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="180" width="775" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- PHASE 2 — ACTIVATE (blue)                       -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <mxCell id="phase2_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="20" y="310" width="865" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="phase2_lbl" value="ACTIVATE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#9DC3E6;strokeColor=#6C8EBF;strokeWidth=1;fontSize=13;fontStyle=1;fontFamily=Arial;fontColor=#1F3864;rotation=-90;" vertex="1" parent="1">
+          <mxGeometry x="20" y="310" width="60" height="250" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="step3" value="&lt;b&gt;③ Open in VS Code&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;code E:\Projects\&lt;project-name&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="340" width="775" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="step4" value="&lt;b&gt;④ junai extension: "Initialize?"&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;Click Initialize Now  ·  or set autoInitializeOnActivation: always&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="405" width="775" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="step5" value="&lt;b&gt;⑤ cmdInit — pool deployed&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;agents/ · skills/ · recipes/ · instructions/ · .vscode/mcp.json · pipeline-state.json&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="470" width="775" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- PHASE 3 — AIM (orange)                          -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <mxCell id="phase3_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D6A656;strokeWidth=2;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="20" y="580" width="865" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="phase3_lbl" value="AIM" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4C07A;strokeColor=#D6A656;strokeWidth=1;fontSize=13;fontStyle=1;fontFamily=Arial;fontColor=#7D4E00;rotation=-90;" vertex="1" parent="1">
+          <mxGeometry x="20" y="580" width="60" height="250" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="step6" value="&lt;b&gt;⑥ Select Profile&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;QuickPick → react-fastapi-vite-mssql · streamlit-mssql-enterprise · org1-telecom-ops · …&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6A656;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="610" width="775" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="step7" value="&lt;b&gt;⑦ Select Recipe&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;QuickPick → enterprise-dashboard (9-phase) · none  →  written to project-config.md&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6A656;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="675" width="775" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="step8" value="&lt;b&gt;⑧ Place your assets&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;scratch/data/ ← CSV · JSON · XLSX · DB tables     scratch/mockups/ ← HTML mockup&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6A656;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="740" width="775" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- PHASE 4 — RUN (red-pink)                        -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <mxCell id="phase4_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="20" y="850" width="865" height="210" as="geometry"/>
+        </mxCell>
+        <mxCell id="phase4_lbl" value="RUN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8928E;strokeColor=#B85450;strokeWidth=1;fontSize=13;fontStyle=1;fontFamily=Arial;fontColor=#7A1F1F;rotation=-90;" vertex="1" parent="1">
+          <mxGeometry x="20" y="850" width="60" height="210" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="step9" value="&lt;b&gt;⑨ Start the pipeline&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;@Orchestrator Start pipeline…   OR   chat in any AI tool (Claude Code, Cursor, Windsurf, Copilot)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="880" width="775" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="step10" value="&lt;b&gt;⑩ Recipe guides delivery&lt;/b&gt;&lt;br&gt;&lt;font color=&apos;#555555&apos; style=&apos;font-size:11px&apos;&gt;9-phase pipeline: Data Intake → Adapter → Normalize → Display DTO → Contract Test → API Surface → UI Design → Implement → Verify&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;strokeWidth=1.5;fontSize=13;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="95" y="950" width="775" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- NOTE                                            -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <mxCell id="note" value="&lt;i&gt;No recipe set? Agents use built-in expertise — recipe is optional, not required.&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=1.5;fontSize=12;fontFamily=Arial;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="95" y="1085" width="775" height="36" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
