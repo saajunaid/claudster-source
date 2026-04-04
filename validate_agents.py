@@ -23,6 +23,10 @@ import threading
 import yaml
 from pathlib import Path
 
+# Ensure UTF-8 output even on Windows cp1252 terminals (→ arrows in error messages)
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
