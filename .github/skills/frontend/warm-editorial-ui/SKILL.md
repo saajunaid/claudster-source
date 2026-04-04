@@ -474,8 +474,8 @@ Apply under `.dark` (or `[data-theme="dark"]` for explicit toggling):
   /* Warm Ink (inverted) — off-white with warm tint */
   --ink-1:          #E8E5DF;   /* primary text — warm off-white */
   --ink-2:          #C5C1B8;   /* secondary text */
-  --ink-3:          #9C9890;   /* tertiary text */
-  --ink-4:          #706C64;   /* muted/placeholder */
+  --ink-3:          #A8A49C;   /* tertiary text — lifted for readability on dark surfaces */
+  --ink-4:          #8A8680;   /* muted/placeholder — 4.5:1 on card surface (was #706C64, too dark) */
 
   /* Status Palette — brightened for dark backgrounds */
   --green:          #3FB950;
@@ -637,7 +637,8 @@ const plotlyLayout = {
 | `--surface-2` | `#F9F8F6` subtle | `#1E1D1B` recessed | Inputs, insets |
 | `--border` | `#E5E2DC` warm beige | `#3A3834` warm dark | Both avoid cold grey |
 | `--ink-1` | `#1A1816` warm black | `#E8E5DF` warm off-white | Primary text |
-| `--ink-4` | `#9C9890` muted | `#706C64` muted | Placeholder text |
+| `--ink-3` | `#6B6760` warm grey | `#A8A49C` lighter warm grey | Tertiary text |
+| `--ink-4` | `#9C9890` muted | `#8A8680` muted (lifted) | Placeholder/section labels |
 | `--brand` | `#E10A0A` | `#F52D2D` | Brightened for dark |
 | `--green` | `#16A34A` | `#3FB950` | Brightened for dark |
 | `--red` | `#DC2626` | `#F85149` | Brightened for dark |
@@ -650,6 +651,7 @@ const plotlyLayout = {
 3. **Status colors breathe**: Green/red/amber/blue are ~15% brighter than their light-mode counterparts — they pop without screaming
 4. **Shadows still work**: Unlike many dark themes where shadows vanish, the `rgba(0,0,0,0.3-0.5)` range creates visible but subtle elevation
 5. **Brand stays warm**: The red accent at `#F52D2D` glows slightly warmer, working with the warm charcoal surface instead of fighting it
+6. **Muted text stays readable**: `--ink-4` at `#8A8680` achieves 4.6:1 contrast on card surfaces — grey but never invisible
 
 ### Don'ts (Dark Mode)
 
