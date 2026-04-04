@@ -1,7 +1,7 @@
 # Recipe System — Runbook
 
 > **Audience**: Developers and AI agents working with the junai portable resource pool.
-> **Last updated**: 2026-04-03
+> **Last updated**: 2026-04-04
 
 ---
 
@@ -32,21 +32,27 @@ Recipes solve one problem: **agents forget to load the right skills at the right
 
 ### 3a. Fresh Project (New Repo)
 
-1. Create new repository
-2. Run `junai-pull` (or VS Code extension sync) to copy the portable pool from `agent-sandbox`
-3. Run the `onboard-project` skill — it will ask for project info including recipe
-4. In `project-config.md`, verify:
+1. Run `new-vmie-project.ps1 -ProjectName "my-project"` from `platform-infra/bootstrap/` to scaffold the project from `project-template`
+2. Open the project in VS Code — the junai extension auto-deploys the agent pool (agents, skills, instructions, recipes)
+3. Extension prompts for **profile selection** → then **recipe selection**
+4. Verify in `project-config.md`:
    - `profile` is set (e.g., `react-fastapi-vite-mssql`)
    - `recipe` is set (e.g., `enterprise-dashboard`)
 5. Start building — agents automatically load recipe skills for data-to-UI tasks
 
 ```
-agent-sandbox ──junai-pull──▶ new-project/.github/
-                                ├── agents/
-                                ├── skills/
-                                ├── recipes/          ◀── recipe files included
-                                ├── instructions/
-                                └── project-config.md ◀── set profile + recipe
+platform-infra/bootstrap/ ──▶ new-project/          (from project-template)
+                                 ├── src/             app scaffolding
+                                 ├── frontend/        React scaffold
+                                 └── .github/
+                                      └── copilot-instructions.md  (sentinel markers)
+
+junai extension (auto) ──▶ new-project/.github/
+                                 ├── agents/
+                                 ├── skills/
+                                 ├── recipes/          ◀── recipe files
+                                 ├── instructions/     ◀── instructions from pool
+                                 └── project-config.md ◀── set profile + recipe
 ```
 
 ### 3b. Existing Project Mid-Flight
@@ -134,13 +140,29 @@ Recipes work **without the junai MCP pipeline**. This is critical for teams usin
 
 ### How It Works
 
-`copilot-instructions.md` contains a "Recipe-Driven Delivery" section that tells ANY AI tool:
+The junai extension manages a sentinel-delimited section inside `copilot-instructions.md` (`<!-- junai:start -->` … `<!-- junai:end -->`). This managed section includes a "Recipe-Driven Delivery" block that tells ANY AI tool:
 
 1. Check `project-config.md` for a `recipe` field
 2. If set, read the recipe file
 3. Follow its Delivery Pipeline and load its skills
 
 This is the **universal entry point** — it fires regardless of which AI tool you use, whether the pipeline is running, or which agent file is active.
+
+### Deployment Mechanism
+
+The recipe discovery text is embedded in the extension's `junaiManagedSection()` function. When the extension runs `init` or `update`, it writes/refreshes this section inside the sentinel markers. User content outside the markers is never touched.
+
+```
+Extension update → junaiManagedSection() → copilot-instructions.md
+                                              <!-- junai:start -->
+                                              ## junai Agent Pipeline
+                                              ...
+                                              ## Recipe-Driven Delivery     ◀── universal trigger
+                                              ...
+                                              <!-- junai:end -->
+```
+
+**No separate file needed.** No manual copy. Every project gets recipe discovery automatically on extension install/update.
 
 ### Why This Is Reliable
 

@@ -42,22 +42,6 @@ agent-sandbox/
 
 ---
 
-## Recipe-Driven Delivery
-
-When working on **data-to-UI tasks** (new features, dashboards, data integrations — not bug fixes, refactors, or docs-only work):
-
-1. Read `.github/project-config.md` — check if a `recipe` field is set in Step 1
-2. If set, read `.github/recipes/{recipe}.recipe.md`
-3. Follow the recipe's **Delivery Pipeline** as your mandatory phase sequence
-4. Load the recipe's **Mandatory Skills** for each phase you work on
-5. Apply the recipe's **Cross-Skill Conventions** (naming chains, directory structure, chart styling)
-
-If no recipe is set, work normally using your built-in expertise and any skills loaded via other mechanisms.
-
-> **Why this matters:** Recipes eliminate manual skill invocation by making the full delivery workflow automatic. See `.github/agent-docs/RECIPE-RUNBOOK.md` for scenarios and details.
-
----
-
 ## The Three-Repo System
 
 ```
