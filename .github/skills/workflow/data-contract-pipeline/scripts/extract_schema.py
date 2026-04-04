@@ -8,7 +8,13 @@ Supported formats:
   - XLSX (.xlsx/.xls) — openpyxl, same column logic as CSV
   - YAML (.yaml/.yml) — safe_load, delegates to dict logic
   - Plain text (.txt/.log) — Key: Value, Key = Value, [Section] headers
-  - DB table (--format db) — SQLAlchemy inspect, SQL type mapping
+  - DB table (--format db) — SQLAlchemy inspect + data sampling + embedded format detection
+
+DB discovery & sampling:
+  --discover — enumerate all tables/views with columns, PKs, FKs
+  --schema <name> — target a specific DB schema (e.g., 'dbo', 'public')
+  --sample N — fetch N rows for type inference and embedded format detection
+  Embedded formats detected: JSON, XML, YAML, markdown, pipe-delimited in string columns
 
 Schema evolution:
   --save-baseline snap.json — snapshot current schema for later comparison
@@ -20,7 +26,9 @@ Usage:
     python extract_schema.py data.csv --output models/ingestion/report.py
     python extract_schema.py data.json --save-baseline baseline.json
     python extract_schema.py data_v2.json --diff baseline.json
-    python extract_schema.py --format db --connection-string "mssql+pyodbc://..." --table users
+    python extract_schema.py --format db --connection-string "mssql+pyodbc://..." --discover
+    python extract_schema.py --format db --connection-string "..." --table users --sample 50
+    python extract_schema.py --format db --connection-string "..." --table orders --schema dbo
 
 Part of the data-contract-pipeline skill.
 """
@@ -658,6 +666,7 @@ def extract_text(text: str) -> list[ExtractedSection]:
 # ---------------------------------------------------------------------------
 
 SQL_TYPE_MAP = {
+    # SQL Server
     "INTEGER": "int",
     "BIGINT": "int",
     "SMALLINT": "int",
@@ -685,12 +694,189 @@ SQL_TYPE_MAP = {
     "VARBINARY": "bytes",
     "BINARY": "bytes",
     "IMAGE": "bytes",
+    # PostgreSQL
+    "SERIAL": "int",
+    "BIGSERIAL": "int",
+    "SMALLSERIAL": "int",
+    "BOOLEAN": "bool",
+    "DOUBLE_PRECISION": "float",
+    "JSONB": "dict",
+    "JSON": "dict",
+    "UUID": "str",
+    "BYTEA": "bytes",
+    "TIMESTAMPTZ": "str",
+    "TIMESTAMP": "str",
+    "INTERVAL": "str",
+    "CITEXT": "str",
+    "INET": "str",
+    "MACADDR": "str",
+    "ARRAY": "list",
+    "HSTORE": "dict",
+    # MySQL
+    "TINYTEXT": "str",
+    "MEDIUMTEXT": "str",
+    "LONGTEXT": "str",
+    "MEDIUMINT": "int",
+    "ENUM": "str",
+    "SET": "str",
+    "BLOB": "bytes",
+    "MEDIUMBLOB": "bytes",
+    "LONGBLOB": "bytes",
+    "TINYBLOB": "bytes",
+    # SQLite
+    "REAL": "float",
 }
 
 
+def _detect_embedded_format(value: str) -> str | None:
+    """Detect structured data embedded in a string column value."""
+    v = value.strip()
+    if not v:
+        return None
+    if (v.startswith("{") and v.endswith("}")) or (
+        v.startswith("[") and v.endswith("]")
+    ):
+        try:
+            json.loads(v)
+            return "json"
+        except (json.JSONDecodeError, ValueError):
+            pass
+    if v.startswith("<?xml") or (v.startswith("<") and ">" in v):
+        return "xml"
+    if v.startswith("---\n") or re.match(r"^[a-zA-Z_]+\s*:", v):
+        try:
+            import yaml
+
+            yaml.safe_load(v)
+            return "yaml"
+        except Exception:
+            pass
+    if "|" in v and v.count("|") >= 3:
+        return "pipe-delimited"
+    if v.startswith("#") or v.startswith("**") or re.search(r"\[.+\]\(.+\)", v):
+        return "markdown"
+    return None
+
+
+def _sample_rows(
+    engine: Any, table_name: str, schema: str | None, limit: int = 50
+) -> list[dict]:
+    """Fetch sample rows from a table for type inference and format detection."""
+    from sqlalchemy import text
+
+    qualified = f'"{schema}"."{table_name}"' if schema else f'"{table_name}"'
+    query = text(f"SELECT * FROM {qualified} ORDER BY 1 LIMIT :lim")
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query, {"lim": limit})
+            columns = list(result.keys())
+            return [dict(zip(columns, row)) for row in result.fetchall()]
+    except Exception:
+        # MSSQL uses TOP instead of LIMIT
+        query_mssql = text(
+            f"SELECT TOP(:lim) * FROM {qualified} ORDER BY 1"
+        )
+        try:
+            with engine.connect() as conn:
+                result = conn.execute(query_mssql, {"lim": limit})
+                columns = list(result.keys())
+                return [dict(zip(columns, row)) for row in result.fetchall()]
+        except Exception:
+            return []
+
+
+def discover_db_tables(
+    connection_string: str, schema: str | None = None
+) -> list[dict]:
+    """Discover all tables and views in a database schema.
+
+    Returns a list of dicts with keys: name, type (table/view), column_count,
+    row_count_estimate, columns (list of column info dicts).
+    """
+    try:
+        from sqlalchemy import create_engine, text
+        from sqlalchemy import inspect as sa_inspect
+    except ImportError:
+        print(
+            "Error: sqlalchemy required. Install: pip install sqlalchemy",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    engine = create_engine(connection_string)
+    inspector = sa_inspect(engine)
+
+    tables = []
+    # Get tables
+    for table_name in inspector.get_table_names(schema=schema):
+        columns = inspector.get_columns(table_name, schema=schema)
+        pk = inspector.get_pk_constraint(table_name, schema=schema)
+        fks = inspector.get_foreign_keys(table_name, schema=schema)
+        tables.append({
+            "name": table_name,
+            "schema": schema,
+            "type": "table",
+            "column_count": len(columns),
+            "columns": [
+                {
+                    "name": c["name"],
+                    "sql_type": type(c["type"]).__name__.upper(),
+                    "nullable": c.get("nullable", True),
+                    "is_pk": c["name"] in (pk.get("constrained_columns", []) if pk else []),
+                }
+                for c in columns
+            ],
+            "primary_key": pk.get("constrained_columns", []) if pk else [],
+            "foreign_keys": [
+                {
+                    "columns": fk["constrained_columns"],
+                    "referred_table": fk["referred_table"],
+                    "referred_columns": fk["referred_columns"],
+                }
+                for fk in fks
+            ],
+        })
+
+    # Get views
+    for view_name in inspector.get_view_names(schema=schema):
+        columns = inspector.get_columns(view_name, schema=schema)
+        tables.append({
+            "name": view_name,
+            "schema": schema,
+            "type": "view",
+            "column_count": len(columns),
+            "columns": [
+                {
+                    "name": c["name"],
+                    "sql_type": type(c["type"]).__name__.upper(),
+                    "nullable": c.get("nullable", True),
+                    "is_pk": False,
+                }
+                for c in columns
+            ],
+            "primary_key": [],
+            "foreign_keys": [],
+        })
+
+    engine.dispose()
+    return tables
+
+
 def extract_db_table(
-    connection_string: str, table_name: str
+    connection_string: str,
+    table_name: str,
+    schema: str | None = None,
+    sample: int = 0,
 ) -> list[ExtractedSection]:
+    """Extract schema from a DB table with optional data sampling.
+
+    Args:
+        connection_string: SQLAlchemy connection string
+        table_name: Table or view name
+        schema: Optional DB schema (e.g., 'dbo', 'public')
+        sample: Number of rows to sample for type inference and format detection.
+                0 = metadata only (original behavior).
+    """
     try:
         from sqlalchemy import create_engine
         from sqlalchemy import inspect as sa_inspect
@@ -704,8 +890,19 @@ def extract_db_table(
     engine = create_engine(connection_string)
     inspector = sa_inspect(engine)
 
-    columns = inspector.get_columns(table_name)
+    columns = inspector.get_columns(table_name, schema=schema)
+    pk = inspector.get_pk_constraint(table_name, schema=schema)
+    pk_cols = pk.get("constrained_columns", []) if pk else []
+    fks = inspector.get_foreign_keys(table_name, schema=schema)
+
+    # Sample rows if requested
+    sampled_rows: list[dict] = []
+    if sample > 0:
+        sampled_rows = _sample_rows(engine, table_name, schema, limit=sample)
+
     section = ExtractedSection(name="Root")
+    embedded_sections: list[ExtractedSection] = []
+
     for col in columns:
         snake = to_snake_case(col["name"])
         sql_type = type(col["type"]).__name__.upper()
@@ -713,17 +910,76 @@ def extract_db_table(
         if col.get("nullable", True):
             py_type = f"{py_type} | None"
 
+        # Build example from sampled data
+        example = f"SQL: {sql_type}"
+        embedded_fmt = None
+        if sampled_rows:
+            sample_vals = [
+                row.get(col["name"])
+                for row in sampled_rows
+                if row.get(col["name"]) is not None
+            ]
+            if sample_vals:
+                example = str(sample_vals[0])[:80]
+                # Check for embedded structured data in string columns
+                if sql_type in (
+                    "VARCHAR", "NVARCHAR", "TEXT", "NTEXT",
+                    "MEDIUMTEXT", "LONGTEXT", "CITEXT",
+                ):
+                    for sv in sample_vals[:10]:
+                        fmt = _detect_embedded_format(str(sv))
+                        if fmt:
+                            embedded_fmt = fmt
+                            break
+
+        source_pattern = "db_column"
+        if col["name"] in pk_cols:
+            source_pattern = "db_column_pk"
+        if embedded_fmt:
+            source_pattern = f"db_column_embedded_{embedded_fmt}"
+            example = f"[embedded {embedded_fmt}] {example}"
+            # Parse the embedded content to extract nested schema
+            if embedded_fmt == "json" and sampled_rows:
+                for sv in sample_vals[:1]:
+                    try:
+                        parsed = json.loads(str(sv))
+                        nested = extract_json_fields(
+                            parsed, section=f"{col['name']} (Embedded JSON)"
+                        )
+                        embedded_sections.extend(nested)
+                    except (json.JSONDecodeError, ValueError):
+                        pass
+
         section.fields.append(
             ExtractedField(
                 name=snake,
                 python_type=py_type,
-                source_pattern="db_column",
-                example_value=f"SQL: {sql_type}",
+                source_pattern=source_pattern,
+                example_value=example,
+            )
+        )
+
+    # Add FK annotations as comments in the section
+    for fk in fks:
+        fk_desc = (
+            f"FK: {','.join(fk['constrained_columns'])} -> "
+            f"{fk['referred_table']}({','.join(fk['referred_columns'])})"
+        )
+        section.fields.append(
+            ExtractedField(
+                name=f"_fk_{fk['referred_table']}",
+                python_type="# relationship",
+                source_pattern="db_foreign_key",
+                example_value=fk_desc,
             )
         )
 
     engine.dispose()
-    return [section] if section.fields else []
+    result = []
+    if section.fields:
+        result.append(section)
+    result.extend(embedded_sections)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -978,18 +1234,62 @@ def main() -> None:
         default=None,
         help="DB table name (for --format db)",
     )
+    parser.add_argument(
+        "--schema",
+        default=None,
+        help="DB schema name, e.g. 'dbo', 'public' (for --format db)",
+    )
+    parser.add_argument(
+        "--discover",
+        action="store_true",
+        help="Discover all tables/views in the database (for --format db)",
+    )
+    parser.add_argument(
+        "--sample",
+        type=int,
+        default=0,
+        help="Number of rows to sample for type inference and embedded format detection (for --format db, default: 0 = metadata only)",
+    )
     args = parser.parse_args()
 
     fmt = detect_format(args.source, args.fmt)
 
     if fmt == "db":
-        if not args.connection_string or not args.table:
+        if not args.connection_string:
             print(
-                "Error: --connection-string and --table required for db format",
+                "Error: --connection-string required for db format",
                 file=sys.stderr,
             )
             sys.exit(1)
-        sections = extract_db_table(args.connection_string, args.table)
+
+        # Discovery mode: list all tables and their schemas
+        if args.discover:
+            tables = discover_db_tables(args.connection_string, schema=args.schema)
+            print(f"Discovered {len(tables)} tables/views:\n")
+            for t in tables:
+                pk_str = f"  PK: {', '.join(t['primary_key'])}" if t['primary_key'] else ""
+                fk_str = f"  FKs: {len(t['foreign_keys'])}" if t['foreign_keys'] else ""
+                print(f"  [{t['type'].upper()}] {t['name']} ({t['column_count']} columns){pk_str}{fk_str}")
+                for col in t['columns']:
+                    pk_marker = " [PK]" if col['is_pk'] else ""
+                    null_marker = " NULL" if col['nullable'] else " NOT NULL"
+                    print(f"    {col['name']}: {col['sql_type']}{null_marker}{pk_marker}")
+                if t['foreign_keys']:
+                    for fk in t['foreign_keys']:
+                        print(f"    FK: {','.join(fk['columns'])} -> {fk['referred_table']}({','.join(fk['referred_columns'])})")
+                print()
+            sys.exit(0)
+
+        if not args.table:
+            print(
+                "Error: --table required for db format (or use --discover to list tables)",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        sections = extract_db_table(
+            args.connection_string, args.table,
+            schema=args.schema, sample=args.sample,
+        )
         source_label = f"{args.table} (db)"
     else:
         if not args.source or not args.source.exists():

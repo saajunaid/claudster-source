@@ -1,6 +1,6 @@
 ---
 name: data-contract-pipeline
-description: "**WORKFLOW SKILL** — Build and validate end-to-end typed data pipelines from source payload to frontend display. Generates Pydantic ingestion models, normalizers, display DTOs, FastAPI routers, TypeScript types, typed service functions, and contract tests from a raw data sample. Detects and reports drift between layers. USE FOR: building a new data pipeline from any source format (JSON, Markdown, CSV, XLSX, YAML, DB tables, plain text), adding a DTO layer to an existing adapter, auditing drift between backend DTOs and frontend types, generating contract tests for data validation, creating golden sample fixtures, aligning TypeScript types with Python DTOs, reviewing data mapping docs for staleness, tracking schema evolution over time. Use when the user says 'data contract', 'build DTO', 'create types from JSON', 'payload to API', 'data pipeline', 'drift check', 'contract test', 'schema drift', 'type alignment', 'golden sample', 'data mapping', 'schema evolution', 'schema baseline', 'extract schema', or provides raw data in any structured format and wants typed backend+frontend code generated from it."
+description: "**WORKFLOW SKILL** — Build and validate end-to-end typed data pipelines from source payload to frontend display. Generates Pydantic ingestion models, normalizers, display DTOs, FastAPI routers, TypeScript types, typed service functions, and contract tests from a raw data sample. Detects and reports drift between layers. USE FOR: building a new data pipeline from any source format (JSON, Markdown, CSV, XLSX, YAML, DB tables, plain text), discovering database schemas and tables, extracting schemas with data sampling from any SQL database (SQL Server, PostgreSQL, MySQL, SQLite), detecting embedded structured data (JSON, XML, markdown, YAML) inside DB columns, multi-table aggregation with FK-based DTO nesting, adding a DTO layer to an existing adapter, auditing drift between backend DTOs and frontend types, generating contract tests for data validation, creating golden sample fixtures, aligning TypeScript types with Python DTOs, reviewing data mapping docs for staleness, tracking schema evolution over time. Use when the user says 'data contract', 'build DTO', 'create types from JSON', 'payload to API', 'data pipeline', 'drift check', 'contract test', 'schema drift', 'type alignment', 'golden sample', 'data mapping', 'schema evolution', 'schema baseline', 'extract schema', 'data is in the database', 'table in SQL Server', 'discover tables', 'what tables exist', or provides raw data in any structured format and wants typed backend+frontend code generated from it."
 ---
 
 # Data Contract Pipeline
@@ -48,16 +48,53 @@ Prompt:
 
 If the user provides a file path, read it. If they paste data, parse it. If they describe a schema, confirm your understanding before proceeding.
 
-**Supported input formats** (auto-detected from file extension, overridable with `--format`):
+**DB source detection** — When the user mentions a database, table, or column (e.g., "the data is in the appointments table in our SQL Server"), treat this as a DB source. Do NOT ask the user for `--format db` or CLI flags. Instead:
+1. Ask for the connection details if not already in project config (DB host, name, credentials)
+2. Use `extract_schema.py --format db --discover` to enumerate all tables
+3. Use `--table <name> --sample 50` to extract schema with data sampling
+4. The script auto-detects embedded formats (JSON, XML, markdown, YAML, pipe-delimited) in string columns
+
+**Supported input formats** (auto-detected from file extension or user description):
 - **JSON** (.json) — parsed directly, recursive nesting, list-of-objects, Field(alias=...)
 - **Markdown** (.md) — tables (2-col KV + multi-col row models), bold KV, code block KV, bullet KV, outer wrapper stripping
 - **CSV/TSV** (.csv/.tsv) — column headers, type inference from sample rows (up to 100)
 - **XLSX** (.xlsx/.xls) — openpyxl, multi-sheet support, same column logic as CSV
 - **YAML** (.yaml/.yml) — safe_load, delegates to JSON dict logic for nested extraction
 - **Plain text** (.txt/.log) — `Key: Value`, `Key = Value` patterns, `[Section]` headers
-- **DB table** (--format db) — SQLAlchemy inspect, SQL type → Python type mapping
+- **DB table** — SQLAlchemy inspect + data sampling + embedded format detection. Supports SQL Server, PostgreSQL, MySQL, SQLite, and any SQLAlchemy-compatible engine.
 
 All formats produce a unified `extract_schema.py` output: sections with typed fields → Pydantic model source code.
+
+### Step 1.5 — DB Discovery (DB sources only)
+
+When the source is a database, run discovery BEFORE schema extraction:
+
+**1. Enumerate tables and views:**
+```bash
+python extract_schema.py --format db --connection-string "..." --discover
+```
+This lists all tables/views with column counts, primary keys, and foreign key relationships. Present this to the user so they can confirm which tables contain the data they need.
+
+**2. Extract with data sampling:**
+```bash
+python extract_schema.py --format db --connection-string "..." --table appointments --sample 50
+```
+Sampling does three things metadata-only inspection cannot:
+- **Type refinement** — a `VARCHAR(MAX)` column's actual values reveal whether it's always numeric, always a date, or truly free-text
+- **Embedded format detection** — discovers JSON objects, XML documents, markdown, YAML, or pipe-delimited data stored inside string columns. When found, the embedded content is parsed and its nested schema is extracted automatically.
+- **Real examples** — provides actual sample values for the generated model comments
+
+**3. Multi-table aggregation:**
+When the user's data spans multiple tables (common for dashboards), run extraction on each relevant table, then:
+- Use FK relationships to suggest DTO nesting (e.g., `Appointment.customer` as a nested model)
+- Propose a unified display DTO that joins across tables
+- Generate the normalizer with join logic
+
+**4. Relationship mapping:**
+The discovery output includes FK chains. Use these to inform:
+- Which tables to join for the API endpoint
+- How to structure nested DTOs
+- Which fields are IDs vs display data
 
 ### Step 2 — Analyze and Ask Follow-ups
 
@@ -231,6 +268,8 @@ Quick reference — see [references/drift-check-catalog.md](./references/drift-c
 | Mapping Doc → Reality | Doc claims a field maps to X but code shows Y |
 | Drift test mode | `SCHEMA_FROZEN` flag doesn't match actual upstream state (D11) |
 | Exclusion allow-list | Intentionally untyped keys missing from `KNOWN_EXCLUDED_KEYS` (D12) |
+| DB embedded format | String column contains structured data (JSON/XML) not extracted to typed model (D13) |
+| DB FK → DTO nesting | FK relationship exists in DB but DTO is flat — no nested model generated (D14) |
 
 ---
 
@@ -327,10 +366,37 @@ Utility scripts for automated checks. Run via terminal.
 
 | Script | Purpose |
 |--------|---------|
-| [scripts/extract_schema.py](./scripts/extract_schema.py) | Unified schema extractor — any format (JSON, MD, CSV, XLSX, YAML, DB, text) → Pydantic model code. Supports `--save-baseline` / `--diff` for schema evolution tracking. |
+| [scripts/extract_schema.py](./scripts/extract_schema.py) | Unified schema extractor — any format (JSON, MD, CSV, XLSX, YAML, DB, text) → Pydantic model code. Supports `--save-baseline` / `--diff` for schema evolution tracking. DB mode: `--discover` to enumerate tables, `--sample N` for data sampling, `--schema` for DB schema targeting. |
 | [scripts/drift_check.py](./scripts/drift_check.py) | Compare DTO fields vs payload keys → report mismatches |
 | [scripts/ts_dto_compare.py](./scripts/ts_dto_compare.py) | Compare TypeScript interface properties vs Python DTO fields |
 | [scripts/generate_mapping_doc.py](./scripts/generate_mapping_doc.py) | Generate or validate a field mapping doc from Pydantic models (`--output` / `--check`) |
+
+### DB Discovery & Sampling
+
+When the source is a database:
+
+```bash
+# 1. Discover all tables/views with columns, PKs, FKs
+python scripts/extract_schema.py --format db --connection-string "mssql+pyodbc://..." --discover
+
+# 2. Discover within a specific schema
+python scripts/extract_schema.py --format db --connection-string "..." --discover --schema dbo
+
+# 3. Extract single table (metadata only — original behavior)
+python scripts/extract_schema.py --format db --connection-string "..." --table appointments
+
+# 4. Extract with data sampling (50 rows, detects embedded JSON/XML/markdown)
+python scripts/extract_schema.py --format db --connection-string "..." --table appointments --sample 50
+
+# 5. Extract from a specific schema
+python scripts/extract_schema.py --format db --connection-string "..." --table appointments --schema dbo --sample 50
+```
+
+Connection string examples:
+- **SQL Server**: `mssql+pyodbc://user:pass@host/dbname?driver=ODBC+Driver+17+for+SQL+Server`
+- **PostgreSQL**: `postgresql://user:pass@host:5432/dbname`
+- **MySQL**: `mysql+pymysql://user:pass@host:3306/dbname`
+- **SQLite**: `sqlite:///path/to/db.sqlite3`
 
 ### Schema Evolution Tracking
 
