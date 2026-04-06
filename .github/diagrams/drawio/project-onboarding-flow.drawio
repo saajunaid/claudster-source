@@ -3,7 +3,7 @@
   <!-- PAGE 1 — New Project (full SAAR flow)                              -->
   <!-- ═══════════════════════════════════════════════════════════════════ -->
   <diagram name="New Project" id="onboarding-flow">
-    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageWidth="1060" pageHeight="1560" math="0" shadow="0">
+    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageScale="1" pageWidth="1060" pageHeight="1560" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -132,7 +132,7 @@
           <mxGeometry x="145" y="375" width="865" height="62" as="geometry"/>
         </mxCell>
         <mxCell id="step4"
-          value="&lt;b&gt;④ Initialize junai — pick ONE command based on your intent&lt;/b&gt;&lt;br&gt;&lt;font color='#1E4620' style='font-size:10px'&gt;▶ &lt;b&gt;junai: Initialize Agent Pipeline&lt;/b&gt; (VS Code notification or Ctrl+Shift+P) — full pool + recipe framework + pipeline-state.json   &lt;b&gt;← new projects (default)&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font color='#777777' style='font-size:10px'&gt;▶ &lt;b&gt;junai: Initialize Agent Pool&lt;/b&gt; &lt;i&gt;(coming soon)&lt;/i&gt; — pool only, no pipeline-state.json — AI assistance without structured orchestration&lt;/font&gt;&lt;br&gt;&lt;font color='#1F3864' style='font-size:10px'&gt;▶ &lt;b&gt;junai: Update Agent Pool&lt;/b&gt; — syncs latest agent/skill versions only — &lt;b&gt;for already-initialized or mid-flight projects only&lt;/b&gt;&lt;/font&gt;"
+          value="&lt;b&gt;④ Initialize junai — pick ONE command based on your intent&lt;/b&gt;&lt;br&gt;&lt;font color='#1E4620' style='font-size:10px'&gt;▶ &lt;b&gt;junai: Initialize Agent Pipeline&lt;/b&gt; (VS Code notification or Ctrl+Shift+P) — full pool + recipe framework + pipeline-state.json   &lt;b&gt;← new projects (default)&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font color='#7D4E00' style='font-size:10px'&gt;▶ &lt;b&gt;junai: Initialize Agent Pool&lt;/b&gt; — pool only, no pipeline-state.json — AI assistance without structured orchestration&lt;/font&gt;&lt;br&gt;&lt;font color='#1F3864' style='font-size:10px'&gt;▶ &lt;b&gt;junai: Update Agent Pool&lt;/b&gt; — syncs latest agent/skill versions only — &lt;b&gt;for already-initialized or mid-flight projects only&lt;/b&gt;&lt;/font&gt;"
           style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;strokeWidth=1.5;fontSize=12;fontFamily=Arial;align=left;spacingLeft=8;spacingRight=8;spacingTop=5;spacingBottom=5;"
           vertex="1" parent="1">
           <mxGeometry x="145" y="452" width="865" height="115" as="geometry"/>
@@ -251,7 +251,7 @@
   <!-- PAGE 2 — Existing Project Adoption (mid-project on-ramp)           -->
   <!-- ═══════════════════════════════════════════════════════════════════ -->
   <diagram name="Existing Project" id="midproject-flow">
-    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageWidth="1060" pageHeight="1470" math="0" shadow="0">
+    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageScale="1" pageWidth="1060" pageHeight="1470" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -505,7 +505,7 @@
   <!-- PAGE 3 — Three Flows at a Glance (reference card)                  -->
   <!-- ═══════════════════════════════════════════════════════════════════ -->
   <diagram name="Three Flows at a Glance" id="three-flows">
-    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageWidth="1060" pageHeight="640" math="0" shadow="0">
+    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageScale="1" pageWidth="1060" pageHeight="640" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -555,7 +555,7 @@
 
         <!-- Flow B body -->
         <mxCell id="t_b_body"
-          value="&lt;b&gt;When:&lt;/b&gt; New project where you want AI agent assistance but &lt;i&gt;not&lt;/i&gt; structured pipeline orchestration&lt;br&gt;&lt;br&gt;&lt;b&gt;Command:&lt;/b&gt;&lt;br&gt;&lt;font face='Courier New' size='2'&gt;junai: Initialize Agent Pool&lt;/font&gt;&lt;br&gt;&lt;font color='#888888'&gt;&lt;i&gt;(coming in a future release)&lt;/i&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;Creates:&lt;/b&gt;&lt;br&gt;• Full agent + skill pool in .github/&lt;br&gt;• project-config.md (profile only, no recipe)&lt;br&gt;• &lt;b&gt;No&lt;/b&gt; pipeline-state.json&lt;br&gt;&lt;br&gt;&lt;b&gt;Workaround until available:&lt;/b&gt;&lt;br&gt;Use Flow A and select &quot;none&quot; as recipe&lt;br&gt;&lt;br&gt;&lt;font color='#888888'&gt;UX gap noted: &quot;Initialize then ignore pipeline-state.json&quot; is not the right answer — this command will be a first-class option in a future junai-vscode release&lt;/font&gt;"
+          value="&lt;b&gt;When:&lt;/b&gt; New project where you want AI agent assistance but &lt;i&gt;not&lt;/i&gt; structured pipeline orchestration&lt;br&gt;&lt;br&gt;&lt;b&gt;Command:&lt;/b&gt;&lt;br&gt;&lt;font face='Courier New' size='2'&gt;junai: Initialize Agent Pool&lt;/font&gt;&lt;br&gt;&lt;i&gt;(VS Code notification or Ctrl+Shift+P)&lt;/i&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;Creates:&lt;/b&gt;&lt;br&gt;• Full agent + skill pool in .github/&lt;br&gt;• project-config.md (profile only, no recipe)&lt;br&gt;• &lt;b&gt;No&lt;/b&gt; pipeline-state.json&lt;br&gt;&lt;br&gt;&lt;b&gt;After deploy:&lt;/b&gt;&lt;br&gt;Prompts to Select Profile or Set Recipe&lt;br&gt;&lt;br&gt;&lt;font color='#1E4620'&gt;&lt;b&gt;Available in junai-vscode 0.9.1+&lt;/b&gt;&lt;/font&gt;"
           style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7B7B7B;strokeWidth=1.5;fontSize=12;fontFamily=Arial;align=left;spacingLeft=10;spacingRight=10;spacingTop=8;spacingBottom=8;verticalAlign=top;"
           vertex="1" parent="1">
           <mxGeometry x="370" y="175" width="320" height="430" as="geometry"/>
@@ -563,7 +563,7 @@
 
         <!-- Flow C body -->
         <mxCell id="t_c_body"
-          value="&lt;b&gt;When:&lt;/b&gt; Project already exists mid-development. Adding junai without disrupting existing work.&lt;br&gt;&lt;br&gt;&lt;b&gt;Command:&lt;/b&gt;&lt;br&gt;&lt;font face='Courier New' size='2'&gt;junai: Update Agent Pool&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;Then configure:&lt;/b&gt;&lt;br&gt;&lt;font face='Courier New' size='2'&gt;junai: Select Project Profile&lt;/font&gt;&lt;br&gt;&lt;font face='Courier New' size='2'&gt;junai: Set Recipe &lt;/font&gt;&lt;font color='#888888'&gt;&lt;i&gt;(coming soon)&lt;/i&gt;&lt;/font&gt;&lt;br&gt;&lt;i&gt;Until available: edit .github/project-config.md manually&lt;/i&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;Creates:&lt;/b&gt;&lt;br&gt;• Syncs latest agents/skills into .github/&lt;br&gt;• All existing files preserved — no overwrites&lt;br&gt;• pipeline-state.json NOT auto-created&lt;br&gt;&lt;br&gt;&lt;font color='#B85450'&gt;&lt;b&gt;⚠ Do NOT use &quot;Initialize Agent Pipeline&quot; on mid-flight projects — it will overwrite project-config.md and copilot-instructions.md&lt;/b&gt;&lt;/font&gt;"
+          value="&lt;b&gt;When:&lt;/b&gt; Project already exists mid-development. Adding junai without disrupting existing work.&lt;br&gt;&lt;br&gt;&lt;b&gt;Command:&lt;/b&gt;&lt;br&gt;&lt;font face='Courier New' size='2'&gt;junai: Update Agent Pool&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;Then configure:&lt;/b&gt;&lt;br&gt;&lt;font face='Courier New' size='2'&gt;junai: Select Project Profile&lt;/font&gt;&lt;br&gt;&lt;font face='Courier New' size='2'&gt;junai: Set Recipe&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;Creates:&lt;/b&gt;&lt;br&gt;• Syncs latest agents/skills into .github/&lt;br&gt;• All existing files preserved — no overwrites&lt;br&gt;• pipeline-state.json NOT auto-created&lt;br&gt;&lt;br&gt;&lt;font color='#B85450'&gt;&lt;b&gt;⚠ Do NOT use &quot;Initialize Agent Pipeline&quot; on mid-flight projects — it will overwrite project-config.md and copilot-instructions.md&lt;/b&gt;&lt;/font&gt;"
           style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;strokeWidth=1.5;fontSize=12;fontFamily=Arial;align=left;spacingLeft=10;spacingRight=10;spacingTop=8;spacingBottom=8;verticalAlign=top;"
           vertex="1" parent="1">
           <mxGeometry x="720" y="175" width="320" height="430" as="geometry"/>
@@ -577,7 +577,7 @@
   <!-- PAGE 4 — Command Reference                                          -->
   <!-- ═══════════════════════════════════════════════════════════════════ -->
   <diagram name="Command Reference" id="cmd-reference">
-    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageWidth="1060" pageHeight="580" math="0" shadow="0">
+    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageScale="1" pageWidth="1060" pageHeight="580" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
@@ -596,7 +596,7 @@
         </mxCell>
 
         <!-- Existing Commands header -->
-        <mxCell id="cr_exist_hdr" value="Existing Commands (9)"
+        <mxCell id="cr_exist_hdr" value="All Commands (11)"
           style="whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=13;fontStyle=1;fontFamily=Arial;fontColor=#1E4620;align=left;spacingLeft=10;"
           vertex="1" parent="1">
           <mxGeometry x="20" y="105" width="1020" height="26" as="geometry"/>
@@ -665,26 +665,18 @@
           <mxGeometry x="720" y="320" width="320" height="80" as="geometry"/>
         </mxCell>
 
-        <!-- Planned Commands header -->
-        <mxCell id="cr_plan_hdr"
-          value="Coming Soon (2) — backlog items, not yet available in junai-vscode"
-          style="whiteSpace=wrap;html=1;fillColor=#DCDCDC;strokeColor=#7B7B7B;strokeWidth=2;fontSize=13;fontStyle=1;fontFamily=Arial;fontColor=#333333;align=left;spacingLeft=10;"
-          vertex="1" parent="1">
-          <mxGeometry x="20" y="412" width="1020" height="26" as="geometry"/>
-        </mxCell>
-
         <mxCell id="cr_c10"
-          value="&lt;font face='Courier New' size='2'&gt;&lt;b&gt;Initialize Agent Pool&lt;/b&gt;&lt;/font&gt;  &lt;font color='#888888'&gt;&lt;i&gt;[coming soon]&lt;/i&gt;&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:10px' color='#555555'&gt;First-time setup — copies agent pool only. No pipeline-state.json created. For AI assistance without structured pipeline.&lt;br&gt;&lt;b&gt;Workaround:&lt;/b&gt; use Initialize Agent Pipeline and select &quot;none&quot; as recipe&lt;/font&gt;"
-          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#7B7B7B;strokeWidth=1.5;fontSize=12;fontFamily=Arial;align=left;spacingLeft=8;spacingTop=5;verticalAlign=top;"
+          value="&lt;font face='Courier New' size='2'&gt;&lt;b&gt;Initialize Agent Pool&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:10px' color='#555555'&gt;First-time setup — copies agent pool only. No pipeline-state.json created. Prompts for profile and recipe after deploy.&lt;br&gt;&lt;b&gt;New projects without structured pipeline orchestration&lt;/b&gt;&lt;/font&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;strokeWidth=1.5;fontSize=12;fontFamily=Arial;align=left;spacingLeft=8;spacingTop=5;verticalAlign=top;"
           vertex="1" parent="1">
-          <mxGeometry x="20" y="448" width="490" height="90" as="geometry"/>
+          <mxGeometry x="20" y="412" width="490" height="80" as="geometry"/>
         </mxCell>
 
         <mxCell id="cr_c11"
-          value="&lt;font face='Courier New' size='2'&gt;&lt;b&gt;Set Recipe&lt;/b&gt;&lt;/font&gt;  &lt;font color='#888888'&gt;&lt;i&gt;[coming soon]&lt;/i&gt;&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:10px' color='#555555'&gt;Set or change the delivery recipe independently of pipeline init (enterprise-dashboard, none, etc.). Updates project-config.md.&lt;br&gt;&lt;b&gt;Workaround:&lt;/b&gt; edit .github/project-config.md manually, or re-run Select Project Profile&lt;/font&gt;"
-          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#7B7B7B;strokeWidth=1.5;fontSize=12;fontFamily=Arial;align=left;spacingLeft=8;spacingTop=5;verticalAlign=top;"
+          value="&lt;font face='Courier New' size='2'&gt;&lt;b&gt;Set Recipe&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:10px' color='#555555'&gt;Set or change the delivery recipe at any time (enterprise-dashboard, none, etc.). Re-settable — updates project-config.md.&lt;br&gt;&lt;b&gt;Any project, any time&lt;/b&gt;&lt;/font&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;strokeWidth=1.5;fontSize=12;fontFamily=Arial;align=left;spacingLeft=8;spacingTop=5;verticalAlign=top;"
           vertex="1" parent="1">
-          <mxGeometry x="550" y="448" width="490" height="90" as="geometry"/>
+          <mxGeometry x="550" y="412" width="490" height="80" as="geometry"/>
         </mxCell>
 
       </root>
@@ -695,7 +687,7 @@
   <!-- PAGE 5 — Enterprise Dashboard Recipe: 9-Phase Reference             -->
   <!-- ═══════════════════════════════════════════════════════════════════ -->
   <diagram name="Recipe: 9 Phases" id="recipe-phases">
-    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageWidth="1060" pageHeight="420" math="0" shadow="0">
+    <mxGraphModel defaultFontFamily="Arial" dx="0" dy="0" page="1" pageScale="1" pageWidth="1060" pageHeight="420" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
