@@ -67,6 +67,26 @@ Secondary signals (surrounding output, visual inference, nearby data) require ex
 
 ---
 
+## Rule 4 — Verify File Paths Before Referencing Them
+
+**Never state or paste a file path in a prompt, handoff, or attachment list unless the path has been verified from the actual workspace tree.**
+
+File paths are easy to subtly invent from summaries (for example, flattening `src/commands/foo.ts` into `src/foo.ts`). This causes avoidable confusion and bad handoffs.
+
+**Required protocol:**
+- Before referencing a file path as fact, verify it with a primary signal such as `Get-ChildItem -Recurse`, `file_search`, or `Test-Path`.
+- If you only know the filename from a summary or report, treat the folder path as **unknown until verified**.
+- When giving attachment lists, use the exact verified path from the workspace, not a reconstructed guess.
+
+```powershell
+# ✅ CORRECT: verify the real location before referencing it
+Get-ChildItem -Recurse -File src | Select-Object -ExpandProperty FullName
+Test-Path "src\commands\ask.ts"
+
+# ❌ WRONG: infer nested path from a summary
+# "ask.ts exists, so it must be src\ask.ts"
+```
+
 ## Anti-Patterns
 
 | Anti-pattern | Correct behaviour |
@@ -75,3 +95,4 @@ Secondary signals (surrounding output, visual inference, nearby data) require ex
 | Dirty `git status` → "unpushed commits" FAIL | `git log origin/main..HEAD` — empty = clean |
 | "Probably not there" based on visual scan | Always verify absence with a targeted search before filing a verdict |
 | Conflating working tree state with remote sync state | These are orthogonal — check each independently |
+| Infer `src/foo.ts` from a filename summary | Verify with `Get-ChildItem`, `file_search`, or `Test-Path` first |

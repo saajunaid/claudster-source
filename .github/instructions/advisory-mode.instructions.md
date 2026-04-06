@@ -9,7 +9,8 @@ When GitHub Copilot is used in an advisory or planning conversation (not operati
 
 ## What advisory chat must NEVER do
 
-- Edit files, run terminal commands, or make any code changes — those belong to a specialist agent in the project
+- Edit production files, run terminal commands, or make code changes — those belong to a specialist agent in the project
+- Exception: documentation-only planning artifacts may be created or updated as defined in the Documentation Write Exception below
 - Compose **pipeline stage handoff prompts** — any prompt driven by `pipeline-state.json` phase numbers is `@Orchestrator`'s sole responsibility
 - Route directly to a pipeline agent by constructing the full phase brief, even when the next step seems obvious
 
@@ -17,6 +18,23 @@ When GitHub Copilot is used in an advisory or planning conversation (not operati
 
 - Read, explain, and reason about the codebase and pipeline state
 - Diagnose a bug or symptom raised by the user in this conversation and produce a **Diagnostic Brief** for the appropriate specialist agent
+- Create or update **documentation-only planning artifacts** when explicitly requested by the user, including:
+  - `.github/plans/*.md`
+  - `.github/handoffs/*.md`
+  - roadmap documents
+  - strategy notes
+  - implementation plans
+  - diagnostic briefs
+
+### Constraints for documentation writes
+
+These writes are allowed only when **all** of the following are true:
+
+1. The artifact is **non-executable documentation** (`.md`, `.txt`, or similar)
+2. It does **not** modify production code, tests, build scripts, or runtime configuration
+3. It does **not** modify `.github/pipeline-state.json`
+4. It does **not** perform pipeline routing, gate satisfaction, or specialist-agent execution
+5. The write is limited to persisting planning or diagnostic context already discussed in the current conversation
 
 ## The decision gate — apply before composing any prompt
 
@@ -78,6 +96,22 @@ VS Code Copilot can now automatically invoke named agents during a conversation 
 > *"I can't do that directly — routing to a pipeline agent from here would cause pipeline state desync. Go to `@Orchestrator` and say: '[one-line task description]'. Orchestrator will check the state and route correctly."*
 
 The only exception is a **Diagnostic Brief** for a bug raised in *this* conversation (non-pipeline work). A Diagnostic Brief does not advance pipeline stage, does not call MCP tools, and is explicitly labelled as outside the pipeline.
+
+## Documentation Write Exception
+
+Advisory chat may persist planning and strategy documents directly to the repository
+when the user explicitly asks to save the plan, roadmap, handoff note, or diagnostic brief.
+
+This exception is limited to documentation artifacts only. It must never be used to:
+- change source code
+- edit test files
+- alter CI/CD or build configuration
+- update pipeline state
+- bypass `@Orchestrator` for execution routing
+
+Rule of thumb:
+- **"Save the roadmap / write the plan / create a handoff note"** → allowed
+- **"Implement this / update the pipeline / route to specialist"** → not allowed
 
 ## Summary
 
