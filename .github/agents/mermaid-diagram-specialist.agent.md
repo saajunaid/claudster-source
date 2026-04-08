@@ -1,5 +1,5 @@
 ---
-name: mermaid-diagram-specialist
+name: Mermaid Diagram Specialist
 description: Mermaid diagram specialist for creating flowcharts, sequence diagrams, ERDs, and architecture visualizations
 tools: [read, search, edit]
 model: Gemini 3.1 Pro (Preview)
