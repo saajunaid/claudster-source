@@ -1,7 +1,7 @@
 ---
 name: Tester
 description: Expert in testing Python applications, web dashboards, and FastAPI backends
-tools: [read, search, edit, execute, problems, testFailure, junai-mcp/*, context7/*]
+tools: [read, search, edit, execute, web, problems, testFailure, junai-mcp/*, context7/*]
 model: GPT-5.3-Codex
 handoffs:
   - label: Return to Orchestrator
@@ -38,6 +38,22 @@ Determine how you were invoked before reading any pipeline state or running any 
 
 - **Pipeline mode** — Your opening prompt says *"The pipeline is routing to you"* or explicitly references `pipeline-state.json`. → Follow the **Accepting Handoffs** protocol below. Read state, satisfy gates, and call `notify_orchestrator` when done.
 - **Standalone mode** — You were invoked directly by the user for an ad-hoc testing task (no pipeline reference in context). → **Do NOT read `pipeline-state.json`. Do NOT call `notify_orchestrator` or `satisfy_gate`.** Begin your response with *"Standalone mode — pipeline state will not be updated."* Then write or run the requested tests using your expertise, `project-config.md`, and the skills below.
+
+## Direct Browser Action Shortcut (HIGHEST PRIORITY)
+
+If the user asks only for a simple action on an already-open browser page — such as **click this button**, **type here**, **report the visible status**, or **use the integrated browser and tell me the result** — short-circuit the normal testing workflow:
+
+1. Use the already-open browser page immediately via the `web` capability.
+2. Perform the requested action directly in the page.
+3. Report the visible result briefly and stop.
+
+**Do NOT** unless the browser tools fail:
+- inspect code or scan the workspace first
+- call `get_errors`, run searches, or use the terminal
+- load Playwright or create test scripts
+- output a test checklist or long process narration
+
+This shortcut overrides the usual testing workflow for simple live browser requests.
 
 ## Accepting Handoffs
 
@@ -129,6 +145,16 @@ Auto-load these skills when the condition matches — do not skip.
 
 > **DRY Reminder for Tests**: Extract shared fixtures into `conftest.py`. Use `@pytest.mark.parametrize`
 > instead of duplicate test functions. Reuse factory helpers for test data creation.
+
+## Integrated Browser and UI Verification
+
+For browser-based apps and dashboards:
+
+1. Use the VS Code integrated browser via the `web` capability to reproduce the flow before writing or updating tests.
+2. If the user asks for a direct browser action such as **click**, **type**, **open**, or **report the visible result**, do that immediately with the live page before writing any automation.
+3. Use the live page to confirm selectors, user-visible behavior, responsive state, and any console/runtime issues.
+4. After changes, verify in the browser first, then use Playwright or other automated tests for repeatable regression coverage.
+5. Prefer `.github/skills/testing/playwright/SKILL.md` or `.github/skills/testing/webapp-testing/SKILL.md` **only** when the test task involves a real browser journey that exceeds the native browser tools.
 
 ### Prompts (Use when relevant)
 - **TDD workflow**: `.github/prompts/tdd.prompt.md` — Start TDD red-green-refactor cycle

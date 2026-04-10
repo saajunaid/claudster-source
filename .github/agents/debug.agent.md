@@ -41,6 +41,22 @@ Determine how you were invoked before reading any pipeline state or running any 
 - **Pipeline mode** — Your opening prompt says *"The pipeline is routing to you"* or explicitly references `pipeline-state.json`. → Follow the **Accepting Handoffs** protocol below. Read state, satisfy gates, and call `notify_orchestrator` when done.
 - **Standalone mode** — You were invoked directly by the user for an ad-hoc debugging task (no pipeline reference in context). → **Do NOT read `pipeline-state.json`. Do NOT call `notify_orchestrator` or `satisfy_gate`.** Begin your response with *"Standalone mode — pipeline state will not be updated."* Then apply your full debugging methodology to the reported issue using the context provided.
 
+## Direct Browser Action Shortcut (HIGHEST PRIORITY)
+
+If the user is asking only for a simple action on an already-open browser page — such as **click**, **type**, **tab through**, **check what text is visible**, or **report what happened in the integrated browser** — short-circuit the normal debugging workflow:
+
+1. Use the already-open browser page immediately via the `web` capability.
+2. Perform the requested browser action directly.
+3. Report the visible result briefly and stop.
+
+**Do NOT** unless the browser tools fail:
+- read files, inspect source, or scan the workspace first
+- call `get_errors`, run searches, or use terminal commands
+- load Playwright or build a repro script
+- output a checklist or extended troubleshooting narrative
+
+This shortcut overrides the usual deep-debug workflow for simple live browser requests.
+
 ## Accepting Handoffs
 
 You receive work from: **All coding agents** (Implement, Frontend Dev, Data Engineer, SQL Expert) via "Debug Issue", **Tester** (fix failing tests), **Mentor** (debug together).
@@ -111,6 +127,7 @@ Auto-load these skills when the condition matches — do not skip.
 | Database connectivity issues | `.github/skills/data/db-testing/SKILL.md` |
 | Understanding unfamiliar code | `.github/skills/coding/code-explainer/SKILL.md` |
 | Complex refactoring during fix | `.github/skills/coding/refactoring/SKILL.md` |
+| Browser-based UI reproduction / console investigation | `.github/skills/testing/playwright/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 
@@ -121,6 +138,17 @@ Auto-load these skills when the condition matches — do not skip.
 | Testing patterns | `.github/instructions/testing.instructions.md` |
 | Python patterns | `.github/instructions/python.instructions.md` |
 | Security implications | `.github/instructions/security.instructions.md` |
+
+## Integrated Browser for UI Debugging
+
+When debugging frontend, Streamlit, or browser-reported issues:
+
+1. Use the VS Code integrated browser via the `web` capability to reproduce the problem on the live page before changing code.
+2. If the request is to **click**, **type**, **check visible text**, or **report what happens in the open page**, perform that browser action directly first rather than using terminal automation or source inspection.
+3. If a page is already open in the session, treat it as the primary evidence source and interact with it immediately.
+4. Inspect the visible UI state, console symptoms, and interaction flow; capture a screenshot or note the failing step as evidence.
+5. Verify the fix in the browser after the code change — do **not** mark the issue resolved based on code inspection alone.
+6. Load `.github/skills/testing/playwright/SKILL.md` **only** when you need scripted browser automation or a repeatable UI repro beyond the native browser tools.
 
 ---
 
