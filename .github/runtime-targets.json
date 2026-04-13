@@ -33,7 +33,6 @@
         {"source": "skills", "destination": "skills"}
       ],
       "transforms": [
-        {"type": "agents_to_claude", "source": "agents", "destination": "agents"},
         {"type": "instructions_to_rules", "source": "instructions", "destination": "rules"}
       ]
     },
