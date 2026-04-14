@@ -292,6 +292,55 @@ print(f"Script: {Path(__file__).resolve()}")
 # Check the framework's state management docs for debugging tools
 ```
 
+### SPA Stale-Chunk Errors (React/Vite + FastAPI/IIS)
+
+If UI shows `Failed to fetch dynamically imported module` or `ChunkLoadError`:
+
+1. Extract requested chunk filename from browser error.
+2. Compare requested filename to current `dist/assets/*` files.
+3. If requested hash is missing, diagnose stale shell cache first.
+4. Verify cache headers:
+   - `index.html` should be `no-cache, no-store, must-revalidate`
+   - `/assets/*` should be `public, max-age=31536000, immutable`
+5. Check reverse proxy/IIS output caching is not overriding HTML cache policy.
+6. Recommend one-time hard refresh for impacted users, then ship durable cache fix.
+
+**Evidence required in fix report:**
+- Requested stale chunk name.
+- Current chunk name present in `dist/assets`.
+- Header values observed for both shell and assets.
+- Exact file/line where cache headers are set.
+
+### Long-Lived Session Staleness (Dashboard Left Open)
+
+If users report stale-chunk errors ONLY after the tab has been open for a long period (hours/days), check the 3-layer proactive version-detection subsystem:
+
+**Layer audit (check all three):**
+1. **Router `beforeLoad`** — the critical layer. Verify the root route calls `checkAndReloadIfStale()` from `version-check.ts` in its `beforeLoad` hook. If this is missing, navigating between tabs loads stale chunks before the poll fires.
+2. **Periodic polling (60 s)** — verify `useVersionCheck` hook is mounted at app root via `<VersionGuard />`. Covers idle tabs.
+3. **`visibilitychange`** — confirm the hook listens for visibility changes and triggers a check when the tab regains focus.
+
+**Shared module checks:**
+4. Verify `version.json` exists in `dist/` root and contains a valid `{"version":"<id>"}`.
+5. Confirm the same build ID is embedded in the main bundle via `import.meta.env.VITE_BUILD_VERSION`.
+6. Inspect `sessionStorage` for the `app:last-reloaded-version` key — if it matches the deployed version, the reload already fired (check for fetch failure silently swallowed).
+7. Verify `version.json` fetch uses `cache: "no-store"` and a `_t=` cache-buster query param.
+8. Check that `version.json` is NOT served with immutable cache headers (it lives in dist root, not `/assets/`).
+
+**Root cause taxonomy:**
+- Router `beforeLoad` missing → navigation loads stale chunks before polling detects the deploy (most common gap).
+- Version polling not implemented → proactive guard missing entirely.
+- `version.json` cached by CDN/reverse proxy → deploy-time purge needed or cache-buster failing.
+- `sessionStorage` loop prevention too aggressive → key set before actual reload completes.
+- `visibilitychange` not firing → browser tab was foreground the entire time, only interval catches it.
+- **HTTPS not available** → Service Workers cannot be used; confirm the 3-layer polling approach is implemented instead.
+
+**Evidence required in fix report:**
+- `version.json` content on server vs version embedded in running bundle (DevTools → Console → `import.meta.env.VITE_BUILD_VERSION`).
+- `sessionStorage.getItem("app:last-reloaded-version")` value.
+- Network tab showing `version.json` fetch with response headers.
+- Confirm root route has `beforeLoad` with `checkAndReloadIfStale()` call.
+
 ### Data Pipeline Issues
 
 ```python

@@ -1,11 +1,178 @@
 ---
 description: 'Frontend development standards for HTML, CSS, and styling'
-applyTo: '**/*.html, **/*.css, **/*.scss, **/*.py'
+applyTo: '**/*.html, **/*.css, **/*.scss, **/*.py, **/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 ---
 
 # Frontend Development Instructions
 
 Guidelines for building consistent, accessible, and visually appealing user interfaces.
+
+## SPA Chunk Resilience (React/Vite)
+
+When using route-level code splitting (`import()` / `React.lazy`), implement one-time stale-chunk recovery:
+
+1. Wrap lazy imports with retry logic for transient failures.
+2. On exhausted retries, detect chunk-load errors (`Failed to fetch dynamically imported module`, `ChunkLoadError`).
+3. Trigger exactly one automatic reload per chunk key via `sessionStorage`.
+4. If reload still fails, show a user-facing fallback with retry button.
+
+```typescript
+const CHUNK_RELOAD_KEY_PREFIX = "app:chunk-reload:";
+
+function tryOneTimeChunkReload(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error ?? "");
+    const isChunkError = /Failed to fetch dynamically imported module|ChunkLoadError|Loading chunk/i.test(message);
+    if (!isChunkError) return false;
+
+    const chunkLike = message.match(/[A-Za-z0-9_-]+\.[cm]?js/i)?.[0] ?? "unknown";
+    const key = `${CHUNK_RELOAD_KEY_PREFIX}${chunkLike}`;
+    if (sessionStorage.getItem(key) === "1") return false;
+
+    sessionStorage.setItem(key, "1");
+    window.location.reload();
+    return true;
+}
+```
+
+This pattern prevents users from getting stuck on stale chunk hashes after deployments while avoiding infinite reload loops.
+
+## Proactive Version Detection (Long-Lived Sessions)
+
+Reactive chunk recovery (above) handles errors after they happen. For long-lived sessions — dashboards left open for days by executives — add **proactive** version detection so the browser reloads **before** stale chunks are requested.
+
+### Why Not Service Workers?
+
+Service workers are the FAANG standard (Gmail, Twitter/X, YouTube). However, they require HTTPS. Intranet apps served over plain HTTP (common with IIS on internal hostnames) cannot register a service worker. If your prod server has HTTPS, prefer `vite-plugin-pwa` (Workbox). Otherwise, use the 3-layer polling approach below.
+
+### 3-Layer Architecture
+
+Three layers provide **zero-gap** coverage — no scenario lets the CEO hit a stale chunk:
+
+| Layer | Trigger | What it catches |
+|-------|---------|----------------|
+| **Router `beforeLoad`** | Every route/tab navigation | User clicks a tab → version check fires BEFORE the stale chunk is requested |
+| **Periodic polling** (60 s) | Interval timer | Tab sitting idle on one page for hours |
+| **`visibilitychange`** | Tab regains focus | User returns from another browser tab/window |
+
+All three layers share a single **module-level** version-check module (non-React) so state is consistent.
+
+### Build-Time: Vite Plugin
+
+Emits `version.json` into `dist/` and injects the same ID as `import.meta.env.VITE_BUILD_VERSION`:
+
+```typescript
+// src/lib/vite-version-plugin.ts
+import type { Plugin } from "vite";
+
+export function versionJsonPlugin(): Plugin {
+  const buildVersion =
+    Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+  return {
+    name: "version-json",
+    apply: "build",
+    config() {
+      return {
+        define: {
+          "import.meta.env.VITE_BUILD_VERSION": JSON.stringify(buildVersion),
+        },
+      };
+    },
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "version.json",
+        source: JSON.stringify({ version: buildVersion }) + "\n",
+      });
+    },
+  };
+}
+```
+
+### Runtime: Shared Version-Check Module
+
+A non-React module that all three layers call into. Caches the last fetch for 30 seconds so rapid tab switching doesn't hammer the server:
+
+```typescript
+// src/lib/version-check.ts
+const STALE_MS = 30_000;
+const STORAGE_KEY = "app:last-reloaded-version";
+
+let _deployed: string | null = null;
+let _lastFetchMs = 0;
+
+export async function fetchDeployedVersion(): Promise<string | null> {
+  const url = `${import.meta.env.BASE_URL}version.json?_t=${Date.now()}`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) return null;
+  const json = await res.json();
+  _deployed = json.version ?? null;
+  _lastFetchMs = Date.now();
+  return _deployed;
+}
+
+export async function ensureFreshVersion(): Promise<void> {
+  if (!import.meta.env.VITE_BUILD_VERSION) return;
+  if (Date.now() - _lastFetchMs > STALE_MS) await fetchDeployedVersion();
+}
+
+export function hasNewerVersion(): boolean {
+  if (!import.meta.env.VITE_BUILD_VERSION || !_deployed) return false;
+  return _deployed !== import.meta.env.VITE_BUILD_VERSION;
+}
+
+export function triggerReload(): boolean {
+  if (!_deployed) return false;
+  if (sessionStorage.getItem(STORAGE_KEY) === _deployed) return false;
+  sessionStorage.setItem(STORAGE_KEY, _deployed);
+  window.location.reload();
+  return true;
+}
+
+export async function checkAndReloadIfStale(): Promise<boolean> {
+  await ensureFreshVersion();
+  return hasNewerVersion() ? triggerReload() : false;
+}
+```
+
+### Layer 1: Router `beforeLoad` (zero-gap navigation check)
+
+Add to the root route so every navigation checks version before loading chunks:
+
+```typescript
+// routes/__root.tsx
+import { checkAndReloadIfStale } from "@/lib/version-check";
+
+export const Route = createRootRoute({
+  beforeLoad: async () => {
+    await checkAndReloadIfStale();
+  },
+  component: RootComponent,
+});
+```
+
+### Layer 2 + 3: Polling Hook + VisibilityChange
+
+```typescript
+// hooks/useVersionCheck.ts — delegates to version-check.ts
+// Polls every 60s + listens to visibilitychange.
+// On mismatch:
+//   - document.hidden → triggerReload() immediately (silent)
+//   - visible → call onUpdateDetected callback (toast), then reload after 3s
+```
+
+Mount at app root via `<VersionGuard />` — a minimal toast component.
+
+### Key Requirements
+
+- Plugin must use `apply: "build"` — no version file or polling in dev.
+- Fetch must bypass HTTP cache: `{ cache: "no-store" }` plus `_t=` query-string buster.
+- `version.json` must be served without caching (sits in dist root, not `/assets/`).
+- `sessionStorage` prevents infinite reloads — check before reloading, set before triggering.
+- Router `beforeLoad` on root route is the **critical** layer — it catches navigation to stale chunks before they 404.
+- Shared module caches fetch results for 30 s — `beforeLoad` on rapid tab switches uses cached state, not fresh fetches.
+- Foreground toast must be non-intrusive and auto-dismiss (reload happens within seconds).
+- **HTTPS required for Service Workers** — if HTTP-only, this 3-layer approach is the best alternative.
 
 ## Branding & Color System
 

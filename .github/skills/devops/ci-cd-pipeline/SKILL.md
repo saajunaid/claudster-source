@@ -261,3 +261,52 @@ Keep CI fast. Developers won't wait for slow pipelines.
 | Manual production deploy | Human error, inconsistent | Automated with approval gate |
 | Secrets in code | Compromised on push | Use secrets manager + OIDC |
 | No rollback plan | Broken deploy = downtime | Blue-green or revert strategy |
+| Build passes but output is wrong | Config error baked into assets | Post-build output validation gate (§12) |
+
+## 12. Frontend Build Output Validation
+
+A successful build (exit code 0) does not guarantee correct output. Configuration errors — especially wrong asset path prefixes — produce valid bundles that break at runtime. Add a **post-build validation step** in CI:
+
+### 12.1 Subpath Base-Path Check
+
+When a frontend is deployed under a URL subpath (e.g. `/my-app/`), the built `index.html` must reference assets with that prefix. Vite's `base` config controls this, and it can be accidentally changed.
+
+```yaml
+# GitHub Actions / Gitea Actions example
+jobs:
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: frontend
+      # Build with production mode to activate conditional base path
+      - run: npx vite build --mode production
+        working-directory: frontend
+      - name: Validate production base path
+        working-directory: frontend
+        run: |
+          if ! grep -q '/my-app/assets/' dist/index.html; then
+            echo "FAIL: Built index.html does not reference /my-app/assets/"
+            echo "Check vite.config.ts base setting"
+            exit 1
+          fi
+          echo 'Base-path guard passed'
+```
+
+**Key points:**
+- Build with `--mode production` — without it, mode-conditional `base` stays as `"/"` and the guard always fails
+- This catches the exact scenario where someone changes `base: mode === "production" ? "/my-app/" : "/"` to `base: "/"`
+- The same check should also run in the deploy script as a belt-and-suspenders guard (abort before service restart)
+
+### 12.2 General Output Validation Patterns
+
+| Check | Command | When to use |
+|-------|---------|-------------|
+| Subpath prefix | `grep -q '/{subpath}/assets/' dist/index.html` | Subpath deployments |
+| Non-empty dist | `test -d dist/assets && ls dist/assets/*.js` | Always |
+| Bundle size budget | `du -sh dist/ \| awk '{print $1}'` | When size regressions matter |
+| No source maps in prod | `! ls dist/assets/*.map 2>/dev/null` | Production builds |

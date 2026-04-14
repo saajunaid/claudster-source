@@ -654,6 +654,8 @@ nssm start $svcName
 | `git pull` fails with auth error | Credentials expired or GCM_PROVIDER not set | `git config credential.helper store` + `GCM_PROVIDER=generic` as user env var |
 | Unclear whether remote control works | Assumed lack of access without probing | Run Remote Capability Handshake (§3.1) before deciding |
 | Frontend shows blank page | SPA routing broken (no catch-all) | IIS: check FastAPI SPA catch-all (§5.4). nginx: check `try_files` (§6.2) |
+| Frontend shows blank page (assets 404) | Vite `base` flattened to `"/"` under subpath | Restore `base: mode === "production" ? "/{subpath}/" : "/"` in `vite.config.ts`, rebuild, add deploy guard (§12) |
+| Users see old version after deploy | Browser caching stale `index.html` | Add `Cache-Control: no-cache, no-store, must-revalidate` on HTML responses (§13) |
 | Frontend shows "Not Found" on subpath | Client-side router missing `basepath` | Add `basepath: import.meta.env.BASE_URL` to router config (§7.2) |
 | `Unexpected token '<'` parsing JSON | Static asset fetch uses root-absolute path (`/file.json`) under subpath | Use `toAppUrl()` helper for all `public/` file fetches (§7.4) |
 | `withCredentials` CORS error in browser | Missing `allow_credentials=True` or wrong origin | Add CORS config (§6.4) or verify same-origin (IIS usually doesn't need CORS) |
@@ -679,6 +681,8 @@ nssm start $svcName
 - [ ] Client-side router has basepath set to import.meta.env.BASE_URL (§7.2)
 - [ ] All `fetch("/...")` calls for public/ assets use `toAppUrl()` helper (§7.4)
 - [ ] Grep for root-absolute fetches: `grep -rn 'fetch("/' frontend/src/` returns no matches
+- [ ] Deploy guard: post-build HTML check for `/{subpath}/assets/` prefix (§12.1)
+- [ ] Cache-Control: `no-cache` on HTML, `immutable` on hashed assets (§13)
 - [ ] Verify: frontend loads, API responds, auth works
 ```
 
@@ -745,3 +749,132 @@ Hard-won lessons from real deployments:
 15. **Static asset fetches are the hidden third subpath trap.** Router basepath and API baseURL are well-documented. Runtime `fetch("/config.json")` or `fetch("/data.geojson")` from `public/` are not — they work in dev (base is `/`) and silently break in prod under a subpath. The symptom is `Unexpected token '<'` because the root-absolute URL hits the wrong app or fallback page, returning HTML instead of JSON. Prevention: create a `toAppUrl()` helper and audit with `grep -rn 'fetch("/' frontend/src/`.
 
 16. **Probe remote capability before declaring no access.** In Windows environments, agents may be able to execute remote commands via WinRM (`Invoke-Command`) even when interactive RDP control is not available. Always run the Remote Capability Handshake (§3.1) before stating remote access is unavailable.
+
+17. **Never flatten `base` to `"/"` when the app is deployed under a subpath.** The Vite `base` config controls every `<script src>` and `<link href>` in the built `index.html`. Changing `base: mode === "production" ? "/{subpath}/" : "/"` → `base: "/"` causes all asset URLs to lose the subpath prefix. If the server has a catch-all rewrite rule (e.g. a Streamlit proxy at root), those asset requests hit the wrong backend → blank page. This is a silent, catastrophic break that is invisible in dev because dev always uses `base: "/"`.
+
+18. **Deploy guards must validate built HTML before restarting services.** A wrong `base` path produces a valid build (exit code 0) but broken output. The deploy script must check the built `index.html` for the expected asset prefix **before** restarting services. If the check fails, the old working version stays live — the deploy aborts without downtime. See §12.
+
+19. **Cache-Control headers prevent stale HTML after deploys.** Vite hashes asset filenames (`index-Crzj2IZk.js`) so old assets never collide with new ones. But `index.html` has a fixed path — without `no-cache`, browsers serve the old HTML (with old asset hashes) even after a deploy. Set `Cache-Control: no-cache, no-store, must-revalidate` on HTML and `public, max-age=31536000, immutable` on hashed assets. See §13.
+
+---
+
+## 12. Deploy Guards — Post-Build Validation
+
+A deploy guard is a check that runs **after the build but before the service restart**. If the guard fails, the deploy aborts and the currently-running (working) version stays live. This prevents broken builds from causing downtime.
+
+### 12.1 Base Path Guard (IIS Strategy — Required)
+
+When deploying under a subpath, verify the built HTML references the correct asset prefix:
+
+```powershell
+# In deploy.ps1 — after vite build, before nssm restart
+$indexHtml = Join-Path $frontendDir "dist\index.html"
+if (Test-Path $indexHtml) {
+    $html = Get-Content $indexHtml -Raw
+    if ($html -notmatch '/{subpath}/assets/') {
+        throw "DEPLOY GUARD FAILED: Built index.html does not reference /{subpath}/assets/. " +
+              "The Vite base path is wrong — aborting deploy before service restart."
+    }
+    Write-Host "Deploy guard passed: assets reference /{subpath}/"
+} else {
+    throw "DEPLOY GUARD FAILED: $indexHtml not found after build"
+}
+```
+
+**Why this matters:** A wrong `base` in `vite.config.ts` produces a successful build (exit 0) but broken output. Without this guard, the deploy script would restart the service, serve the broken HTML, and take the app down. With the guard, the old working version stays live.
+
+### 12.2 CI Build Validation (Belt-and-Suspenders)
+
+The same check should run in CI so the broken build is caught **before** it reaches the deploy step:
+
+```yaml
+# In CI workflow — after frontend build step
+- name: Validate production base path
+  shell: powershell
+  working-directory: frontend
+  run: |
+    $html = Get-Content dist\index.html -Raw
+    if ($html -notmatch '/{subpath}/assets/') {
+      throw "DEPLOY GUARD: Built index.html does not reference /{subpath}/assets/. " +
+            "Check vite.config.ts base setting."
+    }
+    Write-Host 'Base-path guard passed'
+```
+
+**Key:** Build with `--mode production` in CI (not just `vite build`), otherwise the mode-conditional `base` won't activate and the guard will always fail.
+
+### 12.3 Additional Deploy Guards (Optional)
+
+| Guard | What it checks | When to add |
+|-------|---------------|-------------|
+| **Health endpoint** | API responds 200 after restart | Always |
+| **Base path** | Asset prefix in built HTML | Subpath deployments |
+| **Dist size** | `dist/` is non-empty and reasonable size | Prevent empty-build deploys |
+| **Git SHA convergence** | prod HEAD matches expected commit | Prevent stale-code deploys |
+
+---
+
+## 13. Cache-Control Headers for SPA Serving
+
+When FastAPI serves the built frontend (IIS strategy, §5.4), set appropriate cache headers to ensure browsers always get fresh HTML after deploys while caching hashed assets aggressively.
+
+### 13.1 The Problem
+
+Vite produces content-hashed asset filenames (`index-Crzj2IZk.js`), so old and new assets never collide. But `index.html` has a **fixed path** — without cache-control headers, browsers may serve a cached `index.html` with stale asset references after a deploy. The user sees a blank page or JS errors because the old hashed files no longer exist.
+
+### 13.2 The Fix — Two Cache Policies
+
+```python
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+# Cache policies
+_NO_CACHE = {"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"}
+_LONG_CACHE = {"Cache-Control": "public, max-age=31536000, immutable"}
+
+_FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+if not settings.debug and _FRONTEND_DIST.is_dir():
+    app.mount("/assets", StaticFiles(directory=_FRONTEND_DIST / "assets"), name="static")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str) -> FileResponse:
+        file = (_FRONTEND_DIST / full_path).resolve()
+        if file.is_file() and str(file).startswith(str(_FRONTEND_DIST)):
+            # Hashed assets → cache forever; everything else → no cache
+            headers = _LONG_CACHE if "/assets/" in full_path else _NO_CACHE
+            return FileResponse(file, headers=headers)
+        return FileResponse(_FRONTEND_DIST / "index.html", headers=_NO_CACHE)
+```
+
+### 13.3 Cache Policy Summary
+
+| Resource | Cache-Control | Why |
+|----------|--------------|-----|
+| `index.html` (SPA shell) | `no-cache, no-store, must-revalidate` | Must always fetch latest — contains hashed asset references |
+| `/assets/*.js`, `/assets/*.css` | `public, max-age=31536000, immutable` | Content-hashed filenames — safe to cache forever |
+| Other static files (`favicon.ico`, etc.) | `no-cache, no-store, must-revalidate` | No content hash — may change between deploys |
+
+### 13.4 nginx Equivalent
+
+For the nginx strategy (§6.2), set the same headers in the server block:
+
+```nginx
+location / {
+    root G:/Projects/{app-name}/frontend/dist;
+    try_files $uri $uri/ /index.html;
+
+    # SPA shell — never cache
+    location = /index.html {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
+    }
+
+    # Hashed assets — cache forever
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```

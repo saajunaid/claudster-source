@@ -44,6 +44,7 @@ Auto-load these skills when the condition matches — do not skip.
 | Monorepo CI/CD and workspace config | `.github/skills/devops/monorepo/SKILL.md` |
 | Observability / monitoring setup | `.github/skills/coding/observability/SKILL.md` |
 | CI/CD pipeline design | `.github/skills/devops/ci-cd-pipeline/SKILL.md` |
+| Windows Server deployment (IIS, NSSM, subpath) | `.github/skills/devops/windows-deployment/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 
@@ -57,6 +58,7 @@ Auto-load these skills when the condition matches — do not skip.
 | Performance optimization | `.github/instructions/performance-optimization.instructions.md` |
 | Security configs | `.github/instructions/security.instructions.md` |
 | Portability | `.github/instructions/portability.instructions.md` |
+| FastAPI (SPA serving, cache headers) | `.github/instructions/fastapi.instructions.md` |
 
 ### Prompts (Use when relevant)
 - **Dockerfile generation**: `.github/prompts/dockerfile.prompt.md` — Generate optimized Dockerfiles
@@ -155,6 +157,21 @@ Integrate security scanning into CI/CD — SAST, DAST, and dependency scanning (
 - [ ] Rollback strategy defined
 - [ ] Security scans passing in pipeline
 - [ ] Backup strategy in place
+
+### SPA Subpath Deployment Checklist
+
+When deploying a frontend under a subpath (e.g. `/my-app/` behind IIS or nginx), load the `windows-deployment` skill and verify:
+
+- [ ] `vite.config.ts` uses mode-conditional `base`: `mode === "production" ? "/{subpath}/" : "/"`
+- [ ] Client-side router has `basepath: import.meta.env.BASE_URL`
+- [ ] API client uses `import.meta.env.BASE_URL` for base URL (not port arithmetic)
+- [ ] Static asset fetches use `toAppUrl()` helper (no root-absolute `/file.json`)
+- [ ] CI builds with `--mode production` and validates HTML for `/{subpath}/assets/`
+- [ ] Deploy script has post-build guard that aborts before service restart on wrong prefix
+- [ ] Cache-Control: `no-cache, no-store, must-revalidate` on HTML; `immutable` on hashed assets
+- [ ] Health endpoint returns 200 after service restart
+
+> **Anti-pattern:** Never change `base` to a flat `"/"` — asset URLs lose the subpath prefix, requests hit the wrong backend, and the app shows a blank page. This is invisible in dev (where `base` is always `"/"`).
 
 ---
 

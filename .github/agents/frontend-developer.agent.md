@@ -147,8 +147,7 @@ Auto-load these skills when the condition matches — do not skip.
 |-----------|-------|-----------|
 | Task involves React components | .github/skills/frontend/react-best-practices/SKILL.md | Framework-specific patterns and hook rules |
 | Task involves Next.js App Router | .github/skills/frontend/nextjs-app-router/SKILL.md | App Router conventions and SSR patterns |
-| Task involves shadcn/ui components | .github/skills/frontend/shadcn-radix/SKILL.md | Component composition and theming |
-
+| Task involves shadcn/ui components | .github/skills/frontend/shadcn-radix/SKILL.md | Component composition and theming || Task involves mobile/responsive UI, PWA, or "works on mobile" request | `.github/skills/frontend/responsive-mobile-native/SKILL.md` | Breakpoints, navigation transformation (topbar→bottom nav), touch targets, PWA manifest, bottom sheets |
 ### Skills (Read for specialized tasks)
 | Task | Load This Skill |
 |------|-----------------|

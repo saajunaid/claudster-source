@@ -101,6 +101,7 @@
 | Next.js App Router | `frontend/nextjs-app-router/` | Next.js 13+ App Router, Server Components, Server Actions, Route Handlers |
 | Premium React | `frontend/premium-react/` | High-quality animated React UIs with Framer Motion, GSAP, and Tailwind |
 | React Best Practices | `frontend/react-best-practices/` | Modern React hooks, component patterns, and state management |
+| Responsive Mobile Native | `frontend/responsive-mobile-native/` | Converting desktop web apps to mobile-native feel: breakpoints, navigation transformation, PWA setup, touch rules, bottom sheets |
 | React Dev | `frontend/react-dev/` | Type-safe React 18-19 patterns and TypeScript integration |
 | React useEffect | `frontend/react-useeffect/` | When NOT to use Effect — official React best practices |
 | shadcn/Radix | `frontend/shadcn-radix/` | shadcn/ui component system, Radix primitives, theming, and form patterns |

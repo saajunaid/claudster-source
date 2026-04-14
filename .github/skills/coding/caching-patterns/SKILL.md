@@ -130,6 +130,23 @@ async def create_record(record: RecordCreate):
 | Historical reports | 1 hour+ | Data doesn't change |
 | DB connections | No TTL (resource) | Persist for app lifetime |
 
+### Step 6: SPA Shell/Asset Cache Coherence (FastAPI + Vite)
+
+For FastAPI-served SPAs, split cache behavior by file type:
+
+- `index.html` (app shell): `Cache-Control: no-cache, no-store, must-revalidate`
+- `/assets/*` hashed bundles: `Cache-Control: public, max-age=31536000, immutable`
+
+Why this matters:
+- The shell maps route/module imports to hashed chunk filenames.
+- If old shell HTML is cached, it points to deleted chunks after deploy.
+- Hashed bundles are immutable and safe for long cache.
+
+Recommended implementation:
+1. Mount `/assets` using a `StaticFiles` subclass that injects immutable cache headers.
+2. Serve `index.html` via `FileResponse(..., headers={"Cache-Control": "no-cache, no-store, must-revalidate"})`.
+3. Add frontend lazy-import fallback: one automatic reload on chunk-load failure, then show explicit retry UI.
+
 ---
 
 ## Patterns and Examples
@@ -299,6 +316,47 @@ for number, icon in phones.items():
     st.caption(f"{icon} {number}")
 ```
 
+### Gotcha 6: Stale Shell HTML Causes Chunk 404s After Deploy
+
+Symptom:
+- Browser error: `Failed to fetch dynamically imported module: .../assets/<chunk>.js`
+- Requested chunk hash does not exist on server.
+
+Root cause:
+- Cached `index.html` references old chunk hash names from prior build.
+
+Mitigation:
+1. Enforce shell/asset split cache policy from Step 6.
+2. Keep route/module imports behind retry-capable lazy loaders.
+3. Auto-reload once on chunk-load error, then stop and show retry prompt.
+
+### Gotcha 7: Long-Lived Sessions Miss Deploys (Dashboard Left Open)
+
+Symptom:
+- User leaves dashboard tab open for hours/days (common with executives).
+- After a deploy, the old main bundle references chunk hashes that no longer exist on disk.
+- Navigating between tabs triggers `Failed to fetch dynamically imported module` errors.
+- Reactive chunk recovery (Gotcha 6) helps but only fires on error — user already sees a broken state.
+
+Root cause:
+- The browser loaded the main bundle at time T. A deploy at T+N produced new chunk hashes. The running bundle still references the old hashes.
+
+**Why not Service Workers?** Service workers (e.g. `vite-plugin-pwa`) are the industry standard for cache management but require HTTPS. Intranet apps on plain HTTP (e.g. IIS on internal hostnames) cannot register a service worker. Use the 3-layer approach below instead.
+
+Mitigation (3-layer proactive version detection — zero-gap):
+1. **Build-time**: Emit `version.json` to `dist/` with a unique build ID. Inject the same ID as `import.meta.env.VITE_BUILD_VERSION`.
+2. **Router `beforeLoad`**: Check version on every route navigation via a shared `version-check.ts` module. This is the critical layer — it catches stale chunks **before** they are requested, not after.
+3. **Periodic polling (60 s)** + **`visibilitychange`**: A React hook polls every 60 seconds and on tab refocus. Handles the idle-tab and tab-switch-back scenarios.
+4. **Update strategy**:
+   - Background tab → `window.location.reload()` silently.
+   - Foreground tab → brief "Updating…" toast, reload after ~3 seconds.
+5. **Loop prevention**: Store reloaded version in `sessionStorage`. Skip reload if session already reloaded for that version.
+6. **Fetch hygiene**: Use `cache: "no-store"` + `_t=<timestamp>` query param to bypass HTTP cache for `version.json`. Shared module caches fetch results for 30 s so rapid tab switches don't hammer the server.
+
+Version JSON should live in the dist root (not under `/assets/`), which means the SPA catch-all serves it — verify no immutable cache header leaks onto it.
+
+This pattern is complementary to chunk retry (Step 6 + Gotcha 6) — the 3-layer check prevents the error from happening at all, while retry handles transient network failures.
+
 ---
 
 ## Checklist
@@ -316,6 +374,7 @@ for number, icon in phones.items():
 - [ ] **No `@st.cache_data` on Pydantic models with computed fields** (use JSON layer)
 - [ ] **No `@st.cache_resource` on services returning typed domain objects** (hot-reload risk)
 - [ ] **Caching is justified by measurement** (not speculative — YAGNI)
+- [ ] **SPA version polling implemented** for long-lived sessions (Gotcha 7)
 
 ## Related Resources
 

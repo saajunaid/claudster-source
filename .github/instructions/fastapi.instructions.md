@@ -86,6 +86,47 @@ async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
 ```
 
+### SPA Static Caching Policy (React/Vite Frontends)
+
+If FastAPI serves a built SPA, apply split caching policy:
+
+- `index.html`: `Cache-Control: no-cache, no-store, must-revalidate`
+- hashed files under `/assets/*`: `Cache-Control: public, max-age=31536000, immutable`
+
+This prevents stale HTML from referencing deleted chunk hashes after deploys.
+
+```python
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+
+class ImmutableAssetsStaticFiles(StaticFiles):
+    """Serve hashed build assets with immutable caching."""
+
+    def file_response(self, *args, **kwargs):  # type: ignore[override]
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
+app.mount("/assets", ImmutableAssetsStaticFiles(directory=dist_dir / "assets"), name="assets")
+
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str) -> FileResponse:
+    # ... serve root static files when present ...
+    return FileResponse(
+        dist_dir / "index.html",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
+```
+
+**Verification checklist:**
+- Deploy new frontend build with changed chunk hashes.
+- Request `index.html` and confirm `Cache-Control` header is present.
+- Request one `/assets/*.js` file and confirm `immutable` cache header.
+- Load app without hard refresh and verify no stale chunk 404s.
+
 ### Configuration
 
 ```python
@@ -418,6 +459,50 @@ def test_create_complaint_validation(client):
 
 ---
 
+## SPA Serving with Cache-Control Headers
+
+When FastAPI serves a built Vite/React frontend in production (behind IIS or standalone), set appropriate cache headers to ensure browsers always get fresh HTML after deploys.
+
+### The Problem
+
+Vite produces content-hashed asset filenames (`index-Crzj2IZk.js`) so old and new assets never collide. But `index.html` has a fixed path — without `no-cache`, browsers serve stale HTML with outdated asset references after a deploy → blank page or JS errors.
+
+### Cache Policy Pattern
+
+```python
+from pathlib import Path
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+_NO_CACHE = {"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"}
+_LONG_CACHE = {"Cache-Control": "public, max-age=31536000, immutable"}
+
+_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+if not settings.debug and _DIST.is_dir():
+    app.mount("/assets", StaticFiles(directory=_DIST / "assets"), name="static")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str) -> FileResponse:
+        file = (_DIST / full_path).resolve()
+        # Path traversal guard (OWASP A04)
+        if file.is_file() and str(file).startswith(str(_DIST)):
+            headers = _LONG_CACHE if "/assets/" in full_path else _NO_CACHE
+            return FileResponse(file, headers=headers)
+        return FileResponse(_DIST / "index.html", headers=_NO_CACHE)
+```
+
+| Resource | Cache-Control | Why |
+|----------|--------------|-----|
+| `index.html` | `no-cache, no-store, must-revalidate` | Must always fetch latest |
+| `/assets/*.js`, `/assets/*.css` | `public, max-age=31536000, immutable` | Content-hashed — safe to cache forever |
+| Other static files | `no-cache, no-store, must-revalidate` | No content hash |
+
+**Note on `version.json`:** If the frontend uses proactive version detection (see `frontend.instructions.md` → "Proactive Version Detection"), the build emits a `version.json` to `dist/` root. This file is served by the SPA catch-all and inherits the `no-cache` policy for non-asset files. Verify it is NOT caught by the immutable assets mount — it must always return the latest version. The frontend fetches this file every 60 seconds, on every route navigation (`beforeLoad`), and on `visibilitychange` — all with `cache: "no-store"` + `_t=` query-string buster. Service workers (`vite-plugin-pwa`) are the FAANG standard but require HTTPS — intranet apps on plain HTTP use the polling approach instead.
+
+---
+
 ## Checklist
 
 - [ ] Proper project structure with separation of concerns
@@ -428,6 +513,8 @@ def test_create_complaint_validation(client):
 - [ ] API key or authentication on protected endpoints
 - [ ] Health check endpoint
 - [ ] CORS configured for Streamlit frontend
+- [ ] Cache-Control headers on SPA routes (no-cache on HTML, immutable on hashed assets)
+- [ ] `version.json` served with no-cache (not under `/assets/` mount)
 - [ ] Tests with proper mocking
 
 ---
