@@ -130,6 +130,7 @@ git push
 ## Institutional Knowledge
 
 - `copilot-instructions.md` managed-section pattern since v0.6.2 — extension manages only a `<!-- junai:start -->` sentinel block; user content outside markers is never touched. Replaced the v0.5.7 USER_OWNED approach. junai system docs live in `junai-system.instructions.md`.
+- Response discipline rules (no preamble, no closing summaries, dense confirmations) are enforced globally via `.github/instructions/terse-responses.instructions.md` (`applyTo: "**"`). Shipped to all runtimes via the `instructions` copy in `runtime-targets.json`.
 - Canonical-source rule: author AI resources only in `.github/`; treat `.claude/` and `.codex/` as generated runtime targets, never hand-edited sources.
 - Project-local-only rule: the extension ships runtime folders into each workspace and does not populate user-level instruction folders by default.
 - `uv run` replaces `.venv` path in `mcp.json` (introduced v0.5.5) — no local Python install needed for MCP
