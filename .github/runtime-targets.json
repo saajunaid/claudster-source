@@ -12,16 +12,16 @@
       "name": "copilot",
       "workspace_root": ".github",
       "files": [
-        {"source": "project-config.md", "destination": "project-config.md"}
+        {"source": "project-config.md", "destination": "project-config.md"},
+        {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"},
+        {"source": "handoffs/README.md", "destination": "handoffs/README.md"},
+        {"source": "plans/README.md", "destination": "plans/README.md"}
       ],
       "copies": [
         {"source": "agents", "destination": "agents"},
         {"source": "skills", "destination": "skills"},
         {"source": "prompts", "destination": "prompts"},
         {"source": "instructions", "destination": "instructions"},
-        {"source": "agent-docs", "destination": "agent-docs"},
-        {"source": "plans", "destination": "plans"},
-        {"source": "handoffs", "destination": "handoffs"},
         {"source": "tools", "destination": "tools"},
         {"source": "recipes", "destination": "recipes"}
       ]
