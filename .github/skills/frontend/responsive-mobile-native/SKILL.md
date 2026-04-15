@@ -162,6 +162,49 @@ Rules for the bottom nav bar:
 - Active item: filled icon + brand colour
 - The main content area must have `padding-bottom: 64px` to avoid content sitting behind it
 
+### Multi-tab Overflow: The 4+1 "More" Pattern (preferred)
+
+**When**: App has more than 4–5 primary destinations (e.g., a dashboard with 6–9 tabs).
+
+Do NOT spread all tabs across a scrollable bottom bar. Use a **4+1 pattern**:
+pin the 4 most important destinations as labelled icon buttons, and add a 5th **"More"** button
+that opens an **upward dropdown panel** listing all overflow tabs.
+
+```
+Mobile bottom bar (4+1):
+┌─────────────────────────────────┐
+│  Overview Trends  Product  Geo  More▲  │
+└─────────────────────────────────┘
+
+"More" tapped → upward panel:
+┌─────────────────────────────────┐
+│  ✓ Executive    │               │  ← active overflow tab gets a check
+│    Verbatim     │               │
+│    Sampling     │               │
+└─────────────────────────────────┘
+│  Overview Trends  Product  Geo  More▲  │   ← bar still visible below
+```
+
+Implementation rules:
+- When an overflow tab is active, the "More" button shows the active tab's name
+  (truncated to fit) and lights up in brand colour — so the user always sees where they are
+- The upward panel: `position: fixed`, anchored at `bottom: calc(4rem + env(safe-area-inset-bottom))`
+- Animate with `AnimatePresence` + `motion.div` — `y: 16 → 0` on enter, fade out on exit
+- Panel width: `min-w-[180px]`, right-aligned against the safe-area edge
+- Dismiss the panel on any tap outside (overlay or route change)
+- The 4 pinned slots should be the most-visited sections; the overflow slot order
+  should match the desktop tab order for muscle memory
+
+**Why upward dropdown and NOT a slide-in drawer for tab overflow?**
+- A drawer covers content and requires a full swipe gesture to dismiss
+- An upward panel stays spatially anchored to the bar that triggered it — the user's
+  eye never leaves the navigation zone, preserving context
+- Drawers are better for filter/settings panels; dropdowns are better for destination switching
+
+Real-world example: nps-lens NPSIGHT dashboard (9 tabs → 4 pinned: Overview, Trends,
+Product, Geography + "More" for Executive/Verbatim/Product Detail/Sampling/Geography Detail)
+`frontend/src/components/layout/MobileBottomNav.tsx`
+
 ### Sidebar → Slide-in Drawer
 
 **When**: App has a sidebar with filters, settings, or secondary navigation that
