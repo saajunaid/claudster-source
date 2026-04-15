@@ -17,6 +17,7 @@ Instructions are context-specific guidelines that tell AI assistants how to writ
 | [streamlit.instructions.md](streamlit.instructions.md) | `**/app.py, **/pages/*.py` | Streamlit patterns |
 | [fastapi.instructions.md](fastapi.instructions.md) | `**/api/**/*.py` | FastAPI patterns |
 | [frontend.instructions.md](frontend.instructions.md) | `**/*.html, **/*.css` | Frontend styling, brand guidelines |
+| [mobile-native-pwa.instructions.md](mobile-native-pwa.instructions.md) | `**/*.html, **/*.css, **/*.ts, **/*.tsx` | Mobile-native + PWA conversion playbook |
 | [mcp-server.instructions.md](mcp-server.instructions.md) | `**/mcp-servers/**/*.py` | MCP server development |
 
 ### DevOps & Infrastructure Instructions
