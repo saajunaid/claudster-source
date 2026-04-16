@@ -151,7 +151,9 @@ Integrate security scanning into CI/CD — SAST, DAST, and dependency scanning (
 
 For CI/deploy incidents, use this sequence before changing workflow logic:
 
-- Reproduce the exact CI gate commands locally over the same scope used in CI (for example: `src/ tests/` when the workflow targets those paths).
+- Reproduce the exact quality gates locally before touching workflow logic, matching the repository's CI scope and toolchain (for example Ruff/ESLint/format checks, tests, and build steps).
+- First classify the failing gate as one of: lint, format, test, build, workflow-runtime.
+- If the failing gate is lint/format/test/build, treat it as a source-code blocker first and fix/commit that file before workflow changes.
 - Treat workflow edits as orchestration fixes only; verify whether the blocker is actually source code (lint/format/test) and commit that file first.
 - Confirm push status with the primary signal `git log origin/main..HEAD --oneline` (empty output means no unpushed commits).
 - Keep workflow expressions conservative and parser-safe. Avoid fragile expression quoting patterns.
