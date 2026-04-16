@@ -147,6 +147,28 @@ Optimize pipelines and practices toward these delivery performance indicators:
 
 Integrate security scanning into CI/CD — SAST, DAST, and dependency scanning (SCA). Reference `.github/instructions/security.instructions.md` for details.
 
+### CI Failure Triage and Reliability Guardrails
+
+For CI/deploy incidents, use this sequence before changing workflow logic:
+
+- Reproduce the exact CI gate commands locally over the same scope used in CI (for example: `src/ tests/` when the workflow targets those paths).
+- Treat workflow edits as orchestration fixes only; verify whether the blocker is actually source code (lint/format/test) and commit that file first.
+- Confirm push status with the primary signal `git log origin/main..HEAD --oneline` (empty output means no unpushed commits).
+- Keep workflow expressions conservative and parser-safe. Avoid fragile expression quoting patterns.
+- Prefer underscore job IDs when those IDs are referenced via `needs.<job_id>.result`.
+- Ensure notification/summary jobs still run for terminal states (`success`, `failure`, `skipped`, `cancelled`) so failures are never silent.
+- When validating parity, distinguish clearly between:
+   - local vs remote git parity (`HEAD` vs `origin/main`)
+   - deployment-root parity (`prod` path SHA vs `dev` path SHA)
+
+Primary verification commands:
+
+- `git log origin/main..HEAD --oneline`
+- `git rev-parse HEAD`
+- `git rev-parse origin/main`
+- `git -C <prod-root> rev-parse HEAD`
+- `git -C <dev-root> rev-parse HEAD`
+
 ### Deployment Checklist
 
 - [ ] Environment variables configured
