@@ -1,6 +1,6 @@
 # Skills Registry
 
-> **122 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
+> **123 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
 > Load a skill by reading its `SKILL.md`. See `project-config.md` for project-specific placeholder values.
 
 ---
@@ -60,6 +60,7 @@
 |-------|------|-------------|
 | Changelog Generator | `devops/changelog-generator/` | Generating changelogs from git commits |
 | CI/CD Pipeline | `devops/ci-cd-pipeline/` | Pipeline design for GitHub Actions and Azure DevOps — quality gates, environments, caching |
+| Deploy Local | `devops/deploy-local/` | Commit on dev, push to Gitea, monitor prod pull/build/deploy, and remediate CI/CD failures end-to-end |
 | GitHub CLI | `devops/gh-cli/` | GitHub CLI operations (PRs, issues, releases, actions) |
 | Git Commit | `devops/git-commit/` | Writing conventional commit messages |
 | Monorepo | `devops/monorepo/` | pnpm workspaces + Turborepo for monorepo CI/CD and shared packages |
