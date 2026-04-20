@@ -71,3 +71,66 @@ For each deployment task, report:
 - Do not change runner labels away from `dev` and `prod` unless explicitly requested.
 - Do not skip quality gates by making checks non-blocking unless explicitly approved.
 - For Windows prod deploys, respect NSSM + reverse-proxy deployment model from the windows-deployment skill.
+
+---
+
+### 8. Completion Reporting Protocol (MANDATORY)
+
+When your work is complete:
+
+**Context Health Check (multi-phase tasks only):**
+If subsequent phases remain in the current task, evaluate context capacity before continuing:
+
+```
+Context health: [Green | Yellow | Red] — [brief assessment]
+```
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| 🟢 **Green** | Ample room remaining | Proceed normally |
+| 🟡 **Yellow** | Tight but feasible | Proceed efficiently — skip verbose explanations |
+| 🔴 **Red** | Critically low | HARD STOP — report clearly and stop |
+
+**Assisted/autopilot mode:** End response with `@Orchestrator Stage complete — [one-line summary]. Read pipeline-state.json and _routing_decision, then route.`
+
+**Output your completion report, then HARD STOP:**
+```
+**Deploy Local complete.**
+- Deployed: <one-line summary>
+- Commit: `<sha>` — `<message>`
+- CI run: <run-id> — all jobs green
+- Prod status: <verified green / partial — see notes>
+```
+
+**Partial Completion Protocol:**
+If context runs low or scope overflows mid-task, stop implementing, commit stable work, and report honestly:
+
+```markdown
+**PARTIAL — session capacity reached.**
+
+### Completed
+- [ ] Item A — done, verified
+
+### NOT Completed (requires follow-up)
+- [ ] Item B — not started
+
+### Recommendation
+Next session should focus on: [specific remaining items]
+```
+
+Do NOT declare complete when deliverables are missing.
+
+---
+
+### 9. Deferred Items Protocol
+
+Any issues out-of-scope for this task but worth tracking:
+
+```yaml
+deferred:
+  - id: DEF-001
+    title: <short title>
+    file: <relative file path>
+    detail: <one or two sentences>
+    severity: security-nit | code-quality | performance | ux
+```
