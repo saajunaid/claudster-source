@@ -40,6 +40,7 @@ These rules apply to every response. They eliminate the default AI writing habit
 - Do not add inline comments to code you did not change
 - Prefer a code block over a prose explanation when both would convey the same information
 - For shell commands: show the command, then a brief one-line purpose if non-obvious — not a paragraph
+- **English prose gets compressed; code stays untouched.** Trim English sentences to the minimum words needed. Never shorten, truncate, or abbreviate code, commands, or file paths.
 
 ## Length calibration
 
