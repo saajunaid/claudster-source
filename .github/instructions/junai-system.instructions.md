@@ -1,5 +1,5 @@
 ---
-description: "junai agent pipeline system documentation — 25 agents, MCP tools, pipeline flow, routing conventions. Pool-managed: refreshed on every junai update."
+description: "junai agent pipeline system documentation — 26 agents, MCP tools, pipeline flow, routing conventions. Pool-managed: refreshed on every junai update."
 applyTo: "**"
 ---
 
@@ -9,7 +9,7 @@ This file is deployed and maintained by the junai VS Code extension. It is refre
 
 ---
 
-## The 25 Agents
+## The 26 Agents
 
 Each agent lives in `.github/agents/<name>.agent.md`. Each has a YAML frontmatter block with `name`, `model`, `tools`, `handoffs`, and `description`, followed by detailed behavioral instructions.
 
@@ -19,7 +19,7 @@ Each agent lives in `.github/agents/<name>.agent.md`. Each has a YAML frontmatte
 |-------|--------|
 | Claude Opus 4.6 | `anchor`, `architect` — highest-rigor work |
 | Claude Sonnet 4.6 | `orchestrator`, `planner`, `prd`, `prompt-engineer`, `security-analyst`, `accessibility`, `code-reviewer`, `debug`, `mentor`, `project-manager`, `ux-designer`, `ui-ux-designer`, `knowledge-transfer` |
-| GPT-5.3-Codex | `implement`, `streamlit-developer`, `frontend-developer`, `data-engineer`, `devops`, `janitor`, `sql-expert`, `tester` |
+| GPT-5.3-Codex | `implement`, `streamlit-developer`, `frontend-developer`, `data-engineer`, `devops`, `deploy-local`, `janitor`, `sql-expert`, `tester` |
 | Gemini 3.1 Pro (Preview) | `mermaid-diagram-specialist`, `svg-diagram` — visual artifact generation only |
 
 ### Key Agent Roles
@@ -34,6 +34,7 @@ Each agent lives in `.github/agents/<name>.agent.md`. Each has a YAML frontmatte
 | **Implement** | Writes production code following the plan |
 | **Tester / Code Reviewer / Debug / Security Analyst** | Quality gates at various pipeline stages |
 | **Knowledge Transfer** | Institutional memory — extracts durable knowledge from completed sessions and writes to `docs/gold-nuggets-log.md` and instruction files |
+| **Deploy Local** | Local-first deployment operator — commits in dev, pushes to Gitea remote, monitors CI on prod, diagnoses and fixes pipeline failures until green |
 | **Janitor** | Housekeeping — archives stale artefacts, removes dead code |
 
 ---
