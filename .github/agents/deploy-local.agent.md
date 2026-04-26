@@ -74,6 +74,58 @@ For each deployment task, report:
 
 ---
 
+## CalVer Post-Deploy Checks
+
+After every successful deploy, run these checks to confirm the CalVer pipeline delivered a valid version. Treat any failure as a deploy blocker — fix before declaring the deployment complete.
+
+### 1 — Script integrity (run before push, re-run after any script edit)
+
+```powershell
+$scripts = @(".gitea\scripts\compute-version.ps1",
+             ".gitea\scripts\generate-changelog.ps1",
+             ".gitea\scripts\deploy.ps1")
+foreach ($s in $scripts) {
+    # Non-ASCII check (Unicode em-dash causes silent parse failures)
+    $hit = Select-String -Path $s -Pattern '[^\x00-\x7F]' -List
+    if ($hit) { Write-Warning "NON-ASCII in $s" } else { Write-Host "[OK] $s clean" }
+
+    # Syntax check
+    $err = $null
+    $null = [System.Management.Automation.Language.Parser]::ParseFile(
+        (Resolve-Path $s).Path, [ref]$null, [ref]$err)
+    if ($err.Count) { $err | ForEach-Object { Write-Warning $_.Message } }
+    else { Write-Host "[OK] $s parses clean" }
+}
+```
+
+### 2 — Build artefacts written
+
+```powershell
+Test-Path "src\_version.json"                          # backend version file
+Test-Path "frontend\dist\version.json"                 # frontend version file (prod)
+Get-Content "src\_version.json" | ConvertFrom-Json | Select-Object version, environment
+```
+
+### 3 — API version endpoint
+
+```powershell
+$r = Invoke-RestMethod -Uri "http://127.0.0.1:8201/api/version"
+if ($r.version -match '^v\d{4}\.\d{2}') { Write-Host "[OK] $($r.version)" }
+else { Write-Warning "Unexpected version format: $($r.version)" }
+```
+
+### 4 — _version.json not tracked by git
+
+```powershell
+$s = git status --short src/_version.json
+if (-not $s) { Write-Host "[OK] src/_version.json untracked" }
+else { Write-Warning "src/_version.json in git status — add to .gitignore" }
+```
+
+> Full check runbook: see `deploy-local` skill Phase 4.5 for all eight verification steps.
+
+---
+
 ### 8. Completion Reporting Protocol (MANDATORY)
 
 When your work is complete:

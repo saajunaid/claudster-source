@@ -148,6 +148,67 @@ Optimize pipelines and practices toward these delivery performance indicators:
 
 Integrate security scanning into CI/CD — SAST, DAST, and dependency scanning (SCA). Reference `.github/instructions/security.instructions.md` for details.
 
+---
+
+## CalVer Pipeline Verification
+
+VMIE projects use CalVer scheme `vYYYY.MM.DD.N` for prod and `git describe`-style for dev. When verifying or onboarding CalVer in a CI workflow, confirm all of the following are in place.
+
+### CI Workflow Checks
+
+| Check | What to look for |
+|-------|-----------------|
+| `tag_version` job exists | Runs only on `github.ref == 'refs/heads/main' && github.event_name == 'push'` |
+| `app_version` output | Written with `"app_version=$v" \| Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append` |
+| `APP_VERSION` propagation | `frontend_checks` job receives `APP_VERSION: ${{ needs.tag_version.outputs.app_version }}` |
+| `deploy` gating | `deploy` needs `lint_and_test`, `frontend_checks`, **and** `tag_version`; condition `tag_version.result == 'success'` |
+| Script references | `deploy.ps1` calls `compute-version.ps1` then `generate-changelog.ps1` in its CalVer block |
+
+### Script Integrity Gate (Run Before Any Deploy)
+
+Non-ASCII characters (e.g. Unicode em-dash `—`) in PowerShell scripts cause silent runtime parse failures. Always run before pushing CI-related changes:
+
+```powershell
+# 1. Non-ASCII check
+$scripts = @(
+    ".gitea\scripts\compute-version.ps1",
+    ".gitea\scripts\generate-changelog.ps1",
+    ".gitea\scripts\deploy.ps1"
+)
+foreach ($s in $scripts) {
+    $hits = Select-String -Path $s -Pattern '[^\x00-\x7F]' -List
+    if ($hits) { Write-Warning "NON-ASCII in $s" } else { Write-Host "[OK] $s — clean" }
+}
+
+# 2. Parse check (catches syntax errors before CI sees them)
+foreach ($s in $scripts) {
+    $err = $null
+    $null = [System.Management.Automation.Language.Parser]::ParseFile(
+        (Resolve-Path $s).Path, [ref]$null, [ref]$err)
+    if ($err.Count -gt 0) { Write-Warning "PARSE ERRORS in $s"; $err | % { Write-Warning $_.Message } }
+    else { Write-Host "[OK] $s — parses clean" }
+}
+```
+
+### Post-Deploy Version Verification
+
+```powershell
+# API must return a valid CalVer string
+$resp = Invoke-RestMethod -Uri "http://127.0.0.1:8201/api/version"
+if ($resp.version -match '^v\d{4}\.\d{2}') { Write-Host "[OK] $($resp.version)" }
+else { Write-Warning "Unexpected version: $($resp.version)" }
+```
+
+### Common CalVer Failure Modes
+
+| Symptom | Root cause | Fix |
+|---------|-----------|-----|
+| `deploy.ps1` exits with no error but version is `0.0.0` | `compute-version.ps1` missing | Copy from `platform-infra/templates/scripts/` |
+| CHANGELOG not generated | `generate-changelog.ps1` parse failure (non-ASCII) | Run V2 script check above; replace em-dash with `-f` format operator |
+| `APP_VERSION` blank in frontend build | `tag_version` output not wired to `frontend_checks` env | Add `APP_VERSION: ${{ needs.tag_version.outputs.app_version }}` |
+| `GET /api/version` returns 404 | `version_router` not registered in `main.py` | Add `app.include_router(version_router)` |
+| `src/_version.json` appears in `git status` | Not in `.gitignore` | Add `src/_version.json` under `# CalVer build artefact` |
+
 ### CI Failure Triage and Reliability Guardrails
 
 For CI/deploy incidents, use this sequence before changing workflow logic:
