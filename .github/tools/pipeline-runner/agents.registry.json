@@ -6,9 +6,9 @@
     "prd":         { "agent": "PRD",             "agent_file": "agents/prd.agent.md" },
     "architect":   { "agent": "Architect",       "agent_file": "agents/architect.agent.md" },
     "security":    { "agent": "Security Analyst","agent_file": "agents/security-analyst.agent.md" },
-    "plan":        { "agent": "Plan",            "agent_file": "agents/plan.agent.md" },
+    "plan":        { "agent": "Planner",         "agent_file": "agents/planner.agent.md" },
     "ux_research": { "agent": "UX Designer",     "agent_file": "agents/ux-designer.agent.md" },
-    "ui_design":   { "agent": "UI/UX Designer",  "agent_file": "agents/ui-ux-designer.agent.md" },
+    "ui_design":   { "agent": "UX Designer",     "agent_file": "agents/ux-designer.agent.md" },
     "preflight":   { "agent": "Preflight",      "agent_file": "agents/preflight.agent.md" },
     "implement":   { "agent": "Implement",       "agent_file": "agents/implement.agent.md",       "skippable": false },
     "anchor":      { "agent": "Anchor",          "agent_file": "agents/anchor.agent.md",          "skippable": false },
@@ -397,7 +397,7 @@
       "priority": 10
     },
     {
-      "id": "T-34",
+      "id": "T-47",
       "from_stage": "anchor",
       "to_stage": "knowledge_transfer",
       "event": "knowledge_capture",
@@ -408,7 +408,7 @@
       "_comment": "human-triggered optional enrichment: user invokes @knowledge-transfer after Anchor completes. Terminal — no downstream transition. Does not block or advance the main pipeline."
     },
     {
-      "id": "T-35",
+      "id": "T-48",
       "from_stage": "implement",
       "to_stage": "knowledge_transfer",
       "event": "knowledge_capture",
@@ -419,7 +419,7 @@
       "_comment": "human-triggered optional enrichment: user invokes @knowledge-transfer after Implement completes. Terminal — no downstream transition. Does not block or advance the main pipeline."
     },
     {
-      "id": "T-36",
+      "id": "T-49",
       "from_stage": "debug",
       "to_stage": "knowledge_transfer",
       "event": "knowledge_capture",

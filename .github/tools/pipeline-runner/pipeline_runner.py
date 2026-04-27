@@ -13,12 +13,25 @@ from transitions import TRANSITIONS, Transition, _REGISTRY_PATH
 
 DEFAULT_STATE_PATH = Path(".github/pipeline-state.json")
 ALLOWED_PIPELINE_MODES = {"supervised", "assisted", "autopilot"}
-ALLOWED_SUPERVISION_GATES = {
+_BASE_SUPERVISION_GATES = {
     "intent_approved",
     "adr_approved",
     "plan_approved",
+    "plan_validated",
     "review_approved",
 }
+
+
+def _load_registry_gates() -> set[str]:
+    """Union of gate names declared in agents.registry.json transitions."""
+    try:
+        data = json.loads(_REGISTRY_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    return {t["gate"] for t in data.get("transitions", []) if t.get("gate")}
+
+
+ALLOWED_SUPERVISION_GATES = _BASE_SUPERVISION_GATES | _load_registry_gates()
 
 
 def _load_stage_map(registry_path: Path = _REGISTRY_PATH) -> dict[str, str]:

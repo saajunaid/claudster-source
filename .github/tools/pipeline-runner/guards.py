@@ -216,8 +216,14 @@ def no_blocking_escalations(
     _event: CompletionEvent,
     workspace_root: Path,
 ) -> tuple[bool, str | None]:
-    escalations_dir = workspace_root / "agent-docs" / "escalations"
-    if not escalations_dir.exists():
+    # Canonical location is .github/agent-docs/escalations; legacy fallback at
+    # agent-docs/escalations is retained for older workspaces.
+    candidates = [
+        workspace_root / ".github" / "agent-docs" / "escalations",
+        workspace_root / "agent-docs" / "escalations",
+    ]
+    escalations_dir = next((p for p in candidates if p.exists()), None)
+    if escalations_dir is None:
         return True, None
 
     for path in escalations_dir.rglob("*.md"):
