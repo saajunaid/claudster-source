@@ -33,6 +33,7 @@ agent-sandbox/
 │   ├── pipeline-state.json  ← Live pipeline state (gates, routing, artefacts)
 │   └── project-config.md   ← Project-specific token definitions
 ├── validate_agents.py       ← Pre-publish gate: checks 25 agents + MCP smoke test
+├── validate_pool.py         ← Pre-publish gate: pool integrity (registry, gates, privacy, prompts, skill drift, golden-plan)
 ├── export_runtime_resources.py ← Builds project-local `.github/`, `.claude/`, `.codex/` exports from canonical `.github/`
 ├── sync.ps1                 ← junai-pull / junai-push sync functions
 └── project-config.md        ← Workspace-level config
@@ -94,18 +95,22 @@ agent-sandbox  (local only, no remote — authoring source of truth)
 
 ## Team / Project Conventions
 
-**Pre-publish gate:** Always run `validate_agents.py` before publishing. Checks all 25 agents (required frontmatter, `§8`/`§9` sections, Partial Completion Protocol) + MCP smoke test (9 tools via JSON-RPC).
+**Pre-publish gate:** Always run `validate_agents.py` and `validate_pool.py` before publishing.
+- `validate_agents.py` — all 25 agents (required frontmatter, `§8`/`§9` sections, Partial Completion Protocol) + MCP smoke test (9 tools via JSON-RPC).
+- `validate_pool.py` — registry/transitions consistency, gate consistency (registry vs schema vs runner), privacy scan, prompt frontmatter, skill-registry drift, golden-plan structure. Default scope is `.github/`. Use `--include-dist` after `export_runtime_resources.py` and `--include-external` to audit `junai-vscode/pool` and `junai/.github` mirrors.
 
 **Publish workflow:**
 ```powershell
 # 1. Validate (agent-sandbox)
 python validate_agents.py
+python validate_pool.py
 
 # 2. Commit agent-sandbox (local only)
 git add .github/; git commit -m "feat: ..."
 
 # 3. Build runtime exports (agent-sandbox)
 python export_runtime_resources.py
+python validate_pool.py --include-dist   # post-export pool audit
 
 # 4. Publish extension (junai-vscode)
 cd E:\Projects\junai-vscode

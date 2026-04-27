@@ -97,6 +97,7 @@
 | Design System Tokens | `frontend/design-system-tokens/` | Three-layer token architecture (primitive → semantic → component), CSS variables, spacing/typography scales |
 | Enterprise Dashboard Aesthetic System | `frontend/enterprise-dashboard-aesthetic-system/` | Harmonizing React/Vite enterprise dashboards into cohesive executive analytics cockpits with tokenized surfaces, story-card heroes, and tasteful motion |
 | Frontend Design | `frontend/frontend-design/` | Production-grade frontend interfaces |
+| High-End Visual Design | `frontend/high-end-visual-design/` | Awwwards-tier UI/UX — exact fonts, spacing, shadows, card structures, and motion that make sites feel expensive |
 | Mockup | `frontend/mockup/` | Framework-aware UI mockups with feasibility checks |
 | Next.js App Router | `frontend/nextjs-app-router/` | Next.js 13+ App Router, Server Components, Server Actions, Route Handlers |
 | Premium React | `frontend/premium-react/` | High-quality animated React UIs with Framer Motion, GSAP, and Tailwind |
@@ -127,6 +128,7 @@
 | TDD Workflow | `testing/tdd-workflow/` | Red-green-refactor cycle for test-driven development |
 | Test Strategy | `testing/test-strategy/` | Test planning, risk-based prioritisation, coverage goals, and test pyramids |
 | UI Testing | `testing/ui-testing/` | Automated Playwright UI tests for Streamlit and web apps |
+| Webapp Testing | `testing/webapp-testing/` | Interacting with and testing local web apps via Playwright — verify UI, capture screenshots, inspect browser logs |
 
 ### Workflow
 
@@ -148,6 +150,7 @@
 | Pipeline State | `workflow/pipeline-state/` | Reading and writing `.github/pipeline-state.json` for pipeline tracking |
 | Receiving Code Review | `workflow/receiving-code-review/` | Processing code review feedback with technical rigor |
 | Requesting Code Review | `workflow/requesting-code-review/` | Verifying work and preparing it for review before merging |
+| Skill Creator | `workflow/skill-creator/` | Create, modify, and benchmark skills — including eval runs, variance analysis, and description optimisation |
 | Verification Loop | `workflow/verification-loop/` | Systematic lint, test, type-check, and review cycle |
 | Data Contract Pipeline | `workflow/data-contract-pipeline/` | Build/audit typed data pipelines from source to frontend with drift detection |
 | Preflight | `workflow/preflight/` | Plan-vs-codebase validation — verifies API contracts, types, fields, dependencies, and paths before implementation |
