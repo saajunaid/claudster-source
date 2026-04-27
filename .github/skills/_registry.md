@@ -1,6 +1,6 @@
 # Skills Registry
 
-> **123 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
+> **124 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
 > Load a skill by reading its `SKILL.md`. See `project-config.md` for project-specific placeholder values.
 
 ---
@@ -97,6 +97,7 @@
 | Canvas Design | `frontend/canvas-design/` | Creating canvas-based visual art in PNG and PDF |
 | CSS Architecture | `frontend/css-architecture/` | Design token hierarchy, Tailwind config, CSS Modules, responsive and animation patterns |
 | Design System Tokens | `frontend/design-system-tokens/` | Three-layer token architecture (primitive → semantic → component), CSS variables, spacing/typography scales |
+| Enterprise Dashboard Aesthetic System | `frontend/enterprise-dashboard-aesthetic-system/` | Harmonizing React/Vite enterprise dashboards into cohesive executive analytics cockpits with tokenized surfaces, story-card heroes, and tasteful motion |
 | Frontend Design | `frontend/frontend-design/` | Production-grade frontend interfaces |
 | Mockup | `frontend/mockup/` | Framework-aware UI mockups with feasibility checks |
 | Next.js App Router | `frontend/nextjs-app-router/` | Next.js 13+ App Router, Server Components, Server Actions, Route Handlers |
@@ -128,6 +129,14 @@
 | TDD Workflow | `testing/tdd-workflow/` | Red-green-refactor cycle for test-driven development |
 | Test Strategy | `testing/test-strategy/` | Test planning, risk-based prioritisation, coverage goals, and test pyramids |
 | UI Testing | `testing/ui-testing/` | Automated Playwright UI tests for Streamlit and web apps |
+
+### VMIE
+
+| Skill | Path | When to Use |
+|-------|------|-------------|
+| File Bug | `vmie/file-bug/` | File a bug issue against a VMIE Gitea repo by answering 3 questions — user never touches the Gitea form |
+| Query Display | `vmie/query-display/` | Display SQL query results in the dashboard |
+| VM PPT | `vmie/vm-ppt/` | Create Virgin Media Ireland branded PowerPoint presentations |
 
 ### Workflow
 
