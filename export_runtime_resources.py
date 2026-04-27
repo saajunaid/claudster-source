@@ -33,17 +33,25 @@ def ensure_clean_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
+CACHE_DIR_NAMES = {"__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".coverage", "htmlcov"}
+
+
+def _ignore_caches(_dir: str, names: list[str]) -> list[str]:
+    """shutil.copytree ignore callable that drops Python cache dirs at every depth."""
+    return [n for n in names if n in CACHE_DIR_NAMES]
+
+
 def copy_tree(source: Path, destination: Path, excluded_names: set[str] | None = None) -> None:
     """Copy a directory tree while excluding top-level names when requested."""
     excluded_names = excluded_names or set()
     destination.mkdir(parents=True, exist_ok=True)
 
     for child in source.iterdir():
-        if child.name in excluded_names:
+        if child.name in excluded_names or child.name in CACHE_DIR_NAMES:
             continue
         target = destination / child.name
         if child.is_dir():
-            shutil.copytree(child, target, dirs_exist_ok=True)
+            shutil.copytree(child, target, dirs_exist_ok=True, ignore=_ignore_caches)
         else:
             shutil.copy2(child, target)
 

@@ -8,23 +8,25 @@
 # never allowlisted.
 
 # --- Legitimate documentation / teaching examples ---
-.github/instructions/security.instructions.md
-.github/instructions/mssql-dba.instructions.md
-.github/instructions/github-actions.instructions.md
-.github/agents/security-analyst.agent.md
-.github/skills/cloud/aws-agentic-ai/cross-service/credential-management.md
-.github/skills/cloud/aws-serverless-eda/references/security-best-practices.md
-.github/skills/cloud/building-mcp-server-on-cloudflare/references/oauth-setup.md
-.github/skills/devops/ci-cd-pipeline/SKILL.md
-.github/skills/frontend/brand-design/SKILL.md
-.github/skills/productivity/jira-issues/SKILL.md
-.github/skills/testing/playwright/lib/helpers.js
+# Paths are written without a leading `.github/` so they match both the
+# canonical pool layout and the runtime-exported `.codex/` mirror.
+instructions/security.instructions.md
+instructions/mssql-dba.instructions.md
+instructions/github-actions.instructions.md
+agents/security-analyst.agent.md
+skills/cloud/aws-agentic-ai/cross-service/credential-management.md
+skills/cloud/aws-serverless-eda/references/security-best-practices.md
+skills/cloud/building-mcp-server-on-cloudflare/references/oauth-setup.md
+skills/devops/ci-cd-pipeline/SKILL.md
+skills/frontend/brand-design/SKILL.md
+skills/productivity/jira-issues/SKILL.md
+skills/testing/playwright/lib/helpers.js
 
 # --- Pool documentation referencing itself ---
-.github/agent-docs/agent-workflow-design-reference.md
-.github/agent-docs/PROJECT-ONBOARDING-RUNBOOK.md
-.github/agent-docs/RECIPE-RUNBOOK.md
-.github/recipes/enterprise-dashboard.recipe.md
+agent-docs/agent-workflow-design-reference.md
+agent-docs/PROJECT-ONBOARDING-RUNBOOK.md
+agent-docs/RECIPE-RUNBOOK.md
+recipes/enterprise-dashboard.recipe.md
 
 # --- Remediation plan deliberately enumerates leaked tokens for cleanup tracking ---
-.github/plans/2026-04-27-ai-resource-pool-remediation.md
+plans/2026-04-27-ai-resource-pool-remediation.md
