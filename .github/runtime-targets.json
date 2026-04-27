@@ -32,16 +32,6 @@
       ]
     },
     {
-      "name": "claude",
-      "workspace_root": ".claude",
-      "copies": [
-        {"source": "skills", "destination": "skills"}
-      ],
-      "transforms": [
-        {"type": "instructions_to_rules", "source": "instructions", "destination": "rules"}
-      ]
-    },
-    {
       "name": "codex",
       "workspace_root": ".codex",
       "copies": [
