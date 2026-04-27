@@ -44,8 +44,6 @@ Auto-load these skills when the condition matches — do not skip.
 | Monorepo CI/CD and workspace config | `.github/skills/devops/monorepo/SKILL.md` |
 | Observability / monitoring setup | `.github/skills/coding/observability/SKILL.md` |
 | CI/CD pipeline design | `.github/skills/devops/ci-cd-pipeline/SKILL.md` |
-| Local dev-to-prod deployment loop (commit/push/monitor/fix) | `.github/skills/devops/deploy-local/SKILL.md` |
-| Windows Server deployment (IIS, NSSM, subpath) | `.github/skills/devops/windows-deployment/SKILL.md` |
 
 > **Project Context**: Read `project-config.md`. If a `profile` is set, use its Profile Definition to resolve `<PLACEHOLDER>` values in skills, instructions, and prompts.
 

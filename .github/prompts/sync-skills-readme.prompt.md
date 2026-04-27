@@ -68,7 +68,7 @@ Create a markdown table with this exact format:
 
 | Category | Skill | Description |
 |----------|-------|-------------|
-| 🤖 AI Tools | [codex](skills/codex/README.md) | Advanced code analysis with GPT-5.2 |
+| 🤖 AI Tools | [codex](skills/codex/README.md) | Advanced code analysis with GPT-5.3-Codex |
 | 🤖 AI Tools | [gemini](skills/gemini/README.md) | Large-scale review (200k+ context) |
 ...
 ```
@@ -86,7 +86,7 @@ Create a markdown table with this exact format:
 - If description is longer than 50 characters, create a shortened version
 - Keep it concise and action-oriented
 - Examples:
-  - "Use when the user asks to run Codex CLI for code analysis, refactoring, or automated editing" → "Advanced code analysis with GPT-5.2"
+  - "Use when the user asks to run Codex CLI for code analysis, refactoring, or automated editing" → "Advanced code analysis with GPT-5.3-Codex"
   - "Create comprehensive API handoff documentation for frontend developers after backend implementation" → "API handoff docs for frontend"
 
 ### 5. Update README.md

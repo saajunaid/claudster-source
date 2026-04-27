@@ -1,3 +1,7 @@
+---
+description: "Template for creating or modifying MCP (Model Context Protocol) servers."
+---
+
 # MCP Server Development Prompt
 
 Use this prompt template when asking AI to create or modify MCP (Model Context Protocol) servers.

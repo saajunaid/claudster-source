@@ -3,7 +3,7 @@
 > This file is yours. The junai extension manages only the `<!-- junai:start -->` … `<!-- junai:end -->`
 > section below; everything else is never read, modified, or deleted by the extension.
 >
-> junai system documentation (26 agents, pipeline flow, MCP tools, routing conventions) is
+> junai system documentation (25 agents, pipeline flow, MCP tools, routing conventions) is
 > automatically provided by `.github/instructions/junai-system.instructions.md`.
 
 ---
@@ -32,7 +32,7 @@ agent-sandbox/
 │   ├── diagrams/            ← Architecture and workflow reference diagrams
 │   ├── pipeline-state.json  ← Live pipeline state (gates, routing, artefacts)
 │   └── project-config.md   ← Project-specific token definitions
-├── validate_agents.py       ← Pre-publish gate: checks 26 agents + MCP smoke test
+├── validate_agents.py       ← Pre-publish gate: checks 25 agents + MCP smoke test
 ├── export_runtime_resources.py ← Builds project-local `.github/`, `.claude/`, `.codex/` exports from canonical `.github/`
 ├── sync.ps1                 ← junai-pull / junai-push sync functions
 └── project-config.md        ← Workspace-level config
@@ -60,7 +60,7 @@ agent-sandbox  (local only — authoring source)
 
 ---
 
-## The 26 Agents
+## The 25 Agents
 
 Each agent is defined in `.github/agents/<name>.agent.md`. Full model assignments, key roles, pipeline flow, MCP tools, and routing conventions are in `.github/instructions/junai-system.instructions.md` (auto-loaded by VS Code Copilot via `applyTo: "**"`).
 
@@ -94,7 +94,7 @@ agent-sandbox  (local only, no remote — authoring source of truth)
 
 ## Team / Project Conventions
 
-**Pre-publish gate:** Always run `validate_agents.py` before publishing. Checks all 26 agents (required frontmatter, `§8`/`§9` sections, Partial Completion Protocol) + MCP smoke test (9 tools via JSON-RPC).
+**Pre-publish gate:** Always run `validate_agents.py` before publishing. Checks all 25 agents (required frontmatter, `§8`/`§9` sections, Partial Completion Protocol) + MCP smoke test (9 tools via JSON-RPC).
 
 **Publish workflow:**
 ```powershell

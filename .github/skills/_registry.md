@@ -1,6 +1,6 @@
 # Skills Registry
 
-> **124 skills** across 10 categories — full reconciliation against disk state (`vmie/` excluded).  
+> Public skill inventory across 9 categories. Some skills are intentionally private to the development environment and ship under `vmie/` locally — they are excluded from this public registry.  
 > Load a skill by reading its `SKILL.md`. See `project-config.md` for project-specific placeholder values.
 
 ---
@@ -60,11 +60,9 @@
 |-------|------|-------------|
 | Changelog Generator | `devops/changelog-generator/` | Generating changelogs from git commits |
 | CI/CD Pipeline | `devops/ci-cd-pipeline/` | Pipeline design for GitHub Actions and Azure DevOps — quality gates, environments, caching |
-| Deploy Local | `devops/deploy-local/` | Commit on dev, push to Gitea, monitor prod pull/build/deploy, and remediate CI/CD failures end-to-end |
 | GitHub CLI | `devops/gh-cli/` | GitHub CLI operations (PRs, issues, releases, actions) |
 | Git Commit | `devops/git-commit/` | Writing conventional commit messages |
 | Monorepo | `devops/monorepo/` | pnpm workspaces + Turborepo for monorepo CI/CD and shared packages |
-| Windows Deployment | `devops/windows-deployment/` | Deploy FastAPI + React/Vite apps to Windows Server with NSSM, nginx reverse proxy, and Gitea |
 | Using Git Worktrees | `devops/using-git-worktrees/` | Managing parallel branches with git worktrees |
 
 ### Docs
@@ -129,14 +127,6 @@
 | TDD Workflow | `testing/tdd-workflow/` | Red-green-refactor cycle for test-driven development |
 | Test Strategy | `testing/test-strategy/` | Test planning, risk-based prioritisation, coverage goals, and test pyramids |
 | UI Testing | `testing/ui-testing/` | Automated Playwright UI tests for Streamlit and web apps |
-
-### VMIE
-
-| Skill | Path | When to Use |
-|-------|------|-------------|
-| File Bug | `vmie/file-bug/` | File a bug issue against a VMIE Gitea repo by answering 3 questions — user never touches the Gitea form |
-| Query Display | `vmie/query-display/` | Display SQL query results in the dashboard |
-| VM PPT | `vmie/vm-ppt/` | Create Virgin Media Ireland branded PowerPoint presentations |
 
 ### Workflow
 

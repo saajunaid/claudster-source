@@ -1,10 +1,14 @@
+---
+description: "Structure debugging requests to efficiently identify and resolve issues."
+---
+
 # Debug Help Prompt
 
 ## Purpose
 
 Structure debugging requests to efficiently identify and resolve issues.
 
-## Pipeline Boundary (when used with JUNO pipeline)
+## Pipeline Boundary (when used with the junai pipeline)
 
 If `.github/pipeline-state.json` exists:
 

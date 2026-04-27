@@ -1,3 +1,7 @@
+---
+description: "Generate comprehensive API documentation for FastAPI endpoints."
+---
+
 # API Documentation Prompt
 
 ## Purpose
