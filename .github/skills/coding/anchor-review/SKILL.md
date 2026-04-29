@@ -1,5 +1,6 @@
 ---
 name: anchor-review
+context: fork
 description: Single-model adversarial review technique — 3-lens analysis with confidence scoring and self-challenge
 ---
 

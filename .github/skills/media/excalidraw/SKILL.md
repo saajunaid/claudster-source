@@ -1,5 +1,6 @@
 ---
 name: excalidraw
+context: fork
 description: "Brand-themed Excalidraw diagrams for project documentation"
 ---
 

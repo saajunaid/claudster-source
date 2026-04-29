@@ -1,5 +1,6 @@
 ---
 name: preflight
+context: fork
 description: "Plan-vs-codebase validation — verifies API contracts, type names, field accuracy, dependencies, and paths before implementation begins"
 ---
 

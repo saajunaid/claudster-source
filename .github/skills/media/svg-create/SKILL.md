@@ -1,5 +1,6 @@
 ---
 name: svg-create
+context: fork
 description: "Brand-themed SVG diagrams with consistent color palette and accessible design"
 ---
 

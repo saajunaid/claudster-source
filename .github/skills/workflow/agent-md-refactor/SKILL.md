@@ -1,5 +1,6 @@
 ---
 name: agent-md-refactor
+context: fork
 description: Refactor bloated agent instruction files (AGENTS.md, .cursorrules, .github/ files, etc.) to follow progressive disclosure principles. Splits monolithic files into organized, linked documentation.
 license: MIT
 ---

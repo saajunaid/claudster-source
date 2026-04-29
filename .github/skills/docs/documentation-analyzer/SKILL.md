@@ -1,5 +1,6 @@
 ---
 name: documentation-analyzer
+context: fork
 description: Analyze codebases, explain code functionality, and generate comprehensive documentation. Use when documenting a project, creating README files, or understanding complex code.
 ---
 

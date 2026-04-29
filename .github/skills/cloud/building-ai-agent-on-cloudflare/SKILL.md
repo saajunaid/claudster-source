@@ -1,5 +1,6 @@
 ---
 name: building-ai-agent-on-cloudflare
+context: fork
 description: |
   Builds AI agents on Cloudflare using the Agents SDK with state management,
   real-time WebSockets, scheduled tasks, tool integration, and chat capabilities.

@@ -1,5 +1,6 @@
 ---
 name: draw-io
+context: fork
 description: draw.io diagram creation, editing, and review. Use for .drawio XML editing, PNG conversion, layout adjustment, and AWS icon usage.
 ---
 

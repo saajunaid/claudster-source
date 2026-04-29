@@ -1,5 +1,6 @@
 ---
 name: mermaid-diagrams
+context: fork
 description: Create software diagrams using Mermaid text-based syntax. Use for class diagrams (domain modeling, OOP design), sequence diagrams (API flows, interactions), flowcharts (processes, algorithms, user journeys), ERD (database schemas), C4 architecture diagrams, state diagrams, git graphs, gantt charts, and data visualization.
 ---
 

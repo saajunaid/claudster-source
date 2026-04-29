@@ -1,5 +1,6 @@
 ---
 name: github-issues
+context: fork
 description: Create well-structured GitHub issues with proper labels, descriptions, and acceptance criteria. Use when creating bug reports, feature requests, or tracking tasks.
 ---
 

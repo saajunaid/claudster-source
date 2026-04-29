@@ -1,5 +1,6 @@
 ---
 name: component-testing
+context: fork
 description: React component testing with Vitest, Testing Library, MSW, and renderHook. Use for Vitest setup, jsdom/happy-dom config, Testing Library queries, userEvent, component unit tests, testing React hooks, MSW API mocking, snapshot testing, or testing loading/error states. Complements playwright (E2E) and tdd-workflow (methodology).
 ---
 

@@ -1,5 +1,6 @@
 ---
 name: refactoring
+context: fork
 description: Safely refactor code while maintaining behavior. Use when improving code structure, reducing duplication, extracting functions, or modernizing legacy code.
 ---
 

@@ -1,5 +1,6 @@
 ---
 name: monorepo
+context: fork
 description: Monorepo management with Turborepo and pnpm workspaces. Use for Turborepo setup, turbo.json task dependencies, remote caching, pnpm workspace protocol, shared packages (ui-library, config, types), affected-only CI/CD builds, or monorepo structure (apps/ vs packages/). Covers pitfalls like circular deps, version drift, and hoisting issues.
 ---
 
@@ -198,6 +199,7 @@ Both apps and API share these schemas — single source of truth for request/res
 ```yaml
 # .github/workflows/ci.yml
 name: CI
+context: fork
 
 on: [push, pull_request]
 

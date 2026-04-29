@@ -1,5 +1,6 @@
 ---
 name: prd-to-code
+context: fork
 description: Transform PRD documents into working application code using a systematic 6-phase methodology. Use when starting projects from requirements or converting specs to implementation.
 ---
 

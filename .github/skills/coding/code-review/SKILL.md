@@ -1,5 +1,6 @@
 ---
 name: code-review
+context: fork
 description: Automated code review for pull requests using specialized review patterns. Analyzes code for quality, security, performance, and best practices. Use when reviewing code changes, PRs, or doing code audits.
 source: anthropics/claude-code
 license: Apache-2.0

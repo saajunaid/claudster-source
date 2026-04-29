@@ -1,5 +1,6 @@
 ---
 name: security-review
+context: fork
 description: "Security review workflow — OWASP, code scanning, cloud infrastructure"
 ---
 

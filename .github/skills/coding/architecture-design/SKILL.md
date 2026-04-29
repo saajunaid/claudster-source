@@ -1,5 +1,6 @@
 ---
 name: architecture-design
+context: fork
 description: Design application architecture and system diagrams with layered patterns, Mermaid C4 diagrams, SQL Server data platform, and on-premise deployment considerations.
 ---
 

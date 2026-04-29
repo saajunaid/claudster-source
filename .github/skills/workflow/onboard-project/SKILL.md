@@ -1,5 +1,6 @@
 ---
 name: onboard-project
+context: fork
 description: Bootstrap a new project's AI configuration by generating copilot-instructions.md and populating project-config.md. Idempotent — safe to re-run on existing projects.
 ---
 

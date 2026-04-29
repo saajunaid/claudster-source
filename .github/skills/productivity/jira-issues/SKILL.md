@@ -1,5 +1,6 @@
 ---
 name: jira-issues
+context: fork
 description: Create, update, and manage Jira issues from natural language. Use when the user wants to log bugs, create tickets, update issue status, or manage their Jira backlog.
 license: MIT
 ---

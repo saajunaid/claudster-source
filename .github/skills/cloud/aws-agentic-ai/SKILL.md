@@ -1,5 +1,6 @@
 ---
 name: aws-agentic-ai
+context: fork
 aliases:
   - bedrock-agentcore
   - aws-agentic-ai

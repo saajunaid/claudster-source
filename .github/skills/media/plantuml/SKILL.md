@@ -1,5 +1,6 @@
 ---
 name: plantuml
+context: fork
 description: "Brand-themed PlantUML diagrams for project documentation"
 ---
 

@@ -1,5 +1,6 @@
 ---
 name: data-validation
+context: fork
 description: Data quality and validation patterns for ETL pipelines, API inputs, and data processing. Use when defining validation rules, building data quality checks, implementing schema validation, or designing data contracts. Covers Pydantic, Great Expectations patterns, and SQL-level constraints.
 ---
 

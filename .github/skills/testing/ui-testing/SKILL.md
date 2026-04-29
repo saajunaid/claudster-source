@@ -1,5 +1,6 @@
 ---
 name: ui-testing
+context: fork
 description: Create automated UI tests using Playwright for Streamlit and web applications. Use when writing end-to-end tests, automating UI testing, or testing new features.
 ---
 
@@ -599,6 +600,7 @@ npx playwright show-report
 ```yaml
 # .github/workflows/regression.yml
 name: Regression Tests
+context: fork
 
 on:
   push:

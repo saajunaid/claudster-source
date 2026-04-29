@@ -1,5 +1,6 @@
 ---
 name: verification-loop
+context: fork
 description: "Systematic code change verification — lint, test, type-check, review"
 ---
 
@@ -152,6 +153,7 @@ echo "All checks passed."
 ```yaml
 # .github/workflows/verify.yml
 name: Verify
+context: fork
 on: [push, pull_request]
 jobs:
   verify:

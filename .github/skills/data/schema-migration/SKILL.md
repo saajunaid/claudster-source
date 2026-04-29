@@ -1,5 +1,6 @@
 ---
 name: schema-migration
+context: fork
 description: Migrate an application's data access layer from one database schema to another. Use when tables are renamed, consolidated, split, or columns change — and the app's queries, mappings, and abstraction layer must be updated without data loss. Read-only against the database.
 ---
 

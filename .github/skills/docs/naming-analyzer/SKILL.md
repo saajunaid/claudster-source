@@ -1,5 +1,6 @@
 ---
 name: naming-analyzer
+context: fork
 description: Suggest better variable, function, and class names based on context and conventions.
 ---
 

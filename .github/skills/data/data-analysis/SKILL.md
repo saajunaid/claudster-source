@@ -1,5 +1,6 @@
 ---
 name: data-analysis
+context: fork
 description: Analyze datasets and generate insights with a systematic 5-phase workflow. Use when user provides data for analysis, asks about patterns, or needs visualizations.
 ---
 

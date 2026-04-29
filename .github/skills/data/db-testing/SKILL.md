@@ -1,5 +1,6 @@
 ---
 name: db-testing
+context: fork
 description: Test, debug, and validate database connectivity and queries. Use when diagnosing connection errors, testing configurations, or validating queries before deployment.
 ---
 
