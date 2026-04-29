@@ -1,7 +1,7 @@
 ---
 name: golden-plan
 context: fork
-description: "USE THIS SKILL whenever a user asks for a comprehensive implementation plan, a full-stack build plan, a UI+backend plan, or says 'create a plan for building X' where X spans multiple phases or systems. Also activate when the user says 'plan this project', 'I need a detailed plan', 'build plan', 'implementation plan', or attaches a mockup/wireframe and asks how to build it. Produces a zero-ambiguity, evidence-gated plan with self-contained per-phase prompts, exhaustive data binding tables, per-phase validation checklists, and a global quality gate. Evidence-gated: will not write a single phase until it has verified or asked for required artefacts (mockup, data sample, API contract, scaffold inventory). Dual-mode: generic by default, junai-pipeline only when explicitly requested. Agent-agnostic — any agent with read/search/edit tools can use this skill."
+description: "USE THIS SKILL whenever a user asks for a comprehensive implementation plan, a full-stack build plan, a UI+backend plan, or says 'create a plan for building X' where X spans multiple phases or systems. Also activate when the user says 'plan this project', 'I need a detailed plan', 'build plan', 'implementation plan', or attaches a mockup/wireframe and asks how to build it. Produces a zero-ambiguity, evidence-gated plan with self-contained per-phase prompts, exhaustive data binding tables, per-phase validation checklists, and a global quality gate. Evidence-gated: before writing phases, verify required artefacts (mockup, data sample, API contract, scaffold inventory); if any BLOCKER is missing, ask for it and wait before proceeding. Dual-mode: generic by default, junai-pipeline only when explicitly requested. Agent-agnostic — any agent with read/search/edit tools can use this skill."
 ---
 
 # Golden Plan
@@ -36,7 +36,7 @@ If the user does not explicitly request junai pipeline, use `generic`.
 
 ## Phase 0 — Evidence Gathering (REQUIRED before writing any plan content)
 
-Before writing a single phase, you MUST gather and validate evidence. Do not produce plan output until the evidence gate is satisfied.
+Before writing a single phase, you MUST gather and validate evidence. Do not produce plan output while any BLOCKER evidence item is unresolved.
 
 Run through the checklist below. For each item, determine its tier:
 
@@ -141,7 +141,7 @@ Commit to an expected task count per phase. Do not start writing phase content u
 
 ## Phase 2 — Plan Construction
 
-Write the plan to the output file. Follow this template **in full**. Do not omit sections. Do not merge sections. Do not use shorthands.
+Write the plan to the output file using the template below, section-by-section in order. Keep each section complete before moving to the next.
 
 ---
 

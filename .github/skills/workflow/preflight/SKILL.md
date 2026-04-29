@@ -35,12 +35,14 @@ The skill requires two things:
 
 Optional:
 
-3. **Scope restriction** — e.g., "validate phases 6-13 only" (for mid-implementation re-validation)
+3. **Scope restriction** — e.g., "validate only phases 6-13 while assuming phases 1-5 are already implemented" (for mid-implementation re-validation)
 4. **Tech stack hint** — if the plan doesn't state the stack, the agent should detect it from the codebase (look for `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `*.csproj`, etc.)
 
 ---
 
-## Validation Methodology — 8 Check Categories
+## Validation Methodology — 8 Check Categories (run in 3 passes)
+
+To reduce execution load, run categories in this order: Pass 1 (1-3), Pass 2 (4-6), Pass 3 (7-8), recording findings after each pass before continuing.
 
 Execute all 8 categories in order. Each produces findings classified as:
 

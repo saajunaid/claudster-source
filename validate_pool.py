@@ -22,6 +22,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import cast
 
 import yaml
 
@@ -36,6 +37,7 @@ PROMPTS_DIR = GITHUB_DIR / "prompts"
 SKILLS_DIR = GITHUB_DIR / "skills"
 SKILLS_REGISTRY = SKILLS_DIR / "_registry.md"
 RUNTIME_TARGETS = GITHUB_DIR / "runtime-targets.json"
+DIST_RUNTIME_ROOT = REPO_ROOT / "dist" / "runtime-resources"
 PIPELINE_RUNNER_DIR = GITHUB_DIR / "tools" / "pipeline-runner"
 REGISTRY_PATH = PIPELINE_RUNNER_DIR / "agents.registry.json"
 PIPELINE_RUNNER_PY = PIPELINE_RUNNER_DIR / "pipeline_runner.py"
@@ -226,6 +228,37 @@ def check_registry() -> CheckResult:
             )
 
     r.info.append(f"stages: {len(stages)}, transitions: {len(transitions)}")
+    r.passed = not r.failures
+    return r
+
+
+def check_dependency_closure_profile(profile: str, profile_root: Path) -> CheckResult:
+    r = CheckResult(name=f"Dependency closure — profile '{profile}'")
+    registry_path = profile_root / "tools" / "pipeline-runner" / "agents.registry.json"
+    if not registry_path.exists():
+        r.passed = False
+        r.failures.append(f"Missing registry: {registry_path}")
+        return r
+
+    try:
+        data = json.loads(registry_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        r.passed = False
+        r.failures.append(f"Invalid registry JSON: {exc}")
+        return r
+
+    missing = 0
+    for stage_name, info in (data.get("stages") or {}).items():
+        agent_file = info.get("agent_file")
+        if not agent_file:
+            continue
+        resolved = profile_root / agent_file
+        if not resolved.is_file():
+            missing += 1
+            r.failures.append(f"stage '{stage_name}' missing agent_file: {agent_file}")
+
+    r.info.append(f"checked {len((data.get('stages') or {}))} stages")
+    r.info.append(f"missing agent files: {missing}")
     r.passed = not r.failures
     return r
 
@@ -434,6 +467,36 @@ def check_prompts() -> CheckResult:
     return r
 
 
+def check_prompts_in_dir(prompts_dir: Path, label: str) -> CheckResult:
+    r = CheckResult(name=f"Prompts — frontmatter ({label})")
+    if not prompts_dir.exists():
+        r.passed = True
+        r.info.append("(no prompts directory)")
+        return r
+
+    count = 0
+    for p in sorted(prompts_dir.glob("*.prompt.md")):
+        count += 1
+        text = _read_text_safe(p)
+        if text is None:
+            r.failures.append(f"{p.name}: cannot read")
+            continue
+        parsed = _split_frontmatter(text)
+        if parsed is None:
+            r.failures.append(f"{p.name}: missing or invalid YAML frontmatter")
+            continue
+        meta, _ = parsed
+        if not str(meta.get("description", "")).strip():
+            r.failures.append(f"{p.name}: missing 'description' in frontmatter")
+        model = meta.get("model")
+        if model and model not in KNOWN_MODELS:
+            r.failures.append(f"{p.name}: model '{model}' not in KNOWN_MODELS")
+
+    r.info.append(f"validated {count} prompt file(s)")
+    r.passed = not r.failures
+    return r
+
+
 # ---------------------------------------------------------------------------
 # Check 6 — Skill registry drift vs disk
 # ---------------------------------------------------------------------------
@@ -459,6 +522,23 @@ def _disk_public_skills() -> set[str]:
     return out
 
 
+def _disk_public_skills_from_dir(skills_dir: Path) -> set[str]:
+    """Return set of '<category>/<skill>/' paths present on disk, excluding vmie."""
+    out: set[str] = set()
+    if not skills_dir.exists():
+        return out
+    for skill_md in skills_dir.rglob("SKILL.md"):
+        rel = skill_md.relative_to(skills_dir).parts
+        if not rel:
+            continue
+        if rel[0] == "vmie" or "vmie" in rel:
+            continue
+        if len(rel) < 2:
+            continue
+        out.add("/".join(rel[:-1]) + "/")
+    return out
+
+
 def _registry_listed_skills() -> set[str]:
     if not SKILLS_REGISTRY.exists():
         return set()
@@ -468,6 +548,17 @@ def _registry_listed_skills() -> set[str]:
     pattern = re.compile(r"`((?:[a-z0-9_\-]+/){2,}[a-z0-9_\-]+/)`")
     found = set(pattern.findall(text))
     # Also accept exact two-segment form
+    pattern2 = re.compile(r"`([a-z0-9_\-]+/[a-z0-9_\-]+/)`")
+    found |= set(pattern2.findall(text))
+    return found
+
+
+def _registry_listed_skills_from_file(registry_file: Path) -> set[str]:
+    if not registry_file.exists():
+        return set()
+    text = registry_file.read_text(encoding="utf-8")
+    pattern = re.compile(r"`((?:[a-z0-9_\-]+/){2,}[a-z0-9_\-]+/)`")
+    found = set(pattern.findall(text))
     pattern2 = re.compile(r"`([a-z0-9_\-]+/[a-z0-9_\-]+/)`")
     found |= set(pattern2.findall(text))
     return found
@@ -486,6 +577,86 @@ def check_skill_registry() -> CheckResult:
         r.failures.append(f"Skill listed in _registry.md but not on disk: {s}")
 
     r.info.append(f"disk={len(disk)} listed={len(listed)}")
+    r.passed = not r.failures
+    return r
+
+
+def check_skill_registry_in_dir(skills_dir: Path, label: str) -> CheckResult:
+    r = CheckResult(name=f"Skill registry — _registry.md vs disk ({label})")
+    disk = _disk_public_skills_from_dir(skills_dir)
+    listed = _registry_listed_skills_from_file(skills_dir / "_registry.md")
+
+    missing_in_registry = disk - listed
+    for s in sorted(missing_in_registry):
+        r.failures.append(f"Skill on disk but not in _registry.md: {s}")
+    extra_in_registry = listed - disk
+    if extra_in_registry:
+        r.info.append(f"extra registry-only entries (allowed in profile mode): {len(extra_in_registry)}")
+
+    r.info.append(f"disk={len(disk)} listed={len(listed)}")
+    r.passed = not r.failures
+    return r
+
+
+def _load_manifest_target(profile: str) -> dict | None:
+    if not RUNTIME_TARGETS.exists():
+        return None
+    try:
+        data = json.loads(RUNTIME_TARGETS.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    for target in data.get("targets", []):
+        if target.get("name") == profile:
+            return target
+    return None
+
+
+def check_profile_manifest_alignment(profile: str, profile_root: Path) -> CheckResult:
+    r = CheckResult(name=f"Profile manifest alignment — {profile}")
+    target = _load_manifest_target(profile)
+    if target is None:
+        r.passed = False
+        r.failures.append(f"Profile '{profile}' not found in runtime-targets.json")
+        return r
+
+    for copy_spec in target.get("copies", []):
+        excluded = set(copy_spec.get("excluded_names", []))
+        if not excluded:
+            continue
+        destination = profile_root / copy_spec.get("destination", "")
+        if not destination.exists():
+            continue
+        for name in excluded:
+            if (destination / name).exists():
+                r.failures.append(
+                    f"Excluded entry leaked into profile: {copy_spec.get('destination')}/{name}"
+                )
+
+    r.passed = not r.failures
+    return r
+
+
+def check_shannon_content_restrictions(profile_root: Path) -> CheckResult:
+    r = CheckResult(name="Shannon restrictions — forbidden resources excluded")
+    forbidden_paths = [
+        profile_root / "instructions" / "streamlit.instructions.md",
+        profile_root / "instructions" / "sql.instructions.md",
+        profile_root / "instructions" / "sql-stored-procedures.instructions.md",
+        profile_root / "instructions" / "mssql-dba.instructions.md",
+        profile_root / "skills" / "coding" / "sql",
+        profile_root / "skills" / "frontend" / "streamlit-dev",
+        profile_root / "skills" / "frontend" / "streamlit-animate",
+        profile_root / "skills" / "frontend" / "enterprise-dashboard-aesthetic-system",
+        profile_root / "skills" / "workflow" / "developer-growth-analysis",
+        profile_root / "skills" / "workflow" / "data-contract-pipeline",
+    ]
+    checked = 0
+    for forbidden in forbidden_paths:
+        checked += 1
+        if forbidden.exists():
+            rel = forbidden.relative_to(profile_root)
+            r.failures.append(f"Forbidden Shannon resource present: {rel}")
+    r.info.append(f"checked {checked} forbidden resources")
     r.passed = not r.failures
     return r
 
@@ -554,9 +725,19 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Also scan junai-vscode/pool and junai/.github mirrors.",
     )
+    parser.add_argument(
+        "--profile",
+        choices=["shannon", "liffey"],
+        help="Validate a specific exported profile under dist/runtime-resources/<profile>/.github.",
+    )
     args = parser.parse_args(argv)
 
     roots = _resolve_scan_roots(args)
+    profile_root: Path | None = None
+    if args.profile:
+        profile_root = DIST_RUNTIME_ROOT / args.profile / ".github"
+        profile_root_path: Path = cast(Path, profile_root)
+        roots = [profile_root_path]
 
     print("=" * 70)
     print("  validate_pool.py — junai pool validator")
@@ -564,15 +745,32 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  scope: {[str(p) for p in roots]}")
     print("-" * 70)
 
-    results = [
-        check_registry(),
-        check_gate_consistency(),
-        check_privacy_scan(roots),
-        check_generated_artifacts(roots),
-        check_prompts(),
-        check_skill_registry(),
-        check_golden_plan(),
-    ]
+    if args.profile:
+        if profile_root is None or not profile_root.exists():
+            print(f"[FAIL] Profile export not found: {profile_root}")
+            print("       Run export_runtime_resources.py for this profile first.")
+            return 1
+
+        results = [
+            check_dependency_closure_profile(args.profile, profile_root),
+            check_profile_manifest_alignment(args.profile, profile_root),
+            check_privacy_scan(roots),
+            check_generated_artifacts([profile_root.parent]),
+            check_prompts_in_dir(profile_root / "prompts", args.profile),
+            check_skill_registry_in_dir(profile_root / "skills", args.profile),
+        ]
+        if args.profile == "shannon":
+            results.append(check_shannon_content_restrictions(profile_root))
+    else:
+        results = [
+            check_registry(),
+            check_gate_consistency(),
+            check_privacy_scan(roots),
+            check_generated_artifacts(roots),
+            check_prompts(),
+            check_skill_registry(),
+            check_golden_plan(),
+        ]
 
     for result in results:
         _print_check(result)

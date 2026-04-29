@@ -43,21 +43,29 @@ agent-sandbox/
 
 ---
 
-## The Three-Repo System
+## The Four-Repo System
 
 ```
 agent-sandbox  (local only — authoring source)
     │
-    ├──▶  E:\Projects\junai-vscode   (VS Code extension — github.com/saajunaid/junai-vscode)
+    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\junai-vscode   (VS Code extension — github.com/saajunaid/junai-vscode)
     │         packaging builds runtime-specific project-local exports
     │
-    └──▶  E:\Projects\junai          (public pool mirror — github.com/saajunaid/junai)
-              sync.ps1 junai-push copies canonical `.github/` source and git pushes
+    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\junai          (public pool mirror — github.com/saajunaid/junai)
+    │         sync.ps1 junai-push copies canonical `.github/` source and git pushes
+    │
+    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\shannon        (subset pool + VS Code extension — github.com/saajunaid/shannon)
+    │         published to marketplace as junai-labs.shannon
+    │
+    └──▶  E:\Projects\agent-sandbox\vscode-extensions\liffey         (subset pool + VS Code extension — private/internal)
+              packaged as VSIX only; never marketplace-published
 ```
 
 - **agent-sandbox** is where you author all changes
 - **junai-vscode** is what marketplace users install; it compiles canonical resources into runtime-native project folders in workspaces
-- **junai** is the public-facing mirror of the pool for users who want to browse or fork agent definitions directly
+- **junai** is the public-facing mirror of the full pool for users who want to browse or fork agent definitions directly
+- **shannon** is the public subset extension lane
+- **liffey** is the internal subset extension lane (private distribution)
 
 ---
 
@@ -70,20 +78,28 @@ Each agent is defined in `.github/agents/<name>.agent.md`. Full model assignment
 
 ## Architecture Notes
 
-**Three-repo system:**
+**Four-repo system:**
 ```
 agent-sandbox  (local only, no remote — authoring source of truth)
     │
-    ├──▶  E:\Projects\junai-vscode   (VS Code extension — github.com/saajunaid/junai-vscode)
+    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\junai-vscode   (VS Code extension — github.com/saajunaid/junai-vscode)
     │         package step builds `.github/`, `.claude/`, `.codex/` project-local exports
     │
-    └──▶  E:\Projects\junai          (public pool mirror — github.com/saajunaid/junai)
-              sync.ps1 junai-push copies canonical `.github/` folders and git pushes
+    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\junai          (public pool mirror — github.com/saajunaid/junai)
+    │         sync.ps1 junai-push copies canonical `.github/` folders and git pushes
+    │
+    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\shannon        (subset pool + VS Code extension)
+    │         sync.ps1 sync-shannon + optional marketplace publish
+    │
+    └──▶  E:\Projects\agent-sandbox\vscode-extensions\liffey         (subset pool + VS Code extension)
+              sync.ps1 sync-liffey + internal VSIX package only
 ```
 
 - **agent-sandbox** — author all changes here; no remote; local commits only
 - **junai-vscode** — marketplace extension; bundles and deploys the pool
 - **junai** — public-facing mirror for users to browse/fork agent definitions
+- **shannon** — public subset extension lane (independent marketplace listing)
+- **liffey** — internal subset extension lane (private repo, VSIX distribution)
 
 **Runtime export architecture:** `.github/` is the only authoring source. Packaging builds project-local runtime folders per workspace: Copilot reads `.github/`, Claude reads `.claude/`, Codex reads `.codex/`. User-level deployment is intentionally unsupported by default to avoid duplicate loading and context bloat. `pipeline-state.json` and `project-config.md` are USER_OWNED and never overwritten by pool updates. `copilot-instructions.md` is no longer bundled wholesale — the extension manages only a sentinel-delimited `<!-- junai:start -->` section programmatically (v0.6.2+).
 
@@ -113,18 +129,32 @@ python export_runtime_resources.py
 python validate_pool.py --include-dist   # post-export pool audit
 
 # 4. Publish extension (junai-vscode)
-cd E:\Projects\junai-vscode
+cd E:\Projects\agent-sandbox\vscode-extensions\junai-vscode
 # edit package.json version
 git add package.json; git commit -m "chore: bump version to X.Y.Z"
 $env:VSCE_PAT = (Get-Content "vscode.pat" -Raw).Trim()
 npm run publish   # package runtime exports + tsc + vsce publish
 git push
 
-# 5. Sync pool mirror (junai)
-cd E:\Projects\junai
+# 5. Sync pool mirrors (junai + shannon + liffey)
+cd E:\Projects\agent-sandbox\vscode-extensions\junai
 git add .github/agents .github/skills .github/prompts .github/instructions .github/diagrams .github/tools
 git commit -m "feat: sync pool from agent-sandbox - YYYY-MM-DD"
 git push
+
+cd E:\Projects\agent-sandbox\vscode-extensions\shannon
+git add -A
+git commit -m "feat: sync shannon profile from agent-sandbox - YYYY-MM-DD"
+git push
+
+cd E:\Projects\agent-sandbox\vscode-extensions\liffey
+git add -A
+git commit -m "feat: sync liffey profile from agent-sandbox - YYYY-MM-DD"
+git push
+
+# 6. Internal package lane (liffey)
+cd E:\Projects\agent-sandbox\vscode-extensions\liffey
+npx vsce package --out dist\liffey-<version>.vsix
 ```
 
 **Packaging internals:** packaging reads canonical `.github/`, builds runtime-specific project-local exports for Copilot/Claude/Codex, skips excluded assets like `vmie`, writes version metadata, then publishes. The extension should never write equivalent resources into user-level folders.

@@ -11,12 +11,14 @@ Help turn ideas into fully formed designs and specs through natural collaborativ
 
 Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design in small sections (200-300 words), checking after each section whether it looks right so far.
 
+**Constraint priority order:** (1) always ask one question per message; (2) use multiple choice when options are well-defined; (3) validate incrementally after each design section.
+
 ## The Process
 
 **Understanding the idea:**
 - Check out the current project state first (files, docs, recent commits)
 - Ask questions one at a time to refine the idea
-- Prefer multiple choice questions when possible, but open-ended is fine too
+- Prefer multiple choice questions when the options are well-defined and constrained; use open-ended questions when exploring new or unclear ideas
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
 - Focus on understanding: purpose, constraints, success criteria
 
@@ -47,7 +49,7 @@ Start by understanding the current project context, then ask questions one at a 
 ## Key Principles
 
 - **One question at a time** - Don't overwhelm with multiple questions
-- **Multiple choice preferred** - Easier to answer than open-ended when possible
+- **Multiple choice preferred** - Use when options are well-defined; use open-ended when exploring new or unclear ideas
 - **YAGNI ruthlessly** - Remove unnecessary features from all designs
 - **Explore alternatives** - Always propose 2-3 approaches before settling
 - **Incremental validation** - Present design in sections, validate each

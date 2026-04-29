@@ -2,11 +2,11 @@
 # Dot-sourced by PowerShell profile. Provides junai-pull and junai-push globally.
 #
 # One-time setup (run once per machine):
-#   Add-Content $PROFILE "`n. 'E:\Projects\junai\sync.ps1'"
+#   Add-Content $PROFILE "`n. 'E:\Projects\agent-sandbox\sync.ps1'"
 #
 # If you previously had juno-ai in your profile, update the path:
 #   Old:  . 'E:\Projects\juno-ai\sync.ps1'
-#   New:  . 'E:\Projects\junai\sync.ps1'
+#   New:  . 'E:\Projects\agent-sandbox\sync.ps1'
 #
 # Usage from any project root:
 #   junai-pull                    pull latest pool from junai --> current project
@@ -19,11 +19,15 @@
 #   junai-export [OutputPath]     export pool to a local folder or zip (no GitHub needed)
 #   junai-import SourcePath        import pool from a local folder or zip into current project
 
-$JUNO_POOL = "E:\Projects\junai"
+$EXT_REPOS_ROOT = "E:\Projects\agent-sandbox\vscode-extensions"
+$JUNO_POOL = Join-Path $EXT_REPOS_ROOT "junai"
 $JUNO_GITHUB = "$JUNO_POOL\.github"
-$JUNAI_VSCODE = "E:\Projects\junai-vscode"
+$JUNAI_VSCODE = Join-Path $EXT_REPOS_ROOT "junai-vscode"
+$SHANNON_REPO = Join-Path $EXT_REPOS_ROOT "shannon"
+$LIFFEY_REPO = Join-Path $EXT_REPOS_ROOT "liffey"
 $PYPI_KEY_FILE = Join-Path $JUNO_POOL "pypimcp.key"
 $VSCE_PAT_FILE = Join-Path $JUNAI_VSCODE "vscode.pat"
+$SHANNON_PAT_FILE = Join-Path $SHANNON_REPO "shannon.pat"
 # NOTE: "plans" intentionally REMOVED from $POOL_FOLDERS as of 2026-04-27 (Phase 1.0
 # stop-the-bleed). Plans are tracked in agent-sandbox only; they never sync to the
 # public mirror. Do not re-add without explicit privacy review.
@@ -239,6 +243,19 @@ function junai-push {
     Write-Host "  Committed and pushed to junai." -ForegroundColor Magenta
     Write-Host ""
 
+    # Build profile exports used by downstream Shannon/Liffey sync lanes.
+    Push-Location $ProjectRoot
+    python export_runtime_resources.py --profile shannon --profile liffey --report
+    $profileExportOk = ($LASTEXITCODE -eq 0)
+    Pop-Location
+
+    if (-not $profileExportOk) {
+        Write-Host "  [WARN]  Profile export failed; skipping Shannon/Liffey cascade for this run." -ForegroundColor Yellow
+    } else {
+        sync-shannon -ProjectRoot $ProjectRoot -Message $Message -NoPublish:$NoPublish
+        sync-liffey -ProjectRoot $ProjectRoot -Message $Message
+    }
+
     # ── Auto-publish when key files exist ─────────────────────────────────
     $hasPypiKey = Test-Path $PYPI_KEY_FILE
     $hasVscePat = Test-Path $VSCE_PAT_FILE
@@ -264,6 +281,151 @@ function junai-push {
     }
 
     junai-release -McpVersion $McpVersion -SkipMcp:(-not $hasPypiKey) -SkipExtension:(-not $hasVscePat)
+}
+
+function Sync-JunaiProfileRepo {
+    param(
+        [Parameter(Mandatory)][string]$Profile,
+        [Parameter(Mandatory)][string]$ProjectRoot,
+        [Parameter(Mandatory)][string]$RepoPath,
+        [string]$Message = "",
+        [switch]$NoPush
+    )
+
+    $exportRoot = Join-Path $ProjectRoot "dist\runtime-resources\$Profile"
+    $sourceGithub = Join-Path $exportRoot ".github"
+    $targetGithub = Join-Path $RepoPath ".github"
+
+    if (-not (Test-Path $sourceGithub)) {
+        Write-Host "  [WARN]  $Profile export not found at $sourceGithub" -ForegroundColor Yellow
+        return $false
+    }
+    if (-not (Test-Path $RepoPath)) {
+        Write-Host "  [WARN]  $Profile repo not found at $RepoPath" -ForegroundColor Yellow
+        return $false
+    }
+
+    if (Test-Path $targetGithub) {
+        Remove-Item $targetGithub -Recurse -Force
+    }
+    Copy-Item $sourceGithub $RepoPath -Recurse -Force
+
+    Push-Location $RepoPath
+    git add -A | Out-Null
+    $hasChanges = (git status --porcelain) -ne $null
+    if (-not $hasChanges) {
+        Write-Host "  [--]  $Profile repo already up to date" -ForegroundColor DarkGray
+        Pop-Location
+        return $false
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Message)) {
+        $today = Get-Date -Format "yyyy-MM-dd"
+        $Message = "feat: sync $Profile profile from agent-sandbox - $today"
+    }
+
+    git commit -m $Message | Out-Null
+    if ($NoPush) {
+        Write-Host "  [OK]  $Profile committed locally (no push)" -ForegroundColor Green
+        Pop-Location
+        return $true
+    }
+
+    git push | Out-Null
+    Write-Host "  [OK]  $Profile committed + pushed" -ForegroundColor Green
+    Pop-Location
+    return $true
+}
+
+function sync-shannon {
+    param(
+        [string]$ProjectRoot = (Get-Location).Path,
+        [string]$Message = "",
+        [switch]$NoPush,
+        [switch]$NoPublish
+    )
+
+    Write-Host "  SHANNON SYNC  dist/runtime-resources/shannon --> $SHANNON_REPO" -ForegroundColor Cyan
+    $changed = Sync-JunaiProfileRepo -Profile "shannon" -ProjectRoot $ProjectRoot -RepoPath $SHANNON_REPO -Message $Message -NoPush:$NoPush
+    if (-not $changed -or $NoPush -or $NoPublish) {
+        return
+    }
+
+    if (-not (Test-Path $SHANNON_PAT_FILE)) {
+        Write-Host "  [--]  Shannon PAT missing; publish skipped." -ForegroundColor DarkGray
+        return
+    }
+
+    Push-Location $SHANNON_REPO
+    $changedFiles = git diff-tree --no-commit-id --name-only -r HEAD
+    $versionBumped = $changedFiles -contains "package.json"
+    if (-not $versionBumped) {
+        Write-Host "  [--]  package.json unchanged; Shannon publish skipped." -ForegroundColor DarkGray
+        Pop-Location
+        return
+    }
+
+    $pat = (Get-Content $SHANNON_PAT_FILE -Raw).Trim()
+    if ([string]::IsNullOrWhiteSpace($pat)) {
+        Write-Host "  [WARN]  Shannon PAT file empty; publish skipped." -ForegroundColor Yellow
+        Pop-Location
+        return
+    }
+
+    $prevVscePat = $env:VSCE_PAT
+    try {
+        $env:VSCE_PAT = $pat
+        npx vsce publish --pat $pat --no-dependencies
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  [WARN]  Shannon publish failed." -ForegroundColor Yellow
+        } else {
+            Write-Host "  [OK]  Shannon extension published." -ForegroundColor Green
+        }
+    } finally {
+        $env:VSCE_PAT = $prevVscePat
+        Pop-Location
+    }
+}
+
+function sync-liffey {
+    param(
+        [string]$ProjectRoot = (Get-Location).Path,
+        [string]$Message = "",
+        [switch]$NoPush
+    )
+
+    Write-Host "  LIFFEY SYNC   dist/runtime-resources/liffey --> $LIFFEY_REPO" -ForegroundColor Cyan
+    $changed = Sync-JunaiProfileRepo -Profile "liffey" -ProjectRoot $ProjectRoot -RepoPath $LIFFEY_REPO -Message $Message -NoPush:$NoPush
+    if (-not $changed) {
+        return
+    }
+
+    Push-Location $LIFFEY_REPO
+    if (-not (Test-Path (Join-Path $LIFFEY_REPO "package.json"))) {
+        Write-Host "  [--]  package.json not found in liffey repo; VSIX packaging skipped." -ForegroundColor DarkGray
+        Pop-Location
+        return
+    }
+
+    $pkg = Get-Content (Join-Path $LIFFEY_REPO "package.json") -Raw | ConvertFrom-Json
+    $version = $pkg.version
+    if ([string]::IsNullOrWhiteSpace($version)) {
+        $version = "0.0.0"
+    }
+
+    $distDir = Join-Path $LIFFEY_REPO "dist"
+    if (-not (Test-Path $distDir)) {
+        New-Item -ItemType Directory -Path $distDir | Out-Null
+    }
+
+    $vsixOut = Join-Path $distDir "liffey-$version.vsix"
+    npx vsce package --out $vsixOut --no-dependencies
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [WARN]  Liffey VSIX packaging failed." -ForegroundColor Yellow
+    } else {
+        Write-Host "  [OK]  Liffey VSIX prepared: $vsixOut" -ForegroundColor Green
+    }
+    Pop-Location
 }
 
 function junai-publish-mcp {

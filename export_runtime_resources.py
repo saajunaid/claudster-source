@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -36,30 +38,74 @@ def ensure_clean_dir(path: Path) -> None:
 CACHE_DIR_NAMES = {"__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".coverage", "htmlcov"}
 
 
+@dataclass
+class ExportStats:
+    profile: str
+    files_copied: int = 0
+    skipped_by_reason: dict[str, int] = field(default_factory=dict)
+    dependency_errors: list[str] = field(default_factory=list)
+
+    def bump_skip(self, reason: str, count: int = 1) -> None:
+        self.skipped_by_reason[reason] = self.skipped_by_reason.get(reason, 0) + count
+
+
 def _ignore_caches(_dir: str, names: list[str]) -> list[str]:
     """shutil.copytree ignore callable that drops Python cache dirs at every depth."""
     return [n for n in names if n in CACHE_DIR_NAMES]
 
 
-def copy_tree(source: Path, destination: Path, excluded_names: set[str] | None = None) -> None:
+def copy_tree(
+    source: Path,
+    destination: Path,
+    excluded_names: set[str] | None = None,
+    stats: ExportStats | None = None,
+) -> int:
     """Copy a directory tree while excluding top-level names when requested."""
     excluded_names = excluded_names or set()
     destination.mkdir(parents=True, exist_ok=True)
+    copied_files = 0
 
-    for child in source.iterdir():
-        if child.name in excluded_names or child.name in CACHE_DIR_NAMES:
-            continue
-        target = destination / child.name
-        if child.is_dir():
-            shutil.copytree(child, target, dirs_exist_ok=True, ignore=_ignore_caches)
-        else:
-            shutil.copy2(child, target)
+    for root_str, dirs, files in os.walk(source):
+        root = Path(root_str)
+        rel_root = root.relative_to(source)
+
+        kept_dirs: list[str] = []
+        for d in dirs:
+            if d in CACHE_DIR_NAMES:
+                if stats is not None:
+                    stats.bump_skip("cache_dir")
+                continue
+            if d in excluded_names:
+                if stats is not None:
+                    stats.bump_skip("excluded_name")
+                continue
+            kept_dirs.append(d)
+        dirs[:] = kept_dirs
+
+        for filename in files:
+            if filename in CACHE_DIR_NAMES:
+                if stats is not None:
+                    stats.bump_skip("cache_file")
+                continue
+            if filename in excluded_names:
+                if stats is not None:
+                    stats.bump_skip("excluded_name")
+                continue
+
+            src_file = root / filename
+            dest_dir = destination / rel_root
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_file, dest_dir / filename)
+            copied_files += 1
+
+    return copied_files
 
 
-def copy_file(source: Path, destination: Path) -> None:
+def copy_file(source: Path, destination: Path) -> int:
     """Copy a single file, creating parent directories when necessary."""
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
+    return 1
 
 
 def convert_tools_to_claude_format(copilot_tools: list[str]) -> str:
@@ -160,11 +206,36 @@ def _normalize_paths(paths: list[str]) -> set[str]:
     return {p.replace("\\", "/").strip("/") for p in paths if p}
 
 
-def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> None:
+def _check_dependency_closure(workspace_root: Path, stats: ExportStats) -> None:
+    """Validate all agent_file references in agents.registry.json resolve in exported profile."""
+    registry_path = workspace_root / "tools" / "pipeline-runner" / "agents.registry.json"
+    if not registry_path.exists():
+        stats.dependency_errors.append(f"Missing registry file: {registry_path}")
+        return
+
+    try:
+        registry_data = json.loads(registry_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        stats.dependency_errors.append(f"Invalid registry JSON: {exc}")
+        return
+
+    for stage_name, info in (registry_data.get("stages") or {}).items():
+        agent_file = info.get("agent_file")
+        if not agent_file:
+            continue
+        resolved = workspace_root / agent_file
+        if not resolved.exists():
+            stats.dependency_errors.append(
+                f"Stage '{stage_name}' references missing agent file: {agent_file}"
+            )
+
+
+def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportStats:
     """Export one runtime target from the canonical .github source."""
     canonical_root = PROJECT_ROOT / manifest["canonical_root"]
     output_root = PROJECT_ROOT / manifest["output_root"] / target["name"]
     workspace_root = output_root / target["workspace_root"]
+    stats = ExportStats(profile=target["name"])
     exclusion_cfg = manifest.get("exclusions", {})
     skill_exclusions = set(exclusion_cfg.get("skills", []))
     private_roots = set(exclusion_cfg.get("private_roots", []))
@@ -176,23 +247,34 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> None:
         source_rel = copy_spec["source"].replace("\\", "/").strip("/")
         if source_rel in private_paths or source_rel in private_roots:
             print(f"[SKIP] {target['name']}: copy '{source_rel}' is in exclusions")
+            stats.bump_skip("private_path")
             continue
         source = canonical_root / copy_spec["source"]
         destination = workspace_root / copy_spec["destination"]
         excluded_names: set[str] = set(private_roots)
         if source_rel == "skills":
             excluded_names |= skill_exclusions
-        copy_tree(source, destination, excluded_names=excluded_names)
+        excluded_names |= set(copy_spec.get("excluded_names", []))
+        if not source.exists():
+            stats.bump_skip("missing_source")
+            print(f"[SKIP] {target['name']}: source '{source_rel}' does not exist")
+            continue
+        stats.files_copied += copy_tree(source, destination, excluded_names=excluded_names, stats=stats)
 
     for file_spec in target.get("files", []):
         source_rel = file_spec["source"].replace("\\", "/").strip("/")
         top = source_rel.split("/", 1)[0]
         if source_rel in private_paths or top in private_paths or top in private_roots:
             print(f"[SKIP] {target['name']}: file '{source_rel}' is in exclusions")
+            stats.bump_skip("private_path")
             continue
         source = canonical_root / file_spec["source"]
         destination = workspace_root / file_spec["destination"]
-        copy_file(source, destination)
+        if not source.exists():
+            stats.bump_skip("missing_source")
+            print(f"[SKIP] {target['name']}: file '{source_rel}' does not exist")
+            continue
+        stats.files_copied += copy_file(source, destination)
 
     for transform_spec in target.get("transforms", []):
         source_dir = canonical_root / transform_spec["source"]
@@ -210,6 +292,43 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> None:
         else:
             raise ValueError(f"Unsupported transform type: {transform_spec['type']}")
 
+    if target.get("dependency_closure"):
+        _check_dependency_closure(workspace_root, stats)
+
+    return stats
+
+
+def _select_targets(manifest: dict[str, Any], profiles: list[str] | None) -> list[dict[str, Any]]:
+    targets = manifest["targets"]
+    if not profiles:
+        return targets
+    requested = {p.strip() for p in profiles if p and p.strip()}
+    selected = [t for t in targets if t.get("name") in requested]
+    if len(selected) != len(requested):
+        known = {t.get("name") for t in targets}
+        missing = sorted(requested - known)
+        raise ValueError(f"Unknown profile(s): {', '.join(missing)}; known: {', '.join(sorted(known))}")
+    return selected
+
+
+def _print_report(all_stats: list[ExportStats]) -> None:
+    print("\n=== Export report ===")
+    for stats in all_stats:
+        print(f"profile={stats.profile}")
+        print(f"  files_copied: {stats.files_copied}")
+        if stats.skipped_by_reason:
+            print("  skipped:")
+            for reason, count in sorted(stats.skipped_by_reason.items()):
+                print(f"    - {reason}: {count}")
+        else:
+            print("  skipped: none")
+        if stats.dependency_errors:
+            print("  dependency_errors:")
+            for err in stats.dependency_errors:
+                print(f"    - {err}")
+        else:
+            print("  dependency_errors: none")
+
 
 def main() -> int:
     """Build runtime-specific resource exports from the canonical .github source."""
@@ -220,6 +339,16 @@ def main() -> int:
         default=DEFAULT_MANIFEST_PATH,
         help="Path to the runtime export manifest.",
     )
+    parser.add_argument(
+        "--profile",
+        action="append",
+        help="Export only the named profile(s). Repeat the flag to select multiple.",
+    )
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help="Print per-profile export counts, skip counts, and dependency errors.",
+    )
     args = parser.parse_args()
 
     manifest = load_manifest(args.manifest)
@@ -228,15 +357,39 @@ def main() -> int:
         exclusion_cfg.get("skills", [])
     ) | _normalize_paths(exclusion_cfg.get("private_paths", []))
 
-    for target in manifest["targets"]:
-        export_target(manifest, target)
+    all_stats: list[ExportStats] = []
+    try:
+        selected_targets = _select_targets(manifest, args.profile)
+    except ValueError as exc:
+        print(f"[FAIL] {exc}")
+        return 1
+
+    for target in selected_targets:
+        stats = export_target(manifest, target)
+        all_stats.append(stats)
         print(f"[OK] Exported {target['name']} resources")
+
+    if args.report:
+        _print_report(all_stats)
+
+    dependency_errors = [
+        f"{stats.profile}: {err}" for stats in all_stats for err in stats.dependency_errors
+    ]
+    if dependency_errors:
+        print(f"[FAIL] Dependency closure errors detected ({len(dependency_errors)}):")
+        for err in dependency_errors:
+            print(f"   - {err}")
+        return 1
 
     # Post-export verification: no private content in any output tree
     output_root = PROJECT_ROOT / manifest["output_root"]
     leaks: list[str] = []
+    target_names = {t["name"] for t in selected_targets}
     for path in output_root.rglob("*"):
-        if any(part in forbidden_names for part in path.relative_to(output_root).parts):
+        rel_parts = path.relative_to(output_root).parts
+        if rel_parts and rel_parts[0] not in target_names:
+            continue
+        if any(part in forbidden_names for part in rel_parts):
             leaks.append(str(path.relative_to(output_root)))
     if leaks:
         print(f"[FAIL] Private content leaked into export ({len(leaks)} paths):")

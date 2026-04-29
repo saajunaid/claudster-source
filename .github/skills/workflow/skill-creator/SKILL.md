@@ -10,7 +10,7 @@ A skill for creating new skills and iteratively improving them.
 
 At a high level, the process of creating a skill goes like this:
 
-- Decide what you want the skill to do and roughly how it should do it
+- Decide what you want the skill to do and how it should work at a high level (key functions and general approach)
 - Write a draft of the skill
 - Create a few test prompts and run claude-with-access-to-the-skill on them
 - Help the user evaluate the results both qualitatively and quantitatively
@@ -20,15 +20,20 @@ At a high level, the process of creating a skill goes like this:
 - Repeat until you're satisfied
 - Expand the test set and try again at larger scale
 
-Your job when using this skill is to figure out where the user is in this process and then jump in and help them progress through these stages. So for instance, maybe they're like "I want to make a skill for X". You can help narrow down what they mean, write a draft, write the test cases, figure out how they want to evaluate, run all the prompts, and repeat.
+Priority order when time is limited:
+1. Scope alignment (what the skill should do and when it should trigger)
+2. Usability validation (test prompts + human review)
+3. Quantitative rigor (benchmarks, variance analysis, assertions)
+4. Trigger optimization (description optimization loop)
 
-On the other hand, maybe they already have a draft of the skill. In this case you can go straight to the eval/iterate part of the loop.
+Your job when using this skill is to identify where the user is in the process and guide them forward. Use this decision flow:
 
-Of course, you should always be flexible and if the user is like "I don't need to run a bunch of evaluations, just vibe with me", you can do that instead.
+1. If the user has only an idea, run intent capture and draft the first SKILL.md.
+2. If the user already has a draft, skip to eval + iterate.
+3. If the user wants a lightweight workflow (for example, "no heavy evals"), use a lighter path: at minimum run a small test set and a human review pass before finalizing.
+4. If the user requests full rigor, run the complete benchmark + viewer + iteration loop.
 
 Then after the skill is done (but again, the order is flexible), you can also run the skill description improver, which we have a whole separate script for, to optimize the triggering of the skill.
-
-Cool? Cool.
 
 ## Communicating with the user
 

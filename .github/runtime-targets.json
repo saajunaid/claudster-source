@@ -32,6 +32,68 @@
       ]
     },
     {
+      "name": "shannon",
+      "workspace_root": ".github",
+      "files": [
+        {"source": "project-config.md", "destination": "project-config.md"},
+        {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"},
+        {"source": "handoffs/README.md", "destination": "handoffs/README.md"}
+      ],
+      "copies": [
+        {"source": "agents", "destination": "agents"},
+        {
+          "source": "skills",
+          "destination": "skills",
+          "excluded_names": [
+            "sql",
+            "streamlit-dev",
+            "streamlit-animate",
+            "enterprise-dashboard-aesthetic-system",
+            "developer-growth-analysis",
+            "data-contract-pipeline"
+          ]
+        },
+        {
+          "source": "instructions",
+          "destination": "instructions",
+          "excluded_names": [
+            "sql.instructions.md",
+            "sql-stored-procedures.instructions.md",
+            "mssql-dba.instructions.md",
+            "streamlit.instructions.md"
+          ]
+        },
+        {"source": "prompts", "destination": "prompts"},
+        {"source": "tools", "destination": "tools"},
+        {"source": "recipes", "destination": "recipes"},
+        {"source": "diagrams", "destination": "diagrams"},
+        {"source": "agent-docs", "destination": "agent-docs"},
+        {"source": "handoffs", "destination": "handoffs"}
+      ],
+      "dependency_closure": true
+    },
+    {
+      "name": "liffey",
+      "workspace_root": ".github",
+      "files": [
+        {"source": "project-config.md", "destination": "project-config.md"},
+        {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"},
+        {"source": "handoffs/README.md", "destination": "handoffs/README.md"}
+      ],
+      "copies": [
+        {"source": "agents", "destination": "agents"},
+        {"source": "skills", "destination": "skills"},
+        {"source": "instructions", "destination": "instructions"},
+        {"source": "prompts", "destination": "prompts"},
+        {"source": "tools", "destination": "tools"},
+        {"source": "recipes", "destination": "recipes"},
+        {"source": "diagrams", "destination": "diagrams"},
+        {"source": "agent-docs", "destination": "agent-docs"},
+        {"source": "handoffs", "destination": "handoffs"}
+      ],
+      "dependency_closure": true
+    },
+    {
       "name": "codex",
       "workspace_root": ".codex",
       "copies": [

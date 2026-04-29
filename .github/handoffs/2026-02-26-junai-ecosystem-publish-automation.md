@@ -16,8 +16,8 @@ This session completed a multi-phase pipeline hardening and publish automation e
 
 | Repo | Path | Remote | Role |
 |------|------|--------|------|
-| `junai` | `E:\Projects\junai` | GitHub `saajunaid/junai` | Pool template + PyPI source + sync.ps1 |
-| `junai-vscode` | `E:\Projects\junai-vscode` | GitHub `saajunaid/junai-vscode` | VS Code extension (VSIX + marketplace) |
+| `junai` | `E:\Projects\agent-sandbox\vscode-extensions\junai` | GitHub `saajunaid/junai` | Pool template + PyPI source + sync.ps1 |
+| `junai-vscode` | `E:\Projects\agent-sandbox\vscode-extensions\junai-vscode` | GitHub `saajunaid/junai-vscode` | VS Code extension (VSIX + marketplace) |
 | `agent-sandbox` | `E:\Projects\agent-sandbox` | local only (no remote) | Active development + pool bundle source |
 | `Customer360` | `E:\Projects\Customer360` | GitHub | Working project (gitignores agents/skills) |
 
@@ -32,10 +32,10 @@ This session completed a multi-phase pipeline hardening and publish automation e
 - **Anchor agent** (`anchor.agent.md`) — adversarial review agent added to pool; cross-artifact drift protection
 - **24-agent pool** — all 4 repos synced; agent-sandbox is the canonical source
 - **9 MCP tools** — `skip_stage` added; all READMEs updated
-- **junai local `.venv`** — `E:\Projects\junai\.venv` bootstrapped with Python 3.14 (`C:/Users/jshaik/.local/bin/python3.14.exe`), contains `build` + `twine 6.2.0`; Customer360 venv dependency eliminated
+- **junai local `.venv`** — `E:\Projects\agent-sandbox\vscode-extensions\junai\.venv` bootstrapped with Python 3.14 (`C:/Users/jshaik/.local/bin/python3.14.exe`), contains `build` + `twine 6.2.0`; Customer360 venv dependency eliminated
 - **Key file automation** (`junai-release` in `sync.ps1`):
-  - Reads `E:\Projects\junai\pypimcp.key` → sets `TWINE_USERNAME=__token__`, `TWINE_PASSWORD`
-  - Reads `E:\Projects\junai-vscode\vscode.pat` → sets `VSCE_PAT`
+  - Reads `E:\Projects\agent-sandbox\vscode-extensions\junai\pypimcp.key` → sets `TWINE_USERNAME=__token__`, `TWINE_PASSWORD`
+  - Reads `E:\Projects\agent-sandbox\vscode-extensions\junai-vscode\vscode.pat` → sets `VSCE_PAT`
   - Both files gitignored (`*.key`, `*.pat`) AND vscodeignored
 - **`junai-push` auto-publish** — default behaviour when key files exist; `-NoPublish` to skip
 - **Security fix** — `vscode.pat` was accidentally bundled in v0.4.0 VSIX; PAT rotated, `*.pat`/`*.key` added to `.vscodeignore`, clean v0.4.1 published
@@ -61,14 +61,14 @@ This session completed a multi-phase pipeline hardening and publish automation e
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `E:\Projects\junai\sync.ps1` | MODIFY | Added `junai-release`, `-NoPublish`/auto-publish, local venv publish, `$JUNAI_VSCODE`/`$PYPI_KEY_FILE`/`$VSCE_PAT_FILE` globals |
-| `E:\Projects\junai\.gitignore` | MODIFY | Added `pypimcp.key`, `*.key` |
-| `E:\Projects\junai\README.md` | MODIFY | 24 agents, 9 tools, junai-release command, correct model tiers, What's Coming updated |
-| `E:\Projects\junai\.venv\` | CREATE | Bootstrapped Python 3.14 venv with build + twine |
-| `E:\Projects\junai-vscode\package.json` | MODIFY | v0.4.3, updated description, `npx vsce` for publish/package |
-| `E:\Projects\junai-vscode\.gitignore` | MODIFY | Added `vscode.pat`, `*.pat` |
-| `E:\Projects\junai-vscode\.vscodeignore` | MODIFY | Added `*.pat`, `*.key` (security fix) |
-| `E:\Projects\junai-vscode\README.md` | MODIFY | 24 agents, 9 tools, Anchor row, skip_stage row |
+| `E:\Projects\agent-sandbox\vscode-extensions\junai\sync.ps1` | MODIFY | Added `junai-release`, `-NoPublish`/auto-publish, local venv publish, `$JUNAI_VSCODE`/`$PYPI_KEY_FILE`/`$VSCE_PAT_FILE` globals |
+| `E:\Projects\agent-sandbox\vscode-extensions\junai\.gitignore` | MODIFY | Added `pypimcp.key`, `*.key` |
+| `E:\Projects\agent-sandbox\vscode-extensions\junai\README.md` | MODIFY | 24 agents, 9 tools, junai-release command, correct model tiers, What's Coming updated |
+| `E:\Projects\agent-sandbox\vscode-extensions\junai\.venv\` | CREATE | Bootstrapped Python 3.14 venv with build + twine |
+| `E:\Projects\agent-sandbox\vscode-extensions\junai-vscode\package.json` | MODIFY | v0.4.3, updated description, `npx vsce` for publish/package |
+| `E:\Projects\agent-sandbox\vscode-extensions\junai-vscode\.gitignore` | MODIFY | Added `vscode.pat`, `*.pat` |
+| `E:\Projects\agent-sandbox\vscode-extensions\junai-vscode\.vscodeignore` | MODIFY | Added `*.pat`, `*.key` (security fix) |
+| `E:\Projects\agent-sandbox\vscode-extensions\junai-vscode\README.md` | MODIFY | 24 agents, 9 tools, Anchor row, skip_stage row |
 | `E:\Projects\agent-sandbox\.github\tools\mcp-server\README.md` | MODIFY | Full 9-tool listing |
 | `E:\Projects\Customer360\.github\tools\mcp-server\README.md` | MODIFY | Full 9-tool listing (canonical source) |
 
@@ -150,8 +150,8 @@ junai-release -SkipMcp
 ```
 
 Key files (do not commit, gitignored):
-- `E:\Projects\junai\pypimcp.key` — PyPI token (must start with `pypi-`)
-- `E:\Projects\junai-vscode\vscode.pat` — Azure DevOps PAT
+- `E:\Projects\agent-sandbox\vscode-extensions\junai\pypimcp.key` — PyPI token (must start with `pypi-`)
+- `E:\Projects\agent-sandbox\vscode-extensions\junai-vscode\vscode.pat` — Azure DevOps PAT
 
 ---
 
@@ -169,7 +169,7 @@ This handoff document is the entry point for the next session. The agent-sandbox
 
 ### Files to Read First in New Session
 1. This file: `.github/handoffs/2026-02-26-junai-ecosystem-publish-automation.md`
-2. `E:\Projects\junai\sync.ps1` — full command reference
+2. `E:\Projects\agent-sandbox\vscode-extensions\junai\sync.ps1` — full command reference
 3. `E:\Projects\agent-sandbox\.github\tools\mcp-server\README.md` — MCP tool reference
 
 ---
