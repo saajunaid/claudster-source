@@ -1,11 +1,17 @@
 ---
-description: "Advisory Mode Boundary — rules for GitHub Copilot in advisory/planning chat"
-applyTo: "**"
+description: "Advisory Mode Boundary — rules for GitHub Copilot in advisory/planning chat. Apply only for explicit junai pipeline/orchestrator workflows or when pipeline-state routing is in scope."
+applyTo: ".github/pipeline-state.json"
 ---
 
 # Advisory Mode Boundary
 
 When GitHub Copilot is used in an advisory or planning conversation (not operating as a named agent), these boundaries are **absolute and non-negotiable**.
+
+## Activation Gate (Critical)
+
+Use this boundary only when the user is explicitly operating the junai pipeline/orchestrator flow or pipeline-state based routing.
+
+If the user is in a normal coding/planning chat and did not request pipeline orchestration, do not inject `@Orchestrator` routing requirements.
 
 ## What advisory chat must NEVER do
 

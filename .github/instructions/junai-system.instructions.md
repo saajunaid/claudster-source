@@ -1,11 +1,21 @@
 ---
-description: "junai agent pipeline system documentation — 25 agents, MCP tools, pipeline flow, routing conventions. Pool-managed: refreshed on every junai update."
-applyTo: "**"
+description: "junai agent pipeline system documentation — 25 agents, MCP tools, pipeline flow, routing conventions. Pool-managed: refreshed on every junai update. Apply only when the user explicitly requests junai pipeline/orchestrator workflow or when editing `.github/pipeline-state.json`/pipeline artifacts."
+applyTo: ".github/pipeline-state.json"
 ---
 
 # junai Agent Pipeline — System Reference
 
 This file is deployed and maintained by the junai VS Code extension. It is refreshed automatically when you run **Update Agent Pool** — do not edit it by hand. For project-specific context, edit `.github/copilot-instructions.md` instead (the extension manages only a small `<!-- junai:start -->` … `<!-- junai:end -->` section there; your content outside the markers is never touched).
+
+## Activation Gate (Critical)
+
+Apply this instruction set only when at least one condition is true:
+
+1. The user explicitly asks for **junai pipeline** execution, **@Orchestrator**, or pipeline mode management.
+2. The task directly involves `.github/pipeline-state.json` or pipeline-stage routing.
+3. The user explicitly asks for managed stage handoff behavior (supervised/assisted/autopilot loop).
+
+If none of the above are true, treat this as a normal coding/planning session and do not force pipeline routing language.
 
 ---
 

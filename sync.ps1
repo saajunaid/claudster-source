@@ -36,6 +36,28 @@ $PRIVATE_ROOT_FOLDERS = @("vmie")
 # Fully-managed folders: wiped before copy so renamed/moved/deleted files don't persist
 $CLEAN_FOLDERS = @("agents", "skills", "prompts", "instructions", "tools", "recipes")
 
+function Remove-JunaiCacheDirs {
+    param(
+        [Parameter(Mandatory)][string]$RootPath,
+        [string]$Label = ""
+    )
+
+    if (-not (Test-Path $RootPath)) { return }
+
+    $cacheNames = @("__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache", "htmlcov")
+    $cacheDirs = Get-ChildItem $RootPath -Recurse -Directory -Force -ErrorAction SilentlyContinue |
+        Where-Object { $cacheNames -contains $_.Name }
+
+    foreach ($dir in $cacheDirs) {
+        Remove-Item $dir.FullName -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    if ($cacheDirs.Count -gt 0) {
+        if ([string]::IsNullOrWhiteSpace($Label)) { $Label = $RootPath }
+        Write-Host "  [OK]  cache sweep ($Label): removed $($cacheDirs.Count) generated cache folder(s)" -ForegroundColor Green
+    }
+}
+
 function junai-pull {
     param([string]$ProjectRoot = (Get-Location).Path)
 
@@ -51,20 +73,28 @@ function junai-pull {
     Write-Host "  JUNAI PULL  junai --> $(Split-Path $ProjectRoot -Leaf)" -ForegroundColor Cyan
     Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
 
+    # Pre-sync hygiene: drop generated caches in pool + target project .github
+    Remove-JunaiCacheDirs -RootPath $JUNO_GITHUB -Label "pool"
+    Remove-JunaiCacheDirs -RootPath $target -Label "project"
+
     foreach ($folder in $POOL_FOLDERS) {
         $src = Join-Path $JUNO_GITHUB $folder
+        $dest = Join-Path $target $folder
         if (Test-Path $src) {
-            # Clean deploy for fully-managed dirs: wipe first to remove stale files
-            if ($CLEAN_FOLDERS -contains $folder) {
-                $dest = Join-Path $target $folder
-                if (Test-Path $dest) {
-                    Remove-Item $dest -Recurse -Force
-                }
+            # Clean destination first to avoid folder nesting and stale files.
+            if (Test-Path $dest) {
+                Remove-Item $dest -Recurse -Force
             }
             Copy-Item $src $target -Recurse -Force
             Write-Host "  [OK]  $folder" -ForegroundColor Green
         } else {
-            Write-Host "  [--]  $folder - not found in pool, skipped" -ForegroundColor Yellow
+            # If a folder no longer exists in pool, remove stale copy locally.
+            if (Test-Path $dest) {
+                Remove-Item $dest -Recurse -Force
+                Write-Host "  [OK]  $folder - removed stale local folder" -ForegroundColor Green
+            } else {
+                Write-Host "  [--]  $folder - not found in pool, skipped" -ForegroundColor Yellow
+            }
         }
     }
 
@@ -114,13 +144,30 @@ function junai-push {
     Write-Host "  JUNAI PUSH  $(Split-Path $ProjectRoot -Leaf) --> junai" -ForegroundColor Magenta
     Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
 
+    # Pre-sync hygiene: remove generated caches on both sides so they never leak
+    # into the public mirror or get reintroduced by additive copies.
+    Remove-JunaiCacheDirs -RootPath $source -Label "source"
+    Remove-JunaiCacheDirs -RootPath $JUNO_GITHUB -Label "mirror"
+
     foreach ($folder in $POOL_FOLDERS) {
         $src = Join-Path $source $folder
+        $dest = Join-Path $JUNO_GITHUB $folder
         if (Test-Path $src) {
+            # Clean destination first to prevent nested folder copies (e.g. diagrams/diagrams)
+            # and to ensure moved/deleted files are mirrored correctly.
+            if (Test-Path $dest) {
+                Remove-Item $dest -Recurse -Force
+            }
             Copy-Item $src $JUNO_GITHUB -Recurse -Force
             Write-Host "  [OK]  $folder" -ForegroundColor Green
         } else {
-            Write-Host "  [--]  $folder - not in project, skipped" -ForegroundColor DarkGray
+            # Source no longer has this folder: remove stale mirror copy.
+            if (Test-Path $dest) {
+                Remove-Item $dest -Recurse -Force
+                Write-Host "  [OK]  $folder - removed stale mirror folder" -ForegroundColor Green
+            } else {
+                Write-Host "  [--]  $folder - not in project, skipped" -ForegroundColor DarkGray
+            }
         }
     }
 
@@ -173,7 +220,9 @@ function junai-push {
     }
     # ──────────────────────────────────────────────────────────────────────────
 
-    git add .github/agents .github/skills .github/prompts .github/instructions .github/diagrams .github/tools .github/recipes .github/runtime-targets.json export_runtime_resources.py | Out-Null
+    # Stage all tracked/untracked/deleted files in junai so source deletions and
+    # folder moves are guaranteed to propagate.
+    git add -A | Out-Null
 
     if ([string]::IsNullOrWhiteSpace($Message)) {
         $projectName = Split-Path $ProjectRoot -Leaf
@@ -572,9 +621,17 @@ function junai-export {
     Write-Host "  JUNAI EXPORT  junai --> $OutputPath" -ForegroundColor Cyan
     Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
 
+    # Pre-export hygiene: remove generated caches from source + export target.
+    Remove-JunaiCacheDirs -RootPath $JUNO_GITHUB -Label "pool"
+    Remove-JunaiCacheDirs -RootPath $OutputPath -Label "export"
+
     foreach ($folder in $POOL_FOLDERS) {
         $src = Join-Path $JUNO_GITHUB $folder
+        $dest = Join-Path $OutputPath $folder
         if (Test-Path $src) {
+            if (Test-Path $dest) {
+                Remove-Item $dest -Recurse -Force
+            }
             Copy-Item $src $OutputPath -Recurse -Force
             Write-Host "  [OK]  $folder" -ForegroundColor Green
         } else {
@@ -648,13 +705,28 @@ function junai-import {
     Write-Host "  JUNAI IMPORT  $SourcePath --> $(Split-Path $ProjectRoot -Leaf)" -ForegroundColor Cyan
     Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
 
+    # Pre-import hygiene: remove generated caches in import source + target.
+    Remove-JunaiCacheDirs -RootPath $SourcePath -Label "import source"
+    Remove-JunaiCacheDirs -RootPath $target -Label "project"
+
     foreach ($folder in $POOL_FOLDERS) {
         $src = Join-Path $SourcePath $folder
+        $dest = Join-Path $target $folder
         if (Test-Path $src) {
+            # Clean destination first to prevent folder nesting and stale files.
+            if (Test-Path $dest) {
+                Remove-Item $dest -Recurse -Force
+            }
             Copy-Item $src $target -Recurse -Force
             Write-Host "  [OK]  $folder" -ForegroundColor Green
         } else {
-            Write-Host "  [--]  $folder - not in export, skipped" -ForegroundColor Yellow
+            # Import source no longer has this folder: remove stale local copy.
+            if (Test-Path $dest) {
+                Remove-Item $dest -Recurse -Force
+                Write-Host "  [OK]  $folder - removed stale local folder" -ForegroundColor Green
+            } else {
+                Write-Host "  [--]  $folder - not in export, skipped" -ForegroundColor Yellow
+            }
         }
     }
 
