@@ -1,6 +1,6 @@
 ---
 name: golden-plan
-description: "USE THIS SKILL whenever a user asks for a comprehensive implementation plan, a full-stack build plan, a UI+backend plan, or says 'create a plan for building X' where X spans multiple phases or systems. Also activate when the user says 'plan this project', 'I need a detailed plan', 'build plan', 'implementation plan', or attaches a mockup/wireframe and asks how to build it. Produces a zero-ambiguity, evidence-gated plan with self-contained per-phase prompts, exhaustive data binding tables, per-phase validation checklists, and a global quality gate. Evidence-gated: will not write a single phase until it has verified or asked for required artefacts (mockup, data sample, API contract, scaffold inventory). Agent-agnostic — any agent with read/search/edit tools can use this skill."
+description: "USE THIS SKILL whenever a user asks for a comprehensive implementation plan, a full-stack build plan, a UI+backend plan, or says 'create a plan for building X' where X spans multiple phases or systems. Also activate when the user says 'plan this project', 'I need a detailed plan', 'build plan', 'implementation plan', or attaches a mockup/wireframe and asks how to build it. Produces a zero-ambiguity, evidence-gated plan with self-contained per-phase prompts, exhaustive data binding tables, per-phase validation checklists, and a global quality gate. Evidence-gated: will not write a single phase until it has verified or asked for required artefacts (mockup, data sample, API contract, scaffold inventory). Dual-mode: generic by default, junai-pipeline only when explicitly requested. Agent-agnostic — any agent with read/search/edit tools can use this skill."
 ---
 
 # Golden Plan
@@ -19,6 +19,17 @@ Do NOT use for:
 - Simple bug fixes or single-file changes (use `large-task-fidelity.instructions.md` alone)
 - Exploratory plans with vague scope (use `brainstorming/SKILL.md` first to harden scope)
 - Plans that only touch one system in isolation with no data binding (use `docs/writing-plans/SKILL.md`)
+
+---
+
+## Execution Mode (Required first step)
+
+Before Phase 0, explicitly choose an execution mode:
+
+- **Mode A — `generic` (default):** no junai pipeline assumptions, no orchestrator routing requirements, works with default Copilot/default agents.
+- **Mode B — `junai-pipeline` (opt-in):** include orchestrator/stage-routing conventions and pipeline artefact conventions.
+
+If the user does not explicitly request junai pipeline, use `generic`.
 
 ---
 
@@ -140,6 +151,7 @@ Write the plan to the output file. Follow this template **in full**. Do not omit
 
 > **Updated:** YYYY-MM-DD
 > **Status:** READY FOR EXECUTION
+> **Execution mode:** `generic` <!-- or `junai-pipeline` -->
 > **Visual reference:** [path to mockup or "N/A"]
 > **Data source:** [path to canonical data sample or "See E3 — API Contract section"]
 > **Output destination:** [path where plan is saved]
@@ -155,8 +167,11 @@ Write the plan to the output file. Follow this template **in full**. Do not omit
 
 ## Manual Execution Protocol
 
-Each phase runs in a **separate chat session**. After each phase, return to advisory chat for
+Each phase runs in a **separate chat session**. After each phase, return for
 validation before starting the next.
+
+- In **`generic` mode**, use normal chat + selected agent(s) directly.
+- In **`junai-pipeline` mode**, follow orchestrator routing and stage sequencing.
 
 **Per-phase workflow:**
 1. Open a new chat session with the agent named in the phase header
@@ -390,10 +405,10 @@ When a new phase must be inserted into an **existing plan** (discovered mid-proj
 
 Save the completed plan to:
 
-- `.github/plans/<feature-slug>.md` — if part of an active pipeline run
-- `.github/plans/backlog/<feature-slug>.md` — if not yet scheduled
+- `.github/plans/<feature-slug>.md` — default for both modes
+- `.github/plans/backlog/<feature-slug>.md` — optional backlog location
 
-Register the artefact in `.github/agent-docs/ARTIFACTS.md` with `status: current`.
+If mode is **`junai-pipeline`**, additionally register the artefact in `.github/agent-docs/ARTIFACTS.md` with `status: current`.
 
 **Next step after saving:** Load `.github/skills/workflow/preflight/SKILL.md` and run it against the completed plan before any agent begins implementation. Preflight catches wrong endpoints, stale type names, missing dependencies, and field name mismatches that slipped past plan authorship — far cheaper to fix in the plan than mid-implementation.
 
