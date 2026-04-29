@@ -36,8 +36,7 @@
       "workspace_root": ".github",
       "files": [
         {"source": "project-config.md", "destination": "project-config.md"},
-        {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"},
-        {"source": "handoffs/README.md", "destination": "handoffs/README.md"}
+        {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"}
       ],
       "copies": [
         {"source": "agents", "destination": "agents"},
@@ -63,12 +62,62 @@
             "streamlit.instructions.md"
           ]
         },
-        {"source": "prompts", "destination": "prompts"},
-        {"source": "tools", "destination": "tools"},
+        {
+          "source": "prompts",
+          "destination": "prompts",
+          "included_names": [
+            "adr.prompt.md",
+            "advisory-hub.prompt.md",
+            "api-documentation.prompt.md",
+            "code-review.prompt.md",
+            "context-handoff.prompt.md",
+            "conventional-commit.prompt.md",
+            "create-readme.prompt.md",
+            "create-skill.prompt.md",
+            "debug-help.prompt.md",
+            "dockerfile.prompt.md",
+            "documentation-writer.prompt.md",
+            "first-ask.prompt.md",
+            "generate-hld-lld.prompt.md",
+            "golden-nuggets.prompt.md",
+            "mcp-development.prompt.md",
+            "migrate-project.prompt.md",
+            "mockup.prompt.md",
+            "new-feature.prompt.md",
+            "onboarding.prompt.md",
+            "performance-optimization.prompt.md",
+            "plan.prompt.md",
+            "project-setup.prompt.md",
+            "pytest-coverage.prompt.md",
+            "review-and-refactor.prompt.md",
+            "sql-optimization.prompt.md",
+            "sql-review.prompt.md",
+            "sync-skills-readme.prompt.md",
+            "tdd.prompt.md",
+            "test-coverage.prompt.md",
+            "verify.prompt.md"
+          ]
+        },
+        {
+          "source": "tools",
+          "destination": "tools",
+          "included_names": [
+            "mcp-server",
+            "pipeline-runner"
+          ]
+        },
         {"source": "recipes", "destination": "recipes"},
-        {"source": "diagrams", "destination": "diagrams"},
-        {"source": "agent-docs", "destination": "agent-docs"},
-        {"source": "handoffs", "destination": "handoffs"}
+        {
+          "source": "agent-docs",
+          "destination": "agent-docs",
+          "included_names": [
+            "ARTIFACTS.md",
+            "PROJECT-ONBOARDING-RUNBOOK.md",
+            "README.md",
+            "RECIPE-RUNBOOK.md",
+            "escalations"
+          ]
+        }
       ],
       "dependency_closure": true
     },
@@ -77,19 +126,68 @@
       "workspace_root": ".github",
       "files": [
         {"source": "project-config.md", "destination": "project-config.md"},
-        {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"},
-        {"source": "handoffs/README.md", "destination": "handoffs/README.md"}
+        {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"}
       ],
       "copies": [
         {"source": "agents", "destination": "agents"},
         {"source": "skills", "destination": "skills"},
         {"source": "instructions", "destination": "instructions"},
-        {"source": "prompts", "destination": "prompts"},
-        {"source": "tools", "destination": "tools"},
+        {
+          "source": "prompts",
+          "destination": "prompts",
+          "included_names": [
+            "adr.prompt.md",
+            "advisory-hub.prompt.md",
+            "api-documentation.prompt.md",
+            "code-review.prompt.md",
+            "context-handoff.prompt.md",
+            "conventional-commit.prompt.md",
+            "create-readme.prompt.md",
+            "create-skill.prompt.md",
+            "debug-help.prompt.md",
+            "dockerfile.prompt.md",
+            "documentation-writer.prompt.md",
+            "first-ask.prompt.md",
+            "generate-hld-lld.prompt.md",
+            "golden-nuggets.prompt.md",
+            "mcp-development.prompt.md",
+            "migrate-project.prompt.md",
+            "mockup.prompt.md",
+            "new-feature.prompt.md",
+            "onboarding.prompt.md",
+            "performance-optimization.prompt.md",
+            "plan.prompt.md",
+            "project-setup.prompt.md",
+            "pytest-coverage.prompt.md",
+            "review-and-refactor.prompt.md",
+            "sql-optimization.prompt.md",
+            "sql-review.prompt.md",
+            "sync-skills-readme.prompt.md",
+            "tdd.prompt.md",
+            "test-coverage.prompt.md",
+            "verify.prompt.md"
+          ]
+        },
+        {
+          "source": "tools",
+          "destination": "tools",
+          "included_names": [
+            "mcp-server",
+            "pipeline-runner"
+          ]
+        },
         {"source": "recipes", "destination": "recipes"},
-        {"source": "diagrams", "destination": "diagrams"},
-        {"source": "agent-docs", "destination": "agent-docs"},
-        {"source": "handoffs", "destination": "handoffs"}
+        {
+          "source": "agent-docs",
+          "destination": "agent-docs",
+          "included_names": [
+            "ARTIFACTS.md",
+            "PROJECT-ONBOARDING-RUNBOOK.md",
+            "README.md",
+            "RECIPE-RUNBOOK.md",
+            "escalations"
+          ]
+        }
       ],
       "dependency_closure": true
     },

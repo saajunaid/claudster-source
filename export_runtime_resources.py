@@ -58,22 +58,29 @@ def copy_tree(
     source: Path,
     destination: Path,
     excluded_names: set[str] | None = None,
+    included_names: set[str] | None = None,
     stats: ExportStats | None = None,
 ) -> int:
     """Copy a directory tree while excluding top-level names when requested."""
     excluded_names = excluded_names or set()
+    included_names = included_names or set()
     destination.mkdir(parents=True, exist_ok=True)
     copied_files = 0
 
     for root_str, dirs, files in os.walk(source):
         root = Path(root_str)
         rel_root = root.relative_to(source)
+        is_top_level = rel_root == Path(".")
 
         kept_dirs: list[str] = []
         for d in dirs:
             if d in CACHE_DIR_NAMES:
                 if stats is not None:
                     stats.bump_skip("cache_dir")
+                continue
+            if is_top_level and included_names and d not in included_names:
+                if stats is not None:
+                    stats.bump_skip("not_included")
                 continue
             if d in excluded_names:
                 if stats is not None:
@@ -86,6 +93,10 @@ def copy_tree(
             if filename in CACHE_DIR_NAMES:
                 if stats is not None:
                     stats.bump_skip("cache_file")
+                continue
+            if is_top_level and included_names and filename not in included_names:
+                if stats is not None:
+                    stats.bump_skip("not_included")
                 continue
             if filename in excluded_names:
                 if stats is not None:
@@ -252,6 +263,7 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
         source = canonical_root / copy_spec["source"]
         destination = workspace_root / copy_spec["destination"]
         excluded_names: set[str] = set(private_roots)
+        included_names: set[str] = set(copy_spec.get("included_names", []))
         if source_rel == "skills":
             excluded_names |= skill_exclusions
         excluded_names |= set(copy_spec.get("excluded_names", []))
@@ -259,7 +271,13 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
             stats.bump_skip("missing_source")
             print(f"[SKIP] {target['name']}: source '{source_rel}' does not exist")
             continue
-        stats.files_copied += copy_tree(source, destination, excluded_names=excluded_names, stats=stats)
+        stats.files_copied += copy_tree(
+            source,
+            destination,
+            excluded_names=excluded_names,
+            included_names=included_names,
+            stats=stats,
+        )
 
     for file_spec in target.get("files", []):
         source_rel = file_spec["source"].replace("\\", "/").strip("/")

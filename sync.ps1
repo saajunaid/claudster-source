@@ -345,6 +345,7 @@ function Sync-ExtensionRepo {
     param(
         [Parameter(Mandatory)][string]$RepoPath,
         [Parameter(Mandatory)][string]$Label,
+        [string]$ProjectRoot = "",
         [string]$Message = "",
         [switch]$NoPush
     )
@@ -356,11 +357,19 @@ function Sync-ExtensionRepo {
 
     # 1. Refresh pool/ via the repo's own bundle-pool.js
     Push-Location $RepoPath
-    node scripts/bundle-pool.js | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [WARN]  $Label bundle-pool failed." -ForegroundColor Yellow
-        Pop-Location
-        return $false
+    $prevJunaiSource = $env:JUNAI_SOURCE
+    try {
+        if (-not [string]::IsNullOrWhiteSpace($ProjectRoot)) {
+            $env:JUNAI_SOURCE = $ProjectRoot
+        }
+        node scripts/bundle-pool.js | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  [WARN]  $Label bundle-pool failed." -ForegroundColor Yellow
+            Pop-Location
+            return $false
+        }
+    } finally {
+        $env:JUNAI_SOURCE = $prevJunaiSource
     }
 
     # 2. Refresh out/ from the canonical junai-vscode build
@@ -404,13 +413,14 @@ function Sync-ExtensionRepo {
 
 function sync-shannon {
     param(
+        [string]$ProjectRoot = $PSScriptRoot,
         [string]$Message = "",
         [switch]$NoPush,
         [switch]$NoPublish
     )
 
     Write-Host "  SHANNON SYNC  junai mirror --> $SHANNON_REPO (pool/)" -ForegroundColor Cyan
-    $changed = Sync-ExtensionRepo -RepoPath $SHANNON_REPO -Label "Shannon" -Message $Message -NoPush:$NoPush
+    $changed = Sync-ExtensionRepo -RepoPath $SHANNON_REPO -Label "Shannon" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush
     if (-not $changed -or $NoPush -or $NoPublish) {
         return
     }
@@ -453,12 +463,13 @@ function sync-shannon {
 
 function sync-liffey {
     param(
+        [string]$ProjectRoot = $PSScriptRoot,
         [string]$Message = "",
         [switch]$NoPush
     )
 
     Write-Host "  LIFFEY SYNC   junai mirror --> $LIFFEY_REPO (pool/)" -ForegroundColor Cyan
-    $changed = Sync-ExtensionRepo -RepoPath $LIFFEY_REPO -Label "Liffey" -Message $Message -NoPush:$NoPush
+    $changed = Sync-ExtensionRepo -RepoPath $LIFFEY_REPO -Label "Liffey" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush
     if (-not $changed) {
         return
     }

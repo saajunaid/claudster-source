@@ -621,10 +621,21 @@ def check_profile_manifest_alignment(profile: str, profile_root: Path) -> CheckR
 
     for copy_spec in target.get("copies", []):
         excluded = set(copy_spec.get("excluded_names", []))
+        included = set(copy_spec.get("included_names", []))
         if not excluded:
-            continue
-        destination = profile_root / copy_spec.get("destination", "")
+            destination = profile_root / copy_spec.get("destination", "")
+        else:
+            destination = profile_root / copy_spec.get("destination", "")
         if not destination.exists():
+            continue
+        if included:
+            top_level_names = {child.name for child in destination.iterdir()}
+            unexpected = top_level_names - included
+            for name in sorted(unexpected):
+                r.failures.append(
+                    f"Unexpected entry leaked into profile: {copy_spec.get('destination')}/{name}"
+                )
+        if not excluded:
             continue
         for name in excluded:
             if (destination / name).exists():
