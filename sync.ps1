@@ -337,16 +337,80 @@ function Sync-JunaiProfileRepo {
     return $true
 }
 
+function Sync-ExtensionRepo {
+    # Shared helper for shannon and liffey.
+    # Runs bundle-pool.js in the repo (populates pool/ from the junai mirror),
+    # then copies the pre-built out/extension.js from junai-vscode, commits, and
+    # optionally pushes.  Returns $true if a commit was made, $false otherwise.
+    param(
+        [Parameter(Mandatory)][string]$RepoPath,
+        [Parameter(Mandatory)][string]$Label,
+        [string]$Message = "",
+        [switch]$NoPush
+    )
+
+    if (-not (Test-Path $RepoPath)) {
+        Write-Host "  [WARN]  $Label repo not found at $RepoPath" -ForegroundColor Yellow
+        return $false
+    }
+
+    # 1. Refresh pool/ via the repo's own bundle-pool.js
+    Push-Location $RepoPath
+    node scripts/bundle-pool.js | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [WARN]  $Label bundle-pool failed." -ForegroundColor Yellow
+        Pop-Location
+        return $false
+    }
+
+    # 2. Refresh out/ from the canonical junai-vscode build
+    $outSrc = Join-Path $JUNAI_VSCODE "out"
+    if (Test-Path $outSrc) {
+        Copy-Item $outSrc $RepoPath -Recurse -Force
+    }
+
+    # 3. Commit if anything changed
+    git add -A | Out-Null
+    $hasChanges = (git status --porcelain) -ne $null
+    if (-not $hasChanges) {
+        Write-Host "  [--]  $Label repo already up to date" -ForegroundColor DarkGray
+        Pop-Location
+        return $false
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Message)) {
+        $today = Get-Date -Format "yyyy-MM-dd"
+        $Message = "feat: sync $($Label.ToLower()) pool from agent-sandbox - $today"
+    }
+    git commit -m $Message | Out-Null
+
+    if ($NoPush) {
+        Write-Host "  [OK]  $Label committed locally (no push)" -ForegroundColor Green
+        Pop-Location
+        return $true
+    }
+
+    git push | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [WARN]  $Label push failed." -ForegroundColor Yellow
+        Pop-Location
+        return $true  # committed, push failed — caller can retry
+    }
+
+    Write-Host "  [OK]  $Label committed + pushed" -ForegroundColor Green
+    Pop-Location
+    return $true
+}
+
 function sync-shannon {
     param(
-        [string]$ProjectRoot = (Get-Location).Path,
         [string]$Message = "",
         [switch]$NoPush,
         [switch]$NoPublish
     )
 
-    Write-Host "  SHANNON SYNC  dist/runtime-resources/shannon --> $SHANNON_REPO" -ForegroundColor Cyan
-    $changed = Sync-JunaiProfileRepo -Profile "shannon" -ProjectRoot $ProjectRoot -RepoPath $SHANNON_REPO -Message $Message -NoPush:$NoPush
+    Write-Host "  SHANNON SYNC  junai mirror --> $SHANNON_REPO (pool/)" -ForegroundColor Cyan
+    $changed = Sync-ExtensionRepo -RepoPath $SHANNON_REPO -Label "Shannon" -Message $Message -NoPush:$NoPush
     if (-not $changed -or $NoPush -or $NoPublish) {
         return
     }
@@ -389,34 +453,22 @@ function sync-shannon {
 
 function sync-liffey {
     param(
-        [string]$ProjectRoot = (Get-Location).Path,
         [string]$Message = "",
         [switch]$NoPush
     )
 
-    Write-Host "  LIFFEY SYNC   dist/runtime-resources/liffey --> $LIFFEY_REPO" -ForegroundColor Cyan
-    $changed = Sync-JunaiProfileRepo -Profile "liffey" -ProjectRoot $ProjectRoot -RepoPath $LIFFEY_REPO -Message $Message -NoPush:$NoPush
+    Write-Host "  LIFFEY SYNC   junai mirror --> $LIFFEY_REPO (pool/)" -ForegroundColor Cyan
+    $changed = Sync-ExtensionRepo -RepoPath $LIFFEY_REPO -Label "Liffey" -Message $Message -NoPush:$NoPush
     if (-not $changed) {
         return
     }
 
     Push-Location $LIFFEY_REPO
-    if (-not (Test-Path (Join-Path $LIFFEY_REPO "package.json"))) {
-        Write-Host "  [--]  package.json not found in liffey repo; VSIX packaging skipped." -ForegroundColor DarkGray
-        Pop-Location
-        return
-    }
-
     $pkg = Get-Content (Join-Path $LIFFEY_REPO "package.json") -Raw | ConvertFrom-Json
-    $version = $pkg.version
-    if ([string]::IsNullOrWhiteSpace($version)) {
-        $version = "0.0.0"
-    }
+    $version = if ($pkg.version) { $pkg.version } else { "0.0.0" }
 
     $distDir = Join-Path $LIFFEY_REPO "dist"
-    if (-not (Test-Path $distDir)) {
-        New-Item -ItemType Directory -Path $distDir | Out-Null
-    }
+    New-Item -ItemType Directory -Path $distDir -Force | Out-Null
 
     $vsixOut = Join-Path $distDir "liffey-$version.vsix"
     npx vsce package --out $vsixOut --no-dependencies
