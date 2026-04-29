@@ -648,18 +648,41 @@ def check_profile_manifest_alignment(profile: str, profile_root: Path) -> CheckR
 
 
 def check_shannon_content_restrictions(profile_root: Path) -> CheckResult:
-    r = CheckResult(name="Shannon restrictions — forbidden resources excluded")
+    r = CheckResult(name="Shannon ADLC restrictions — exact 5-agent roster and forbidden resources")
+
+    # --- Agent roster: exactly these 5 ---
+    required_agents = {
+        "orchestrator.agent.md",
+        "planner.agent.md",
+        "implement.agent.md",
+        "tester.agent.md",
+        "code-reviewer.agent.md",
+    }
+    agents_dir = profile_root / "agents"
+    if agents_dir.exists():
+        present = {f.name for f in agents_dir.glob("*.agent.md")}
+        for expected in sorted(required_agents):
+            if expected not in present:
+                r.failures.append(f"Shannon ADLC agent missing: {expected}")
+        for extra in sorted(present - required_agents):
+            r.failures.append(f"Shannon ADLC unexpected agent present: {extra}")
+        r.info.append(f"agent files present: {len(present)}, required: {len(required_agents)}")
+    else:
+        r.failures.append("agents/ directory missing from Shannon profile")
+
+    # --- Forbidden stack-specific resources ---
     forbidden_paths = [
         profile_root / "instructions" / "streamlit.instructions.md",
         profile_root / "instructions" / "sql.instructions.md",
         profile_root / "instructions" / "sql-stored-procedures.instructions.md",
         profile_root / "instructions" / "mssql-dba.instructions.md",
+        profile_root / "instructions" / "docker.instructions.md",
+        profile_root / "instructions" / "github-actions.instructions.md",
         profile_root / "skills" / "coding" / "sql",
+        profile_root / "skills" / "data",
+        profile_root / "skills" / "cloud",
         profile_root / "skills" / "frontend" / "streamlit-dev",
         profile_root / "skills" / "frontend" / "streamlit-animate",
-        profile_root / "skills" / "frontend" / "enterprise-dashboard-aesthetic-system",
-        profile_root / "skills" / "workflow" / "developer-growth-analysis",
-        profile_root / "skills" / "workflow" / "data-contract-pipeline",
     ]
     checked = 0
     for forbidden in forbidden_paths:
@@ -667,6 +690,54 @@ def check_shannon_content_restrictions(profile_root: Path) -> CheckResult:
         if forbidden.exists():
             rel = forbidden.relative_to(profile_root)
             r.failures.append(f"Forbidden Shannon resource present: {rel}")
+    r.info.append(f"checked {checked} forbidden resources")
+    r.passed = not r.failures
+    return r
+
+
+def check_liffey_content_restrictions(profile_root: Path) -> CheckResult:
+    r = CheckResult(name="Liffey ADLC restrictions — exact 8-agent roster and forbidden resources")
+
+    # --- Agent roster: exactly these 8 ---
+    required_agents = {
+        "orchestrator.agent.md",
+        "prd.agent.md",
+        "architect.agent.md",
+        "planner.agent.md",
+        "implement.agent.md",
+        "tester.agent.md",
+        "code-reviewer.agent.md",
+        "devops.agent.md",
+    }
+    agents_dir = profile_root / "agents"
+    if agents_dir.exists():
+        present = {f.name for f in agents_dir.glob("*.agent.md")}
+        for expected in sorted(required_agents):
+            if expected not in present:
+                r.failures.append(f"Liffey ADLC agent missing: {expected}")
+        for extra in sorted(present - required_agents):
+            r.failures.append(f"Liffey ADLC unexpected agent present: {extra}")
+        r.info.append(f"agent files present: {len(present)}, required: {len(required_agents)}")
+    else:
+        r.failures.append("agents/ directory missing from Liffey profile")
+
+    # --- Forbidden resources (stack-specific ones not in Liffey roster) ---
+    forbidden_paths = [
+        profile_root / "instructions" / "streamlit.instructions.md",
+        profile_root / "instructions" / "sql.instructions.md",
+        profile_root / "instructions" / "sql-stored-procedures.instructions.md",
+        profile_root / "instructions" / "mssql-dba.instructions.md",
+        profile_root / "skills" / "coding" / "sql",
+        profile_root / "skills" / "cloud",
+        profile_root / "skills" / "frontend" / "streamlit-dev",
+        profile_root / "skills" / "frontend" / "streamlit-animate",
+    ]
+    checked = 0
+    for forbidden in forbidden_paths:
+        checked += 1
+        if forbidden.exists():
+            rel = forbidden.relative_to(profile_root)
+            r.failures.append(f"Forbidden Liffey resource present: {rel}")
     r.info.append(f"checked {checked} forbidden resources")
     r.passed = not r.failures
     return r
@@ -772,6 +843,8 @@ def main(argv: list[str] | None = None) -> int:
         ]
         if args.profile == "shannon":
             results.append(check_shannon_content_restrictions(profile_root))
+        elif args.profile == "liffey":
+            results.append(check_liffey_content_restrictions(profile_root))
     else:
         results = [
             check_registry(),

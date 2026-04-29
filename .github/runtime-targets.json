@@ -34,55 +34,122 @@
     {
       "name": "shannon",
       "workspace_root": ".github",
+      "_comment_adlc": "Shannon — lean public ADLC lane. 5 user-facing agents: Orchestrator · Planner · Implement · Tester · Code Reviewer",
       "files": [
         {"source": "project-config.md", "destination": "project-config.md"},
         {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"}
       ],
+      "additional_registry_transitions": [
+        {
+          "id": "T-S01",
+          "from_stage": "intake",
+          "to_stage": "plan",
+          "event": "complete",
+          "guards": [],
+          "gate": "intent_approved",
+          "hotfix_only": false,
+          "priority": 0,
+          "_comment": "ADLC-shannon: direct intake → plan (prd and architect stages absent)"
+        },
+        {
+          "id": "T-S02",
+          "from_stage": "plan",
+          "to_stage": "implement",
+          "event": "complete",
+          "guards": ["artefact_exists", "artefact_approved"],
+          "gate": "plan_approved",
+          "hotfix_only": false,
+          "priority": 0,
+          "_comment": "ADLC-shannon: direct plan → implement (preflight stage absent)"
+        }
+      ],
       "copies": [
-        {"source": "agents", "destination": "agents"},
+        {
+          "source": "agents",
+          "destination": "agents",
+          "included_names": [
+            "orchestrator.agent.md",
+            "planner.agent.md",
+            "implement.agent.md",
+            "tester.agent.md",
+            "code-reviewer.agent.md"
+          ]
+        },
         {
           "source": "skills",
           "destination": "skills",
-          "excluded_names": [
-            "sql",
-            "streamlit-dev",
-            "streamlit-animate",
-            "enterprise-dashboard-aesthetic-system",
-            "developer-growth-analysis",
-            "data-contract-pipeline"
-          ]
+          "included_skills": {
+            "coding": [
+              "anchor-review",
+              "backend-development",
+              "code-explainer",
+              "code-review",
+              "codebase-audit",
+              "error-handling",
+              "javascript-typescript",
+              "python",
+              "refactoring",
+              "security-review"
+            ],
+            "testing": [
+              "tdd-workflow",
+              "test-strategy",
+              "webapp-testing"
+            ],
+            "workflow": [
+              "asking-questions",
+              "best-practices",
+              "brainstorming",
+              "context-handoff",
+              "golden-plan",
+              "intent-writer",
+              "onboard-project",
+              "receiving-code-review",
+              "requesting-code-review",
+              "verification-loop"
+            ],
+            "docs": [
+              "code-documentation",
+              "technical-writing",
+              "writing-plans"
+            ],
+            "devops": [
+              "git-commit"
+            ]
+          }
         },
         {
           "source": "instructions",
           "destination": "instructions",
-          "excluded_names": [
-            "sql.instructions.md",
-            "sql-stored-procedures.instructions.md",
-            "mssql-dba.instructions.md",
-            "streamlit.instructions.md"
+          "included_names": [
+            "advisory-mode.instructions.md",
+            "browser-first.instructions.md",
+            "code-review.instructions.md",
+            "large-task-fidelity.instructions.md",
+            "performance-optimization.instructions.md",
+            "plan-mode.instructions.md",
+            "portability.instructions.md",
+            "python.instructions.md",
+            "security.instructions.md",
+            "terse-responses.instructions.md",
+            "testing.instructions.md",
+            "validation-discipline.instructions.md"
           ]
         },
         {
           "source": "prompts",
           "destination": "prompts",
           "included_names": [
-            "adr.prompt.md",
-            "advisory-hub.prompt.md",
-            "api-documentation.prompt.md",
             "code-review.prompt.md",
             "context-handoff.prompt.md",
             "conventional-commit.prompt.md",
             "create-readme.prompt.md",
             "create-skill.prompt.md",
             "debug-help.prompt.md",
-            "dockerfile.prompt.md",
             "documentation-writer.prompt.md",
             "first-ask.prompt.md",
-            "generate-hld-lld.prompt.md",
             "golden-nuggets.prompt.md",
-            "mcp-development.prompt.md",
             "migrate-project.prompt.md",
-            "mockup.prompt.md",
             "new-feature.prompt.md",
             "onboarding.prompt.md",
             "performance-optimization.prompt.md",
@@ -90,8 +157,6 @@
             "project-setup.prompt.md",
             "pytest-coverage.prompt.md",
             "review-and-refactor.prompt.md",
-            "sql-optimization.prompt.md",
-            "sql-review.prompt.md",
             "sync-skills-readme.prompt.md",
             "tdd.prompt.md",
             "test-coverage.prompt.md",
@@ -112,9 +177,7 @@
           "destination": "agent-docs",
           "included_names": [
             "ARTIFACTS.md",
-            "PROJECT-ONBOARDING-RUNBOOK.md",
             "README.md",
-            "RECIPE-RUNBOOK.md",
             "escalations"
           ]
         }
@@ -124,14 +187,137 @@
     {
       "name": "liffey",
       "workspace_root": ".github",
+      "_comment_adlc": "Liffey — broader internal ADLC lane. 8 user-facing agents: Orchestrator · PRD · Architect · Planner · Implement · Tester · Code Reviewer · DevOps",
       "files": [
         {"source": "project-config.md", "destination": "project-config.md"},
         {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"}
       ],
+      "additional_registry_transitions": [
+        {
+          "id": "T-L01",
+          "from_stage": "plan",
+          "to_stage": "implement",
+          "event": "complete",
+          "guards": ["artefact_exists", "artefact_approved"],
+          "gate": "plan_approved",
+          "hotfix_only": false,
+          "priority": 0,
+          "_comment": "ADLC-liffey: direct plan → implement (preflight stage absent)"
+        }
+      ],
       "copies": [
-        {"source": "agents", "destination": "agents"},
-        {"source": "skills", "destination": "skills"},
-        {"source": "instructions", "destination": "instructions"},
+        {
+          "source": "agents",
+          "destination": "agents",
+          "included_names": [
+            "orchestrator.agent.md",
+            "prd.agent.md",
+            "architect.agent.md",
+            "planner.agent.md",
+            "implement.agent.md",
+            "tester.agent.md",
+            "code-reviewer.agent.md",
+            "devops.agent.md"
+          ]
+        },
+        {
+          "source": "skills",
+          "destination": "skills",
+          "included_skills": {
+            "coding": [
+              "anchor-review",
+              "api-client-patterns",
+              "api-design",
+              "architecture-design",
+              "backend-development",
+              "backend-to-frontend-handoff",
+              "code-explainer",
+              "code-review",
+              "codebase-audit",
+              "error-handling",
+              "fastapi-dev",
+              "javascript-typescript",
+              "llm-application-dev",
+              "python",
+              "refactoring",
+              "security-review"
+            ],
+            "testing": [
+              "component-testing",
+              "performance-testing",
+              "playwright",
+              "tdd-workflow",
+              "test-strategy",
+              "webapp-testing"
+            ],
+            "workflow": [
+              "asking-questions",
+              "best-practices",
+              "brainstorming",
+              "context-handoff",
+              "golden-plan",
+              "intent-writer",
+              "onboard-project",
+              "pipeline-state",
+              "receiving-code-review",
+              "requesting-code-review",
+              "skill-creator",
+              "verification-loop"
+            ],
+            "docs": [
+              "architecture-document",
+              "code-documentation",
+              "doc-coauthoring",
+              "prd-to-code",
+              "technical-writing",
+              "writing-plans"
+            ],
+            "devops": [
+              "changelog-generator",
+              "ci-cd-pipeline",
+              "gh-cli",
+              "git-commit",
+              "monorepo"
+            ],
+            "data": [
+              "data-analysis",
+              "data-validation",
+              "database-design"
+            ],
+            "frontend": [
+              "nextjs-app-router",
+              "react-best-practices",
+              "react-dev",
+              "webapp-development"
+            ]
+          }
+        },
+        {
+          "source": "instructions",
+          "destination": "instructions",
+          "included_names": [
+            "advisory-mode.instructions.md",
+            "browser-first.instructions.md",
+            "code-review.instructions.md",
+            "docker.instructions.md",
+            "fastapi.instructions.md",
+            "frontend.instructions.md",
+            "github-actions.instructions.md",
+            "junai-system.instructions.md",
+            "large-task-fidelity.instructions.md",
+            "mcp-server.instructions.md",
+            "performance-optimization.instructions.md",
+            "plan-mode.instructions.md",
+            "playwright.instructions.md",
+            "portability.instructions.md",
+            "python.instructions.md",
+            "security.instructions.md",
+            "shell.instructions.md",
+            "terse-responses.instructions.md",
+            "testing.instructions.md",
+            "validation-discipline.instructions.md"
+          ]
+        },
         {
           "source": "prompts",
           "destination": "prompts",
@@ -152,7 +338,6 @@
             "golden-nuggets.prompt.md",
             "mcp-development.prompt.md",
             "migrate-project.prompt.md",
-            "mockup.prompt.md",
             "new-feature.prompt.md",
             "onboarding.prompt.md",
             "performance-optimization.prompt.md",
@@ -160,8 +345,6 @@
             "project-setup.prompt.md",
             "pytest-coverage.prompt.md",
             "review-and-refactor.prompt.md",
-            "sql-optimization.prompt.md",
-            "sql-review.prompt.md",
             "sync-skills-readme.prompt.md",
             "tdd.prompt.md",
             "test-coverage.prompt.md",

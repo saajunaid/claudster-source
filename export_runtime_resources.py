@@ -59,9 +59,17 @@ def copy_tree(
     destination: Path,
     excluded_names: set[str] | None = None,
     included_names: set[str] | None = None,
+    depth2_included: dict[str, set[str]] | None = None,
     stats: ExportStats | None = None,
 ) -> int:
-    """Copy a directory tree while excluding top-level names when requested."""
+    """Copy a directory tree with optional top-level and depth-2 allowlists.
+
+    included_names:   allowlist at depth 0 (direct children of source).
+    depth2_included:  per-category allowlist at depth 1.  A dict mapping
+                      category-name → set of allowed item names.  Categories
+                      absent from the dict are excluded entirely when the dict
+                      is provided (i.e. it is a full allowlist across categories).
+    """
     excluded_names = excluded_names or set()
     included_names = included_names or set()
     destination.mkdir(parents=True, exist_ok=True)
@@ -70,7 +78,10 @@ def copy_tree(
     for root_str, dirs, files in os.walk(source):
         root = Path(root_str)
         rel_root = root.relative_to(source)
-        is_top_level = rel_root == Path(".")
+        depth = 0 if rel_root == Path(".") else len(rel_root.parts)
+        is_depth0 = depth == 0
+        is_depth1 = depth == 1
+        depth1_category = rel_root.parts[0] if is_depth1 else None
 
         kept_dirs: list[str] = []
         for d in dirs:
@@ -78,14 +89,28 @@ def copy_tree(
                 if stats is not None:
                     stats.bump_skip("cache_dir")
                 continue
-            if is_top_level and included_names and d not in included_names:
+            # depth-0: top-level included_names allowlist
+            if is_depth0 and included_names and d not in included_names:
                 if stats is not None:
                     stats.bump_skip("not_included")
                 continue
-            if d in excluded_names:
+            # depth-0: top-level excluded_names
+            if is_depth0 and d in excluded_names:
                 if stats is not None:
                     stats.bump_skip("excluded_name")
                 continue
+            # depth-0: depth2_included acts as category allowlist
+            if is_depth0 and depth2_included is not None and d not in depth2_included:
+                if stats is not None:
+                    stats.bump_skip("not_included")
+                continue
+            # depth-1: per-category skill allowlist
+            if is_depth1 and depth2_included is not None and depth1_category is not None:
+                category_filter = depth2_included.get(depth1_category)
+                if category_filter is not None and d not in category_filter:
+                    if stats is not None:
+                        stats.bump_skip("not_included")
+                    continue
             kept_dirs.append(d)
         dirs[:] = kept_dirs
 
@@ -94,14 +119,23 @@ def copy_tree(
                 if stats is not None:
                     stats.bump_skip("cache_file")
                 continue
-            if is_top_level and included_names and filename not in included_names:
+            if is_depth0 and included_names and filename not in included_names:
                 if stats is not None:
                     stats.bump_skip("not_included")
                 continue
-            if filename in excluded_names:
+            if is_depth0 and filename in excluded_names:
                 if stats is not None:
                     stats.bump_skip("excluded_name")
                 continue
+            if is_depth0 and depth2_included is not None and filename not in depth2_included:
+                # depth2_included is a directory-level allowlist — never filter root files
+                pass
+            if is_depth1 and depth2_included is not None and depth1_category is not None:
+                category_filter = depth2_included.get(depth1_category)
+                if category_filter is not None and filename not in category_filter:
+                    if stats is not None:
+                        stats.bump_skip("not_included")
+                    continue
 
             src_file = root / filename
             dest_dir = destination / rel_root
@@ -241,6 +275,74 @@ def _check_dependency_closure(workspace_root: Path, stats: ExportStats) -> None:
             )
 
 
+def prune_registry(
+    workspace_root: Path,
+    additional_transitions: list[dict[str, Any]] | None = None,
+) -> int:
+    """Prune agents.registry.json to match the agent files present in the profile.
+
+    Stages whose agent_file is not present in the agents/ directory are removed.
+    Transitions that reference removed stages are removed.
+    Any additional_transitions from the manifest are appended after pruning.
+    Returns the number of stages pruned.
+    """
+    registry_path = workspace_root / "tools" / "pipeline-runner" / "agents.registry.json"
+    if not registry_path.exists():
+        return 0
+
+    agents_dir = workspace_root / "agents"
+    present_agents: set[str] = set()
+    if agents_dir.exists():
+        present_agents = {f.name for f in agents_dir.glob("*.agent.md")}
+
+    try:
+        data = json.loads(registry_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return 0
+
+    active_stages: set[str] = set()
+    pruned_stages: dict[str, Any] = {}
+    original_count = len(data.get("stages") or {})
+
+    for stage_name, info in (data.get("stages") or {}).items():
+        agent_file = info.get("agent_file")
+        if agent_file is None:
+            # terminal/control stages (closed, BLOCKED) — always keep
+            active_stages.add(stage_name)
+            pruned_stages[stage_name] = info
+        elif Path(agent_file).name in present_agents:
+            active_stages.add(stage_name)
+            pruned_stages[stage_name] = info
+        # else: agent file absent from this profile — drop stage
+
+    pruned_transitions: list[dict[str, Any]] = []
+    for t in (data.get("transitions") or []):
+        from_s = t.get("from_stage", "")
+        to_s = t.get("to_stage", "")
+        # wildcard stages ("*") always survive; specific stages must be active
+        if (from_s == "*" or from_s in active_stages) and (to_s == "*" or to_s in active_stages):
+            pruned_transitions.append(t)
+
+    if additional_transitions:
+        # Guard: only add if both stages are active in this profile
+        existing_ids = {t.get("id") for t in pruned_transitions}
+        for t in additional_transitions:
+            if t.get("id") in existing_ids:
+                continue
+            from_s = t.get("from_stage", "")
+            to_s = t.get("to_stage", "")
+            if (from_s == "*" or from_s in active_stages) and (to_s == "*" or to_s in active_stages):
+                pruned_transitions.append(t)
+
+    data["stages"] = pruned_stages
+    data["transitions"] = pruned_transitions
+    registry_path.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return original_count - len(pruned_stages)
+
+
 def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportStats:
     """Export one runtime target from the canonical .github source."""
     canonical_root = PROJECT_ROOT / manifest["canonical_root"]
@@ -264,8 +366,12 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
         destination = workspace_root / copy_spec["destination"]
         excluded_names: set[str] = set(private_roots)
         included_names: set[str] = set(copy_spec.get("included_names", []))
+        depth2_included: dict[str, set[str]] | None = None
         if source_rel == "skills":
             excluded_names |= skill_exclusions
+            raw_skill_roster = copy_spec.get("included_skills")
+            if raw_skill_roster:
+                depth2_included = {cat: set(skills) for cat, skills in raw_skill_roster.items()}
         excluded_names |= set(copy_spec.get("excluded_names", []))
         if not source.exists():
             stats.bump_skip("missing_source")
@@ -276,6 +382,7 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
             destination,
             excluded_names=excluded_names,
             included_names=included_names,
+            depth2_included=depth2_included,
             stats=stats,
         )
 
@@ -311,6 +418,10 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
             raise ValueError(f"Unsupported transform type: {transform_spec['type']}")
 
     if target.get("dependency_closure"):
+        additional_transitions: list[dict[str, Any]] = target.get("additional_registry_transitions", [])
+        pruned = prune_registry(workspace_root, additional_transitions)
+        if pruned:
+            stats.bump_skip("registry_stages_pruned", pruned)
         _check_dependency_closure(workspace_root, stats)
 
     return stats
