@@ -439,9 +439,9 @@ function sync-ptarmigan {
         return
     }
 
-    $pat = (Get-Content $SHANNON_PAT_FILE -Raw).Trim()
+    $pat = (Get-Content $PTARMIGAN_PAT_FILE -Raw).Trim()
     if ([string]::IsNullOrWhiteSpace($pat)) {
-        Write-Host "  [WARN]  Shannon PAT file empty; publish skipped." -ForegroundColor Yellow
+        Write-Host "  [WARN]  Ptarmigan PAT file empty; publish skipped." -ForegroundColor Yellow
         Pop-Location
         return
     }
@@ -451,9 +451,9 @@ function sync-ptarmigan {
         $env:VSCE_PAT = $pat
         npx vsce publish --pat $pat --no-dependencies
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "  [WARN]  Shannon publish failed." -ForegroundColor Yellow
+            Write-Host "  [WARN]  Ptarmigan publish failed." -ForegroundColor Yellow
         } else {
-            Write-Host "  [OK]  Shannon extension published." -ForegroundColor Green
+            Write-Host "  [OK]  Ptarmigan extension published." -ForegroundColor Green
         }
     } finally {
         $env:VSCE_PAT = $prevVscePat
