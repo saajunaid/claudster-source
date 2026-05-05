@@ -23,11 +23,11 @@ $EXT_REPOS_ROOT = "E:\Projects\agent-sandbox\vscode-extensions"
 $JUNO_POOL = Join-Path $EXT_REPOS_ROOT "junai"
 $JUNO_GITHUB = "$JUNO_POOL\.github"
 $JUNAI_VSCODE = Join-Path $EXT_REPOS_ROOT "junai-vscode"
-$SHANNON_REPO = Join-Path $EXT_REPOS_ROOT "shannon"
+$PTARMIGAN_REPO = Join-Path $EXT_REPOS_ROOT "ptarmigan"
 $LIFFEY_REPO = Join-Path $EXT_REPOS_ROOT "liffey"
 $PYPI_KEY_FILE = Join-Path $JUNO_POOL "pypimcp.key"
 $VSCE_PAT_FILE = Join-Path $JUNAI_VSCODE "vscode.pat"
-$SHANNON_PAT_FILE = Join-Path $SHANNON_REPO "shannon.pat"
+$PTARMIGAN_PAT_FILE = Join-Path $PTARMIGAN_REPO "ptarmigan.pat"
 # NOTE: "plans" intentionally REMOVED from $POOL_FOLDERS as of 2026-04-27 (Phase 1.0
 # stop-the-bleed). Plans are tracked in agent-sandbox only; they never sync to the
 # public mirror. Do not re-add without explicit privacy review.
@@ -243,16 +243,16 @@ function junai-push {
     Write-Host "  Committed and pushed to junai." -ForegroundColor Magenta
     Write-Host ""
 
-    # Build profile exports used by downstream Shannon/Liffey sync lanes.
+    # Build profile exports used by downstream Ptarmigan/Liffey sync lanes.
     Push-Location $ProjectRoot
-    python export_runtime_resources.py --profile shannon --profile liffey --report
+    python export_runtime_resources.py --profile ptarmigan --profile liffey --report
     $profileExportOk = ($LASTEXITCODE -eq 0)
     Pop-Location
 
     if (-not $profileExportOk) {
-        Write-Host "  [WARN]  Profile export failed; skipping Shannon/Liffey cascade for this run." -ForegroundColor Yellow
+        Write-Host "  [WARN]  Profile export failed; skipping Ptarmigan/Liffey cascade for this run." -ForegroundColor Yellow
     } else {
-        sync-shannon -ProjectRoot $ProjectRoot -Message $Message -NoPublish:$NoPublish
+        sync-ptarmigan -ProjectRoot $ProjectRoot -Message $Message -NoPublish:$NoPublish
         sync-liffey -ProjectRoot $ProjectRoot -Message $Message
     }
 
@@ -338,7 +338,7 @@ function Sync-JunaiProfileRepo {
 }
 
 function Sync-ExtensionRepo {
-    # Shared helper for shannon and liffey.
+    # Shared helper for ptarmigan and liffey.
     # Runs bundle-pool.js in the repo (populates pool/ from the junai mirror),
     # then copies the pre-built out/extension.js from junai-vscode, commits, and
     # optionally pushes.  Returns $true if a commit was made, $false otherwise.
@@ -411,7 +411,7 @@ function Sync-ExtensionRepo {
     return $true
 }
 
-function sync-shannon {
+function sync-ptarmigan {
     param(
         [string]$ProjectRoot = $PSScriptRoot,
         [string]$Message = "",
@@ -419,22 +419,22 @@ function sync-shannon {
         [switch]$NoPublish
     )
 
-    Write-Host "  SHANNON SYNC  junai mirror --> $SHANNON_REPO (pool/)" -ForegroundColor Cyan
-    $changed = Sync-ExtensionRepo -RepoPath $SHANNON_REPO -Label "Shannon" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush
+    Write-Host "  PTARMIGAN SYNC  junai mirror --> $PTARMIGAN_REPO (pool/)" -ForegroundColor Cyan
+    $changed = Sync-ExtensionRepo -RepoPath $PTARMIGAN_REPO -Label "Ptarmigan" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush
     if (-not $changed -or $NoPush -or $NoPublish) {
         return
     }
 
-    if (-not (Test-Path $SHANNON_PAT_FILE)) {
-        Write-Host "  [--]  Shannon PAT missing; publish skipped." -ForegroundColor DarkGray
+    if (-not (Test-Path $PTARMIGAN_PAT_FILE)) {
+        Write-Host "  [--]  Ptarmigan PAT missing; publish skipped." -ForegroundColor DarkGray
         return
     }
 
-    Push-Location $SHANNON_REPO
+    Push-Location $PTARMIGAN_REPO
     $changedFiles = git diff-tree --no-commit-id --name-only -r HEAD
     $versionBumped = $changedFiles -contains "package.json"
     if (-not $versionBumped) {
-        Write-Host "  [--]  package.json unchanged; Shannon publish skipped." -ForegroundColor DarkGray
+        Write-Host "  [--]  package.json unchanged; Ptarmigan publish skipped." -ForegroundColor DarkGray
         Pop-Location
         return
     }

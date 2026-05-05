@@ -32,9 +32,9 @@
       ]
     },
     {
-      "name": "shannon",
+      "name": "ptarmigan",
       "workspace_root": ".github",
-      "_comment_adlc": "Shannon — lean public ADLC lane. 5 user-facing agents: Orchestrator · Planner · Implement · Tester · Code Reviewer",
+      "_comment_adlc": "Ptarmigan — lean public ADLC lane. 5 user-facing agents: Orchestrator · Planner · Implement · Tester · Code Reviewer",
       "files": [
         {"source": "project-config.md", "destination": "project-config.md"},
         {"source": "agent-docs/README.md", "destination": "agent-docs/README.md"}
@@ -49,7 +49,7 @@
           "gate": "intent_approved",
           "hotfix_only": false,
           "priority": 0,
-          "_comment": "ADLC-shannon: direct intake → plan (prd and architect stages absent)"
+          "_comment": "ADLC-ptarmigan: direct intake → plan (prd and architect stages absent)"
         },
         {
           "id": "T-S02",
@@ -60,7 +60,7 @@
           "gate": "plan_approved",
           "hotfix_only": false,
           "priority": 0,
-          "_comment": "ADLC-shannon: direct plan → implement (preflight stage absent)"
+          "_comment": "ADLC-ptarmigan: direct plan → implement (preflight stage absent)"
         }
       ],
       "copies": [

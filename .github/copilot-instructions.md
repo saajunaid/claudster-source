@@ -54,8 +54,8 @@ agent-sandbox  (local only — authoring source)
     ├──▶  E:\Projects\agent-sandbox\vscode-extensions\junai          (public pool mirror — github.com/saajunaid/junai)
     │         sync.ps1 junai-push copies canonical `.github/` source and git pushes
     │
-    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\shannon        (subset pool + VS Code extension — github.com/saajunaid/shannon)
-    │         published to marketplace as junai-labs.shannon
+    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\ptarmigan     (subset pool + VS Code extension — github.com/saajunaid/ptarmigan)
+    │         published to marketplace as junai-labs.ptarmigan
     │
     └──▶  E:\Projects\agent-sandbox\vscode-extensions\liffey         (subset pool + VS Code extension — private/internal)
               packaged as VSIX only; never marketplace-published
@@ -64,7 +64,7 @@ agent-sandbox  (local only — authoring source)
 - **agent-sandbox** is where you author all changes
 - **junai-vscode** is what marketplace users install; it compiles canonical resources into runtime-native project folders in workspaces
 - **junai** is the public-facing mirror of the full pool for users who want to browse or fork agent definitions directly
-- **shannon** is the public subset extension lane
+- **ptarmigan** is the public subset extension lane
 - **liffey** is the internal subset extension lane (private distribution)
 
 ---
@@ -88,8 +88,8 @@ agent-sandbox  (local only, no remote — authoring source of truth)
     ├──▶  E:\Projects\agent-sandbox\vscode-extensions\junai          (public pool mirror — github.com/saajunaid/junai)
     │         sync.ps1 junai-push copies canonical `.github/` folders and git pushes
     │
-    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\shannon        (subset pool + VS Code extension)
-    │         sync.ps1 sync-shannon + optional marketplace publish
+    ├──▶  E:\Projects\agent-sandbox\vscode-extensions\ptarmigan     (subset pool + VS Code extension)
+    │         sync.ps1 sync-ptarmigan + optional marketplace publish
     │
     └──▶  E:\Projects\agent-sandbox\vscode-extensions\liffey         (subset pool + VS Code extension)
               sync.ps1 sync-liffey + internal VSIX package only
@@ -98,7 +98,7 @@ agent-sandbox  (local only, no remote — authoring source of truth)
 - **agent-sandbox** — author all changes here; no remote; local commits only
 - **junai-vscode** — marketplace extension; bundles and deploys the pool
 - **junai** — public-facing mirror for users to browse/fork agent definitions
-- **shannon** — public subset extension lane (independent marketplace listing)
+- **ptarmigan** — public subset extension lane (independent marketplace listing)
 - **liffey** — internal subset extension lane (private repo, VSIX distribution)
 
 **Runtime export architecture:** `.github/` is the only authoring source. Packaging builds project-local runtime folders per workspace: Copilot reads `.github/`, Claude reads `.claude/`, Codex reads `.codex/`. User-level deployment is intentionally unsupported by default to avoid duplicate loading and context bloat. `pipeline-state.json` and `project-config.md` are USER_OWNED and never overwritten by pool updates. `copilot-instructions.md` is no longer bundled wholesale — the extension manages only a sentinel-delimited `<!-- junai:start -->` section programmatically (v0.6.2+).
@@ -136,15 +136,15 @@ $env:VSCE_PAT = (Get-Content "vscode.pat" -Raw).Trim()
 npm run publish   # package runtime exports + tsc + vsce publish
 git push
 
-# 5. Sync pool mirrors (junai + shannon + liffey)
+# 5. Sync pool mirrors (junai + ptarmigan + liffey)
 cd E:\Projects\agent-sandbox\vscode-extensions\junai
 git add .github/agents .github/skills .github/prompts .github/instructions .github/diagrams .github/tools
 git commit -m "feat: sync pool from agent-sandbox - YYYY-MM-DD"
 git push
 
-cd E:\Projects\agent-sandbox\vscode-extensions\shannon
+cd E:\Projects\agent-sandbox\vscode-extensions\ptarmigan
 git add -A
-git commit -m "feat: sync shannon profile from agent-sandbox - YYYY-MM-DD"
+git commit -m "feat: sync ptarmigan profile from agent-sandbox - YYYY-MM-DD"
 git push
 
 cd E:\Projects\agent-sandbox\vscode-extensions\liffey

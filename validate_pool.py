@@ -647,8 +647,8 @@ def check_profile_manifest_alignment(profile: str, profile_root: Path) -> CheckR
     return r
 
 
-def check_shannon_content_restrictions(profile_root: Path) -> CheckResult:
-    r = CheckResult(name="Shannon ADLC restrictions — exact 5-agent roster and forbidden resources")
+def check_ptarmigan_content_restrictions(profile_root: Path) -> CheckResult:
+    r = CheckResult(name="Ptarmigan ADLC restrictions — exact 5-agent roster and forbidden resources")
 
     # --- Agent roster: exactly these 5 ---
     required_agents = {
@@ -663,12 +663,12 @@ def check_shannon_content_restrictions(profile_root: Path) -> CheckResult:
         present = {f.name for f in agents_dir.glob("*.agent.md")}
         for expected in sorted(required_agents):
             if expected not in present:
-                r.failures.append(f"Shannon ADLC agent missing: {expected}")
-        for extra in sorted(present - required_agents):
-            r.failures.append(f"Shannon ADLC unexpected agent present: {extra}")
+                r.failures.append(f"Ptarmigan ADLC agent missing: {expected}")
+            for extra in sorted(present - required_agents):
+                r.failures.append(f"Ptarmigan ADLC unexpected agent present: {extra}")
         r.info.append(f"agent files present: {len(present)}, required: {len(required_agents)}")
     else:
-        r.failures.append("agents/ directory missing from Shannon profile")
+        r.failures.append("agents/ directory missing from Ptarmigan profile")
 
     # --- Forbidden stack-specific resources ---
     forbidden_paths = [
@@ -689,7 +689,7 @@ def check_shannon_content_restrictions(profile_root: Path) -> CheckResult:
         checked += 1
         if forbidden.exists():
             rel = forbidden.relative_to(profile_root)
-            r.failures.append(f"Forbidden Shannon resource present: {rel}")
+            r.failures.append(f"Forbidden Ptarmigan resource present: {rel}")
     r.info.append(f"checked {checked} forbidden resources")
     r.passed = not r.failures
     return r
@@ -809,7 +809,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--profile",
-        choices=["shannon", "liffey"],
+        choices=["ptarmigan", "liffey"],
         help="Validate a specific exported profile under dist/runtime-resources/<profile>/.github.",
     )
     args = parser.parse_args(argv)
@@ -841,8 +841,8 @@ def main(argv: list[str] | None = None) -> int:
             check_prompts_in_dir(profile_root / "prompts", args.profile),
             check_skill_registry_in_dir(profile_root / "skills", args.profile),
         ]
-        if args.profile == "shannon":
-            results.append(check_shannon_content_restrictions(profile_root))
+        if args.profile == "ptarmigan":
+            results.append(check_ptarmigan_content_restrictions(profile_root))
         elif args.profile == "liffey":
             results.append(check_liffey_content_restrictions(profile_root))
     else:
