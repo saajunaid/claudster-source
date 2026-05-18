@@ -107,7 +107,7 @@ For `DECISION_REQUIRED` findings:
 5. Run all 7 validation categories against the plan
 6. Classify each finding (severity + fix type)
 7. Surface DECISION_REQUIRED findings (in standalone: interactive; in pipeline: in report)
-8. Write structured report to agent-docs/preflight-report.md
+8. Write structured report to .github/agent-docs/preflight-report.md
 9. Route according to result
 ```
 
@@ -129,7 +129,7 @@ For `DECISION_REQUIRED` findings:
 
 | Field | Value |
 |-------|-------|
-| `artefact_path` | `agent-docs/preflight-report.md` |
+| `artefact_path` | `.github/agent-docs/preflight-report.md` |
 | `required_fields` | `type`, `plan`, `result`, `counts` |
 | `approval` | Not applicable — preflight reports are not approved, they PASS or FAIL |
 
@@ -140,7 +140,7 @@ The report must follow the format defined in the preflight skill (YAML frontmatt
 When your validation is complete:
 
 ### Pipeline Mode
-1. Write the preflight report to `agent-docs/preflight-report.md`
+1. Write the preflight report to `.github/agent-docs/preflight-report.md`
 2. Call `notify_orchestrator` with:
    - `event`: `"passed"` if result is PASS, `"failed"` if result is FAIL
    - `summary`: One-line summary (e.g., "Plan validated: 0 critical, 3 significant, 2 minor findings")
@@ -149,7 +149,7 @@ When your validation is complete:
    - FAIL → "Fix Plan" (routes to Planner)
 
 ### Standalone Mode
-1. Write the preflight report to `agent-docs/preflight-report.md` (or path specified by user)
+1. Write the preflight report to `.github/agent-docs/preflight-report.md` (or path specified by user)
 2. Present the summary in chat
 3. If FAIL: list the critical findings and required decisions inline
 

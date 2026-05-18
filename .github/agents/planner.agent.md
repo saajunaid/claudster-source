@@ -8,6 +8,10 @@ handoffs:
     agent: Orchestrator
     prompt: Stage complete. Read pipeline-state.json and _routing_decision, then route.
     send: false
+  - label: Validate Plan
+    agent: Preflight
+    prompt: The pipeline is routing to you. Read pipeline-state.json first, then validate this plan against the actual codebase before implementation begins.
+    send: false
   - label: Review Architecture
     agent: Architect
     prompt: Review and refine the architecture for this plan.

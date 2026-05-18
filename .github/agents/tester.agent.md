@@ -12,6 +12,10 @@ handoffs:
     agent: Debug
     prompt: Debug and fix the failing tests identified above.
     send: false
+  - label: Implement Fixes (TDD Red → Green)
+    agent: Implement
+    prompt: Tests are failing (red phase). Read the failing test output above, then fix the production code to make the tests pass. Do not modify the tests.
+    send: false
   - label: Review Code
     agent: Code Reviewer
     prompt: Review the test code above for quality and coverage.

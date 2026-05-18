@@ -301,7 +301,7 @@ Produce a structured report (see Output Format below).
 
 ## Output Format
 
-The report is written to the path specified by the invoking agent. Default: `agent-docs/preflight-report.md`
+The report is written to the path specified by the invoking agent. Default: `.github/agent-docs/preflight-report.md`
 
 ```markdown
 ---
