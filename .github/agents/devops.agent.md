@@ -36,7 +36,7 @@ Load the smallest useful skill set for the task.
 | Task | Load This Skill |
 |------|-----------------|
 | VMIE workflow migration or repair | `.github/skills/vmie/golden-workflow/SKILL.md` |
-| Commit, push, monitor CI, validate prod | `.github/skills/vmie/deploy-local/SKILL.md` |
+| Commit, push, monitor CI, validate prod | `.github/skills/devops/deploy-local/SKILL.md` |
 | Windows/NSSM prod deploy details | `.github/skills/vmie/windows-deployment/SKILL.md` |
 | General CI/CD design | `.github/skills/devops/ci-cd-pipeline/SKILL.md` |
 | Git commit messages | `.github/skills/devops/git-commit/SKILL.md` |
@@ -52,7 +52,7 @@ If a listed skill path is missing, continue with the closest available skill and
 
 When working in VMIE app repos, default to this contract unless the repo explicitly documents another model:
 
-- Gitea URL: `http://git.local:8090`
+- Gitea URL: `http://gitea.internal:8090`
 - Primary workflow: `.gitea/workflows/ci.yml`
 - Dev runner label: `dev`
 - Prod runner label: `prod`
@@ -113,7 +113,7 @@ Invoke-Command -ComputerName iegbcoppoc02 -ScriptBlock {
   Set-Location "G:\Projects\<repo>"
   git rev-parse HEAD
   git status --short
-  Get-Service -Name "vmie-<short>-*" -ErrorAction SilentlyContinue
+  Get-Service -Name "app-<short>-*" -ErrorAction SilentlyContinue
   Invoke-RestMethod -Uri "http://127.0.0.1:<api-port>/health" -TimeoutSec 5
 }
 ```
@@ -172,3 +172,38 @@ For CI/CD or deployment work, report:
 - Files changed and any follow-ups.
 
 Do not declare success from local checks alone when the request included push/deploy monitoring.
+
+## Output Contract
+
+When this agent performs CI/CD or deployment work, return:
+
+- `repo`: repository path or name
+- `branch`: branch used for the operation
+- `commit_sha`: commit used for push/deploy
+- `workflow_run`: run id/url when available
+- `job_results`: job-level pass/fail summary
+- `prod_validation`: expected SHA, service status, and health result when deployment is expected
+- `files_changed`: tracked files modified by the fix
+- `follow_ups`: remaining risk, deferred steps, or required approvals
+
+### 8. Completion Reporting Protocol
+
+When a task is complete, report only verified outcomes:
+
+1. State what changed, with file paths and commit SHA when applicable.
+2. Include command-backed evidence for CI status and deployment status.
+3. Separate completed actions from recommended follow-up actions.
+4. If deployment was requested, include production health verification details.
+
+Do not mark work complete when critical validation is missing.
+
+### 9. Deferred Items Protocol
+
+If any requested scope cannot be completed in this run:
+
+1. List each deferred item explicitly.
+2. Provide the reason (missing access, missing secret, upstream blocker, or policy constraint).
+3. Provide the exact next action needed to unblock completion.
+4. Classify impact as `blocking` or `non-blocking`.
+
+Never silently omit requested work.

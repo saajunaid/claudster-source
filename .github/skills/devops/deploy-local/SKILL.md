@@ -33,8 +33,8 @@ Optional:
 
 ## VMIE Local Platform Defaults
 
-- Gitea UI: `http://git.local:8090`
-- Gitea API: `http://git.local:8090/api/v1`
+- Gitea UI: `http://gitea.internal:8090`
+- Gitea API: `http://gitea.internal:8090/api/v1`
 - Expected non-prod runner label: `dev`
 - Expected prod runner label: `prod`
 - Prod host: `iegbcoppoc02`
@@ -122,11 +122,11 @@ Gitea API shape:
 
 ```powershell
 $headers = @{ Authorization = "token $env:VMIE_BOT_TOKEN" }
-$runs = Invoke-RestMethod -Uri "http://git.local:8090/api/v1/repos/vmie/<repo>/actions/runs?limit=10" -Headers $headers
+$runs = Invoke-RestMethod -Uri "http://gitea.internal:8090/api/v1/repos/vmie/<repo>/actions/runs?limit=10" -Headers $headers
 $run = $runs.workflow_runs |
   Where-Object { $_.head_sha -eq "<expected-sha>" -and $_.path -like "ci.yml@refs/heads/main" } |
   Select-Object -First 1
-$jobs = Invoke-RestMethod -Uri "http://git.local:8090/api/v1/repos/vmie/<repo>/actions/runs/$($run.id)/jobs" -Headers $headers
+$jobs = Invoke-RestMethod -Uri "http://gitea.internal:8090/api/v1/repos/vmie/<repo>/actions/runs/$($run.id)/jobs" -Headers $headers
 $jobs.jobs | Select-Object name,status,conclusion,started_at,completed_at
 ```
 
@@ -150,7 +150,7 @@ Invoke-Command -ComputerName iegbcoppoc02 -ScriptBlock {
     Head = (git rev-parse HEAD)
     Branch = (git branch --show-current)
     Status = ((git status --short) -join '; ')
-    Services = Get-Service -Name "vmie-<short>-*" -ErrorAction SilentlyContinue |
+    Services = Get-Service -Name "app-<short>-*" -ErrorAction SilentlyContinue |
       Select-Object Name,Status,DisplayName
     ApiPort = Get-NetTCPConnection -LocalPort <api-port> -State Listen -ErrorAction SilentlyContinue |
       Select-Object LocalAddress,LocalPort,OwningProcess

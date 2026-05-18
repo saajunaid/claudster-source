@@ -373,6 +373,10 @@ def _iter_pool_files(root: Path) -> list[Path]:
             rel_parts = p.parts
         if "vmie" in rel_parts:
             continue
+        # Skip .github/plans/ — planning artefacts are intentionally source-only,
+        # not distributable pool content.
+        if root == GITHUB_DIR and "plans" in rel_parts:
+            continue
         if any(part in GENERATED_ARTIFACTS for part in rel_parts):
             continue
         if p.suffix.lower() in SCAN_TEXT_EXTENSIONS:

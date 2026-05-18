@@ -60,6 +60,7 @@
 |-------|------|-------------|
 | Changelog Generator | `devops/changelog-generator/` | Generating changelogs from git commits |
 | CI/CD Pipeline | `devops/ci-cd-pipeline/` | Pipeline design for GitHub Actions and Azure DevOps — quality gates, environments, caching |
+| Deploy Local | `devops/deploy-local/` | End-to-end local commit/push/monitor/prod-validation loop for Gitea-hosted deployments |
 | GitHub CLI | `devops/gh-cli/` | GitHub CLI operations (PRs, issues, releases, actions) |
 | Git Commit | `devops/git-commit/` | Writing conventional commit messages |
 | Monorepo | `devops/monorepo/` | pnpm workspaces + Turborepo for monorepo CI/CD and shared packages |
@@ -115,6 +116,7 @@
 | UI/UX Intelligence | `frontend/ui-ux-intelligence/` | Data-backed design decisions: 161 color palettes, 57 font pairings, 99 UX guidelines, 25 chart types |
 | UX Design | `frontend/ux-design/` | Designing user experiences with brand color system and accessibility standards |
 | Warm Editorial UI | `frontend/warm-editorial-ui/` | Warm editorial design system — cream surfaces, Syne + DM Sans typography, multi-layer shadows, generous radius |
+| Warm New | `frontend/warm-new/` | Alternate warm design token system and implementation guide for fast prototyping |
 | Webapp Development | `frontend/webapp-development/` | End-to-end web application development workflow |
 | Word Cloud | `frontend/word-cloud/` | Generate static or animated word clouds from text/files with theming and shape masking |
 
