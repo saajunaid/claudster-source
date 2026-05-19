@@ -465,6 +465,18 @@ def add(a, b):
 # Step 3: Refactor if needed (REFACTOR)
 ```
 
+### TDD Enforcement for App Changes
+
+When code changes behavior in Python, TypeScript, or React layers:
+- Write/update failing tests before implementation.
+- Keep each commit logically aligned with passing tests.
+- Do not mark work complete if tests were added only after implementation without justification.
+
+Recommended mapping:
+- Backend Python changes → `tests/unit` and `tests/integration`
+- FastAPI endpoint contract changes → API integration tests first
+- Frontend hooks/components changes → component/hook tests first
+
 ---
 
 ## Advanced Fixture Patterns

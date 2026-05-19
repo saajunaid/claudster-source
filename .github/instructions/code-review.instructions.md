@@ -166,6 +166,13 @@ with get_connection() as conn:
 - Don't build features before they're needed
 - Avoid speculative generality — start simple, refactor when needed
 
+### SOLID
+- Check SRP in services/components/classes (one clear reason to change)
+- Prefer extension points over editing stable code paths (OCP)
+- Validate substitutability for interfaces/protocols/base classes (LSP)
+- Prefer small focused interfaces/prop contracts (ISP)
+- Depend on abstractions and injected collaborators, not concrete infrastructure (DIP)
+
 ### Immutability
 ```python
 # ✅ GOOD: Return new data rather than mutating
@@ -324,6 +331,7 @@ When reviewing tests or verifying test coverage:
 - [ ] Edge cases covered (nulls, empty collections, boundaries)
 - [ ] External dependencies mocked; domain logic tested directly
 - [ ] No tests that always pass or are commented out
+- [ ] TDD flow visible for new behavior (failing test first, then implementation)
 
 ```python
 # ❌ BAD: Vague name, weak assertion

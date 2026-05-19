@@ -58,6 +58,19 @@ Optional area of change:
 
 ### Actions
 
+0. **Run a pre-commit quality gate (blocking)**
+   ```bash
+   # Python repos
+   ruff check .
+
+   # TypeScript/React repos
+   npm run lint
+
+   # If both stacks exist, run both.
+   ```
+
+   If lint fails, do not proceed to commit generation until fixed.
+
 1. **Review staged changes**
    ```bash
    # If files are staged, use staged diff
@@ -253,6 +266,7 @@ When in doubt, ask yourself:
 - NEVER run destructive commands (`--force`, hard reset) without explicit user request
 - NEVER skip hooks (`--no-verify`) unless user asks
 - NEVER force push to main/master
+- ALWAYS verify lint gate status before creating a commit message
 - If a commit fails due to pre-commit hooks, fix the issue and create a NEW commit (don't amend the failed one)
 - One logical change per commit
 - Reference issues in footers: `Closes #123`, `Refs #456`

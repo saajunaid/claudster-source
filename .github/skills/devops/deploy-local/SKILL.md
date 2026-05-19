@@ -59,18 +59,20 @@ CalVer is release metadata, not the deploy identity. Do not reintroduce tag-firs
 1. Confirm repo root and current branch.
 2. Run `git status --short`.
 3. Identify the repo's actual gates from `.gitea/workflows/ci.yml`; do not invent database or frontend gates.
-4. Run local quality gates that mirror CI where feasible:
-   - Backend lint/format/tests for backend repos.
-   - Frontend lint/typecheck/build for frontend repos.
-   - Repo-specific data/database checks only when the repo declares that capability.
+4. Run local quality gates that mirror CI where feasible **before any commit**:
+  - Backend repos: `ruff check .` (required), then format/tests as configured.
+  - Frontend repos: lint/typecheck/build as configured.
+  - Full-stack repos: run both backend and frontend gates.
+  - Repo-specific data/database checks only when the repo declares that capability.
 5. If a gate fails, fix source code first before changing workflow logic.
 
 ## Phase 2: Commit + Push
 
-1. Stage only intended files.
-2. Commit with a conventional message.
-3. Push to the target branch, normally `main` for prod deploy.
-4. Capture commit SHA and remote ack.
+1. Confirm preflight quality gates are green (no failing `ruff`/lint checks).
+2. Stage only intended files.
+3. Commit with a conventional message.
+4. Push to the target branch, normally `main` for prod deploy.
+5. Capture commit SHA and remote ack.
 
 Example:
 

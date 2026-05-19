@@ -592,6 +592,44 @@ st.markdown("""
 7. **Responsive**: Test at all viewport sizes
 8. **Accessible**: Meet WCAG AA standards
 
+## Design Principles for Frontend Code (KISS, DRY, YAGNI, SOLID)
+
+Apply these to:
+- `frontend/src/components/**/*.{tsx,jsx}`
+- `frontend/src/pages/**/*.{tsx,jsx}`
+- `frontend/src/hooks/**/*.{ts,tsx}`
+- `frontend/src/services/**/*.{ts,tsx}`
+- shared CSS modules and theme layers
+
+- **KISS**: keep components focused and predictable; avoid nested conditional rendering trees.
+- **DRY**: extract shared UI primitives and utility functions rather than duplicating patterns.
+- **YAGNI**: don't introduce state libraries or abstractions until concrete duplication appears.
+
+### SOLID Mapping for React/TypeScript
+
+- **S (SRP)**: split data-fetching hooks from presentational components.
+- **O (OCP)**: extend via composition/props instead of editing core components.
+- **L (LSP)**: components honoring a shared prop contract remain substitutable.
+- **I (ISP)**: use small prop interfaces over one massive "god props" type.
+- **D (DIP)**: UI depends on service interfaces/adapters, not hardcoded transport details.
+
+```typescript
+export interface MetricsReader {
+    getSummary(): Promise<SummaryMetrics>;
+}
+
+export function useSummary(reader: MetricsReader) {
+    // hook logic independent of axios/fetch specifics
+}
+```
+
+## Frontend TDD Rule
+
+For behavior changes in components/hooks/services:
+1. Add or update failing tests first (`__tests__`, component tests, hook tests).
+2. Implement the smallest change to pass.
+3. Refactor while retaining green tests and accessibility requirements.
+
 ---
 
 ## Project Defaults

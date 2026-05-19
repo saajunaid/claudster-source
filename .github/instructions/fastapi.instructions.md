@@ -385,6 +385,35 @@ class ComplaintService:
 
 ---
 
+## Design Principles for API Code (KISS, DRY, YAGNI, SOLID)
+
+Apply these principles to `api/`, `routers/`, `services/`, and `repositories/` files.
+
+- **KISS**: keep endpoints thin; route → service → repository.
+- **DRY**: centralize shared validation, pagination, and error mapping.
+- **YAGNI**: avoid speculative generic repositories or plugin systems.
+
+### SOLID in FastAPI Layers
+
+- **S (SRP)**: routers orchestrate HTTP concerns only; business rules live in services.
+- **O (OCP)**: extend behavior via strategy/service classes, not router condition trees.
+- **L (LSP)**: test doubles for repositories/services must satisfy the same contract.
+- **I (ISP)**: define small protocols for specific responsibilities.
+- **D (DIP)**: depend on abstractions via dependency injection.
+
+```python
+from typing import Protocol
+
+class ComplaintReader(Protocol):
+    async def get_by_id(self, complaint_id: str) -> dict | None: ...
+
+class ComplaintService:
+    def __init__(self, reader: ComplaintReader):
+        self._reader = reader
+```
+
+---
+
 ## Error Handling
 
 ```python
@@ -415,6 +444,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 ---
 
 ## Testing
+
+TDD is required for endpoint behavior changes:
+1. Add failing tests first (`tests/unit` or `tests/integration`).
+2. Implement the minimal code to pass.
+3. Refactor while preserving API contract and green tests.
 
 ```python
 # tests/test_complaints.py

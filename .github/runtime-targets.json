@@ -27,6 +27,7 @@
         {"source": "skills", "destination": "skills"},
         {"source": "prompts", "destination": "prompts"},
         {"source": "instructions", "destination": "instructions"},
+        {"source": "hooks", "destination": "hooks"},
         {"source": "tools", "destination": "tools"},
         {"source": "recipes", "destination": "recipes"}
       ]
@@ -127,7 +128,8 @@
               "writing-plans"
             ],
             "devops": [
-              "git-commit"
+              "git-commit",
+              "update-readme"
             ]
           }
         },
@@ -138,6 +140,8 @@
             "advisory-mode.instructions.md",
             "browser-first.instructions.md",
             "code-review.instructions.md",
+            "fastapi.instructions.md",
+            "frontend.instructions.md",
             "large-task-fidelity.instructions.md",
             "performance-optimization.instructions.md",
             "plan-mode.instructions.md",
@@ -148,6 +152,10 @@
             "testing.instructions.md",
             "validation-discipline.instructions.md"
           ]
+        },
+        {
+          "source": "hooks",
+          "destination": "hooks"
         },
         {
           "source": "prompts",
@@ -290,7 +298,8 @@
               "ci-cd-pipeline",
               "gh-cli",
               "git-commit",
-              "monorepo"
+              "monorepo",
+              "update-readme"
             ],
             "data": [
               "data-analysis",
@@ -330,6 +339,10 @@
             "testing.instructions.md",
             "validation-discipline.instructions.md"
           ]
+        },
+        {
+          "source": "hooks",
+          "destination": "hooks"
         },
         {
           "source": "prompts",

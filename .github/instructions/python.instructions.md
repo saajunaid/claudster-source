@@ -347,9 +347,91 @@ When a non-obvious approach is chosen, explain **why** in comments:
 STATUS_MAP: dict[str, str] = load_status_mapping(settings.tenant)
 ```
 
+## Design Principles (KISS, DRY, YAGNI, SOLID)
+
+Apply these principles in Python-heavy files such as:
+- `src/**/*.py` (services, domain logic, repositories)
+- `src/api/**/*.py` and `src/routers/**/*.py` (endpoint composition)
+- `tests/**/*.py` (test helpers and fixtures)
+
+### KISS
+- Prefer straightforward control flow with early returns.
+- Keep functions small and single-purpose.
+
+### DRY
+- Extract repeated transformations/queries into shared helpers.
+- Avoid copy-pasting validation logic across routers/services.
+
+### YAGNI
+- Implement only currently required features and parameters.
+- Delay framework abstractions until two or more real call sites need them.
+
+### SOLID (Python)
+
+#### S — Single Responsibility Principle
+```python
+# ✅ GOOD: focused classes
+class ComplaintValidator:
+    def validate(self, payload: dict) -> None:
+        ...
+
+class ComplaintRepository:
+    def save(self, payload: dict) -> str:
+        ...
+```
+
+#### O — Open/Closed Principle (use `abc.ABC`)
+```python
+from abc import ABC, abstractmethod
+
+class ScoreStrategy(ABC):
+    @abstractmethod
+    def score(self, wait_minutes: int) -> int: ...
+
+class LinearScore(ScoreStrategy):
+    def score(self, wait_minutes: int) -> int:
+        return max(0, 100 - wait_minutes)
+```
+
+#### L — Liskov Substitution Principle
+- Subclasses and implementations must preserve parent/interface contracts.
+- Do not narrow accepted input types or change return semantics unexpectedly.
+
+#### I — Interface Segregation Principle (use `Protocol`)
+```python
+from typing import Protocol
+
+class CaseReader(Protocol):
+    def get_case(self, case_id: str) -> dict: ...
+
+class CaseWriter(Protocol):
+    def save_case(self, payload: dict) -> str: ...
+```
+
+#### D — Dependency Inversion Principle (use `Protocol` + injection)
+```python
+from typing import Protocol
+
+class Notifier(Protocol):
+    def send(self, message: str) -> None: ...
+
+class ComplaintService:
+    def __init__(self, notifier: Notifier):
+        self._notifier = notifier
+```
+
 ---
 
 ## Testing
+
+### TDD Requirement (Red → Green → Refactor)
+
+For behavior changes in Python code:
+1. Add or update a failing test first.
+2. Implement the minimal fix.
+3. Refactor while keeping tests green.
+
+When possible, include the failing-test intent in the commit body.
 
 ### Write Tests for Critical Paths
 

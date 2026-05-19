@@ -64,6 +64,7 @@
 | GitHub CLI | `devops/gh-cli/` | GitHub CLI operations (PRs, issues, releases, actions) |
 | Git Commit | `devops/git-commit/` | Writing conventional commit messages |
 | Monorepo | `devops/monorepo/` | pnpm workspaces + Turborepo for monorepo CI/CD and shared packages |
+| Update README | `devops/update-readme/` | Detecting feature commits and updating README Features/API/Usage with docs-only staging |
 | Using Git Worktrees | `devops/using-git-worktrees/` | Managing parallel branches with git worktrees |
 
 ### Docs
