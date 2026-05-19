@@ -245,6 +245,7 @@ Only include if the backend exists or is being defined in this plan:
 ## Phase N — [Name]
 
 **Agent:** `@[AgentName]`
+**Model:** `[claude-sonnet-4-6 | claude-opus-4-7 | claude-haiku-4-5]` — [one-line rationale, e.g. "Opus for architecture decisions", "Sonnet for code generation", "Haiku for repetitive file scaffolding"]
 **Objective:** [One sentence — what this phase produces. No implementation detail here.]
 
 ### Skills to load
@@ -291,6 +292,10 @@ Deliverables (in order):
 
 When done, run every item in the Validation Checklist and report each result explicitly.
 Do not mark done unless all items pass. If any fail, fix and re-verify.
+
+After all items pass:
+1. Update `plan-status-tracker.md` — mark Phase N as ✅ complete with today's date.
+2. Commit: `git add -A && git commit -m "phase(N): [Name] complete"`.
 ```
 
 ### What to build
@@ -318,6 +323,17 @@ If the code is the spec — write the code. Do not describe code, write it.]
 - [ ] Dark mode: [specific component] renders correctly
 - [ ] Zero [hardcoded colors / any types / console.log / etc.]
 
+### Phase Gate — run after all checklist items pass
+
+```bash
+# 1. Update tracker
+#    Open plan-status-tracker.md and mark Phase N ✅ with today's date and a one-line summary.
+
+# 2. Commit
+git add -A
+git commit -m "phase(N): [Name] complete"
+```
+
 ---
 
 [After all phases, include these three mandatory reference sections:]
@@ -334,6 +350,42 @@ consult this before wiring any component to data.
 | [component] | `[json.field.path]` | `type` | [e.g. camelCase, derived, always [] in v1] |
 
 [Repeat DB-[SECTION] for each logical section / tab / page]
+
+---
+
+## Query Catalog
+
+Every DB-backed UI field must trace to a specific executable SQL query.
+This section is the authoritative reference for data analysis — it answers
+"what query fetches what for the UI?"
+
+Include one block per repository function. Queries must use **named bind parameters**
+(`:param`), be schema-qualified (`{schema}.TableName`, default `dbo`), and include an
+`OFFSET+FETCH` or `TOP N` bound — never unbounded.
+
+```sql
+-- [EntityName] — [repository_module].[function_name]
+-- UI fields populated: fieldA, fieldB, embeddedStatus, derivedFromBlob
+-- Parameters: :filter_val (optional), :offset (int), :page_size (int)
+SELECT
+    t.column_a         AS field_a,
+    t.column_b         AS field_b,
+    t.payload_col      AS payload_col   -- NVARCHAR(MAX): parsed by [adapter_name]
+FROM {schema}.[SourceTable] AS t
+WHERE (:filter_val IS NULL OR t.filter_col = :filter_val)
+ORDER BY t.created_at DESC
+OFFSET :offset ROWS FETCH NEXT :page_size ROWS ONLY;
+```
+
+**Derived fields from `payload_col` (extracted by normalizer — not in SQL):**
+
+| UI field | Payload path / section | Adapter |
+|---|---|---|
+| `embeddedStatus` | NULL check on `payload_col` | n/a |
+| `derivedField1` | `payload_col → json_key` | `embedded_json_adapter` |
+| `derivedField2` | `payload_col → ## Section Header` | `embedded_markdown_adapter` |
+
+[Repeat one block per repository function — single-row lookups, filters, aggregates, etc.]
 
 ---
 
@@ -410,6 +462,37 @@ Save the completed plan to:
 - `.github/plans/backlog/<feature-slug>.md` — optional backlog location
 
 If mode is **`junai-pipeline`**, additionally register the artefact in `.github/agent-docs/ARTIFACTS.md` with `status: current`.
+
+### Plan Status Tracker
+
+Alongside the plan file, **always** create `.github/plans/<feature-slug>-status.md` using
+this template (one row per phase, populated from the Pre-Flight Scan):
+
+```markdown
+# Plan Status — [Project Name]
+
+> Plan: `.github/plans/<feature-slug>.md`
+> Started: YYYY-MM-DD
+> Last updated: YYYY-MM-DD
+
+| Phase | Name | Agent | Model | Status | Completed | Notes |
+|---|---|---|---|---|---|---|
+| 0 | Context & Decisions | — | — | ✅ Complete | YYYY-MM-DD | Plan authored |
+| 1 | [Name] | @[Agent] | [model] | ⏳ Pending | — | |
+| 2 | [Name] | @[Agent] | [model] | ⏳ Pending | — | |
+| N | [Name] | @[Agent] | [model] | ⏳ Pending | — | |
+
+## Status key
+- ⏳ Pending — not started
+- 🔄 In Progress — agent session open
+- ✅ Complete — gate passed, committed
+- ❌ Blocked — gate failed, needs fix
+- ⏭️ Skipped — explicitly deferred
+```
+
+**Gate rule:** The executing agent updates this file and commits as the final step of
+every phase (`git commit -m "phase(N): [Name] complete"`). Never mark a phase ✅ before
+all validation checklist items pass.
 
 **Next step after saving:** Load `.github/skills/workflow/preflight/SKILL.md` and run it against the completed plan before any agent begins implementation. Preflight catches wrong endpoints, stale type names, missing dependencies, and field name mismatches that slipped past plan authorship — far cheaper to fix in the plan than mid-implementation.
 
