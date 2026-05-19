@@ -31,14 +31,14 @@ $PTARMIGAN_PAT_FILE = Join-Path $PTARMIGAN_REPO "ptarmigan.pat"
 # NOTE: "plans" intentionally REMOVED from $POOL_FOLDERS as of 2026-04-27 (Phase 1.0
 # stop-the-bleed). Plans are tracked in agent-sandbox only; they never sync to the
 # public mirror. Do not re-add without explicit privacy review.
-$POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "diagrams", "tools", "recipes", "agent-docs", "handoffs")
+$POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "hooks", "diagrams", "tools", "recipes", "agent-docs", "handoffs")
 $POOL_FILES = @("runtime-targets.json")
 $ROOT_PUSH_FILES = @("export_runtime_resources.py")
 # Top-level repo-root folders that must NEVER be synced to the public mirror.
 # vmie/ holds private, organisation-specific resources for local copy-paste only.
 $PRIVATE_ROOT_FOLDERS = @("vmie")
 # Fully-managed folders: wiped before copy so renamed/moved/deleted files don't persist
-$CLEAN_FOLDERS = @("agents", "skills", "prompts", "instructions", "tools", "recipes")
+$CLEAN_FOLDERS = @("agents", "skills", "prompts", "instructions", "hooks", "tools", "recipes")
 
 function Remove-JunaiCacheDirs {
     param(
