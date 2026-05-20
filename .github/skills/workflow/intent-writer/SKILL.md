@@ -74,14 +74,14 @@ Apply `.github/instructions/document-frontmatter.instructions.md` when creating 
 ```markdown
 ---
 agent: prompt-engineer
-created: {YYYY-MM-DD}
+created: {YYYY-MM-DDTHH:MM:SSZ}
 status: current
 type: intent
 chain_id: {FEAT-YYYY-MMDD-slug}
 approval: pending
 feasibility_warnings: {list or "none"}
 Original Author: prompt-engineer
-Creation Date: {YYYY-MM-DD}
+Creation Date: {YYYY-MM-DDTHH:MM:SSZ}
 Creating Model: {actual model used}
 ---
 <!-- AGENT-GENERATED: This Intent Document preserves user intent for the agent pipeline.
@@ -154,7 +154,7 @@ When requirements change mid-pipeline:
 ```markdown
 ---
 agent: prompt-engineer
-created: {YYYY-MM-DD}
+created: {YYYY-MM-DDTHH:MM:SSZ}
 status: current
 type: intent-amendment
 chain_id: {same chain_id as original}
@@ -162,7 +162,7 @@ amends: agent-docs/intents/{chain_id}.md
 amendment_number: {N}
 approval: pending
 Original Author: prompt-engineer
-Creation Date: {YYYY-MM-DD}
+Creation Date: {YYYY-MM-DDTHH:MM:SSZ}
 Creating Model: {actual model used}
 ---
 
@@ -188,7 +188,7 @@ Creating Model: {actual model used}
 2. Mark downstream artifacts (produced BEFORE the amendment) as `superseded` in the manifest
 3. The pipeline re-runs from the earliest affected point
 
-If you revise an existing intent or amendment file instead of creating a new one, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+If you revise an existing intent or amendment file instead of creating a new one, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used` using full ISO 8601 UTC timestamps.
 
 ---
 

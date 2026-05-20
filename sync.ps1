@@ -12,6 +12,8 @@
 #   junai-pull                    pull latest pool from junai --> current project
 #   junai-push                    push pool from current project --> junai + commit + push (+ auto-publish when keys exist)
 #   junai-push -NoPublish         push only (skip publish)
+#   junai-smoke-release           run fresh-shell smoke checks for release automation
+#   junai-ship                    commit source, cascade mirrors/profiles, optionally publish selected lanes
 #   junai-release                 publish MCP + VS Code extension using keyfiles
 #   junai-release -SkipMcp        extension only
 #   junai-release -SkipExtension  MCP only
@@ -32,6 +34,9 @@ $VSCE_PAT_FILE = Join-Path $JUNAI_VSCODE "vscode.pat"
 $PTARMIGAN_PAT_FILE = Join-Path $PTARMIGAN_REPO "ptarmigan.pat"
 $script:JunaiEnvLoaded = $false
 $script:JunaiEnv = @{}
+$LOCAL_ONLY_POOL_FILES = @(
+    "prompts\junai-ship.prompt.md"
+)
 # NOTE: "plans" intentionally REMOVED from $POOL_FOLDERS as of 2026-04-27 (Phase 1.0
 # stop-the-bleed). Plans are tracked in agent-sandbox only; they never sync to the
 # public mirror. Do not re-add without explicit privacy review.
@@ -196,6 +201,20 @@ function Get-NextPatchVersion {
     return "$major.$minor.$patch"
 }
 
+function Try-GetNextPatchVersion {
+    param([string]$VersionString = "")
+
+    if ([string]::IsNullOrWhiteSpace($VersionString)) {
+        return ""
+    }
+
+    try {
+        return Get-NextPatchVersion -VersionString $VersionString
+    } catch {
+        return ""
+    }
+}
+
 function Set-PackageJsonVersion {
     param(
         [Parameter(Mandatory)][string]$PackageJsonPath,
@@ -233,6 +252,68 @@ function Bump-PackageJsonPatchVersion {
     return $nextVersion
 }
 
+function Get-PyprojectVersion {
+    param([Parameter(Mandatory)][string]$PyprojectPath)
+
+    if (-not (Test-Path $PyprojectPath)) {
+        return ""
+    }
+
+    $content = Get-Content $PyprojectPath -Raw
+    $match = [regex]::Match($content, '(?m)^version\s*=\s*"([^"]+)"')
+    if (-not $match.Success) {
+        return ""
+    }
+
+    return $match.Groups[1].Value.Trim()
+}
+
+function Set-PyprojectVersion {
+    param(
+        [Parameter(Mandatory)][string]$PyprojectPath,
+        [Parameter(Mandatory)][string]$VersionString
+    )
+
+    $content = Get-Content $PyprojectPath -Raw
+    $updated = [regex]::Replace($content, '(?m)^version\s*=\s*"[^"]+"', ('version = "' + $VersionString + '"'), 1)
+    if ($updated -eq $content) {
+        throw "Could not update version in $PyprojectPath"
+    }
+
+    Set-Content $PyprojectPath $updated -NoNewline
+}
+
+function Commit-PackageJsonPatchVersion {
+    param(
+        [Parameter(Mandatory)][string]$RepoPath,
+        [Parameter(Mandatory)][string]$Label
+    )
+
+    Push-Location $RepoPath
+    try {
+        $nextVersion = Bump-PackageJsonPatchVersion -RepoPath $RepoPath -Label $Label
+        if ([string]::IsNullOrWhiteSpace($nextVersion)) {
+            return ""
+        }
+
+        git add package.json
+        git commit -m "chore: bump version to $nextVersion" | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "$Label version bump commit failed"
+        }
+
+        git push | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "$Label version bump push failed"
+        }
+
+        Write-Host "  [OK]  $Label version bump committed + pushed" -ForegroundColor Green
+        return $nextVersion
+    } finally {
+        Pop-Location
+    }
+}
+
 function Confirm-VscePublishedVersion {
     param(
         [Parameter(Mandatory)][string]$ExtensionId,
@@ -262,10 +343,506 @@ function Confirm-VscePublishedVersion {
     return $false
 }
 
+function Backup-LocalOnlyPoolFiles {
+    param([Parameter(Mandatory)][string]$GithubRoot)
+
+    $backup = @{}
+    foreach ($relativePath in $LOCAL_ONLY_POOL_FILES) {
+        $fullPath = Join-Path $GithubRoot $relativePath
+        if (Test-Path $fullPath) {
+            $backup[$relativePath] = [System.IO.File]::ReadAllText($fullPath)
+        }
+    }
+
+    return $backup
+}
+
+function Restore-LocalOnlyPoolFiles {
+    param(
+        [Parameter(Mandatory)][string]$GithubRoot,
+        [hashtable]$Backup = @{}
+    )
+
+    foreach ($relativePath in $LOCAL_ONLY_POOL_FILES) {
+        if (-not $Backup.ContainsKey($relativePath)) {
+            continue
+        }
+
+        $fullPath = Join-Path $GithubRoot $relativePath
+        $parent = Split-Path $fullPath -Parent
+        if (-not (Test-Path $parent)) {
+            New-Item -ItemType Directory -Path $parent -Force | Out-Null
+        }
+        [System.IO.File]::WriteAllText($fullPath, [string]$Backup[$relativePath])
+    }
+}
+
+function Remove-LocalOnlyPoolFiles {
+    param([Parameter(Mandatory)][string]$GithubRoot)
+
+    foreach ($relativePath in $LOCAL_ONLY_POOL_FILES) {
+        $fullPath = Join-Path $GithubRoot $relativePath
+        if (Test-Path $fullPath) {
+            Remove-Item $fullPath -Force
+        }
+    }
+}
+
+function Get-RepoHeadLine {
+    param([Parameter(Mandatory)][string]$RepoPath)
+
+    if (-not (Test-Path $RepoPath)) {
+        return "$RepoPath (missing)"
+    }
+
+    Push-Location $RepoPath
+    try {
+        $line = git log -1 --oneline 2>$null
+        return (($line | Out-String).Trim())
+    } finally {
+        Pop-Location
+    }
+}
+
+function Get-RepoChangedPaths {
+    param([Parameter(Mandatory)][string]$RepoPath)
+
+    if (-not (Test-Path $RepoPath)) {
+        return @()
+    }
+
+    Push-Location $RepoPath
+    try {
+        $tracked = @(git diff --name-only HEAD 2>$null)
+        $untracked = @(git ls-files --others --exclude-standard 2>$null)
+        $all = @($tracked + $untracked | ForEach-Object { ($_ | Out-String).Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        return @($all | Select-Object -Unique)
+    } finally {
+        Pop-Location
+    }
+}
+
+function Get-RuntimeTargetManifest {
+    $manifestPath = Join-Path $REPO_ROOT ".github\runtime-targets.json"
+    if (-not (Test-Path $manifestPath)) {
+        return $null
+    }
+
+    return (Get-Content $manifestPath -Raw | ConvertFrom-Json)
+}
+
+function Test-CopySpecMatchesPath {
+    param(
+        [Parameter(Mandatory)]$CopySpec,
+        [Parameter(Mandatory)][string]$RelativePath
+    )
+
+    $normalizedPath = $RelativePath.Replace("\", "/").Trim("/")
+    $sourceRoot = ([string]$CopySpec.source).Replace("\", "/").Trim("/")
+    if ([string]::IsNullOrWhiteSpace($sourceRoot)) {
+        return $false
+    }
+    if ($normalizedPath -ne $sourceRoot -and -not $normalizedPath.StartsWith("$sourceRoot/")) {
+        return $false
+    }
+
+    $subPath = $normalizedPath.Substring($sourceRoot.Length).TrimStart('/')
+    if ([string]::IsNullOrWhiteSpace($subPath)) {
+        return $true
+    }
+
+    $parts = @($subPath -split '/')
+    $topLevel = $parts[0]
+
+    $excludedNames = @($CopySpec.excluded_names | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    if ($excludedNames.Count -gt 0 -and $excludedNames -contains $topLevel) {
+        return $false
+    }
+
+    $includedNames = @($CopySpec.included_names | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    if ($includedNames.Count -gt 0 -and -not ($includedNames -contains $topLevel)) {
+        return $false
+    }
+
+    if ([string]$CopySpec.source -eq "skills" -and $CopySpec.included_skills) {
+        if ($parts.Count -lt 2) {
+            return $false
+        }
+
+        $categoryName = $parts[0]
+        $skillName = $parts[1]
+        $categoryProperty = $CopySpec.included_skills.PSObject.Properties | Where-Object { $_.Name -eq $categoryName } | Select-Object -First 1
+        if (-not $categoryProperty) {
+            return $false
+        }
+
+        return (@($categoryProperty.Value) -contains $skillName)
+    }
+
+    return $true
+}
+
+function Test-TargetMatchesSourcePath {
+    param(
+        [Parameter(Mandatory)]$Target,
+        [Parameter(Mandatory)][string]$RepoRelativePath
+    )
+
+    $normalized = $RepoRelativePath.Replace("\", "/").Trim("/")
+
+    if ($normalized -eq "export_runtime_resources.py") {
+        return $true
+    }
+
+    if (-not $normalized.StartsWith(".github/")) {
+        return $false
+    }
+
+    $poolRelativePath = $normalized.Substring(8)
+    if ([string]::IsNullOrWhiteSpace($poolRelativePath)) {
+        return $false
+    }
+
+    if ($poolRelativePath -eq "runtime-targets.json") {
+        return $true
+    }
+
+    foreach ($fileSpec in @($Target.files)) {
+        $fileSource = ([string]$fileSpec.source).Replace("\", "/").Trim("/")
+        if ($poolRelativePath -eq $fileSource) {
+            return $true
+        }
+    }
+
+    foreach ($copySpec in @($Target.copies)) {
+        if (Test-CopySpecMatchesPath -CopySpec $copySpec -RelativePath $poolRelativePath) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Get-AffectedProfileNamesFromSourcePaths {
+    param([string[]]$ChangedPaths = @())
+
+    $manifest = Get-RuntimeTargetManifest
+    if (-not $manifest) {
+        return @("ptarmigan", "liffey")
+    }
+
+    $profileTargets = @($manifest.targets | Where-Object { $_.name -in @("ptarmigan", "liffey") })
+    if ($profileTargets.Count -eq 0) {
+        return @()
+    }
+
+    $affected = New-Object System.Collections.Generic.HashSet[string]
+    foreach ($path in @($ChangedPaths | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+        foreach ($target in $profileTargets) {
+            if (Test-TargetMatchesSourcePath -Target $target -RepoRelativePath $path) {
+                $null = $affected.Add([string]$target.name)
+            }
+        }
+    }
+
+    return @($affected | Sort-Object)
+}
+
+function Test-PathPrefixMatch {
+    param(
+        [Parameter(Mandatory)][string]$RelativePath,
+        [string[]]$Prefixes = @()
+    )
+
+    $normalizedPath = $RelativePath.Replace("\", "/").Trim("/")
+    foreach ($prefix in @($Prefixes | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+        $normalizedPrefix = ([string]$prefix).Replace("\", "/").Trim("/")
+        if ([string]::IsNullOrWhiteSpace($normalizedPrefix)) {
+            continue
+        }
+
+        if ($normalizedPath -eq $normalizedPrefix -or $normalizedPath.StartsWith("$normalizedPrefix/")) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Get-ReleaseRelevantRepoChangedPaths {
+    param(
+        [Parameter(Mandatory)][string]$Lane,
+        [string[]]$ChangedPaths = @()
+    )
+
+    $relevant = New-Object System.Collections.Generic.List[string]
+    foreach ($path in @($ChangedPaths | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+        $normalizedPath = $path.Replace("\", "/").Trim("/")
+        $isRelevant = $false
+
+        switch ($Lane) {
+            "junai-vscode" {
+                $isRelevant = (
+                    (Test-PathPrefixMatch -RelativePath $normalizedPath -Prefixes @("src", "media", "out", "scripts")) -or
+                    $normalizedPath -in @("package.json", "esbuild.mjs", "tsconfig.json", "README.md", "CHANGELOG.md", "LICENSE.md")
+                )
+            }
+            "ptarmigan" {
+                $isRelevant = (
+                    (Test-PathPrefixMatch -RelativePath $normalizedPath -Prefixes @("src", "media", "assets", "pool", "out", "scripts")) -or
+                    $normalizedPath -in @("package.json", "esbuild.mjs", "tsconfig.json", "README.md", "CHANGELOG.md", "PUBLISHING.md", "LICENSE.md")
+                )
+            }
+            "liffey" {
+                $isRelevant = (
+                    (Test-PathPrefixMatch -RelativePath $normalizedPath -Prefixes @("src", "media", "pool", "out", "scripts")) -or
+                    $normalizedPath -in @("package.json", "esbuild.mjs", "tsconfig.json", "README.md", "CHANGELOG.md", "LICENSE.md")
+                )
+            }
+            "mcp" {
+                $isRelevant = (
+                    (Test-PathPrefixMatch -RelativePath $normalizedPath -Prefixes @("src/junai_mcp")) -or
+                    $normalizedPath -in @("pyproject.toml", "README.md")
+                )
+            }
+        }
+
+        if ($isRelevant) {
+            $null = $relevant.Add($normalizedPath)
+        }
+    }
+
+    return @($relevant | Select-Object -Unique)
+}
+
+function Get-AffectedReleaseTargetsFromSourcePaths {
+    param([string[]]$ChangedPaths = @())
+
+    $affected = New-Object System.Collections.Generic.HashSet[string]
+
+    foreach ($profile in @(Get-AffectedProfileNamesFromSourcePaths -ChangedPaths $ChangedPaths)) {
+        $null = $affected.Add($profile)
+    }
+
+    foreach ($path in @($ChangedPaths | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+        $normalizedPath = $path.Replace("\", "/").Trim("/")
+
+        if ($normalizedPath -eq "export_runtime_resources.py" -or $normalizedPath -eq ".github/runtime-targets.json" -or $normalizedPath.StartsWith(".github/")) {
+            $null = $affected.Add("junai-vscode")
+        }
+
+        if ($normalizedPath -eq ".github/tools/mcp-server/server.py") {
+            $null = $affected.Add("mcp")
+        }
+    }
+
+    return @($affected | Sort-Object)
+}
+
+function Commit-RepoIfDirty {
+    param(
+        [Parameter(Mandatory)][string]$RepoPath,
+        [Parameter(Mandatory)][string]$Label,
+        [Parameter(Mandatory)][string]$Message,
+        [switch]$Push
+    )
+
+    if (-not (Test-Path $RepoPath)) {
+        Write-Host "  [WARN]  $Label repo not found at $RepoPath" -ForegroundColor Yellow
+        return $false
+    }
+
+    Push-Location $RepoPath
+    try {
+        $statusOutput = @(git status --porcelain)
+        $hasChanges = -not [string]::IsNullOrWhiteSpace(($statusOutput | Out-String).Trim())
+        if (-not $hasChanges) {
+            Write-Host "  [--]  $Label repo already clean" -ForegroundColor DarkGray
+            return $false
+        }
+
+        git add -A | Out-Null
+        git commit -m $Message | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "$Label commit failed"
+        }
+
+        if ($Push) {
+            git push | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "$Label push failed"
+            }
+            Write-Host "  [OK]  $Label committed + pushed" -ForegroundColor Green
+        } else {
+            Write-Host "  [OK]  $Label committed locally" -ForegroundColor Green
+        }
+
+        return $true
+    } finally {
+        Pop-Location
+    }
+}
+
+function Test-ManagedExtensionStaging {
+    param(
+        [Parameter(Mandatory)][string]$RepoPath,
+        [Parameter(Mandatory)][string]$Label
+    )
+
+    $result = @{
+        Label = $Label
+        Passed = $true
+        Unexpected = @()
+    }
+
+    if (-not (Test-Path $RepoPath)) {
+        $result.Passed = $false
+        $result.Unexpected = @("missing repo: $RepoPath")
+        return $result
+    }
+
+    $sentinelEnv = Join-Path $RepoPath ".env"
+    $sentinelDistDir = Join-Path $RepoPath "dist"
+    $sentinelVsix = Join-Path $sentinelDistDir "junai-smoke-sentinel.vsix"
+    $createdEnv = $false
+    $createdDistDir = $false
+    $createdVsix = $false
+
+    try {
+        if (-not (Test-Path $sentinelEnv)) {
+            [System.IO.File]::WriteAllText($sentinelEnv, "JUNAI_SMOKE_TEST=1`n")
+            $createdEnv = $true
+        }
+        if (-not (Test-Path $sentinelDistDir)) {
+            New-Item -ItemType Directory -Path $sentinelDistDir -Force | Out-Null
+            $createdDistDir = $true
+        }
+        if (-not (Test-Path $sentinelVsix)) {
+            [System.IO.File]::WriteAllText($sentinelVsix, "smoke-test")
+            $createdVsix = $true
+        }
+
+        Push-Location $RepoPath
+        try {
+            $dryRunOutput = @(git add -n -- package.json pool out 2>&1)
+        } finally {
+            Pop-Location
+        }
+
+        $unexpected = @($dryRunOutput | Where-Object {
+            $_ -match 'junai-smoke-sentinel\.vsix' -or $_ -match '(^|[\\/])\.env($|\s)'
+        })
+
+        if ($unexpected.Count -gt 0) {
+            $result.Passed = $false
+            $result.Unexpected = @($unexpected | ForEach-Object { ($_ | Out-String).Trim() })
+        }
+    } finally {
+        if ($createdVsix -and (Test-Path $sentinelVsix)) {
+            Remove-Item $sentinelVsix -Force
+        }
+        if ($createdDistDir -and (Test-Path $sentinelDistDir)) {
+            $remaining = Get-ChildItem $sentinelDistDir -Force -ErrorAction SilentlyContinue
+            if (-not $remaining) {
+                Remove-Item $sentinelDistDir -Force
+            }
+        }
+        if ($createdEnv -and (Test-Path $sentinelEnv)) {
+            Remove-Item $sentinelEnv -Force
+        }
+    }
+
+    return $result
+}
+
+function Invoke-JunaiFreshShell {
+    param(
+        [Parameter(Mandatory)][string]$ScriptText,
+        [string]$WorkingDirectory = $REPO_ROOT
+    )
+
+    $tempScript = Join-Path ([System.IO.Path]::GetTempPath()) ("junai-smoke-" + [guid]::NewGuid().ToString() + ".ps1")
+    $scriptContent = @"
+Set-Location '$WorkingDirectory'
+. '$REPO_ROOT\sync.ps1'
+
+$ErrorActionPreference = 'Stop'
+$ScriptText
+"@
+
+    [System.IO.File]::WriteAllText($tempScript, $scriptContent)
+    try {
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tempScript
+        return $LASTEXITCODE
+    } finally {
+        if (Test-Path $tempScript) {
+            Remove-Item $tempScript -Force
+        }
+    }
+}
+
+function Publish-PtarmiganExtension {
+    if (-not (Test-Path $PTARMIGAN_REPO)) {
+        Write-Host "  [ERROR] Ptarmigan repo not found at $PTARMIGAN_REPO" -ForegroundColor Red
+        return $false
+    }
+
+    $pat = Get-JunaiSecretValue -EnvName "PTARMIGAN_VSCE_PAT" -LegacyFilePath $PTARMIGAN_PAT_FILE
+    if ([string]::IsNullOrWhiteSpace($pat)) {
+        Write-Host "  [ERROR] Missing Ptarmigan PAT. Set PTARMIGAN_VSCE_PAT in $JUNAI_ENV_FILE or keep $PTARMIGAN_PAT_FILE." -ForegroundColor Red
+        return $false
+    }
+
+    Push-Location $PTARMIGAN_REPO
+    $prevVscePat = $env:VSCE_PAT
+    try {
+        $env:VSCE_PAT = $pat
+        npx vsce publish --pat $pat --no-dependencies
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  [WARN]  Ptarmigan publish failed." -ForegroundColor Yellow
+            return $false
+        }
+
+        Write-Host "  [OK]  Ptarmigan extension published." -ForegroundColor Green
+        $expectedVersion = Get-PackageJsonVersion -PackageJsonPath (Join-Path $PTARMIGAN_REPO "package.json")
+        if (-not [string]::IsNullOrWhiteSpace($expectedVersion)) {
+            Confirm-VscePublishedVersion -ExtensionId "junai-labs.ptarmigan" -ExpectedVersion $expectedVersion | Out-Null
+        }
+        return $true
+    } finally {
+        $env:VSCE_PAT = $prevVscePat
+        Pop-Location
+    }
+}
+
+function Package-LiffeyExtension {
+    Push-Location $LIFFEY_REPO
+    try {
+        $pkg = Get-Content (Join-Path $LIFFEY_REPO "package.json") -Raw | ConvertFrom-Json
+        $version = if ($pkg.version) { $pkg.version } else { "0.0.0" }
+
+        $distDir = Join-Path $LIFFEY_REPO "dist"
+        New-Item -ItemType Directory -Path $distDir -Force | Out-Null
+
+        $vsixOut = Join-Path $distDir "liffey-$version.vsix"
+        npx vsce package --out $vsixOut --no-dependencies
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  [WARN]  Liffey VSIX packaging failed." -ForegroundColor Yellow
+            return $null
+        }
+
+        Write-Host "  [OK]  Liffey VSIX prepared: $vsixOut" -ForegroundColor Green
+        return $vsixOut
+    } finally {
+        Pop-Location
+    }
+}
+
 function junai-pull {
     param([string]$ProjectRoot = (Get-Location).Path)
 
     $target = Join-Path $ProjectRoot ".github"
+    $localOnlyBackup = Backup-LocalOnlyPoolFiles -GithubRoot $target
 
     if (-not (Test-Path $target)) {
         Write-Host "No .github/ folder found at $ProjectRoot" -ForegroundColor Red
@@ -322,6 +899,8 @@ function junai-pull {
         Write-Host "  [OK]  .vscode/mcp.json" -ForegroundColor Green
     }
 
+    Restore-LocalOnlyPoolFiles -GithubRoot $target -Backup $localOnlyBackup
+
     Write-Host ""
     Write-Host "  Done. project-config.md was NOT overwritten." -ForegroundColor DarkGray
     Write-Host ""
@@ -333,8 +912,17 @@ function junai-push {
         [string]$Message = "",
         [switch]$Publish,
         [switch]$NoPublish,
-        [string]$McpVersion = ""
+        [string]$McpVersion = "",
+        [string[]]$Profiles = @("ptarmigan", "liffey"),
+        [switch]$SkipProfileSync
     )
+
+    $pushResult = [ordered]@{
+        MirrorChanged = $false
+        SelectedProfiles = @()
+        ProfileResults = @{}
+        ReleaseTriggered = $false
+    }
 
     $source = Join-Path $ProjectRoot ".github"
 
@@ -397,6 +985,8 @@ function junai-push {
         }
     }
 
+    Remove-LocalOnlyPoolFiles -GithubRoot $JUNO_GITHUB
+
     # Commit and push junai
     Push-Location $JUNO_POOL
 
@@ -405,7 +995,7 @@ function junai-push {
         Write-Host ""
         Write-Host "  No changes detected in junai. Nothing to commit." -ForegroundColor DarkGray
         Pop-Location
-        return
+        return [pscustomobject]$pushResult
     }
 
     # ── PyPI build copy (src/junai_mcp/server.py) ─────────────────────────────
@@ -437,32 +1027,49 @@ function junai-push {
     git commit -m $Message | Out-Null
     git push | Out-Null
 
+    $pushResult.MirrorChanged = $true
+
     Pop-Location
 
     Write-Host ""
     Write-Host "  Committed and pushed to junai." -ForegroundColor Magenta
     Write-Host ""
 
-    # Build profile exports used by downstream Ptarmigan/Liffey sync lanes.
-    Push-Location $ProjectRoot
-    $pythonCommand = Get-JunaiPythonCommand
-    if ($pythonCommand) {
-        & $pythonCommand.Path @($pythonCommand.PrefixArgs + @("export_runtime_resources.py", "--profile", "ptarmigan", "--profile", "liffey", "--report"))
-        $profileExportOk = ($LASTEXITCODE -eq 0)
+    $selectedProfiles = @($Profiles | Where-Object { $_ -in @("ptarmigan", "liffey") } | Select-Object -Unique)
+    $pushResult.SelectedProfiles = $selectedProfiles
+    if ($SkipProfileSync -or $selectedProfiles.Count -eq 0) {
+        Write-Host "  [--]  Profile sync skipped." -ForegroundColor DarkGray
     } else {
-        $profileExportOk = $false
-    }
-    if ($profileExportOk -and (Test-Path (Join-Path $ProjectRoot "validate_pool.py"))) {
-        & $pythonCommand.Path @($pythonCommand.PrefixArgs + @("validate_pool.py", "--include-dist"))
-        $profileExportOk = ($LASTEXITCODE -eq 0)
-    }
-    Pop-Location
+        # Build only the selected profile exports used by downstream sync lanes.
+        Push-Location $ProjectRoot
+        $pythonCommand = Get-JunaiPythonCommand
+        if ($pythonCommand) {
+            $exportArgs = @("export_runtime_resources.py")
+            foreach ($profile in $selectedProfiles) {
+                $exportArgs += @("--profile", $profile)
+            }
+            $exportArgs += "--report"
+            & $pythonCommand.Path @($pythonCommand.PrefixArgs + $exportArgs)
+            $profileExportOk = ($LASTEXITCODE -eq 0)
+        } else {
+            $profileExportOk = $false
+        }
+        if ($profileExportOk -and (Test-Path (Join-Path $ProjectRoot "validate_pool.py"))) {
+            & $pythonCommand.Path @($pythonCommand.PrefixArgs + @("validate_pool.py", "--include-dist"))
+            $profileExportOk = ($LASTEXITCODE -eq 0)
+        }
+        Pop-Location
 
-    if (-not $profileExportOk) {
-        Write-Host "  [WARN]  Profile export failed; skipping Ptarmigan/Liffey cascade for this run." -ForegroundColor Yellow
-    } else {
-        sync-ptarmigan -ProjectRoot $ProjectRoot -Message $Message -NoPublish:$NoPublish
-        sync-liffey -ProjectRoot $ProjectRoot -Message $Message
+        if (-not $profileExportOk) {
+            Write-Host "  [WARN]  Profile export failed; skipping selected profile cascade for this run." -ForegroundColor Yellow
+        } else {
+            if ($selectedProfiles -contains "ptarmigan") {
+                $pushResult.ProfileResults["ptarmigan"] = [bool](sync-ptarmigan -ProjectRoot $ProjectRoot -Message $Message)
+            }
+            if ($selectedProfiles -contains "liffey") {
+                $pushResult.ProfileResults["liffey"] = [bool](sync-liffey -ProjectRoot $ProjectRoot -Message $Message)
+            }
+        }
     }
 
     # ── Auto-publish when key files exist ─────────────────────────────────
@@ -475,13 +1082,13 @@ function junai-push {
 
     if ($NoPublish) {
         Write-Host "  [--]  Publish skipped (-NoPublish)." -ForegroundColor DarkGray
-        return
+        return [pscustomobject]$pushResult
     }
 
     if (-not $shouldPublish) {
         Write-Host "  [--]  No publish keys found. Skipping release." -ForegroundColor DarkGray
         Write-Host "       Set JUNAI_PYPI_TOKEN and/or JUNAI_VSCE_PAT in $JUNAI_ENV_FILE (legacy key files still work)." -ForegroundColor DarkGray
-        return
+        return [pscustomobject]$pushResult
     }
 
     if (-not $hasPypiKey) {
@@ -491,7 +1098,9 @@ function junai-push {
         Write-Host "  [--]  VS Code PAT missing; extension publish skipped." -ForegroundColor DarkGray
     }
 
+    $pushResult.ReleaseTriggered = $true
     junai-release -McpVersion $McpVersion -SkipMcp:(-not $hasPypiKey) -SkipExtension:(-not $hasVscePat)
+    return [pscustomobject]$pushResult
 }
 
 function Sync-JunaiProfileRepo {
@@ -649,70 +1258,35 @@ function sync-ptarmigan {
         [string]$ProjectRoot = $PSScriptRoot,
         [string]$Message = "",
         [switch]$NoPush,
-        [switch]$NoPublish
+        [switch]$Publish
     )
 
     Write-Host "  PTARMIGAN SYNC  junai mirror --> $PTARMIGAN_REPO (pool/)" -ForegroundColor Cyan
     $changed = Sync-ExtensionRepo -RepoPath $PTARMIGAN_REPO -Label "Ptarmigan" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush -AutoBumpVersion
-    if (-not $changed -or $NoPush -or $NoPublish) {
-        return
+    if (-not $changed -or $NoPush -or -not $Publish) {
+        return $changed
     }
 
-    Push-Location $PTARMIGAN_REPO
-    $pat = Get-JunaiSecretValue -EnvName "PTARMIGAN_VSCE_PAT" -LegacyFilePath $PTARMIGAN_PAT_FILE
-    if ([string]::IsNullOrWhiteSpace($pat)) {
-        Write-Host "  [--]  Ptarmigan PAT missing; publish skipped." -ForegroundColor DarkGray
-        Pop-Location
-        return
-    }
-
-    $prevVscePat = $env:VSCE_PAT
-    try {
-        $env:VSCE_PAT = $pat
-        npx vsce publish --pat $pat --no-dependencies
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "  [WARN]  Ptarmigan publish failed." -ForegroundColor Yellow
-        } else {
-            Write-Host "  [OK]  Ptarmigan extension published." -ForegroundColor Green
-            $expectedVersion = Get-PackageJsonVersion -PackageJsonPath (Join-Path $PTARMIGAN_REPO "package.json")
-            if (-not [string]::IsNullOrWhiteSpace($expectedVersion)) {
-                Confirm-VscePublishedVersion -ExtensionId "junai-labs.ptarmigan" -ExpectedVersion $expectedVersion | Out-Null
-            }
-        }
-    } finally {
-        $env:VSCE_PAT = $prevVscePat
-        Pop-Location
-    }
+    $null = Publish-PtarmiganExtension
+    return $changed
 }
 
 function sync-liffey {
     param(
         [string]$ProjectRoot = $PSScriptRoot,
         [string]$Message = "",
-        [switch]$NoPush
+        [switch]$NoPush,
+        [switch]$Package
     )
 
     Write-Host "  LIFFEY SYNC   junai mirror --> $LIFFEY_REPO (pool/)" -ForegroundColor Cyan
     $changed = Sync-ExtensionRepo -RepoPath $LIFFEY_REPO -Label "Liffey" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush -AutoBumpVersion
-    if (-not $changed) {
-        return
+    if (-not $changed -or -not $Package) {
+        return $changed
     }
 
-    Push-Location $LIFFEY_REPO
-    $pkg = Get-Content (Join-Path $LIFFEY_REPO "package.json") -Raw | ConvertFrom-Json
-    $version = if ($pkg.version) { $pkg.version } else { "0.0.0" }
-
-    $distDir = Join-Path $LIFFEY_REPO "dist"
-    New-Item -ItemType Directory -Path $distDir -Force | Out-Null
-
-    $vsixOut = Join-Path $distDir "liffey-$version.vsix"
-    npx vsce package --out $vsixOut --no-dependencies
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [WARN]  Liffey VSIX packaging failed." -ForegroundColor Yellow
-    } else {
-        Write-Host "  [OK]  Liffey VSIX prepared: $vsixOut" -ForegroundColor Green
-    }
-    Pop-Location
+    $null = Package-LiffeyExtension
+    return $changed
 }
 
 function junai-publish-mcp {
@@ -807,20 +1381,20 @@ function junai-release {
     $poolValidatorScript = Join-Path $REPO_ROOT "validate_pool.py"
     $pythonCommand = Get-JunaiPythonCommand
     if (-not $pythonCommand) {
-        return
+        return $false
     }
     if (Test-Path $validatorScript) {
         & $pythonCommand.Path @($pythonCommand.PrefixArgs + @($validatorScript))
         if ($LASTEXITCODE -ne 0) {
             Write-Host "  [ABORT]  Agent validation failed. Fix errors above before publishing." -ForegroundColor Red
-            return
+            return $false
         }
 
         if (Test-Path $poolValidatorScript) {
             & $pythonCommand.Path @($pythonCommand.PrefixArgs + @($poolValidatorScript))
             if ($LASTEXITCODE -ne 0) {
                 Write-Host "  [ABORT]  Pool validation failed. Fix errors above before publishing." -ForegroundColor Red
-                return
+                return $false
             }
         }
     } else {
@@ -831,7 +1405,7 @@ function junai-release {
         $pypiToken = Get-JunaiSecretValue -EnvName "JUNAI_PYPI_TOKEN" -LegacyFilePath $PYPI_KEY_FILE
         if ([string]::IsNullOrWhiteSpace($pypiToken)) {
             Write-Host "  [ERROR] Missing PyPI token. Set JUNAI_PYPI_TOKEN in $JUNAI_ENV_FILE or keep $PYPI_KEY_FILE." -ForegroundColor Red
-            return
+            return $false
         }
 
         $prevTwineUser = $env:TWINE_USERNAME
@@ -850,12 +1424,12 @@ function junai-release {
         $vscePat = Get-JunaiSecretValue -EnvName "JUNAI_VSCE_PAT" -LegacyFilePath $VSCE_PAT_FILE
         if ([string]::IsNullOrWhiteSpace($vscePat)) {
             Write-Host "  [ERROR] Missing VS Code PAT. Set JUNAI_VSCE_PAT in $JUNAI_ENV_FILE or keep $VSCE_PAT_FILE." -ForegroundColor Red
-            return
+            return $false
         }
 
         if (-not (Test-Path (Join-Path $JUNAI_VSCODE "package.json"))) {
             Write-Host "  [ERROR] junai-vscode repo not found at $JUNAI_VSCODE" -ForegroundColor Red
-            return
+            return $false
         }
 
         $prevVscePat = $env:VSCE_PAT
@@ -866,7 +1440,7 @@ function junai-release {
             $currentExtensionVersion = Get-PackageJsonVersion -PackageJsonPath $packageJsonPath
             if ([string]::IsNullOrWhiteSpace($currentExtensionVersion)) {
                 Write-Host "  [ERROR] Could not read junai-vscode package version." -ForegroundColor Red
-                return
+                return $false
             }
 
             if ([string]::IsNullOrWhiteSpace($ExtensionVersion)) {
@@ -879,12 +1453,12 @@ function junai-release {
                 git commit -m "chore: bump version to $ExtensionVersion" | Out-Null
                 if ($LASTEXITCODE -ne 0) {
                     Write-Host "  [ERROR] junai-vscode version bump commit failed." -ForegroundColor Red
-                    return
+                    return $false
                 }
                 git push | Out-Null
                 if ($LASTEXITCODE -ne 0) {
                     Write-Host "  [ERROR] junai-vscode version bump push failed." -ForegroundColor Red
-                    return
+                    return $false
                 }
                 Write-Host "  [OK]  junai-vscode version bumped $currentExtensionVersion --> $ExtensionVersion" -ForegroundColor Green
             } else {
@@ -895,7 +1469,7 @@ function junai-release {
             npx vsce publish --pat $vscePat --no-dependencies
             if ($LASTEXITCODE -ne 0) {
                 Write-Host "  [ERROR] VS Code extension publish failed." -ForegroundColor Red
-                return
+                return $false
             }
 
             Confirm-VscePublishedVersion -ExtensionId "junai-labs.junai" -ExpectedVersion $ExtensionVersion | Out-Null
@@ -907,6 +1481,344 @@ function junai-release {
 
     Write-Host "  [OK]  Release flow completed." -ForegroundColor Green
     Write-Host ""
+    return $true
+}
+
+function junai-smoke-release {
+    param([string]$ProjectRoot = $REPO_ROOT)
+
+    Write-Host ""
+    Write-Host "  JUNAI RELEASE SMOKE TEST" -ForegroundColor Cyan
+    Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
+
+    $escapedPtarmigan = $PTARMIGAN_REPO.Replace("'", "''")
+    $escapedLiffey = $LIFFEY_REPO.Replace("'", "''")
+    $scriptText = @"
+`$pythonCommand = Get-JunaiPythonCommand
+if (-not `$pythonCommand) { throw 'Python resolution failed' }
+Write-Host "[OK] python: `$(`$pythonCommand.Path)"
+
+& `$pythonCommand.Path @(`$pythonCommand.PrefixArgs + @('validate_agents.py'))
+if (`$LASTEXITCODE -ne 0) { throw 'validate_agents.py failed' }
+Write-Host '[OK] validate_agents.py'
+
+& `$pythonCommand.Path @(`$pythonCommand.PrefixArgs + @('export_runtime_resources.py', '--profile', 'ptarmigan', '--profile', 'liffey', '--report'))
+if (`$LASTEXITCODE -ne 0) { throw 'export_runtime_resources.py failed' }
+Write-Host '[OK] export_runtime_resources.py'
+
+& `$pythonCommand.Path @(`$pythonCommand.PrefixArgs + @('validate_pool.py', '--include-dist'))
+if (`$LASTEXITCODE -ne 0) { throw 'validate_pool.py --include-dist failed' }
+Write-Host '[OK] validate_pool.py --include-dist'
+
+`$ptarmiganStage = Test-ManagedExtensionStaging -RepoPath '$escapedPtarmigan' -Label 'Ptarmigan'
+if (-not `$ptarmiganStage.Passed) {
+    throw ('Ptarmigan unmanaged staging leak: ' + ([string]::Join('; ', `$ptarmiganStage.Unexpected)))
+}
+Write-Host '[OK] Ptarmigan managed staging'
+
+`$liffeyStage = Test-ManagedExtensionStaging -RepoPath '$escapedLiffey' -Label 'Liffey'
+if (-not `$liffeyStage.Passed) {
+    throw ('Liffey unmanaged staging leak: ' + ([string]::Join('; ', `$liffeyStage.Unexpected)))
+}
+Write-Host '[OK] Liffey managed staging'
+"@
+
+    $exitCode = Invoke-JunaiFreshShell -ScriptText $scriptText -WorkingDirectory $ProjectRoot
+    if ($exitCode -ne 0) {
+        Write-Host "  [FAIL] Release smoke test failed." -ForegroundColor Red
+        return $false
+    }
+
+    Write-Host "  [OK]  Release smoke test passed." -ForegroundColor Green
+    Write-Host ""
+    return $true
+}
+
+function junai-ship {
+    param(
+        [string]$ProjectRoot = $REPO_ROOT,
+        [string]$Message = "",
+        [string]$McpVersion = "",
+        [string]$JunaiExtensionVersion = "",
+        [string[]]$Lanes = @("auto"),
+        [string[]]$Profiles = @("auto"),
+        [switch]$PublishMcp,
+        [switch]$PublishJunaiExtension,
+        [switch]$PublishPtarmigan,
+        [switch]$PackageLiffey,
+        [switch]$PublishAll,
+        [switch]$SkipSmokeTest
+    )
+
+    if ($PublishAll) {
+        $PublishMcp = $true
+        $PublishJunaiExtension = $true
+        $PublishPtarmigan = $true
+        $PackageLiffey = $true
+    }
+
+    Write-Host ""
+    Write-Host "  JUNAI SHIP" -ForegroundColor Magenta
+    Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
+
+    $smokeStatus = if ($SkipSmokeTest) { "skipped" } else { "pending" }
+    if (-not $SkipSmokeTest) {
+        if (-not (junai-smoke-release -ProjectRoot $ProjectRoot)) {
+            Write-Host "  [ABORT]  Ship halted because the release smoke test failed." -ForegroundColor Red
+            return $false
+        }
+        $smokeStatus = "passed"
+    }
+
+    $projectName = Split-Path $ProjectRoot -Leaf
+    if ([string]::IsNullOrWhiteSpace($Message)) {
+        $Message = "chore: ship from $projectName - $(Get-Date -Format 'yyyy-MM-dd')"
+    }
+
+    $normalizedLanes = @($Lanes | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() } | Where-Object { $_ })
+    if ($normalizedLanes.Count -eq 0) {
+        $normalizedLanes = @("auto")
+    }
+
+    $normalizedProfiles = @($Profiles | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() } | Where-Object { $_ })
+    if ($normalizedProfiles.Count -eq 0) {
+        $normalizedProfiles = @("auto")
+    }
+
+    $sourceChangedPaths = @(Get-RepoChangedPaths -RepoPath $ProjectRoot)
+    $junaiChangedPaths = @(Get-RepoChangedPaths -RepoPath $JUNO_POOL)
+    $junaiVscodeChangedPaths = @(Get-RepoChangedPaths -RepoPath $JUNAI_VSCODE)
+    $ptarmiganChangedPaths = @(Get-RepoChangedPaths -RepoPath $PTARMIGAN_REPO)
+    $liffeyChangedPaths = @(Get-RepoChangedPaths -RepoPath $LIFFEY_REPO)
+
+    $sourceReleaseTargets = @(Get-AffectedReleaseTargetsFromSourcePaths -ChangedPaths $sourceChangedPaths)
+    $junaiVscodeDirectReleasePaths = @(Get-ReleaseRelevantRepoChangedPaths -Lane "junai-vscode" -ChangedPaths $junaiVscodeChangedPaths)
+    $ptarmiganDirectReleasePaths = @(Get-ReleaseRelevantRepoChangedPaths -Lane "ptarmigan" -ChangedPaths $ptarmiganChangedPaths)
+    $liffeyDirectReleasePaths = @(Get-ReleaseRelevantRepoChangedPaths -Lane "liffey" -ChangedPaths $liffeyChangedPaths)
+    $mcpDirectReleasePaths = @(Get-ReleaseRelevantRepoChangedPaths -Lane "mcp" -ChangedPaths $junaiChangedPaths)
+
+    $sourceDirty = $sourceChangedPaths.Count -gt 0
+    $junaiVscodeDirty = $junaiVscodeChangedPaths.Count -gt 0
+    $ptarmiganDirty = $ptarmiganChangedPaths.Count -gt 0
+    $liffeyDirty = $liffeyChangedPaths.Count -gt 0
+
+    $autoLaneMode = $normalizedLanes -contains "auto"
+    $runSourceLane = if ($autoLaneMode) { $sourceDirty } else { $normalizedLanes -contains "source" }
+    $runJunaiVscodeLane = if ($autoLaneMode) { $junaiVscodeDirty } else { $normalizedLanes -contains "junai-vscode" }
+    $runPtarmiganLane = if ($autoLaneMode) { $ptarmiganDirty } else { $normalizedLanes -contains "ptarmigan" }
+    $runLiffeyLane = if ($autoLaneMode) { $liffeyDirty } else { $normalizedLanes -contains "liffey" }
+
+    if ($normalizedProfiles -contains "none") {
+        $sourceProfiles = @()
+    } elseif ($normalizedProfiles -contains "auto") {
+        $sourceProfiles = if ($sourceDirty) { @(Get-AffectedProfileNamesFromSourcePaths -ChangedPaths $sourceChangedPaths) } else { @() }
+    } else {
+        $sourceProfiles = @($normalizedProfiles | Where-Object { $_ -in @("ptarmigan", "liffey") } | Select-Object -Unique)
+    }
+
+    if (-not $runSourceLane) {
+        $sourceProfiles = @()
+    }
+
+    $sourceCommitted = $false
+    $sourcePushResult = [pscustomobject]@{
+        MirrorChanged = $false
+        SelectedProfiles = @()
+        ProfileResults = @{}
+        ReleaseTriggered = $false
+    }
+
+    if ($runJunaiVscodeLane) {
+        $null = Commit-RepoIfDirty -RepoPath $JUNAI_VSCODE -Label "junai-vscode" -Message "$Message (junai-vscode)" -Push
+    }
+    if ($runPtarmiganLane) {
+        $null = Commit-RepoIfDirty -RepoPath $PTARMIGAN_REPO -Label "Ptarmigan" -Message "$Message (ptarmigan)" -Push
+    }
+    if ($runLiffeyLane) {
+        $null = Commit-RepoIfDirty -RepoPath $LIFFEY_REPO -Label "Liffey" -Message "$Message (liffey)" -Push
+    }
+
+    if ($runSourceLane) {
+        Push-Location $ProjectRoot
+        try {
+            $statusOutput = @(git status --porcelain)
+            $hasSourceChanges = -not [string]::IsNullOrWhiteSpace(($statusOutput | Out-String).Trim())
+            if ($hasSourceChanges) {
+                git add -A | Out-Null
+                git commit -m $Message | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "  [ABORT]  Source commit failed." -ForegroundColor Red
+                    return $false
+                }
+                $sourceCommitted = $true
+                Write-Host "  [OK]  Source repo committed." -ForegroundColor Green
+            } else {
+                Write-Host "  [--]  Source repo already clean; skipping source commit." -ForegroundColor DarkGray
+            }
+        } finally {
+            Pop-Location
+        }
+
+        $skipProfileSync = ($sourceProfiles.Count -eq 0)
+        $sourcePushResult = junai-push -ProjectRoot $ProjectRoot -Message $Message -NoPublish -Profiles $sourceProfiles -SkipProfileSync:$skipProfileSync
+    } else {
+        Write-Host "  [--]  Source lane not selected; skipping canonical mirror sync." -ForegroundColor DarkGray
+    }
+
+    $sourceMirrorChanged = [bool]$sourcePushResult.MirrorChanged
+    $ptarmiganProfileChanged = [bool]$sourcePushResult.ProfileResults["ptarmigan"]
+    $liffeyProfileChanged = [bool]$sourcePushResult.ProfileResults["liffey"]
+
+    $junaiExtensionReleaseStatus = "not requested"
+    $mcpReleaseStatus = "not requested"
+    $ptarmiganReleaseStatus = "not requested"
+    $liffeyPackageStatus = "not requested"
+
+    $shouldPublishJunaiExtension = $false
+    $shouldPublishMcp = $false
+    $shouldPublishPtarmigan = $false
+    $shouldPackageLiffey = $false
+
+    if ($PublishJunaiExtension) {
+        $junaiExtensionChanged = (($sourceMirrorChanged -and ($sourceReleaseTargets -contains "junai-vscode")) -or $junaiVscodeDirectReleasePaths.Count -gt 0)
+        if (-not $junaiExtensionChanged) {
+            $junaiExtensionReleaseStatus = "skipped - unchanged"
+        } else {
+            $resolvedJunaiVersion = if ([string]::IsNullOrWhiteSpace($JunaiExtensionVersion)) {
+                Try-GetNextPatchVersion -VersionString (Get-PackageJsonVersion -PackageJsonPath (Join-Path $JUNAI_VSCODE "package.json"))
+            } else {
+                $JunaiExtensionVersion
+            }
+
+            if ([string]::IsNullOrWhiteSpace($resolvedJunaiVersion)) {
+                $junaiExtensionReleaseStatus = "skipped - no version bump path"
+            } else {
+                $JunaiExtensionVersion = $resolvedJunaiVersion
+                $shouldPublishJunaiExtension = $true
+                $junaiExtensionReleaseStatus = "pending"
+            }
+        }
+    }
+
+    if ($PublishMcp) {
+        $mcpChanged = (($sourceMirrorChanged -and ($sourceReleaseTargets -contains "mcp")) -or $mcpDirectReleasePaths.Count -gt 0)
+        if (-not $mcpChanged) {
+            $mcpReleaseStatus = "skipped - unchanged"
+        } else {
+            $resolvedMcpVersion = if ([string]::IsNullOrWhiteSpace($McpVersion)) {
+                Try-GetNextPatchVersion -VersionString (Get-PyprojectVersion -PyprojectPath (Join-Path $JUNO_POOL "pyproject.toml"))
+            } else {
+                $McpVersion
+            }
+
+            if ([string]::IsNullOrWhiteSpace($resolvedMcpVersion)) {
+                $mcpReleaseStatus = "skipped - no version bump path"
+            } else {
+                $McpVersion = $resolvedMcpVersion
+                $shouldPublishMcp = $true
+                $mcpReleaseStatus = "pending"
+            }
+        }
+    }
+
+    if ($PublishPtarmigan) {
+        $ptarmiganChangedForRelease = ($ptarmiganProfileChanged -or $ptarmiganDirectReleasePaths.Count -gt 0)
+        if (-not $ptarmiganChangedForRelease) {
+            $ptarmiganReleaseStatus = "skipped - unchanged"
+        } else {
+            if (-not $ptarmiganProfileChanged -and $ptarmiganDirectReleasePaths.Count -gt 0) {
+                $ptarmiganNextVersion = Try-GetNextPatchVersion -VersionString (Get-PackageJsonVersion -PackageJsonPath (Join-Path $PTARMIGAN_REPO "package.json"))
+                if ([string]::IsNullOrWhiteSpace($ptarmiganNextVersion)) {
+                    $ptarmiganReleaseStatus = "skipped - no version bump path"
+                } else {
+                    $null = Commit-PackageJsonPatchVersion -RepoPath $PTARMIGAN_REPO -Label "Ptarmigan"
+                    $shouldPublishPtarmigan = $true
+                    $ptarmiganReleaseStatus = "pending"
+                }
+            } else {
+                $shouldPublishPtarmigan = $true
+                $ptarmiganReleaseStatus = "pending"
+            }
+        }
+    }
+
+    if ($PackageLiffey) {
+        $liffeyChangedForRelease = ($liffeyProfileChanged -or $liffeyDirectReleasePaths.Count -gt 0)
+        if (-not $liffeyChangedForRelease) {
+            $liffeyPackageStatus = "skipped - unchanged"
+        } else {
+            if (-not $liffeyProfileChanged -and $liffeyDirectReleasePaths.Count -gt 0) {
+                $liffeyNextVersion = Try-GetNextPatchVersion -VersionString (Get-PackageJsonVersion -PackageJsonPath (Join-Path $LIFFEY_REPO "package.json"))
+                if ([string]::IsNullOrWhiteSpace($liffeyNextVersion)) {
+                    $liffeyPackageStatus = "skipped - no version bump path"
+                } else {
+                    $null = Commit-PackageJsonPatchVersion -RepoPath $LIFFEY_REPO -Label "Liffey"
+                    $shouldPackageLiffey = $true
+                    $liffeyPackageStatus = "pending"
+                }
+            } else {
+                $shouldPackageLiffey = $true
+                $liffeyPackageStatus = "pending"
+            }
+        }
+    }
+
+    if ($shouldPublishMcp -or $shouldPublishJunaiExtension) {
+        $releaseOk = junai-release -McpVersion $McpVersion -ExtensionVersion $JunaiExtensionVersion -SkipMcp:(-not $shouldPublishMcp) -SkipExtension:(-not $shouldPublishJunaiExtension)
+        if (-not $releaseOk) {
+            Write-Host "  [ABORT]  junai release failed." -ForegroundColor Red
+            return $false
+        }
+        if ($shouldPublishMcp) {
+            $mcpReleaseStatus = "published"
+        }
+        if ($shouldPublishJunaiExtension) {
+            $junaiExtensionReleaseStatus = "published"
+        }
+    }
+
+    if ($shouldPublishPtarmigan) {
+        if (-not (Publish-PtarmiganExtension)) {
+            Write-Host "  [ABORT]  Ptarmigan publish failed." -ForegroundColor Red
+            return $false
+        }
+        $ptarmiganReleaseStatus = "published"
+    }
+
+    if ($shouldPackageLiffey) {
+        $packagedVsix = Package-LiffeyExtension
+        if (-not $packagedVsix) {
+            Write-Host "  [ABORT]  Liffey packaging failed." -ForegroundColor Red
+            return $false
+        }
+        $liffeyPackageStatus = "packaged"
+    }
+
+    $liffeyVersion = Get-PackageJsonVersion -PackageJsonPath (Join-Path $LIFFEY_REPO "package.json")
+    $liffeyVsix = if ([string]::IsNullOrWhiteSpace($liffeyVersion)) { $null } else { Join-Path $LIFFEY_REPO "dist\liffey-$liffeyVersion.vsix" }
+
+    Write-Host ""
+    Write-Host "  JUNAI SHIP SUMMARY" -ForegroundColor Cyan
+    Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
+    Write-Host "  lanes requested      : $([string]::Join(', ', $normalizedLanes))" -ForegroundColor DarkGray
+    Write-Host "  source profiles      : $(if ($sourceProfiles.Count -gt 0) { [string]::Join(', ', $sourceProfiles) } else { 'none' })" -ForegroundColor DarkGray
+    Write-Host "  smoke test          : $smokeStatus" -ForegroundColor DarkGray
+    Write-Host "  source committed    : $sourceCommitted" -ForegroundColor DarkGray
+    Write-Host "  mcp release         : $mcpReleaseStatus" -ForegroundColor DarkGray
+    Write-Host "  junai release       : $junaiExtensionReleaseStatus" -ForegroundColor DarkGray
+    Write-Host "  ptarmigan release   : $ptarmiganReleaseStatus" -ForegroundColor DarkGray
+    Write-Host "  liffey package      : $liffeyPackageStatus" -ForegroundColor DarkGray
+    Write-Host "  source HEAD         : $(Get-RepoHeadLine -RepoPath $ProjectRoot)" -ForegroundColor DarkGray
+    Write-Host "  junai HEAD          : $(Get-RepoHeadLine -RepoPath $JUNO_POOL)" -ForegroundColor DarkGray
+    Write-Host "  junai-vscode HEAD   : $(Get-RepoHeadLine -RepoPath $JUNAI_VSCODE)" -ForegroundColor DarkGray
+    Write-Host "  ptarmigan HEAD      : $(Get-RepoHeadLine -RepoPath $PTARMIGAN_REPO)" -ForegroundColor DarkGray
+    Write-Host "  liffey HEAD         : $(Get-RepoHeadLine -RepoPath $LIFFEY_REPO)" -ForegroundColor DarkGray
+    if ($liffeyVsix) {
+        $vsixState = if (Test-Path $liffeyVsix) { $liffeyVsix } else { "missing ($liffeyVsix)" }
+        Write-Host "  liffey VSIX         : $vsixState" -ForegroundColor DarkGray
+    }
+    Write-Host ""
+    return $true
 }
 
 function junai-revert {
@@ -1166,6 +2078,7 @@ function junai-import {
     )
 
     $target = Join-Path $ProjectRoot ".github"
+    $localOnlyBackup = Backup-LocalOnlyPoolFiles -GithubRoot $target
 
     if (-not (Test-Path $target)) {
         Write-Host "No .github/ folder found at $ProjectRoot" -ForegroundColor Red
@@ -1224,6 +2137,8 @@ function junai-import {
         Copy-Item $mcpSrc $vscodeTarget -Force
         Write-Host "  [OK]  .vscode/mcp.json" -ForegroundColor Green
     }
+
+    Restore-LocalOnlyPoolFiles -GithubRoot $target -Backup $localOnlyBackup
 
     if ($tmpExtract -and (Test-Path $tmpExtract)) {
         Remove-Item $tmpExtract -Recurse -Force

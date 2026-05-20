@@ -162,6 +162,7 @@ Links to deeper resources.
 - When creating or updating a standalone Markdown document, apply `.github/instructions/document-frontmatter.instructions.md`.
 - New docs must include `Original Author`, `Creation Date`, and `Creating Model` in YAML frontmatter.
 - Updated docs must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+- Use full ISO 8601 UTC timestamps for the `Creation Date` and `Last Updated` values.
 - Merge metadata into existing frontmatter instead of overwriting document-specific keys.
 
 #### Formatting

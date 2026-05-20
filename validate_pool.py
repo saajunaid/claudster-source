@@ -53,6 +53,10 @@ DOC_FRONTMATTER_REQUIRED_FIELDS = [
     "Last Updated",
     "Last Model Used",
 ]
+DOC_FRONTMATTER_REQUIRED_PHRASES = [
+    "ISO 8601",
+    "YYYY-MM-DDTHH:MM:SSZ",
+]
 DOC_FRONTMATTER_REFERENCERS = [
     GITHUB_DIR / "instructions" / "plan-mode.instructions.md",
     GITHUB_DIR / "skills" / "docs" / "code-documentation" / "SKILL.md",
@@ -848,6 +852,12 @@ def check_document_frontmatter_contract() -> CheckResult:
                 f"{DOC_FRONTMATTER_INSTRUCTION.relative_to(REPO_ROOT)}: missing required field '{field_name}'"
             )
 
+    for phrase in DOC_FRONTMATTER_REQUIRED_PHRASES:
+        if phrase not in instruction_text:
+            r.failures.append(
+                f"{DOC_FRONTMATTER_INSTRUCTION.relative_to(REPO_ROOT)}: missing required phrase '{phrase}'"
+            )
+
     for path in DOC_FRONTMATTER_REFERENCERS:
         if not path.exists():
             r.failures.append(f"Missing doc-generator template: {path.relative_to(REPO_ROOT)}")
@@ -900,6 +910,11 @@ def check_document_frontmatter_contract_in_profile(profile_root: Path, label: st
                 if field_name not in text:
                     r.failures.append(
                         f"{instruction_path.relative_to(profile_root)}: missing required field '{field_name}'"
+                    )
+            for phrase in DOC_FRONTMATTER_REQUIRED_PHRASES:
+                if phrase not in text:
+                    r.failures.append(
+                        f"{instruction_path.relative_to(profile_root)}: missing required phrase '{phrase}'"
                     )
 
     r.info.append(f"exported files referencing contract: {len(referenced_by)}")

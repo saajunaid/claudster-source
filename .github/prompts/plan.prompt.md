@@ -148,13 +148,13 @@ Use this template:
 ```markdown
 ---
 Original Author: {active author or agent name}
-Creation Date: {YYYY-MM-DD}
+Creation Date: {YYYY-MM-DDTHH:MM:SSZ}
 Creating Model: {actual model used}
 ---
 
 # {Feature Name} - Phased Execution Plan
 
-**Created**: {date}
+**Created**: {ISO-8601 timestamp}
 **Status**: Phase 1 of N | Planned / In Progress / Completed / On Hold
 **Estimated Sessions**: {N}
 
@@ -359,7 +359,7 @@ before starting Phase N+1. Never carry implementation debt forward between phase
 > Read `plans/{feature-name}.md` and implement Phase {N}. Previous phases are complete.
 ```
 
-If the plan is updated later, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+If the plan is updated later, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used` using full ISO 8601 UTC timestamps.
 
 > 💡 **Note**: Use `- [ ]` checkbox format for deliverables so progress can be tracked. In Cursor, the Implement agent can update the plan as work progresses; in other IDEs, you or the AI can update checkboxes when completing each item.
 

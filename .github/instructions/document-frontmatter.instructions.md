@@ -18,7 +18,7 @@ When creating a **new** document, add YAML frontmatter at the top and include:
 
 ```yaml
 Original Author: <active author or agent name>
-Creation Date: <YYYY-MM-DD>
+Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
 Creating Model: <actual model used for this document>
 ```
 
@@ -26,7 +26,7 @@ When **updating** an existing document, preserve those original fields and add o
 
 ```yaml
 Last Author: <active author or agent name>
-Last Updated: <YYYY-MM-DD>
+Last Updated: <YYYY-MM-DDTHH:MM:SSZ>
 Last Model Used: <actual model used for this update>
 ```
 
@@ -44,7 +44,8 @@ Last Model Used: <actual model used for this update>
   Then add the current `Last Author`, `Last Updated`, and `Last Model Used` fields.
 - Use the active author identity for author fields, for example `GitHub Copilot`, `Planner`, `Architect`, `PRD`, or the human author if explicitly provided.
 - Use the actual model used in that session for model fields.
-- Use `YYYY-MM-DD` format for dates.
+- Use full ISO 8601 UTC timestamps for metadata values, in `YYYY-MM-DDTHH:MM:SSZ` format.
+- Despite the field name `Creation Date`, the value must be a full timestamp for auditability and provenance.
 - For non-Markdown descriptive deliverables that support a native metadata/header block, mirror the same fields in that format.
 
 ## Examples
@@ -58,7 +59,7 @@ type: plan
 status: current
 approval: pending
 Original Author: Planner
-Creation Date: 2026-05-20
+Creation Date: 2026-05-20T18:42:11Z
 Creating Model: Claude Sonnet 4.6
 ---
 ```
@@ -69,10 +70,10 @@ Creating Model: Claude Sonnet 4.6
 ---
 title: Incident Runbook
 Original Author: GitHub Copilot
-Creation Date: 2026-05-18
+Creation Date: 2026-05-18T09:14:32Z
 Creating Model: GPT-5.4
 Last Author: GitHub Copilot
-Last Updated: 2026-05-20
+Last Updated: 2026-05-20T19:03:27Z
 Last Model Used: GPT-5.4
 ---
 ```

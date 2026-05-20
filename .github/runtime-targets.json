@@ -25,7 +25,7 @@
       "copies": [
         {"source": "agents", "destination": "agents"},
         {"source": "skills", "destination": "skills"},
-        {"source": "prompts", "destination": "prompts"},
+        {"source": "prompts", "destination": "prompts", "excluded_names": ["junai-ship.prompt.md"]},
         {"source": "instructions", "destination": "instructions"},
         {"source": "hooks", "destination": "hooks"},
         {"source": "tools", "destination": "tools"},
@@ -161,6 +161,9 @@
         {
           "source": "prompts",
           "destination": "prompts",
+          "excluded_names": [
+            "junai-ship.prompt.md"
+          ],
           "included_names": [
             "code-review.prompt.md",
             "context-handoff.prompt.md",
@@ -349,6 +352,9 @@
         {
           "source": "prompts",
           "destination": "prompts",
+          "excluded_names": [
+            "junai-ship.prompt.md"
+          ],
           "included_names": [
             "adr.prompt.md",
             "advisory-hub.prompt.md",

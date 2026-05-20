@@ -276,7 +276,7 @@ Extract and structure this information:
 
 ```yaml
 session_metadata:
-  date: <YYYY-MM-DD>
+  date: <YYYY-MM-DDTHH:MM:SSZ>
   duration: <approximate duration>
   primary_objective: <main goal>
   secondary_objectives: [<list>]
@@ -432,13 +432,13 @@ Apply `.github/instructions/document-frontmatter.instructions.md` when creating 
 ```markdown
 ---
 Original Author: <active author or agent name>
-Creation Date: <YYYY-MM-DD>
+Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
 Creating Model: <actual model used>
 ---
 
 # Context Handoff: <Task Name>
 
-**Date**: <YYYY-MM-DD>
+**Date**: <YYYY-MM-DDTHH:MM:SSZ>
 **Status**: <In Progress | Blocked | Ready for Review>
 **Previous Handoff**: <link or "None - fresh start">
 
@@ -581,7 +581,7 @@ Files to focus on:
 \`\`\`
 ```
 
-If you update an existing handoff instead of creating a fresh one, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+If you update an existing handoff instead of creating a fresh one, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used` using full ISO 8601 UTC timestamps.
 
 ### 3.2 Generate Console Output
 

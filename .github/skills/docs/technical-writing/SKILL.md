@@ -26,6 +26,7 @@ All descriptive Markdown docs must follow `.github/instructions/document-frontma
 
 - **New docs**: include `Original Author`, `Creation Date`, and `Creating Model` in YAML frontmatter.
 - **Updated docs**: preserve those original fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+- Use full ISO 8601 UTC timestamps for `Creation Date` and `Last Updated` values.
 - Merge these fields into existing frontmatter instead of replacing document-specific metadata.
 
 ### README Structure

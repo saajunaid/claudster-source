@@ -56,7 +56,7 @@ Include these sections (skip any that don't apply):
 ```markdown
 ---
 Original Author: {active author or agent name}
-Creation Date: {YYYY-MM-DD}
+Creation Date: {YYYY-MM-DDTHH:MM:SSZ}
 Creating Model: {actual model used}
 ---
 

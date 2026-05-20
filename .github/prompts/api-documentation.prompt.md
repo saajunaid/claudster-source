@@ -13,7 +13,7 @@ Generate comprehensive API documentation for FastAPI endpoints.
 - Endpoint code or router file
 - Context about the API purpose
 
-If the output will be saved as a standalone Markdown file, apply `.github/instructions/document-frontmatter.instructions.md` and prepend the required document metadata frontmatter before the first heading. If updating an existing doc, preserve the original fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+If the output will be saved as a standalone Markdown file, apply `.github/instructions/document-frontmatter.instructions.md` and prepend the required document metadata frontmatter before the first heading. If updating an existing doc, preserve the original fields and add or update `Last Author`, `Last Updated`, and `Last Model Used` using full ISO 8601 UTC timestamps.
 
 ## Template
 

@@ -19,13 +19,13 @@ Generate an ADR document for a technical decision using the standard ADR format.
 ---
 title: "ADR-NNNN: <Decision Title>"
 status: "Proposed"
-date: "<YYYY-MM-DD>"
+date: "<YYYY-MM-DDTHH:MM:SSZ>"
 authors: "<author names or roles>"
 tags: ["architecture", "decision"]
 supersedes: ""
 superseded_by: ""
 Original Author: "<active author or agent name>"
-Creation Date: "<YYYY-MM-DD>"
+Creation Date: "<YYYY-MM-DDTHH:MM:SSZ>"
 Creating Model: "<actual model used>"
 ---
 
@@ -93,4 +93,4 @@ Before finalizing the ADR, verify:
 - [ ] Implementation notes are actionable
 - [ ] Status is set to "Proposed" (author will change later)
 
-If updating an existing ADR, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+If updating an existing ADR, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used` using full ISO 8601 UTC timestamps.

@@ -40,7 +40,7 @@ type: plan
 status: current
 approval: pending
 Original Author: <active author or agent name>
-Creation Date: <YYYY-MM-DD>
+Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
 Creating Model: <actual model used>
 ---
 
@@ -58,7 +58,7 @@ Creating Model: <actual model used>
 ```
 
 > ⚠️ The YAML frontmatter block (`---` delimiters) is required for Orchestrator artefact contract validation. Do NOT use blockquote-style metadata (`> **approval:** pending`) — it will not be parsed.
-> Preserve the original metadata fields on later edits, and add or update `Last Author`, `Last Updated`, and `Last Model Used` when the plan is revised.
+> Preserve the original metadata fields on later edits, and add or update `Last Author`, `Last Updated`, and `Last Model Used` when the plan is revised. Use full ISO 8601 UTC timestamps for `Creation Date` and `Last Updated`.
 
 ## Task Structure
 

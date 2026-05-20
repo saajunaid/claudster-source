@@ -56,13 +56,13 @@ Apply `.github/instructions/document-frontmatter.instructions.md` when creating 
 ```markdown
 ---
 Original Author: {active author or agent name}
-Creation Date: {YYYY-MM-DD}
+Creation Date: {YYYY-MM-DDTHH:MM:SSZ}
 Creating Model: {actual model used}
 ---
 
 # Context Handoff: {Task Name}
 
-**Date**: {YYYY-MM-DD}
+**Date**: {YYYY-MM-DDTHH:MM:SSZ}
 **Status**: {In Progress / Blocked / Near Complete}
 **Plan Document**: {path to plan file, if any}
 
@@ -113,7 +113,7 @@ Creating Model: {actual model used}
 ### Continuation Prompt
 ```
 
-If updating an existing handoff file, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+If updating an existing handoff file, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used` using full ISO 8601 UTC timestamps.
 {A ready-to-paste prompt the user can give to a new chat session to resume work}
 ```
 ```

@@ -319,7 +319,7 @@ counts:
   warn: <N>
 decisions_pending: <N>
 Original Author: <active author or agent name>
-Creation Date: <YYYY-MM-DD>
+Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
 Creating Model: <actual model used>
 ---
 
@@ -381,7 +381,7 @@ Creating Model: <actual model used>
 | D2 | ... | ... | ... |
 ```
 
-If you revise an existing report file, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+If you revise an existing report file, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used` using full ISO 8601 UTC timestamps.
 
 ---
 

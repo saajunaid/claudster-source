@@ -13,6 +13,7 @@ For standalone Markdown docs such as README files, guides, ADRs, and API referen
 
 - **New docs**: add `Original Author`, `Creation Date`, and `Creating Model`.
 - **Updated docs**: preserve the original fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+- Use full ISO 8601 UTC timestamps for `Creation Date` and `Last Updated` values.
 
 ## README Structure
 

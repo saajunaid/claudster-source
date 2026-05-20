@@ -152,13 +152,13 @@ Write the plan to the output file using the template below, section-by-section i
 ```markdown
 ---
 Original Author: <active author or agent name>
-Creation Date: <YYYY-MM-DD>
+Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
 Creating Model: <actual model used>
 ---
 
 # Plan: [Project Name] — [Sub-title e.g. "React UI Build" or "Backend API + Data Pipeline"]
 
-> **Updated:** YYYY-MM-DD
+> **Updated:** YYYY-MM-DDTHH:MM:SSZ
 > **Status:** READY FOR EXECUTION
 > **Execution mode:** `generic` <!-- or `junai-pipeline` -->
 > **Visual reference:** [path to mockup or "N/A"]
@@ -472,7 +472,7 @@ Save the completed plan to:
 
 If mode is **`junai-pipeline`**, additionally register the artefact in `.github/agent-docs/ARTIFACTS.md` with `status: current`.
 
-When revising an existing plan file, preserve `Original Author`, `Creation Date`, and `Creating Model`, then add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+When revising an existing plan file, preserve `Original Author`, `Creation Date`, and `Creating Model`, then add or update `Last Author`, `Last Updated`, and `Last Model Used`. Use full ISO 8601 UTC timestamps for the date fields.
 
 ### Plan Status Tracker
 
@@ -482,19 +482,19 @@ this template (one row per phase, populated from the Pre-Flight Scan):
 ```markdown
 ---
 Original Author: <active author or agent name>
-Creation Date: <YYYY-MM-DD>
+Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
 Creating Model: <actual model used>
 ---
 
 # Plan Status — [Project Name]
 
 > Plan: `.github/plans/<feature-slug>.md`
-> Started: YYYY-MM-DD
-> Last updated: YYYY-MM-DD
+> Started: YYYY-MM-DDTHH:MM:SSZ
+> Last updated: YYYY-MM-DDTHH:MM:SSZ
 
 | Phase | Name | Agent | Model | Status | Completed | Notes |
 |---|---|---|---|---|---|---|
-| 0 | Context & Decisions | — | — | ✅ Complete | YYYY-MM-DD | Plan authored |
+| 0 | Context & Decisions | — | — | ✅ Complete | YYYY-MM-DDTHH:MM:SSZ | Plan authored |
 | 1 | [Name] | @[Agent] | [model] | ⏳ Pending | — | |
 | 2 | [Name] | @[Agent] | [model] | ⏳ Pending | — | |
 | N | [Name] | @[Agent] | [model] | ⏳ Pending | — | |
