@@ -138,6 +138,35 @@ function Get-JunaiSecretValue {
     return ""
 }
 
+function Get-JunaiPythonCommand {
+    $venvPython = Join-Path $REPO_ROOT ".venv\Scripts\python.exe"
+    if (Test-Path $venvPython) {
+        return @{
+            Path = $venvPython
+            PrefixArgs = @()
+        }
+    }
+
+    $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+    if ($pythonCommand) {
+        return @{
+            Path = $pythonCommand.Source
+            PrefixArgs = @()
+        }
+    }
+
+    $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
+    if ($pyLauncher) {
+        return @{
+            Path = $pyLauncher.Source
+            PrefixArgs = @("-3")
+        }
+    }
+
+    Write-Host "  [ERROR]  No Python interpreter found. Install Python or create $venvPython" -ForegroundColor Red
+    return $null
+}
+
 function Get-PackageJsonVersion {
     param([Parameter(Mandatory)][string]$PackageJsonPath)
 
@@ -416,10 +445,15 @@ function junai-push {
 
     # Build profile exports used by downstream Ptarmigan/Liffey sync lanes.
     Push-Location $ProjectRoot
-    python export_runtime_resources.py --profile ptarmigan --profile liffey --report
-    $profileExportOk = ($LASTEXITCODE -eq 0)
+    $pythonCommand = Get-JunaiPythonCommand
+    if ($pythonCommand) {
+        & $pythonCommand.Path @($pythonCommand.PrefixArgs + @("export_runtime_resources.py", "--profile", "ptarmigan", "--profile", "liffey", "--report"))
+        $profileExportOk = ($LASTEXITCODE -eq 0)
+    } else {
+        $profileExportOk = $false
+    }
     if ($profileExportOk -and (Test-Path (Join-Path $ProjectRoot "validate_pool.py"))) {
-        python validate_pool.py --include-dist
+        & $pythonCommand.Path @($pythonCommand.PrefixArgs + @("validate_pool.py", "--include-dist"))
         $profileExportOk = ($LASTEXITCODE -eq 0)
     }
     Pop-Location
@@ -722,7 +756,12 @@ function junai-publish-mcp {
     if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
 
     Write-Host "  Building..." -ForegroundColor DarkGray
-    python -m build 2>&1 | Where-Object { $_ -match "Successfully|error|ERROR" } | Write-Host
+    $pythonCommand = Get-JunaiPythonCommand
+    if (-not $pythonCommand) {
+        Pop-Location
+        return
+    }
+    & $pythonCommand.Path @($pythonCommand.PrefixArgs + @("-m", "build")) 2>&1 | Where-Object { $_ -match "Successfully|error|ERROR" } | Write-Host
 
     Write-Host "  Uploading to PyPI..." -ForegroundColor DarkGray
     twine upload dist\*
@@ -766,23 +805,26 @@ function junai-release {
     # -- Pre-publish agent validation gate --
     $validatorScript = Join-Path $REPO_ROOT "validate_agents.py"
     $poolValidatorScript = Join-Path $REPO_ROOT "validate_pool.py"
-    $pythonExe       = Join-Path $REPO_ROOT ".venv\Scripts\python.exe"
-    if ((Test-Path $validatorScript) -and (Test-Path $pythonExe)) {
-        & $pythonExe $validatorScript
+    $pythonCommand = Get-JunaiPythonCommand
+    if (-not $pythonCommand) {
+        return
+    }
+    if (Test-Path $validatorScript) {
+        & $pythonCommand.Path @($pythonCommand.PrefixArgs + @($validatorScript))
         if ($LASTEXITCODE -ne 0) {
             Write-Host "  [ABORT]  Agent validation failed. Fix errors above before publishing." -ForegroundColor Red
             return
         }
 
         if (Test-Path $poolValidatorScript) {
-            & $pythonExe $poolValidatorScript
+            & $pythonCommand.Path @($pythonCommand.PrefixArgs + @($poolValidatorScript))
             if ($LASTEXITCODE -ne 0) {
                 Write-Host "  [ABORT]  Pool validation failed. Fix errors above before publishing." -ForegroundColor Red
                 return
             }
         }
     } else {
-        Write-Host "  [WARN]  validate_agents.py/validate_pool.py or venv not found -- skipping validation" -ForegroundColor Yellow
+        Write-Host "  [WARN]  validate_agents.py not found -- skipping validation" -ForegroundColor Yellow
     }
 
     if (-not $SkipMcp) {
