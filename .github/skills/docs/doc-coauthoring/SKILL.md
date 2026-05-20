@@ -132,6 +132,8 @@ Ask if this structure works, or if they want to adjust it.
 
 Create the initial document structure with placeholder text for all sections.
 
+Before scaffolding any new Markdown document, initialize its frontmatter using `.github/instructions/document-frontmatter.instructions.md`. When editing an existing document, update `Last Author`, `Last Updated`, and `Last Model Used` in its frontmatter before or alongside the content edits.
+
 **If access to artifacts is available:**
 Use `create_file` to create an artifact. This gives both Claude and the user a scaffold to work from.
 

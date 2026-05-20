@@ -18,6 +18,8 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 
+**Document metadata:** Before creating or updating a plan, apply `.github/instructions/document-frontmatter.instructions.md`.
+
 ## Bite-Sized Task Granularity
 
 **Each step is one action (2-5 minutes):**
@@ -37,6 +39,9 @@ chain_id: <chain_id>
 type: plan
 status: current
 approval: pending
+Original Author: <active author or agent name>
+Creation Date: <YYYY-MM-DD>
+Creating Model: <actual model used>
 ---
 
 # [Feature Name] Implementation Plan
@@ -53,6 +58,7 @@ approval: pending
 ```
 
 > ⚠️ The YAML frontmatter block (`---` delimiters) is required for Orchestrator artefact contract validation. Do NOT use blockquote-style metadata (`> **approval:** pending`) — it will not be parsed.
+> Preserve the original metadata fields on later edits, and add or update `Last Author`, `Last Updated`, and `Last Model Used` when the plan is revised.
 
 ## Task Structure
 

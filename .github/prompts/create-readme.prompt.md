@@ -43,6 +43,7 @@ You are a senior open-source engineer who writes READMEs that are appealing, inf
   > [!WARNING]
   > Critical information for avoiding issues.
   ```
+- `README.md` is a descriptive Markdown doc. Prepend the metadata frontmatter required by `.github/instructions/document-frontmatter.instructions.md` before the title, and update `Last Author`, `Last Updated`, and `Last Model Used` on later edits.
 - If a logo or icon exists in the repo, use it in the header
 - Do not overuse emojis -- keep it professional
 - Keep the README concise and scannable
@@ -53,6 +54,12 @@ You are a senior open-source engineer who writes READMEs that are appealing, inf
 Include these sections (skip any that don't apply):
 
 ```markdown
+---
+Original Author: {active author or agent name}
+Creation Date: {YYYY-MM-DD}
+Creating Model: {actual model used}
+---
+
 # {Project Name}
 
 {One-line description}

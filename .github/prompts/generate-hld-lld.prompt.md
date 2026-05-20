@@ -14,7 +14,8 @@ Create a formal, enterprise-grade architecture deliverable from our living docum
 2. **Read the living architecture doc**: Read `docs/Architecture.md` completely
 3. **Read project config**: Read `.github/project-config.md` for org name, tech stack, branding
 4. **Follow the Generation Workflow** in the skill (Steps 1-5)
-5. **Ask me**: HLD, LLD, or both? DOCX, PPTX, or both?
+5. **Apply document metadata rules**: Any Markdown companion output or source-doc update must follow `.github/instructions/document-frontmatter.instructions.md`; for DOCX/PPTX deliverables, mirror the same author/date/model metadata on the cover page or revision history.
+6. **Ask me**: HLD, LLD, or both? DOCX, PPTX, or both?
 
 ## Quick Triggers
 

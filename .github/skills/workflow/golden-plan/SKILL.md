@@ -32,6 +32,8 @@ Before Phase 0, explicitly choose an execution mode:
 
 If the user does not explicitly request junai pipeline, use `generic`.
 
+**Document metadata:** Every plan, status tracker, and other descriptive Markdown artefact created by this skill must follow `.github/instructions/document-frontmatter.instructions.md`.
+
 ---
 
 ## Phase 0 — Evidence Gathering (REQUIRED before writing any plan content)
@@ -148,6 +150,12 @@ Write the plan to the output file using the template below, section-by-section i
 ### Plan Template
 
 ```markdown
+---
+Original Author: <active author or agent name>
+Creation Date: <YYYY-MM-DD>
+Creating Model: <actual model used>
+---
+
 # Plan: [Project Name] — [Sub-title e.g. "React UI Build" or "Backend API + Data Pipeline"]
 
 > **Updated:** YYYY-MM-DD
@@ -451,6 +459,7 @@ When a new phase must be inserted into an **existing plan** (discovered mid-proj
 4. **Add a `## Phase 9A` block** with the full structure (Prompt, What to build, Validation Checklist).
 5. **Update the Output Destination header** to reflect the new `Updated:` date and status.
 6. **Do NOT modify completed phase sections** — treat them as immutable history.
+7. **Update frontmatter metadata** — preserve the original fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ---
 
@@ -463,12 +472,20 @@ Save the completed plan to:
 
 If mode is **`junai-pipeline`**, additionally register the artefact in `.github/agent-docs/ARTIFACTS.md` with `status: current`.
 
+When revising an existing plan file, preserve `Original Author`, `Creation Date`, and `Creating Model`, then add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+
 ### Plan Status Tracker
 
 Alongside the plan file, **always** create `.github/plans/<feature-slug>-status.md` using
 this template (one row per phase, populated from the Pre-Flight Scan):
 
 ```markdown
+---
+Original Author: <active author or agent name>
+Creation Date: <YYYY-MM-DD>
+Creating Model: <actual model used>
+---
+
 # Plan Status — [Project Name]
 
 > Plan: `.github/plans/<feature-slug>.md`

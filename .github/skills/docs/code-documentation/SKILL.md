@@ -7,6 +7,13 @@ license: MIT
 
 # Code Documentation
 
+## Document Metadata
+
+For standalone Markdown docs such as README files, guides, ADRs, and API reference pages, apply `.github/instructions/document-frontmatter.instructions.md` before the first heading.
+
+- **New docs**: add `Original Author`, `Creation Date`, and `Creating Model`.
+- **Updated docs**: preserve the original fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+
 ## README Structure
 
 ### Standard README Template

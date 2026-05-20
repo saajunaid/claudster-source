@@ -51,7 +51,15 @@ Collect all of the following by reading the workspace:
 
 Create a markdown file at `.github/handoffs/YYYY-MM-DD_{task-name}.md` with this structure:
 
+Apply `.github/instructions/document-frontmatter.instructions.md` when creating or updating the handoff file.
+
 ```markdown
+---
+Original Author: {active author or agent name}
+Creation Date: {YYYY-MM-DD}
+Creating Model: {actual model used}
+---
+
 # Context Handoff: {Task Name}
 
 **Date**: {YYYY-MM-DD}
@@ -104,6 +112,8 @@ Create a markdown file at `.github/handoffs/YYYY-MM-DD_{task-name}.md` with this
 
 ### Continuation Prompt
 ```
+
+If updating an existing handoff file, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 {A ready-to-paste prompt the user can give to a new chat session to resume work}
 ```
 ```

@@ -158,6 +158,12 @@ Links to deeper resources.
 
 ### DOCUMENTATION STANDARDS
 
+#### Document Metadata
+- When creating or updating a standalone Markdown document, apply `.github/instructions/document-frontmatter.instructions.md`.
+- New docs must include `Original Author`, `Creation Date`, and `Creating Model` in YAML frontmatter.
+- Updated docs must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+- Merge metadata into existing frontmatter instead of overwriting document-specific keys.
+
 #### Formatting
 - Use Markdown for all documentation
 - Use proper heading hierarchy (# for title, ## for sections)
@@ -193,6 +199,7 @@ Links to deeper resources.
 
 3. **Generate Content**
    - Write in Markdown
+   - Initialize or update document frontmatter first
    - Follow templates and guidelines
    - Include working code examples
 

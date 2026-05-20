@@ -10,7 +10,8 @@ Generate an ADR document for a technical decision using the standard ADR format.
 
 1. If the decision title, context, or chosen approach is not clear from the conversation, ask before proceeding.
 2. Create the ADR file at `docs/adr/adr-NNNN-<title-slug>.md`, where `NNNN` is the next sequential number.
-3. Follow the template below exactly. Fill in every section with clear, unambiguous language.
+3. Apply `.github/instructions/document-frontmatter.instructions.md` when creating or updating the ADR.
+4. Follow the template below exactly. Fill in every section with clear, unambiguous language.
 
 ## ADR Template
 
@@ -23,6 +24,9 @@ authors: "<author names or roles>"
 tags: ["architecture", "decision"]
 supersedes: ""
 superseded_by: ""
+Original Author: "<active author or agent name>"
+Creation Date: "<YYYY-MM-DD>"
+Creating Model: "<actual model used>"
 ---
 
 # ADR-NNNN: <Decision Title>
@@ -88,3 +92,5 @@ Before finalizing the ADR, verify:
 - [ ] Both positive and negative consequences are listed
 - [ ] Implementation notes are actionable
 - [ ] Status is set to "Proposed" (author will change later)
+
+If updating an existing ADR, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.

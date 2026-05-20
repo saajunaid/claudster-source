@@ -421,6 +421,8 @@ Store with memory tool:
 
 Create file at: `handoffs/YYYY-MM-DD_<task-slug>.md`
 
+Apply `.github/instructions/document-frontmatter.instructions.md` when creating or updating the handoff file.
+
 **Naming convention:**
 - Use date and short task description
 - Examples: `2026-02-05_interactionid-linking.md`, `2026-02-05_api-refactor.md`
@@ -428,6 +430,12 @@ Create file at: `handoffs/YYYY-MM-DD_<task-slug>.md`
 **Document Template:**
 
 ```markdown
+---
+Original Author: <active author or agent name>
+Creation Date: <YYYY-MM-DD>
+Creating Model: <actual model used>
+---
+
 # Context Handoff: <Task Name>
 
 **Date**: <YYYY-MM-DD>
@@ -572,6 +580,8 @@ Files to focus on:
 - \`<file2>\` - <relevance>
 \`\`\`
 ```
+
+If you update an existing handoff instead of creating a fresh one, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ### 3.2 Generate Console Output
 

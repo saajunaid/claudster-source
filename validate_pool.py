@@ -44,6 +44,37 @@ PIPELINE_RUNNER_PY = PIPELINE_RUNNER_DIR / "pipeline_runner.py"
 STATE_TEMPLATE = GITHUB_DIR / "pipeline-state.template.json"
 GOLDEN_PLAN_SKILL = SKILLS_DIR / "workflow" / "golden-plan" / "SKILL.md"
 DENYLIST_EXCEPTIONS = GITHUB_DIR / "tools" / "pool-validator" / "denylist-exceptions.txt"
+DOC_FRONTMATTER_INSTRUCTION = GITHUB_DIR / "instructions" / "document-frontmatter.instructions.md"
+DOC_FRONTMATTER_REQUIRED_FIELDS = [
+    "Original Author",
+    "Creation Date",
+    "Creating Model",
+    "Last Author",
+    "Last Updated",
+    "Last Model Used",
+]
+DOC_FRONTMATTER_REFERENCERS = [
+    GITHUB_DIR / "instructions" / "plan-mode.instructions.md",
+    GITHUB_DIR / "skills" / "docs" / "code-documentation" / "SKILL.md",
+    GITHUB_DIR / "skills" / "docs" / "technical-writing" / "SKILL.md",
+    GITHUB_DIR / "skills" / "docs" / "writing-plans" / "SKILL.md",
+    GITHUB_DIR / "skills" / "docs" / "architecture-document" / "SKILL.md",
+    GITHUB_DIR / "skills" / "docs" / "doc-coauthoring" / "SKILL.md",
+    GITHUB_DIR / "skills" / "workflow" / "brainstorming" / "SKILL.md",
+    GITHUB_DIR / "skills" / "workflow" / "context-handoff" / "SKILL.md",
+    GITHUB_DIR / "skills" / "workflow" / "golden-plan" / "SKILL.md",
+    GITHUB_DIR / "skills" / "workflow" / "intent-writer" / "SKILL.md",
+    GITHUB_DIR / "skills" / "workflow" / "preflight" / "SKILL.md",
+    GITHUB_DIR / "prompts" / "plan.prompt.md",
+    GITHUB_DIR / "prompts" / "adr.prompt.md",
+    GITHUB_DIR / "prompts" / "documentation-writer.prompt.md",
+    GITHUB_DIR / "prompts" / "api-documentation.prompt.md",
+    GITHUB_DIR / "prompts" / "context-handoff.prompt.md",
+    GITHUB_DIR / "prompts" / "create-readme.prompt.md",
+    GITHUB_DIR / "prompts" / "generate-hld-lld.prompt.md",
+    GITHUB_DIR / "prompts" / "new-feature.prompt.md",
+    GITHUB_DIR / "prompts" / "project-setup.prompt.md",
+]
 
 # External pool roots that are checked when present
 EXTRA_POOL_ROOTS = [
@@ -652,12 +683,13 @@ def check_profile_manifest_alignment(profile: str, profile_root: Path) -> CheckR
 
 
 def check_ptarmigan_content_restrictions(profile_root: Path) -> CheckResult:
-    r = CheckResult(name="Ptarmigan ADLC restrictions — exact 5-agent roster and forbidden resources")
+    r = CheckResult(name="Ptarmigan ADLC restrictions — exact 6-agent roster and forbidden resources")
 
-    # --- Agent roster: exactly these 5 ---
+    # --- Agent roster: exactly these 6 ---
     required_agents = {
         "orchestrator.agent.md",
         "planner.agent.md",
+        "preflight.agent.md",
         "implement.agent.md",
         "tester.agent.md",
         "code-reviewer.agent.md",
@@ -780,6 +812,101 @@ def check_golden_plan() -> CheckResult:
     return r
 
 
+def check_document_frontmatter_contract() -> CheckResult:
+    r = CheckResult(name="Document frontmatter contract — instruction + doc generators")
+
+    if not DOC_FRONTMATTER_INSTRUCTION.exists():
+        r.passed = False
+        r.failures.append(
+            f"Missing: {DOC_FRONTMATTER_INSTRUCTION.relative_to(REPO_ROOT)}"
+        )
+        return r
+
+    instruction_text = _read_text_safe(DOC_FRONTMATTER_INSTRUCTION)
+    if instruction_text is None:
+        r.passed = False
+        r.failures.append(
+            f"Cannot read: {DOC_FRONTMATTER_INSTRUCTION.relative_to(REPO_ROOT)}"
+        )
+        return r
+
+    parsed = _split_frontmatter(instruction_text)
+    if parsed is None:
+        r.failures.append(
+            f"{DOC_FRONTMATTER_INSTRUCTION.relative_to(REPO_ROOT)}: missing or invalid YAML frontmatter"
+        )
+    else:
+        meta, _ = parsed
+        if str(meta.get("applyTo", "")).strip() != "**/*.md":
+            r.failures.append(
+                f"{DOC_FRONTMATTER_INSTRUCTION.relative_to(REPO_ROOT)}: applyTo must be '**/*.md'"
+            )
+
+    for field_name in DOC_FRONTMATTER_REQUIRED_FIELDS:
+        if field_name not in instruction_text:
+            r.failures.append(
+                f"{DOC_FRONTMATTER_INSTRUCTION.relative_to(REPO_ROOT)}: missing required field '{field_name}'"
+            )
+
+    for path in DOC_FRONTMATTER_REFERENCERS:
+        if not path.exists():
+            r.failures.append(f"Missing doc-generator template: {path.relative_to(REPO_ROOT)}")
+            continue
+        text = _read_text_safe(path)
+        if text is None:
+            r.failures.append(f"Cannot read doc-generator template: {path.relative_to(REPO_ROOT)}")
+            continue
+        if "document-frontmatter.instructions.md" not in text:
+            r.failures.append(
+                f"{path.relative_to(REPO_ROOT)}: missing reference to document-frontmatter.instructions.md"
+            )
+
+    r.info.append(f"checked {len(DOC_FRONTMATTER_REFERENCERS)} doc-generation template(s)")
+    r.passed = not r.failures
+    return r
+
+
+def check_document_frontmatter_contract_in_profile(profile_root: Path, label: str) -> CheckResult:
+    r = CheckResult(name=f"Document frontmatter contract — exported profile '{label}'")
+
+    instruction_path = profile_root / "instructions" / "document-frontmatter.instructions.md"
+    referenced_by: list[Path] = []
+
+    for folder_name in ("skills", "prompts", "instructions"):
+        folder = profile_root / folder_name
+        if not folder.exists():
+            continue
+        for path in folder.rglob("*.md"):
+            text = _read_text_safe(path)
+            if text is None:
+                continue
+            if "document-frontmatter.instructions.md" in text:
+                referenced_by.append(path)
+
+    if not referenced_by:
+        r.info.append("no exported files reference document-frontmatter.instructions.md")
+        return r
+
+    if not instruction_path.exists():
+        r.failures.append(
+            f"{instruction_path.relative_to(profile_root)} missing, but {len(referenced_by)} exported file(s) reference it"
+        )
+    else:
+        text = _read_text_safe(instruction_path)
+        if text is None:
+            r.failures.append(f"Cannot read: {instruction_path.relative_to(profile_root)}")
+        else:
+            for field_name in DOC_FRONTMATTER_REQUIRED_FIELDS:
+                if field_name not in text:
+                    r.failures.append(
+                        f"{instruction_path.relative_to(profile_root)}: missing required field '{field_name}'"
+                    )
+
+    r.info.append(f"exported files referencing contract: {len(referenced_by)}")
+    r.passed = not r.failures
+    return r
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -844,6 +971,7 @@ def main(argv: list[str] | None = None) -> int:
             check_generated_artifacts([profile_root.parent]),
             check_prompts_in_dir(profile_root / "prompts", args.profile),
             check_skill_registry_in_dir(profile_root / "skills", args.profile),
+            check_document_frontmatter_contract_in_profile(profile_root, args.profile),
         ]
         if args.profile == "ptarmigan":
             results.append(check_ptarmigan_content_restrictions(profile_root))
@@ -857,6 +985,7 @@ def main(argv: list[str] | None = None) -> int:
             check_generated_artifacts(roots),
             check_prompts(),
             check_skill_registry(),
+            check_document_frontmatter_contract(),
             check_golden_plan(),
         ]
 

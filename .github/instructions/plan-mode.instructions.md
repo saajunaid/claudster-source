@@ -37,6 +37,10 @@ Activate plan mode when the user:
 - ✅ Propose a plan before execution
 - ✅ Wait for user approval at each phase
 
+### Documentation Metadata
+
+Any PRD, plan, requirements doc, or other descriptive Markdown artefact created or updated during plan mode must follow `.github/instructions/document-frontmatter.instructions.md`.
+
 ## Plan Mode Workflow
 
 ### Phase 1: Discovery (Required)

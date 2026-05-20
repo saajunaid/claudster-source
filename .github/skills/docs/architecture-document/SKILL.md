@@ -10,6 +10,7 @@ description: Generate professional enterprise-grade HLD and LLD documents from t
 Produce formal **High-Level Design (HLD)** and **Low-Level Design (LLD)** documents from the project's living `docs/Architecture.md` and codebase.
 
 > **Project Context** — Read `project-config.md` for brand tokens, org name, tech stack, and project metadata used in document headers.
+> **Document metadata** — Any Markdown companion doc or source doc created or updated in this workflow must follow `.github/instructions/document-frontmatter.instructions.md`. For DOCX/PPTX deliverables, mirror the same author/date/model fields on the cover page or revision history.
 
 ## When to Load This Skill
 

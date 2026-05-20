@@ -69,6 +69,8 @@ Create a unique identifier for this feature chain:
 
 Create the document at `agent-docs/intents/{chain_id}.md`:
 
+Apply `.github/instructions/document-frontmatter.instructions.md` when creating or updating the Intent Document.
+
 ```markdown
 ---
 agent: prompt-engineer
@@ -78,6 +80,9 @@ type: intent
 chain_id: {FEAT-YYYY-MMDD-slug}
 approval: pending
 feasibility_warnings: {list or "none"}
+Original Author: prompt-engineer
+Creation Date: {YYYY-MM-DD}
+Creating Model: {actual model used}
 ---
 <!-- AGENT-GENERATED: This Intent Document preserves user intent for the agent pipeline.
      Every agent in the chain MUST read this document FIRST before processing. -->
@@ -156,6 +161,9 @@ chain_id: {same chain_id as original}
 amends: agent-docs/intents/{chain_id}.md
 amendment_number: {N}
 approval: pending
+Original Author: prompt-engineer
+Creation Date: {YYYY-MM-DD}
+Creating Model: {actual model used}
 ---
 
 # Intent Amendment #{N}: {Brief description of change}
@@ -179,6 +187,8 @@ approval: pending
 
 2. Mark downstream artifacts (produced BEFORE the amendment) as `superseded` in the manifest
 3. The pipeline re-runs from the earliest affected point
+
+If you revise an existing intent or amendment file instead of creating a new one, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ---
 

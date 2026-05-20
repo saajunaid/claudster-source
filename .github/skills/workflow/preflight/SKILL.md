@@ -303,6 +303,8 @@ Produce a structured report (see Output Format below).
 
 The report is written to the path specified by the invoking agent. Default: `.github/agent-docs/preflight-report.md`
 
+Apply `.github/instructions/document-frontmatter.instructions.md` when creating or updating the report.
+
 ```markdown
 ---
 type: preflight-report
@@ -316,6 +318,9 @@ counts:
   minor: <N>
   warn: <N>
 decisions_pending: <N>
+Original Author: <active author or agent name>
+Creation Date: <YYYY-MM-DD>
+Creating Model: <actual model used>
 ---
 
 # Preflight Validation Report
@@ -375,6 +380,8 @@ decisions_pending: <N>
 | D1 | <finding ref> | A / B / C | <PENDING or chosen> |
 | D2 | ... | ... | ... |
 ```
+
+If you revise an existing report file, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ---
 

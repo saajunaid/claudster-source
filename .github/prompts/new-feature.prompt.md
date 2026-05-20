@@ -33,6 +33,8 @@ Evaluate the user's input:
 
 The input needs refinement before entering the pipeline.
 
+Intent Documents created or updated in this flow must follow `.github/instructions/document-frontmatter.instructions.md`.
+
 1. Read `skills/workflow/intent-writer/SKILL.md`
 2. Follow the skill to structure the input into an Intent Document
 3. Ask clarifying questions to fill gaps (goal, success criteria, constraints, out of scope)
@@ -46,6 +48,8 @@ The input needs refinement before entering the pipeline.
 ## Step 2B: Create Intent Document Directly
 
 The input is clear enough — structure it without extensive Q&A.
+
+Intent Documents created or updated in this flow must follow `.github/instructions/document-frontmatter.instructions.md`.
 
 1. Read `skills/workflow/intent-writer/SKILL.md`
 2. Follow the skill to create the Intent Document

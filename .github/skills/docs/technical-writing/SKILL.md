@@ -20,6 +20,14 @@ Good documentation is the difference between a project that scales and one that 
 
 ## 2. Document Types and Templates
 
+### Document Provenance Frontmatter
+
+All descriptive Markdown docs must follow `.github/instructions/document-frontmatter.instructions.md`.
+
+- **New docs**: include `Original Author`, `Creation Date`, and `Creating Model` in YAML frontmatter.
+- **Updated docs**: preserve those original fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+- Merge these fields into existing frontmatter instead of replacing document-specific metadata.
+
 ### README Structure
 
 Every project README follows this order:
@@ -256,6 +264,7 @@ docs/
 When reviewing documentation:
 
 - [ ] Answers "what does this do?" in the first paragraph
+- [ ] Document frontmatter is present and current
 - [ ] Code examples are complete and runnable
 - [ ] Commands are copy-pasteable
 - [ ] No stale references to old code, endpoints, or config

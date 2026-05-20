@@ -194,6 +194,8 @@ The team needs to track complaint trends, resolution times, and agent performanc
 
 Save the output to `docs/prd/prd.md`.
 
+That PRD must include the metadata frontmatter required by `.github/instructions/document-frontmatter.instructions.md`.
+
 #### 3.2 Design Architecture
 
 ```

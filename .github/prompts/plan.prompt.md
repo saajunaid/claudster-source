@@ -8,6 +8,8 @@ tools: ['codebase', 'editFiles', 'search']
 
 **You must create a phased plan document immediately.**
 
+Before creating or updating the plan or any supporting Markdown deliverable, apply `.github/instructions/document-frontmatter.instructions.md`.
+
 ## Input
 
 User's request: `{{input}}`
@@ -144,6 +146,12 @@ Create file at: `plans/{feature-name}.md`
 Use this template:
 
 ```markdown
+---
+Original Author: {active author or agent name}
+Creation Date: {YYYY-MM-DD}
+Creating Model: {actual model used}
+---
+
 # {Feature Name} - Phased Execution Plan
 
 **Created**: {date}
@@ -350,6 +358,8 @@ before starting Phase N+1. Never carry implementation debt forward between phase
 **To continue Phase N:**
 > Read `plans/{feature-name}.md` and implement Phase {N}. Previous phases are complete.
 ```
+
+If the plan is updated later, preserve the original metadata fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 > 💡 **Note**: Use `- [ ]` checkbox format for deliverables so progress can be tracked. In Cursor, the Implement agent can update the plan as work progresses; in other IDEs, you or the AI can update checkboxes when completing each item.
 
