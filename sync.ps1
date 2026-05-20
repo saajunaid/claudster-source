@@ -19,21 +19,25 @@
 #   junai-export [OutputPath]     export pool to a local folder or zip (no GitHub needed)
 #   junai-import SourcePath        import pool from a local folder or zip into current project
 
-$EXT_REPOS_ROOT = "E:\Projects\agent-sandbox\vscode-extensions"
+$REPO_ROOT = $PSScriptRoot
+$EXT_REPOS_ROOT = Join-Path $REPO_ROOT "vscode-extensions"
 $JUNO_POOL = Join-Path $EXT_REPOS_ROOT "junai"
 $JUNO_GITHUB = "$JUNO_POOL\.github"
 $JUNAI_VSCODE = Join-Path $EXT_REPOS_ROOT "junai-vscode"
 $PTARMIGAN_REPO = Join-Path $EXT_REPOS_ROOT "ptarmigan"
 $LIFFEY_REPO = Join-Path $EXT_REPOS_ROOT "liffey"
+$JUNAI_ENV_FILE = Join-Path $REPO_ROOT ".env"
 $PYPI_KEY_FILE = Join-Path $JUNO_POOL "pypimcp.key"
 $VSCE_PAT_FILE = Join-Path $JUNAI_VSCODE "vscode.pat"
 $PTARMIGAN_PAT_FILE = Join-Path $PTARMIGAN_REPO "ptarmigan.pat"
+$script:JunaiEnvLoaded = $false
+$script:JunaiEnv = @{}
 # NOTE: "plans" intentionally REMOVED from $POOL_FOLDERS as of 2026-04-27 (Phase 1.0
 # stop-the-bleed). Plans are tracked in agent-sandbox only; they never sync to the
 # public mirror. Do not re-add without explicit privacy review.
 $POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "hooks", "diagrams", "tools", "recipes", "agent-docs", "handoffs")
 $POOL_FILES = @("runtime-targets.json")
-$ROOT_PUSH_FILES = @("export_runtime_resources.py")
+$ROOT_PUSH_FILES = @("export_runtime_resources.py", "validate_agents.py", "validate_pool.py", "sync.ps1", ".env.example")
 # Top-level repo-root folders that must NEVER be synced to the public mirror.
 # vmie/ holds private, organisation-specific resources for local copy-paste only.
 $PRIVATE_ROOT_FOLDERS = @("vmie")
@@ -60,6 +64,173 @@ function Remove-JunaiCacheDirs {
         if ([string]::IsNullOrWhiteSpace($Label)) { $Label = $RootPath }
         Write-Host "  [OK]  cache sweep ($Label): removed $($cacheDirs.Count) generated cache folder(s)" -ForegroundColor Green
     }
+}
+
+function Initialize-JunaiEnv {
+    if ($script:JunaiEnvLoaded) { return }
+
+    $script:JunaiEnv = @{}
+    if (Test-Path $JUNAI_ENV_FILE) {
+        foreach ($line in Get-Content $JUNAI_ENV_FILE) {
+            $trimmed = $line.Trim()
+            if ([string]::IsNullOrWhiteSpace($trimmed) -or $trimmed.StartsWith("#")) {
+                continue
+            }
+
+            $parts = $trimmed.Split("=", 2)
+            if ($parts.Count -ne 2) {
+                continue
+            }
+
+            $name = $parts[0].Trim()
+            if ([string]::IsNullOrWhiteSpace($name)) {
+                continue
+            }
+
+            $value = $parts[1].Trim()
+            if ($value.Length -ge 2) {
+                if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+                    $value = $value.Substring(1, $value.Length - 2)
+                }
+            }
+
+            $script:JunaiEnv[$name] = $value
+        }
+    }
+
+    $script:JunaiEnvLoaded = $true
+}
+
+function Get-JunaiEnvValue {
+    param([Parameter(Mandatory)][string]$Name)
+
+    Initialize-JunaiEnv
+
+    foreach ($scope in @("Process", "User", "Machine")) {
+        $value = [Environment]::GetEnvironmentVariable($Name, $scope)
+        if (-not [string]::IsNullOrWhiteSpace($value)) {
+            return $value.Trim()
+        }
+    }
+
+    if ($script:JunaiEnv.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace($script:JunaiEnv[$Name])) {
+        return $script:JunaiEnv[$Name].Trim()
+    }
+
+    return ""
+}
+
+function Get-JunaiSecretValue {
+    param(
+        [Parameter(Mandatory)][string]$EnvName,
+        [string]$LegacyFilePath = ""
+    )
+
+    $value = Get-JunaiEnvValue -Name $EnvName
+    if (-not [string]::IsNullOrWhiteSpace($value)) {
+        return $value
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($LegacyFilePath) -and (Test-Path $LegacyFilePath)) {
+        return (Get-Content $LegacyFilePath -Raw).Trim()
+    }
+
+    return ""
+}
+
+function Get-PackageJsonVersion {
+    param([Parameter(Mandatory)][string]$PackageJsonPath)
+
+    if (-not (Test-Path $PackageJsonPath)) {
+        return ""
+    }
+
+    $content = Get-Content $PackageJsonPath -Raw
+    $match = [regex]::Match($content, '"version"\s*:\s*"([^"]+)"')
+    if (-not $match.Success) {
+        return ""
+    }
+
+    return $match.Groups[1].Value
+}
+
+function Get-NextPatchVersion {
+    param([Parameter(Mandatory)][string]$VersionString)
+
+    if ($VersionString -notmatch '^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)$') {
+        throw "Unsupported version format: $VersionString"
+    }
+
+    $major = [int]$Matches.major
+    $minor = [int]$Matches.minor
+    $patch = [int]$Matches.patch + 1
+    return "$major.$minor.$patch"
+}
+
+function Set-PackageJsonVersion {
+    param(
+        [Parameter(Mandatory)][string]$PackageJsonPath,
+        [Parameter(Mandatory)][string]$VersionString
+    )
+
+    $content = Get-Content $PackageJsonPath -Raw
+    $updated = [regex]::Replace($content, '"version"\s*:\s*"[^"]+"', ('"version": "' + $VersionString + '"'), 1)
+    if ($updated -eq $content) {
+        throw "Could not update version in $PackageJsonPath"
+    }
+
+    Set-Content $PackageJsonPath $updated -NoNewline
+}
+
+function Bump-PackageJsonPatchVersion {
+    param(
+        [Parameter(Mandatory)][string]$RepoPath,
+        [Parameter(Mandatory)][string]$Label
+    )
+
+    $packageJsonPath = Join-Path $RepoPath "package.json"
+    if (-not (Test-Path $packageJsonPath)) {
+        return ""
+    }
+
+    $currentVersion = Get-PackageJsonVersion -PackageJsonPath $packageJsonPath
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        throw "Could not read version from $packageJsonPath"
+    }
+
+    $nextVersion = Get-NextPatchVersion -VersionString $currentVersion
+    Set-PackageJsonVersion -PackageJsonPath $packageJsonPath -VersionString $nextVersion
+    Write-Host "  [OK]  $Label version bumped $currentVersion --> $nextVersion" -ForegroundColor Green
+    return $nextVersion
+}
+
+function Confirm-VscePublishedVersion {
+    param(
+        [Parameter(Mandatory)][string]$ExtensionId,
+        [Parameter(Mandatory)][string]$ExpectedVersion
+    )
+
+    $output = npx @vscode/vsce show $ExtensionId 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace(($output | Out-String))) {
+        Write-Host "  [WARN]  Could not verify marketplace version for $ExtensionId" -ForegroundColor Yellow
+        return $false
+    }
+
+    $joined = ($output | Out-String)
+    $match = [regex]::Match($joined, 'Version:\s*([^\r\n]+)')
+    if (-not $match.Success) {
+        Write-Host "  [WARN]  Marketplace version for $ExtensionId could not be parsed" -ForegroundColor Yellow
+        return $false
+    }
+
+    $publishedVersion = $match.Groups[1].Value.Trim()
+    if ($publishedVersion -eq $ExpectedVersion) {
+        Write-Host "  [OK]  Marketplace version verified: $ExtensionId v$publishedVersion" -ForegroundColor Green
+        return $true
+    }
+
+    Write-Host "  [WARN]  Marketplace still shows $ExtensionId v$publishedVersion (expected v$ExpectedVersion). This is usually propagation delay." -ForegroundColor Yellow
+    return $false
 }
 
 function junai-pull {
@@ -247,6 +418,10 @@ function junai-push {
     Push-Location $ProjectRoot
     python export_runtime_resources.py --profile ptarmigan --profile liffey --report
     $profileExportOk = ($LASTEXITCODE -eq 0)
+    if ($profileExportOk -and (Test-Path (Join-Path $ProjectRoot "validate_pool.py"))) {
+        python validate_pool.py --include-dist
+        $profileExportOk = ($LASTEXITCODE -eq 0)
+    }
     Pop-Location
 
     if (-not $profileExportOk) {
@@ -257,8 +432,10 @@ function junai-push {
     }
 
     # ── Auto-publish when key files exist ─────────────────────────────────
-    $hasPypiKey = Test-Path $PYPI_KEY_FILE
-    $hasVscePat = Test-Path $VSCE_PAT_FILE
+    $pypiToken = Get-JunaiSecretValue -EnvName "JUNAI_PYPI_TOKEN" -LegacyFilePath $PYPI_KEY_FILE
+    $vscePat = Get-JunaiSecretValue -EnvName "JUNAI_VSCE_PAT" -LegacyFilePath $VSCE_PAT_FILE
+    $hasPypiKey = -not [string]::IsNullOrWhiteSpace($pypiToken)
+    $hasVscePat = -not [string]::IsNullOrWhiteSpace($vscePat)
     $hasAnyKey = $hasPypiKey -or $hasVscePat
     $shouldPublish = $Publish -or (-not $NoPublish -and $hasAnyKey)
 
@@ -269,7 +446,7 @@ function junai-push {
 
     if (-not $shouldPublish) {
         Write-Host "  [--]  No publish keys found. Skipping release." -ForegroundColor DarkGray
-        Write-Host "       Add $PYPI_KEY_FILE and/or $VSCE_PAT_FILE to enable auto-publish." -ForegroundColor DarkGray
+        Write-Host "       Set JUNAI_PYPI_TOKEN and/or JUNAI_VSCE_PAT in $JUNAI_ENV_FILE (legacy key files still work)." -ForegroundColor DarkGray
         return
     }
 
@@ -347,7 +524,8 @@ function Sync-ExtensionRepo {
         [Parameter(Mandatory)][string]$Label,
         [string]$ProjectRoot = "",
         [string]$Message = "",
-        [switch]$NoPush
+        [switch]$NoPush,
+        [switch]$AutoBumpVersion
     )
 
     if (-not (Test-Path $RepoPath)) {
@@ -379,13 +557,33 @@ function Sync-ExtensionRepo {
     }
 
     # 3. Commit if anything changed
-    git add -A | Out-Null
     $hasChanges = (git status --porcelain) -ne $null
     if (-not $hasChanges) {
         Write-Host "  [--]  $Label repo already up to date" -ForegroundColor DarkGray
         Pop-Location
         return $false
     }
+
+    if ($AutoBumpVersion) {
+        $null = Bump-PackageJsonPatchVersion -RepoPath $RepoPath -Label $Label
+
+        $prevJunaiSource = $env:JUNAI_SOURCE
+        try {
+            if (-not [string]::IsNullOrWhiteSpace($ProjectRoot)) {
+                $env:JUNAI_SOURCE = $ProjectRoot
+            }
+            node scripts/bundle-pool.js | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "  [WARN]  $Label bundle-pool refresh after version bump failed." -ForegroundColor Yellow
+                Pop-Location
+                return $false
+            }
+        } finally {
+            $env:JUNAI_SOURCE = $prevJunaiSource
+        }
+    }
+
+    git add -A | Out-Null
 
     if ([string]::IsNullOrWhiteSpace($Message)) {
         $today = Get-Date -Format "yyyy-MM-dd"
@@ -420,28 +618,15 @@ function sync-ptarmigan {
     )
 
     Write-Host "  PTARMIGAN SYNC  junai mirror --> $PTARMIGAN_REPO (pool/)" -ForegroundColor Cyan
-    $changed = Sync-ExtensionRepo -RepoPath $PTARMIGAN_REPO -Label "Ptarmigan" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush
+    $changed = Sync-ExtensionRepo -RepoPath $PTARMIGAN_REPO -Label "Ptarmigan" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush -AutoBumpVersion
     if (-not $changed -or $NoPush -or $NoPublish) {
         return
     }
 
-    if (-not (Test-Path $PTARMIGAN_PAT_FILE)) {
-        Write-Host "  [--]  Ptarmigan PAT missing; publish skipped." -ForegroundColor DarkGray
-        return
-    }
-
     Push-Location $PTARMIGAN_REPO
-    $changedFiles = git diff-tree --no-commit-id --name-only -r HEAD
-    $versionBumped = $changedFiles -contains "package.json"
-    if (-not $versionBumped) {
-        Write-Host "  [--]  package.json unchanged; Ptarmigan publish skipped." -ForegroundColor DarkGray
-        Pop-Location
-        return
-    }
-
-    $pat = (Get-Content $PTARMIGAN_PAT_FILE -Raw).Trim()
+    $pat = Get-JunaiSecretValue -EnvName "PTARMIGAN_VSCE_PAT" -LegacyFilePath $PTARMIGAN_PAT_FILE
     if ([string]::IsNullOrWhiteSpace($pat)) {
-        Write-Host "  [WARN]  Ptarmigan PAT file empty; publish skipped." -ForegroundColor Yellow
+        Write-Host "  [--]  Ptarmigan PAT missing; publish skipped." -ForegroundColor DarkGray
         Pop-Location
         return
     }
@@ -454,6 +639,10 @@ function sync-ptarmigan {
             Write-Host "  [WARN]  Ptarmigan publish failed." -ForegroundColor Yellow
         } else {
             Write-Host "  [OK]  Ptarmigan extension published." -ForegroundColor Green
+            $expectedVersion = Get-PackageJsonVersion -PackageJsonPath (Join-Path $PTARMIGAN_REPO "package.json")
+            if (-not [string]::IsNullOrWhiteSpace($expectedVersion)) {
+                Confirm-VscePublishedVersion -ExtensionId "junai-labs.ptarmigan" -ExpectedVersion $expectedVersion | Out-Null
+            }
         }
     } finally {
         $env:VSCE_PAT = $prevVscePat
@@ -469,7 +658,7 @@ function sync-liffey {
     )
 
     Write-Host "  LIFFEY SYNC   junai mirror --> $LIFFEY_REPO (pool/)" -ForegroundColor Cyan
-    $changed = Sync-ExtensionRepo -RepoPath $LIFFEY_REPO -Label "Liffey" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush
+    $changed = Sync-ExtensionRepo -RepoPath $LIFFEY_REPO -Label "Liffey" -ProjectRoot $ProjectRoot -Message $Message -NoPush:$NoPush -AutoBumpVersion
     if (-not $changed) {
         return
     }
@@ -553,18 +742,18 @@ function junai-publish-mcp {
 }
 
 function junai-release {
-    # Publishes MCP package and VS Code extension using local secret files.
-    # Secret files:
-    #   E:\Projects\junai\pypimcp.key       (PyPI token)
-    #   E:\Projects\junai-vscode\vscode.pat (Azure DevOps PAT for marketplace)
+    # Publishes MCP package and VS Code extension using .env secrets first,
+    # with legacy key files as fallback.
     #
     # Usage:
     #   junai-release                        # publish both MCP + extension
     #   junai-release -SkipMcp               # extension only
     #   junai-release -SkipExtension         # MCP only
     #   junai-release -McpVersion "0.2.2"    # bump MCP version before publish
+    #   junai-release -ExtensionVersion "1.2.3"
     param(
         [string]$McpVersion = "",
+        [string]$ExtensionVersion = "",
         [switch]$SkipMcp,
         [switch]$SkipExtension
     )
@@ -574,27 +763,31 @@ function junai-release {
     Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
 
     # -- Pre-publish agent validation gate --
-    $validatorScript = "E:\Projects\agent-sandbox\validate_agents.py"
-    $pythonExe       = "E:\Projects\agent-sandbox\.venv\Scripts\python.exe"
+    $validatorScript = Join-Path $REPO_ROOT "validate_agents.py"
+    $poolValidatorScript = Join-Path $REPO_ROOT "validate_pool.py"
+    $pythonExe       = Join-Path $REPO_ROOT ".venv\Scripts\python.exe"
     if ((Test-Path $validatorScript) -and (Test-Path $pythonExe)) {
         & $pythonExe $validatorScript
         if ($LASTEXITCODE -ne 0) {
             Write-Host "  [ABORT]  Agent validation failed. Fix errors above before publishing." -ForegroundColor Red
             return
         }
+
+        if (Test-Path $poolValidatorScript) {
+            & $pythonExe $poolValidatorScript
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "  [ABORT]  Pool validation failed. Fix errors above before publishing." -ForegroundColor Red
+                return
+            }
+        }
     } else {
-        Write-Host "  [WARN]  validate_agents.py or venv not found -- skipping validation" -ForegroundColor Yellow
+        Write-Host "  [WARN]  validate_agents.py/validate_pool.py or venv not found -- skipping validation" -ForegroundColor Yellow
     }
 
     if (-not $SkipMcp) {
-        if (-not (Test-Path $PYPI_KEY_FILE)) {
-            Write-Host "  [ERROR] Missing PyPI key file: $PYPI_KEY_FILE" -ForegroundColor Red
-            return
-        }
-
-        $pypiToken = (Get-Content $PYPI_KEY_FILE -Raw).Trim()
+        $pypiToken = Get-JunaiSecretValue -EnvName "JUNAI_PYPI_TOKEN" -LegacyFilePath $PYPI_KEY_FILE
         if ([string]::IsNullOrWhiteSpace($pypiToken)) {
-            Write-Host "  [ERROR] PyPI key file is empty: $PYPI_KEY_FILE" -ForegroundColor Red
+            Write-Host "  [ERROR] Missing PyPI token. Set JUNAI_PYPI_TOKEN in $JUNAI_ENV_FILE or keep $PYPI_KEY_FILE." -ForegroundColor Red
             return
         }
 
@@ -611,14 +804,9 @@ function junai-release {
     }
 
     if (-not $SkipExtension) {
-        if (-not (Test-Path $VSCE_PAT_FILE)) {
-            Write-Host "  [ERROR] Missing VS Code PAT file: $VSCE_PAT_FILE" -ForegroundColor Red
-            return
-        }
-
-        $vscePat = (Get-Content $VSCE_PAT_FILE -Raw).Trim()
+        $vscePat = Get-JunaiSecretValue -EnvName "JUNAI_VSCE_PAT" -LegacyFilePath $VSCE_PAT_FILE
         if ([string]::IsNullOrWhiteSpace($vscePat)) {
-            Write-Host "  [ERROR] VS Code PAT file is empty: $VSCE_PAT_FILE" -ForegroundColor Red
+            Write-Host "  [ERROR] Missing VS Code PAT. Set JUNAI_VSCE_PAT in $JUNAI_ENV_FILE or keep $VSCE_PAT_FILE." -ForegroundColor Red
             return
         }
 
@@ -631,13 +819,43 @@ function junai-release {
         try {
             $env:VSCE_PAT = $vscePat
             Push-Location $JUNAI_VSCODE
+            $packageJsonPath = Join-Path $JUNAI_VSCODE "package.json"
+            $currentExtensionVersion = Get-PackageJsonVersion -PackageJsonPath $packageJsonPath
+            if ([string]::IsNullOrWhiteSpace($currentExtensionVersion)) {
+                Write-Host "  [ERROR] Could not read junai-vscode package version." -ForegroundColor Red
+                return
+            }
+
+            if ([string]::IsNullOrWhiteSpace($ExtensionVersion)) {
+                $ExtensionVersion = Get-NextPatchVersion -VersionString $currentExtensionVersion
+            }
+
+            if ($ExtensionVersion -ne $currentExtensionVersion) {
+                Set-PackageJsonVersion -PackageJsonPath $packageJsonPath -VersionString $ExtensionVersion
+                git add package.json
+                git commit -m "chore: bump version to $ExtensionVersion" | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "  [ERROR] junai-vscode version bump commit failed." -ForegroundColor Red
+                    return
+                }
+                git push | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "  [ERROR] junai-vscode version bump push failed." -ForegroundColor Red
+                    return
+                }
+                Write-Host "  [OK]  junai-vscode version bumped $currentExtensionVersion --> $ExtensionVersion" -ForegroundColor Green
+            } else {
+                Write-Host "  [--]  junai-vscode version unchanged at $currentExtensionVersion" -ForegroundColor DarkGray
+            }
+
             Write-Host "  Publishing VS Code extension..." -ForegroundColor DarkGray
             npx vsce publish --pat $vscePat --no-dependencies
             if ($LASTEXITCODE -ne 0) {
                 Write-Host "  [ERROR] VS Code extension publish failed." -ForegroundColor Red
-                Pop-Location
                 return
             }
+
+            Confirm-VscePublishedVersion -ExtensionId "junai-labs.junai" -ExpectedVersion $ExtensionVersion | Out-Null
         } finally {
             Pop-Location
             $env:VSCE_PAT = $prevVscePat
@@ -671,7 +889,7 @@ function junai-revert {
         [switch]$Force
     )
 
-    $agentSandbox = "E:\Projects\agent-sandbox"
+    $agentSandbox = $REPO_ROOT
 
     Push-Location $agentSandbox
 
