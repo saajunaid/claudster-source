@@ -283,6 +283,23 @@ function Set-PyprojectVersion {
     Set-Content $PyprojectPath $updated -NoNewline
 }
 
+function Bump-PyprojectPatchVersion {
+    param(
+        [Parameter(Mandatory)][string]$PyprojectPath,
+        [string]$Label = "MCP"
+    )
+
+    $currentVersion = Get-PyprojectVersion -PyprojectPath $PyprojectPath
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        throw "Could not read version from $PyprojectPath"
+    }
+
+    $nextVersion = Get-NextPatchVersion -VersionString $currentVersion
+    Set-PyprojectVersion -PyprojectPath $PyprojectPath -VersionString $nextVersion
+    Write-Host "  [OK]  $Label version bumped $currentVersion --> $nextVersion" -ForegroundColor Green
+    return $nextVersion
+}
+
 function Commit-PackageJsonPatchVersion {
     param(
         [Parameter(Mandatory)][string]$RepoPath,
@@ -1303,11 +1320,16 @@ function junai-publish-mcp {
     $pyproject = Join-Path $JUNO_POOL "pyproject.toml"
     if (-not (Test-Path $pyproject)) {
         Write-Host "  pyproject.toml not found at $JUNO_POOL" -ForegroundColor Red
-        Pop-Location; return
+        Pop-Location
+        return $false
     }
 
-    $content     = Get-Content $pyproject -Raw
-    $currentVer  = [regex]::Match($content, 'version\s*=\s*"([^"]+)"').Groups[1].Value
+    $currentVer = Get-PyprojectVersion -PyprojectPath $pyproject
+    if ([string]::IsNullOrWhiteSpace($currentVer)) {
+        Write-Host "  [ERROR] Could not read a valid semantic version from $pyproject" -ForegroundColor Red
+        Pop-Location
+        return $false
+    }
 
     Write-Host ""
     Write-Host "  JUNAI PUBLISH MCP  junai-mcp --> PyPI" -ForegroundColor Cyan
@@ -1315,14 +1337,19 @@ function junai-publish-mcp {
     Write-Host "  Current version: $currentVer" -ForegroundColor DarkGray
 
     if ([string]::IsNullOrWhiteSpace($Version)) {
-        $Version = Read-Host "  New version (blank to keep $currentVer)"
-        if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $currentVer }
+        $Version = Get-NextPatchVersion -VersionString $currentVer
+        Write-Host "  [OK]  Auto-selected next patch version: $Version" -ForegroundColor Green
+    } elseif ($Version -notmatch '^(\d+)\.(\d+)\.(\d+)$') {
+        Write-Host "  [ERROR] MCP version must use semantic version format X.Y.Z: $Version" -ForegroundColor Red
+        Pop-Location
+        return $false
     }
 
     if ($Version -ne $currentVer) {
-        $content = $content -replace "version\s*=\s*`"$([regex]::Escape($currentVer))`"", "version = `"$Version`""
-        Set-Content $pyproject $content -NoNewline
+        Set-PyprojectVersion -PyprojectPath $pyproject -VersionString $Version
         Write-Host "  [OK]  pyproject.toml bumped $currentVer --> $Version" -ForegroundColor Green
+    } else {
+        Write-Host "  [--]  pyproject.toml version unchanged at $currentVer" -ForegroundColor DarkGray
     }
 
     # Clean old dist/
@@ -1333,19 +1360,39 @@ function junai-publish-mcp {
     $pythonCommand = Get-JunaiPythonCommand
     if (-not $pythonCommand) {
         Pop-Location
-        return
+        return $false
     }
     & $pythonCommand.Path @($pythonCommand.PrefixArgs + @("-m", "build")) 2>&1 | Where-Object { $_ -match "Successfully|error|ERROR" } | Write-Host
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [ERROR] MCP build failed." -ForegroundColor Red
+        Pop-Location
+        return $false
+    }
 
     Write-Host "  Uploading to PyPI..." -ForegroundColor DarkGray
     twine upload dist\*
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [ERROR] MCP upload failed." -ForegroundColor Red
+        Pop-Location
+        return $false
+    }
 
     # Commit version bump
     $hasChanges = (git status --porcelain) -ne $null
     if ($hasChanges) {
         git add pyproject.toml
         git commit -m "chore: bump junai-mcp to v$Version" | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  [ERROR] MCP version bump commit failed." -ForegroundColor Red
+            Pop-Location
+            return $false
+        }
         git push | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  [ERROR] MCP version bump push failed." -ForegroundColor Red
+            Pop-Location
+            return $false
+        }
         Write-Host "  [OK]  Committed and pushed version bump" -ForegroundColor Green
     }
 
@@ -1353,6 +1400,7 @@ function junai-publish-mcp {
     Write-Host ""
     Write-Host "  Published junai-mcp v$Version to PyPI." -ForegroundColor Cyan
     Write-Host ""
+    return $true
 }
 
 function junai-release {
@@ -1413,7 +1461,10 @@ function junai-release {
         try {
             $env:TWINE_USERNAME = "__token__"
             $env:TWINE_PASSWORD = $pypiToken
-            junai-publish-mcp -Version $McpVersion
+            $mcpPublished = junai-publish-mcp -Version $McpVersion
+            if (-not $mcpPublished) {
+                return $false
+            }
         } finally {
             $env:TWINE_USERNAME = $prevTwineUser
             $env:TWINE_PASSWORD = $prevTwinePass
@@ -1497,6 +1548,11 @@ function junai-smoke-release {
 `$pythonCommand = Get-JunaiPythonCommand
 if (-not `$pythonCommand) { throw 'Python resolution failed' }
 Write-Host "[OK] python: `$(`$pythonCommand.Path)"
+
+`$mcpVersion = Get-PyprojectVersion -PyprojectPath (Join-Path `$JUNO_POOL 'pyproject.toml')
+if ([string]::IsNullOrWhiteSpace(`$mcpVersion)) { throw 'junai pyproject.toml version is missing or invalid' }
+if ([string]::IsNullOrWhiteSpace((Try-GetNextPatchVersion -VersionString `$mcpVersion))) { throw ('junai pyproject.toml version is not semver: ' + `$mcpVersion) }
+Write-Host ('[OK] junai pyproject.toml version: ' + `$mcpVersion)
 
 & `$pythonCommand.Path @(`$pythonCommand.PrefixArgs + @('validate_agents.py'))
 if (`$LASTEXITCODE -ne 0) { throw 'validate_agents.py failed' }
