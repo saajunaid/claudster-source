@@ -557,7 +557,8 @@ function Sync-ExtensionRepo {
     }
 
     # 3. Commit if anything changed
-    $hasChanges = (git status --porcelain) -ne $null
+    $managedChanges = git status --porcelain -- pool out
+    $hasChanges = -not [string]::IsNullOrWhiteSpace(($managedChanges | Out-String).Trim())
     if (-not $hasChanges) {
         Write-Host "  [--]  $Label repo already up to date" -ForegroundColor DarkGray
         Pop-Location
@@ -583,7 +584,7 @@ function Sync-ExtensionRepo {
         }
     }
 
-    git add -A | Out-Null
+    git add -- package.json pool out | Out-Null
 
     if ([string]::IsNullOrWhiteSpace($Message)) {
         $today = Get-Date -Format "yyyy-MM-dd"
