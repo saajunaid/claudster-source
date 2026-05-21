@@ -385,8 +385,8 @@ The plan document should contain **copy-paste prompts** for each phase. This rem
 │  "I need new Streamlit components"                      │
 │   → Streamlit Developer Agent                           │
 │                                                         │
-│  "Session is about to run out of context"               │
-│   → Context Handoff Skill (emergency only)              │
+│  "Session needs resumable context"                      │
+│   → Relay Skill                                          │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -491,7 +491,7 @@ A well-orchestrated session should produce:
 
 | Situation | Load This Skill |
 |-----------|----------------|
-| Emergency context exhaustion mid-session | `.github/skills/workflow/context-handoff/SKILL.md` |
+| Session continuation context | `.github/skills/workflow/relay/SKILL.md` |
 | Verifying code before committing | `.github/skills/workflow/verification-loop/SKILL.md` |
 | Writing implementation plans | `.github/skills/docs/writing-plans/SKILL.md` |
 | Creating new reusable skills | `.github/skills/workflow/skill-creator/SKILL.md` |

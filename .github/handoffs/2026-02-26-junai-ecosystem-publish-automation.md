@@ -1,4 +1,4 @@
-# Context Handoff: junai Ecosystem — Publish Automation & v0.4.x Hardening
+# Relay: junai Ecosystem — Publish Automation & v0.4.x Hardening
 
 **Date**: 2026-02-26
 **Status**: Near Complete (one manual step outstanding)

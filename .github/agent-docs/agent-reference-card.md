@@ -10,7 +10,7 @@
 | Agent | Purpose | Hands Off To | Skills Loaded | Instructions Used |
 |-------|---------|-------------|---------------|-------------------|
 | **PRD** | Requirements discovery, stakeholder synthesis | Architect, Planner | prd-to-code, documentation-analyzer, github-issues | — |
-| **Architect** | System design, trade-offs, architecture decisions | Planner, Implement, PRD, SQL Expert, Data Engineer, Streamlit Dev, SVG Diagram, UX Designer | sql, data-analysis, draw-io, context-handoff | sql, security, performance-optimization, code-review |
+| **Architect** | System design, trade-offs, architecture decisions | Planner, Implement, PRD, SQL Expert, Data Engineer, Streamlit Dev, SVG Diagram, UX Designer | sql, data-analysis, draw-io, relay | sql, security, performance-optimization, code-review |
 | **Planner** | Strategic planning, technical roadmapping (read-only) | Implement, Architect, PRD, Streamlit Dev, Data Engineer, SQL Expert, Prompt Engineer, UX Designer | writing-plans, documentation-analyzer, code-explainer | python, portability, code-review |
 | **Code Reviewer** | Quality, security, standards review | Implement, Security Analyst, Janitor, DevOps | refactoring, code-explainer, documentation-analyzer, security-review | code-review, security, python, portability, performance-optimization |
 | **Debug** | Root-cause analysis, bug fixing, Planner amendment briefs | Tester, Code Reviewer, Security Analyst, Planner | db-testing, code-explainer, refactoring | testing, python, security |
@@ -81,7 +81,7 @@ PRD ──► Architect ──► Planner ──► Implement ──► Tester �
 | `/performance-optimization` | Performance audit | UX Designer / Code Reviewer |
 | `/review-and-refactor` | Review + refactor pass | Code Reviewer / Janitor |
 | `/generate-hld-lld` | Enterprise HLD/LLD docs | architecture-document skill |
-| `/context-handoff` | Emergency context save | context-handoff skill |
+| `/relay` | Session continuation document | relay skill |
 | `/adr` | Architecture Decision Record | Project Manager |
 
 ## 7 Universal Protocols (All Agents)

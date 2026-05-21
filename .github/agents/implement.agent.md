@@ -919,17 +919,18 @@ For large features or multi-file changes, **don't rely on handoffs**. Instead:
 If user starts large work without a plan, suggest creating one:
 > "This looks like a multi-session task. Should I use `/plan` to create a phased plan document first? This will make the implementation smoother and avoid context issues."
 
-### Emergency Handoff (For Interruptions Only)
+### Relay (For Session Continuation)
 
-Use handoff skill **only when**:
+Use relay skill when:
 - Interrupted mid-phase unexpectedly
 - Complexity was underestimated
+- Work should resume cleanly in a later session
 - Need checkpoint before risky change
 - Handing to another person
 
 ```bash
-# Emergency handoff
-"Read .github/skills/workflow/context-handoff/SKILL.md and do an emergency handoff"
+# Session continuation
+"Read .github/skills/workflow/relay/SKILL.md and create or update relay.md"
 ```
 
 **Don't do**: Handoff → New Chat → Handoff → repeat (this is inefficient)

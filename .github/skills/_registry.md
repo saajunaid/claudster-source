@@ -143,7 +143,7 @@
 | Best Practices | `workflow/best-practices/` | Transform vague prompts into optimised AI prompts |
 | Brainstorming | `workflow/brainstorming/` | Structured ideation before implementing features or changes |
 | Context Curator | `workflow/context-curator/` | Compress and prioritise codebase context before feeding reasoning agents |
-| Context Handoff | `workflow/context-handoff/` | Preserving context between sessions (emergency handoff) |
+| Relay | `workflow/relay/` | Creating or updating root `relay.md` with verified session-continuation context |
 | Developer Growth | `workflow/developer-growth-analysis/` | Analyzing coding patterns and curating personalized learning resources |
 | File Organizer | `workflow/file-organizer/` | Organizing files, finding duplicates, suggesting structure |
 | Game-Changing Features | `workflow/game-changing-features/` | Finding 10x product opportunities and high-leverage improvements |

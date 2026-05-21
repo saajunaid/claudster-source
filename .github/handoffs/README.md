@@ -1,67 +1,32 @@
-# Emergency Context Handoffs
+# Handoffs Directory
 
-This directory contains **emergency handoff documents** created when work is unexpectedly interrupted.
+This directory is reserved for pipeline handoff artifacts that are internal to the agent workflow.
 
-## When This Is Used
+## Current Session Continuation Workflow
 
-- ⚠️ Context window nearly exhausted mid-task
-- 🔄 Handing work to another person
-- 🚨 Unexpected interruption requiring session end
-- 📍 Checkpoint before risky operation
+For user-facing session continuation, use `/relay`.
 
-## This Is NOT For
-
-- ❌ Planned multi-session work → Use `.github/plans/` instead
-- ❌ Regular session endings → Just end naturally
-- ❌ Completed work → No handoff needed
+Relay creates or updates `relay.md` at the repository root. It does not write new session-continuation files into `.github/handoffs/` by default.
 
 ## Plan Amendment Briefs
 
-This directory also hosts **plan amendment briefs** written by the Debug agent when a bug reveals incorrect or missing information in an implementation plan.
+This directory can host plan amendment briefs written when implementation or debugging reveals incorrect or missing information in an execution plan.
 
-**Naming:** `plan-amendment-YYYY-MM-DD-<topic>.md`
+Naming convention:
 
-**Lifecycle:**
-```
-🐛 Created    → Debug agent finds plan issue, writes brief
-📋 Active     → Waiting for Planner agent to apply
-✅ Applied    → Renamed to *-APPLIED.md after Planner agent processes it
-🗑️ Archived  → Delete after 7 days
+```text
+plan-amendment-YYYY-MM-DD-<topic>.md
 ```
 
-**Not emergencies** — these are structured inter-agent communication, not context recovery.
+Lifecycle:
 
-## Creating Handoffs
-
-User invokes: `/context-handoff`
-
-This creates: `.github/handoffs/YYYY-MM-DD_{task-name}.md`
-
-## File Naming
-
-Format: `YYYY-MM-DD_{brief-task-name}.md`
-
-Examples:
-- `2026-02-05_interaction-linking.md`
-- `2026-02-05_analytics-refactor.md`
-
-## Lifecycle
-
-```
-🚨 Created    → Emergency handoff invoked
-📋 Active     → Contains continuation context
-✅ Resumed    → Work continued in new session
-🗑️ Archived  → Move to .github/handoffs/archive/ after 7 days
+```text
+Created  -> an agent finds a plan issue and writes a brief
+Active   -> waiting for the planning owner to apply it
+Applied  -> renamed to *-APPLIED.md after the plan is updated
+Archived -> delete or archive after the work is no longer relevant
 ```
 
 ## Cleanup
 
-Handoff documents are temporary. After resuming work:
-1. The continuation session uses the handoff context
-2. After 7 days, archive or delete old handoffs
-3. Keep only if the work is still pending
-
-## Why Here (Not docs/)
-
-Emergency handoffs are AI workflow artifacts, not project documentation.
-Keeping them in `.github/handoffs/` separates them from user-facing docs.
+Handoff artifacts are temporary workflow files. Keep them only while they are actively needed to route or repair work.

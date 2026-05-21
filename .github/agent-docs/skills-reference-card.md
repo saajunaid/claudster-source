@@ -132,7 +132,7 @@ Skills are NOT auto-applied. An agent reads a SKILL.md file when its task matche
 |-------|------|-------------|---------|
 | **Asking Questions** | `workflow/asking-questions/` | Clarify requirements before implementing | — |
 | **Best Practices** | `workflow/best-practices/` | Transform vague prompts into optimized AI prompts | — |
-| **Context Handoff** | `workflow/context-handoff/` | Preserve context between sessions (emergency) | Architect, Implement |
+| **Relay** | `workflow/relay/` | Create or update root `relay.md` for session continuation | Architect, Implement |
 | **File Organizer** | `workflow/file-organizer/` | Organize files, find duplicates, suggest structure | — |
 | **Intent Writer** | `workflow/intent-writer/` | Structure freetext ideas into formal Intent Documents | Prompt Engineer |
 | **Onboard Project** | `workflow/onboard-project/` | Bootstrap AI config — copilot-instructions, project-config | — (via `/onboarding` prompt) |

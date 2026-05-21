@@ -120,7 +120,7 @@ Auto-load these skills when the condition matches — do not skip.
 | SQL query standards | `.github/skills/coding/sql/SKILL.md` |
 | Data analysis patterns | `.github/skills/data/data-analysis/SKILL.md` |
 | Architecture diagrams (draw.io) | `.github/skills/media/draw-io/SKILL.md` |
-| Context handoff | `.github/skills/workflow/context-handoff/SKILL.md` |
+| Relay | `.github/skills/workflow/relay/SKILL.md` |
 | Working with unfamiliar codebase | `.github/skills/coding/codebase-audit/SKILL.md` |
 | Observability / monitoring design | `.github/skills/coding/observability/SKILL.md` |
 | Monorepo architecture decisions | `.github/skills/devops/monorepo/SKILL.md` |
@@ -517,15 +517,15 @@ Phase 3: UI Components (pages, charts)
 Phase 4: Integration & Polish
 ```
 
-### Emergency Context Handoff
+### Relay
 
-If unexpectedly interrupted or context nearly exhausted:
-- User can invoke `/context-handoff`
-- This loads `.github/skills/workflow/context-handoff/SKILL.md`
-- Generates continuation artefacts
+If work needs to be resumed in a future session:
+- User can invoke `/relay`
+- This loads `.github/skills/workflow/relay/SKILL.md`
+- Creates or updates root `relay.md`
 
 **Primary approach**: Design with phases → Implementation follows phases
-**Emergency only**: Context handoff skill
+**Continuation context**: Relay skill
 
 ---
 

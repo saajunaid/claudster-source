@@ -112,7 +112,7 @@ Skills are specialized knowledge that agents load when needed:
 
 | Skill | When To Use |
 |-------|-------------|
-| `context-handoff` | **⚠️ EMERGENCY ONLY** - Unexpected interruption, context exhausted |
+| `relay` | Create or update root `relay.md` so future sessions can resume |
 | `data-analysis` | Analyzing datasets, creating visualizations |
 | `data-loader` | Loading data from files to database |
 | `refactoring` | Safely restructuring code |
@@ -130,16 +130,14 @@ Quick actions invoked with `/command`:
 | Command | Purpose | Output |
 |---------|---------|--------|
 | `/plan` | **Create phased execution plan** for multi-session work | `.github/plans/<feature>.md` |
-| `/context-handoff` | **Emergency** - Save context when unexpectedly interrupted | `.github/handoffs/YYYY-MM-DD_*.md` |
+| `/relay` | Create or update session-continuation context | `relay.md` |
 
 ### Usage
 
 ```
 /plan add customer search feature    ← Creates phased plan
 /plan refactor data services         ← Creates refactor plan
-/context-handoff                     ← Emergency handoff (auto-detect mode)
-/context-handoff full                ← Force full handoff with documentation
-/context-handoff quick               ← Quick handoff (prompt only)
+/relay                     ← Create or update root relay.md
 ```
 
 ## How To Request A Skill
