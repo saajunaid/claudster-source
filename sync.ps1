@@ -331,6 +331,24 @@ function Commit-PackageJsonPatchVersion {
     }
 }
 
+
+function Get-LastOutputValue {
+    param([Parameter(ValueFromPipeline = $true)]$InputObject)
+
+    begin {
+        $items = @()
+    }
+    process {
+        $items += ,$InputObject
+    }
+    end {
+        if ($items.Count -eq 0) {
+            return $null
+        }
+        return $items[-1]
+    }
+}
+
 function Confirm-VscePublishedVersion {
     param(
         [Parameter(Mandatory)][string]$ExtensionId,
@@ -1461,7 +1479,7 @@ function junai-release {
         try {
             $env:TWINE_USERNAME = "__token__"
             $env:TWINE_PASSWORD = $pypiToken
-            $mcpPublished = junai-publish-mcp -Version $McpVersion
+            $mcpPublished = [bool](junai-publish-mcp -Version $McpVersion | Get-LastOutputValue)
             if (-not $mcpPublished) {
                 return $false
             }
@@ -1716,7 +1734,7 @@ function junai-ship {
         }
 
         $skipProfileSync = ($sourceProfiles.Count -eq 0)
-        $sourcePushResult = junai-push -ProjectRoot $ProjectRoot -Message $Message -NoPublish -Profiles $sourceProfiles -SkipProfileSync:$skipProfileSync
+        $sourcePushResult = junai-push -ProjectRoot $ProjectRoot -Message $Message -NoPublish -Profiles $sourceProfiles -SkipProfileSync:$skipProfileSync | Get-LastOutputValue
     } else {
         Write-Host "  [--]  Source lane not selected; skipping canonical mirror sync." -ForegroundColor DarkGray
     }
@@ -1820,7 +1838,7 @@ function junai-ship {
     }
 
     if ($shouldPublishMcp -or $shouldPublishJunaiExtension) {
-        $releaseOk = junai-release -McpVersion $McpVersion -ExtensionVersion $JunaiExtensionVersion -SkipMcp:(-not $shouldPublishMcp) -SkipExtension:(-not $shouldPublishJunaiExtension)
+        $releaseOk = [bool](junai-release -McpVersion $McpVersion -ExtensionVersion $JunaiExtensionVersion -SkipMcp:(-not $shouldPublishMcp) -SkipExtension:(-not $shouldPublishJunaiExtension) | Get-LastOutputValue)
         if (-not $releaseOk) {
             Write-Host "  [ABORT]  junai release failed." -ForegroundColor Red
             return $false
@@ -1834,7 +1852,7 @@ function junai-ship {
     }
 
     if ($shouldPublishPtarmigan) {
-        if (-not (Publish-PtarmiganExtension)) {
+        if (-not ([bool](Publish-PtarmiganExtension | Get-LastOutputValue))) {
             Write-Host "  [ABORT]  Ptarmigan publish failed." -ForegroundColor Red
             return $false
         }
@@ -1842,7 +1860,7 @@ function junai-ship {
     }
 
     if ($shouldPackageLiffey) {
-        $packagedVsix = Package-LiffeyExtension
+        $packagedVsix = Package-LiffeyExtension | Get-LastOutputValue
         if (-not $packagedVsix) {
             Write-Host "  [ABORT]  Liffey packaging failed." -ForegroundColor Red
             return $false
