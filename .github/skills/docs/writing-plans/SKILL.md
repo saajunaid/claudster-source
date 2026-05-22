@@ -18,7 +18,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 
-**Document metadata:** Before creating or updating a plan, apply `.github/instructions/document-frontmatter.instructions.md`.
+**Document metadata:** Before creating or updating a plan, apply `.github/instructions/document-frontmatter.instructions.md`. The YAML frontmatter block must be the first content in the file. New plans require `Original Author`, `Creation Date`, and `Creating Model`; revised plans must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ## Bite-Sized Task Granularity
 
@@ -41,7 +41,7 @@ status: current
 approval: pending
 Original Author: <active author or agent name>
 Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
-Creating Model: <actual model used>
+Creating Model: <exact runtime model identifier or display name>
 ---
 
 # [Feature Name] Implementation Plan

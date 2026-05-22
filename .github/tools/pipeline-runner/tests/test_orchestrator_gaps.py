@@ -9,8 +9,8 @@ Coverage requirements (from pipeline-state.json handoff_payload):
   CR-2  §9 mode recommendation output block — format and instructions present
   CR-3  §9.1 Multi-Item Intake — classification table (7 rows), 5-step protocol,
          boundary definitions, decomposed-list code block
-  CR-4  §13 Pipeline Halt & Recovery Protocol — halt format string, 5-cause
-         recovery table, 5-step resumption, "All resumption must go through" sentinel
+  CR-4  §13 Pipeline Halt & Recovery Protocol — halt format string, recovery
+         table, 5-step resumption, "All resumption must go through" sentinel
   CR-5  No regressions — §1–§8, §10–§12 headings still present
 """
 
@@ -286,11 +286,11 @@ class TestSection13HaltProtocol:  # CR-4
         section = _extract_section(doc, "### 13. Pipeline Halt & Recovery Protocol")
         assert "Stage:" in section, "§13 halt format must include 'Stage:' field"
 
-    def test_section13_recovery_table_has_five_rows(self, doc: str) -> None:
+    def test_section13_recovery_table_has_expected_rows(self, doc: str) -> None:
         section = _extract_section(doc, "### 13. Pipeline Halt & Recovery Protocol")
         rows = _count_table_data_rows(section)
-        assert rows == 5, (
-            f"§13 recovery table: expected 5 data rows, found {rows}"
+        assert rows >= 5, (
+            f"§13 recovery table: expected at least 5 data rows, found {rows}"
         )
 
     @pytest.mark.parametrize("cause_phrase", [
@@ -380,3 +380,40 @@ class TestNoRegressions:  # CR-5
 
     def test_handoffs_still_declare_tester(self, doc: str) -> None:
         assert "agent: Tester" in doc, "Handoff to Tester agent removed from frontmatter"
+
+
+class TestDocumentDiscoveryAndFastTrack:
+
+    @pytest.mark.parametrize("path_fragment", [
+        ".github/plans/<feature-slug>.md",
+        ".github/agent-docs/prd/",
+        ".github/agent-docs/architecture/",
+        "docs/architecture/agentic-adr/",
+    ])
+    def test_disk_scan_uses_canonical_and_persistent_paths(self, doc: str, path_fragment: str) -> None:
+        section = _extract_section(doc, "### 1. Read Pipeline State First")
+        assert path_fragment in section, (
+            f"Orchestrator disk scan missing expected path fragment: {path_fragment}"
+        )
+
+    def test_plan_fast_track_routes_to_preflight_before_implement(self, doc: str) -> None:
+        section = _extract_section(doc, "### 9. Intake Protocol")
+        assert '| "I have a plan, need implementation" | `preflight` |' in section
+        assert "notify_orchestrator(stage_completed=\"preflight\", result_status=\"passed\"" in section
+
+    def test_reentry_resync_uses_real_advance_cli_flags(self, doc: str) -> None:
+        section = _extract_section(doc, "### 9.2 Stage Drift / Re-entry Resync")
+        assert "junai pipeline advance --completed-stage" in section
+        assert "--result-status" in section
+        assert "--artefact-path" in section
+        assert "pipeline advance --stage" not in section
+
+    def test_orchestrator_uses_runner_backed_discovery_and_fast_track(self, doc: str) -> None:
+        assert "junai pipeline discover-artefacts --feature" in doc
+        assert "junai pipeline fast-track --from-plan" in doc
+
+    def test_autopilot_from_approved_plan_protocol_present(self, doc: str) -> None:
+        section = _extract_section(doc, "#### 3.1.1 Autopilot From Approved Plan")
+        assert "--mode autopilot" in section
+        assert "Autopilot removes approval prompts" in section
+        assert "does not remove validation" in section

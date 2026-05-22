@@ -316,7 +316,7 @@ Do NOT jump straight to `@pytest.mark.skip`. Follow this three-case resolution p
 
 **Only reach for `@pytest.mark.skip`** if installation fails (e.g. network blocked, permission error). In that case:
 1. Write the tests and mark `@pytest.mark.skip(reason="playwright install failed — <error>")`
-2. Escalate to `agent-docs/escalations/` with severity `warning`
+2. Escalate to `.github/agent-docs/escalations/` with severity `warning`
 
 ---
 
@@ -359,10 +359,10 @@ If the prompt lacks an explicit exit gate or `**Scope boundary:**` section, cont
 Before accepting any task, verify it falls within your responsibilities (test writing, test execution, coverage analysis, test infrastructure). If asked to design architecture, create PRDs, or build production features: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artefact Output Protocol
-Your primary artefacts are test files (committed to the repo). When producing test reports or coverage analysis for other agents, write them to `agent-docs/testing/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
+Your primary artefacts are test files (committed to the repo). When producing test reports or coverage analysis for other agents, write them to `.github/agent-docs/testing/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `.github/agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
-If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
+If a `chain_id` is provided or an Intent Document exists in `.github/agent-docs/intents/`:
 1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your tests against the Intent Document's Goal and Constraints
 3. If your tests would miss requirements from the original intent, STOP and flag the gap
@@ -388,11 +388,11 @@ When your handoff includes \intent_references\ or \design_intent\:
 Before starting work that depends on an upstream artefact: check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `.github/agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
-Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
+Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
@@ -476,7 +476,7 @@ Context health: [Green | Yellow | Red] — [brief assessment]
        - test: <test_function_name>
          file: <relative path>
          reason: <one-line failure description>
-   coverage_doc: agent-docs/testing/coverage-<feature>.md
+   coverage_doc: .github/agent-docs/testing/coverage-<feature>.md
    commit: <sha> — <message>
    pipeline_state: updated
    ```
@@ -553,7 +553,7 @@ deferred:
 
 | Field | Value |
 |-------|-------|
-| `artefact_path` | `tests/**` (test files) + `agent-docs/testing/coverage-<feature>.md` (optional in hotfix targeted rerun — update existing doc if present, do not create new) |
+| `artefact_path` | `tests/**` (test files) + `.github/agent-docs/testing/coverage-<feature>.md` (optional in hotfix targeted rerun — update existing doc if present, do not create new) |
 | `required_fields` | `chain_id`, `status`, `approval`, `pass_rate`, `uncovered_requirements` |
 | `approval_on_completion` | `pending` |
 | `next_agent` | `code-reviewer` (on `status: passed`) or back to implementing agent (on `status: failed`) |

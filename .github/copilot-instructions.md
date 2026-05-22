@@ -1,6 +1,6 @@
 # Project Instructions
 
-> This file is yours. The junai extension manages only the `<!-- junai:start -->` … `<!-- junai:end -->`
+> This file is yours. The junai extension manages only the `junai:start` … `junai:end`
 > section below; everything else is never read, modified, or deleted by the extension.
 >
 > junai system documentation (25 agents, pipeline flow, MCP tools, routing conventions) is
@@ -101,7 +101,7 @@ agent-sandbox  (local only, no remote — authoring source of truth)
 - **ptarmigan** — public subset extension lane (independent marketplace listing)
 - **liffey** — internal subset extension lane (private repo, VSIX distribution)
 
-**Runtime export architecture:** `.github/` is the only authoring source. Packaging builds project-local runtime folders per workspace: Copilot reads `.github/`, Claude reads `.claude/`, Codex reads `.codex/`. User-level deployment is intentionally unsupported by default to avoid duplicate loading and context bloat. `pipeline-state.json` and `project-config.md` are USER_OWNED and never overwritten by pool updates. `copilot-instructions.md` is no longer bundled wholesale — the extension manages only a sentinel-delimited `<!-- junai:start -->` section programmatically (v0.6.2+).
+**Runtime export architecture:** `.github/` is the only authoring source. Packaging builds project-local runtime folders per workspace: Copilot reads `.github/`, Claude reads `.claude/`, Codex reads `.codex/`. User-level deployment is intentionally unsupported by default to avoid duplicate loading and context bloat. `pipeline-state.json` and `project-config.md` are USER_OWNED and never overwritten by pool updates. `copilot-instructions.md` is no longer bundled wholesale — the extension manages only a sentinel-delimited `junai:start` block programmatically (v0.6.2+).
 
 **Export contract:** `export_runtime_resources.py` reads `.github/runtime-targets.json` and emits build artefacts under `dist/runtime-resources/` for packaging. Treat `dist/` as generated output, not source of truth.
 
@@ -164,7 +164,7 @@ npx vsce package --out dist\liffey-<version>.vsix
 
 ## Institutional Knowledge
 
-- `copilot-instructions.md` managed-section pattern since v0.6.2 — extension manages only a `<!-- junai:start -->` sentinel block; user content outside markers is never touched. Replaced the v0.5.7 USER_OWNED approach. junai system docs live in `junai-system.instructions.md`.
+- `copilot-instructions.md` managed-section pattern since v0.6.2 — extension manages only a `junai:start` sentinel block; user content outside markers is never touched. Replaced the v0.5.7 USER_OWNED approach. junai system docs live in `junai-system.instructions.md`.
 - Response discipline rules (no preamble, no closing summaries, dense confirmations) are enforced globally via `.github/instructions/terse-responses.instructions.md` (`applyTo: "**"`). Shipped to all runtimes via the `instructions` copy in `runtime-targets.json`.
 - Canonical-source rule: author AI resources only in `.github/`; treat `.claude/` and `.codex/` as generated runtime targets, never hand-edited sources.
 - Project-local-only rule: the extension ships runtime folders into each workspace and does not populate user-level instruction folders by default.
@@ -193,3 +193,30 @@ Apply these rules whenever a task produces a **large, structured, multi-phase ou
 - `bundle-pool.js` `dir/dir` nesting guard introduced v0.5.2 — `cmdUpdate` auto-heals legacy nesting on activation
 - Agent file naming: lowercase kebab-case matching the `name` frontmatter field exactly
 - `validate_agents.py` `KNOWN_MODELS` allowlist must be updated whenever a new model is introduced
+
+<!-- junai:start -->
+
+## junai Agent Pipeline
+
+> junai system documentation (agents, pipeline flow, MCP tools, routing conventions) is
+> automatically provided by `.github/instructions/junai-system.instructions.md`.
+>
+> Project-specific config: `.github/project-config.md` | Pipeline state: `.github/pipeline-state.json`
+>
+> Start with `@Orchestrator` in Copilot Chat.
+
+## Recipe-Driven Delivery
+
+When working on **data-to-UI tasks** (new features, dashboards, data integrations — not bug fixes, refactors, or docs-only work):
+
+1. Read `.github/project-config.md` — check if a `recipe` field is set in Step 1
+2. If set, read `.github/recipes/{recipe}.recipe.md`
+3. Follow the recipe's **Delivery Pipeline** as your mandatory phase sequence
+4. Load the recipe's **Mandatory Skills** for each phase you work on
+5. Apply the recipe's **Cross-Skill Conventions** (naming chains, directory structure, chart styling)
+
+If no recipe is set, work normally using your built-in expertise and any skills loaded via other mechanisms.
+
+For complex, ambiguous, or risky tasks, run `junai.deepPlan` from the Command Palette to generate a phased plan before implementation.
+
+<!-- junai:end -->

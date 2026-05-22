@@ -398,7 +398,18 @@ def validate_contract_consistency(agents_dir: Path) -> list[str]:
                                 "N/A (PROMPT FILE IS THE ARTEFACT)") or raw.startswith("N/A"):
                 current_agent = None
                 continue
-            fields = {f.strip().strip("`") for f in raw.split(",") if f.strip()}
+            fields = set()
+            for raw_field in raw.split(","):
+                field = raw_field.strip()
+                if not field:
+                    continue
+                backtick_match = re.match(r"`([^`]+)`", field)
+                if backtick_match:
+                    fields.add(backtick_match.group(1).strip())
+                    continue
+                field = field.split("(", 1)[0].strip().strip("`")
+                if field:
+                    fields.add(field)
             contracts[current_agent] = fields
             current_agent = None
 

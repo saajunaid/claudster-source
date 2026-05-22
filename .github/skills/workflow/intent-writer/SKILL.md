@@ -69,7 +69,7 @@ Create a unique identifier for this feature chain:
 
 Create the document at `agent-docs/intents/{chain_id}.md`:
 
-Apply `.github/instructions/document-frontmatter.instructions.md` when creating or updating the Intent Document.
+Apply `.github/instructions/document-frontmatter.instructions.md` when creating or updating the Intent Document. The YAML frontmatter block must be the first content in the file. New intent documents require `Original Author`, `Creation Date`, and `Creating Model`; revised intent documents must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ```markdown
 ---
@@ -82,7 +82,7 @@ approval: pending
 feasibility_warnings: {list or "none"}
 Original Author: prompt-engineer
 Creation Date: {YYYY-MM-DDTHH:MM:SSZ}
-Creating Model: {actual model used}
+Creating Model: {exact runtime model identifier or display name}
 ---
 <!-- AGENT-GENERATED: This Intent Document preserves user intent for the agent pipeline.
      Every agent in the chain MUST read this document FIRST before processing. -->
@@ -163,7 +163,7 @@ amendment_number: {N}
 approval: pending
 Original Author: prompt-engineer
 Creation Date: {YYYY-MM-DDTHH:MM:SSZ}
-Creating Model: {actual model used}
+Creating Model: {exact runtime model identifier or display name}
 ---
 
 # Intent Amendment #{N}: {Brief description of change}

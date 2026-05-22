@@ -192,14 +192,14 @@ In VS Code Copilot Chat:
 The team needs to track complaint trends, resolution times, and agent performance.
 ```
 
-Save the output to `docs/prd/prd.md`.
+Save the output to `.github/agent-docs/prd/<feature-slug>.md`.
 
 That PRD must include the metadata frontmatter required by `.github/instructions/document-frontmatter.instructions.md`.
 
 #### 3.2 Design Architecture
 
 ```
-Ask the Architect agent (or paste architect.agent.md context): "Based on docs/prd/prd.md, design the system architecture."
+Ask the Architect agent (or paste architect.agent.md context): "Based on `.github/agent-docs/prd/<feature-slug>.md`, design the system architecture."
 ```
 
 #### 3.3 Start Coding
@@ -234,7 +234,7 @@ Use the appropriate agents:
 
 ### Ready to Code Checklist
 
-- [ ] PRD written in `docs/prd/prd.md`
+- [ ] PRD written in `.github/agent-docs/prd/<feature-slug>.md`
 - [ ] Architecture designed
 - [ ] Database schema planned
 - [ ] First `streamlit run src/app.py` works

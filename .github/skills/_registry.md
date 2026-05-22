@@ -1,6 +1,6 @@
 # Skills Registry
 
-> Public skill inventory across 9 categories. Some skills are intentionally private to the development environment and ship under `vmie/` locally — they are excluded from this public registry.  
+> Public skill inventory generated from `SKILL.md` frontmatter. Private material and denylist-exception paths are excluded from this registry.
 > Load a skill by reading its `SKILL.md`. See `project-config.md` for project-specific placeholder values.
 
 ---
@@ -11,180 +11,178 @@
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| AWS Agentic AI | `cloud/aws-agentic-ai/` | Building agentic AI systems on AWS Bedrock AgentCore (Gateway, Runtime, Memory, Identity) |
-| AWS CDK Development | `cloud/aws-cdk-development/` | Building cloud infrastructure as code with AWS CDK in TypeScript/Python |
-| AWS Cost Operations | `cloud/aws-cost-operations/` | AWS cost optimization, monitoring, and operational best practices |
-| AWS Serverless EDA | `cloud/aws-serverless-eda/` | Event-driven architectures using Lambda, API Gateway, SQS, SNS, Step Functions |
-| AI Agent on Cloudflare | `cloud/building-ai-agent-on-cloudflare/` | Building stateful AI agents on Cloudflare Workers with WebSockets and tool integration |
-| MCP Server on Cloudflare | `cloud/building-mcp-server-on-cloudflare/` | Building remote MCP servers on Cloudflare Workers with OAuth authentication |
+| AWS Agentic AI | `cloud/aws-agentic-ai/` | AWS Bedrock AgentCore comprehensive expert for deploying and managing all AgentCore services. Use when working with Gateway, Runtime, Memory, Identity, or any AgentCore component. Covers MCP target deployment, credential management, schema optimization, runtime configuration, memory management, and identity services. |
+| AWS CDK Development | `cloud/aws-cdk-development/` | AWS Cloud Development Kit (CDK) expert for building cloud infrastructure with TypeScript/Python. Use when creating CDK stacks, defining CDK constructs, implementing infrastructure as code, or when the user mentions CDK, CloudFormation, IaC, cdk synth, cdk deploy, or wants to define AWS infrastructure programmatically. Covers CDK app structure, construct patterns, stack composition, and deployment workflows. |
+| AWS Cost Operations | `cloud/aws-cost-operations/` | This skill provides AWS cost optimization, monitoring, and operational best practices with integrated MCP servers for billing analysis, cost estimation, observability, and security assessment. |
+| AWS Serverless EDA | `cloud/aws-serverless-eda/` | AWS serverless and event-driven architecture expert based on Well-Architected Framework. Use when building serverless APIs, Lambda functions, REST APIs, microservices, or async workflows. Covers Lambda with TypeScript/Python, API Gateway (REST/HTTP), DynamoDB, Step Functions, EventBridge, SQS, SNS, and serverless patterns. Essential when user mentions serverless, Lambda, API Gateway, event-driven, async processing, queues, pub/sub, or wants to build scalable serverless applications with AWS best practices. |
+| Building AI Agent On Cloudflare | `cloud/building-ai-agent-on-cloudflare/` | Builds AI agents on Cloudflare using the Agents SDK with state management, real-time WebSockets, scheduled tasks, tool integration, and chat capabilities. Generates production-ready agent code deployed to Workers. Use when: user wants to "build an agent", "AI agent", "chat agent", "stateful agent", mentions "Agents SDK", needs "real-time AI", "WebSocket AI", or asks about agent "state management", "scheduled tasks", or "tool calling". |
+| Building MCP Server On Cloudflare | `cloud/building-mcp-server-on-cloudflare/` | Builds remote MCP (Model Context Protocol) servers on Cloudflare Workers with tools, OAuth authentication, and production deployment. Generates server code, configures auth providers, and deploys to Workers. Use when: user wants to "build MCP server", "create MCP tools", "remote MCP", "deploy MCP", add "OAuth to MCP", or mentions Model Context Protocol on Cloudflare. Also triggers on "MCP authentication" or "MCP deployment". |
 
 ### Coding
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Anchor Review | `coding/anchor-review/` | Single-model adversarial review with 3-lens analysis and confidence scoring |
-| API Client Patterns | `coding/api-client-patterns/` | Typed fetch wrappers, TanStack Query, tRPC, and OpenAPI codegen |
-| API Design | `coding/api-design/` | REST/GraphQL API design — naming, pagination, versioning, error responses, OpenAPI |
-| Architecture Design | `coding/architecture-design/` | Designing system architecture with C4 diagrams and layered patterns |
-| Backend Development | `coding/backend-development/` | Backend API development patterns and microservices |
-| Backend-to-Frontend Handoff | `coding/backend-to-frontend-handoff/` | Generating API handoff docs for frontend integration |
-| Caching Patterns | `coding/caching-patterns/` | Caching strategies for Streamlit/FastAPI applications |
-| Codebase Audit | `coding/codebase-audit/` | Auditing unfamiliar codebases — 20 audit areas, 6-step method, findings report |
-| Code Explainer | `coding/code-explainer/` | Explaining code with diagrams and analogies |
-| Code Review | `coding/code-review/` | Performing code reviews for quality, security, and performance |
-| Error Handling | `coding/error-handling/` | Error hierarchies, retry logic, error boundaries, and logging strategies |
-| FastAPI Dev | `coding/fastapi-dev/` | Building FastAPI backends with standard patterns |
-| JavaScript/TypeScript | `coding/javascript-typescript/` | JS/TS development patterns and best practices |
-| LLM Application Dev | `coding/llm-application-dev/` | Building LLM-powered applications with prompt engineering and RAG |
-| MCP Builder | `coding/mcp-builder/` | Building MCP (Model Context Protocol) servers |
-| Observability | `coding/observability/` | Structured logging, distributed tracing, metrics, health checks, and error tracking |
-| Python | `coding/python/` | Python development patterns and best practices |
-| Refactoring | `coding/refactoring/` | Safe code refactoring while maintaining behavior |
-| Security Review | `coding/security-review/` | Security review using OWASP Top 10 + cloud security best practices |
-| SQL | `coding/sql/` | Writing optimized SQL queries (database-agnostic) |
+| Anchor Review | `coding/anchor-review/` | Single-model adversarial review technique — 3-lens analysis with confidence scoring and self-challenge |
+| API Client Patterns | `coding/api-client-patterns/` | Typed API client patterns for consuming REST APIs and tRPC. Use for typed fetch wrappers, zod response validation, API client factory, auth injection, TanStack Query (useQuery, useMutation, infinite queries, optimistic updates), tRPC end-to-end types, error handling with discriminated unions, OpenAPI client codegen, or pagination envelopes. Complements backend-development (server side) with client-side consumption patterns. |
+| API Design | `coding/api-design/` | REST and GraphQL API design patterns. Use when designing new API endpoints, defining resource schemas, planning versioning strategies, or reviewing API contracts. Covers naming conventions, pagination, filtering, error responses, and OpenAPI documentation. |
+| Architecture Design | `coding/architecture-design/` | Design application architecture and system diagrams with layered patterns, Mermaid C4 diagrams, SQL Server data platform, and on-premise deployment considerations. |
+| Backend Development | `coding/backend-development/` | Backend API design, database architecture, microservices patterns, and test-driven development. Use for designing APIs, database schemas, or backend system architecture. |
+| Backend To Frontend Handoff Docs | `coding/backend-to-frontend-handoff/` | Create API handoff documentation for frontend developers. Use when backend work is complete and needs to be documented for frontend integration, or user says 'create handoff', 'document API', 'frontend handoff', or 'API documentation'. |
+| Caching Patterns | `coding/caching-patterns/` | Caching strategies for Streamlit and FastAPI applications |
+| Code Explainer | `coding/code-explainer/` | Explain code with visual diagrams, analogies, and step-by-step walkthroughs. Use when explaining how code works, teaching about a codebase, or answering "how does this work?" |
+| Code Review | `coding/code-review/` | Automated code review for pull requests using specialized review patterns. Analyzes code for quality, security, performance, and best practices. Use when reviewing code changes, PRs, or doing code audits. |
+| Codebase Audit | `coding/codebase-audit/` | Systematic codebase audit methodology for unfamiliar codebases before architecture or implementation work. Use for new codebase, unfamiliar codebase, pre-implementation audit, codebase review, technical due diligence, or onboarding to an existing project. Produces AUDIT-FINDINGS.md and QUESTIONS.md. Routes to Architect, Planner, or Code Reviewer agents. |
+| Error Handling | `coding/error-handling/` | Error handling patterns for Python and TypeScript applications. Use when designing error hierarchies, implementing retry logic, building error boundaries, or establishing logging strategies. Covers custom exceptions, result types, circuit breakers, and user-facing error messages. |
+| FastAPI Dev | `coding/fastapi-dev/` | Build FastAPI backends with standard patterns, error handling, and testing |
+| Javascript Typescript | `coding/javascript-typescript/` | JavaScript and TypeScript development with ES6+, Node.js, React, and modern web frameworks. Use for frontend, backend, or full-stack JavaScript/TypeScript projects. |
+| LLM Application Dev | `coding/llm-application-dev/` | Building applications with Large Language Models - prompt engineering, RAG patterns, and LLM integration. Use for AI-powered features, chatbots, or LLM-based automation. |
+| MCP Builder | `coding/mcp-builder/` | Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK). |
+| Observability | `coding/observability/` | Structured logging, OpenTelemetry distributed tracing, metrics (RED method), health checks, and error tracking with Sentry. Use for structured logs, correlation IDs, PII redaction, OpenTelemetry setup, distributed tracing, metrics counters/histograms/gauges, SLO-based alerting, liveness/readiness probes, or Sentry integration. Dual Python/TypeScript examples throughout. |
+| Python Development | `coding/python/` | Modern Python development with Python 3.12+, Django, FastAPI, async patterns, and production best practices. Use for Python projects, APIs, data processing, or automation scripts. |
+| Refactoring | `coding/refactoring/` | Safely refactor code while maintaining behavior. Use when improving code structure, reducing duplication, extracting functions, or modernizing legacy code. |
+| Security Review | `coding/security-review/` | Security review workflow — OWASP, code scanning, cloud infrastructure |
+| SQL | `coding/sql/` | Write high-quality, optimized SQL with best practices for performance, NULL handling, security, and readability. Database-agnostic patterns with dialect-specific notes. |
 
 ### Data
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Data Analysis | `data/data-analysis/` | Analyzing datasets with 5-phase methodology |
-| Data Loader | `data/data-loader/` | Loading data from Excel, JSON, CSV into databases |
-| Data Validation | `data/data-validation/` | Data quality checks, Pydantic validation, SQL constraints, and data contracts |
-| Database Design | `data/database-design/` | Designing database schemas |
-| DB Testing | `data/db-testing/` | Testing database connectivity and queries |
-| Schema Migration | `data/schema-migration/` | Migrating app data access layer between schema versions (mapping, parity testing, query translation) |
+| Data Analysis | `data/data-analysis/` | Analyze datasets and generate insights with a systematic 5-phase workflow. Use when user provides data for analysis, asks about patterns, or needs visualizations. |
+| Data Loader | `data/data-loader/` | Load data from files (Excel, JSON, CSV) into databases. Use when user needs to import data files into any database system. Database-agnostic - supports SQL Server, PostgreSQL, MySQL, SQLite, and others. |
+| Data Validation | `data/data-validation/` | Data quality and validation patterns for ETL pipelines, API inputs, and data processing. Use when defining validation rules, building data quality checks, implementing schema validation, or designing data contracts. Covers Pydantic, Great Expectations patterns, and SQL-level constraints. |
+| Database Design | `data/database-design/` | Database schema design, optimization, and migration patterns for PostgreSQL, MySQL, and NoSQL databases. Use for designing schemas, writing migrations, or optimizing queries. |
+| DB Testing | `data/db-testing/` | Test, debug, and validate database connectivity and queries. Use when diagnosing connection errors, testing configurations, or validating queries before deployment. |
+| Schema Migration | `data/schema-migration/` | Migrate an application's data access layer from one database schema to another. Use when tables are renamed, consolidated, split, or columns change — and the app's queries, mappings, and abstraction layer must be updated without data loss. Read-only against the database. |
 
 ### DevOps
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Changelog Generator | `devops/changelog-generator/` | Generating changelogs from git commits |
-| CI/CD Pipeline | `devops/ci-cd-pipeline/` | Pipeline design for GitHub Actions and Azure DevOps — quality gates, environments, caching |
-| Deploy Local | `devops/deploy-local/` | End-to-end local commit/push/monitor/prod-validation loop for Gitea-hosted deployments |
-| GitHub CLI | `devops/gh-cli/` | GitHub CLI operations (PRs, issues, releases, actions) |
-| Git Commit | `devops/git-commit/` | Writing conventional commit messages |
-| Monorepo | `devops/monorepo/` | pnpm workspaces + Turborepo for monorepo CI/CD and shared packages |
-| Update README | `devops/update-readme/` | Detecting feature commits and updating README Features/API/Usage with docs-only staging |
-| Using Git Worktrees | `devops/using-git-worktrees/` | Managing parallel branches with git worktrees |
+| Changelog Generator | `devops/changelog-generator/` | Automatically creates user-facing changelogs from git commits by analyzing commit history, categorizing changes, and transforming technical commits into clear, customer-friendly release notes. Turns hours of manual changelog writing into minutes of automated generation. |
+| Deploy Local | `devops/deploy-local/` | End-to-end local deployment loop for VMIE Gitea projects. Use when the user wants to commit on dev, push to remote, monitor the golden CI/build/deploy workflow, validate prod on iegbcoppoc02, and fix lint/test/pipeline failures until deployment is healthy. |
+| Gh CLI | `devops/gh-cli/` | GitHub CLI operations — issues, PRs, releases, and repo management |
+| Git Commit | `devops/git-commit/` | Create well-structured conventional commit messages following Conventional Commits standard. Use when committing changes, preparing PRs, or generating changelogs. |
+| Monorepo | `devops/monorepo/` | Monorepo management with Turborepo and pnpm workspaces. Use for Turborepo setup, turbo.json task dependencies, remote caching, pnpm workspace protocol, shared packages (ui-library, config, types), affected-only CI/CD builds, or monorepo structure (apps/ vs packages/). Covers pitfalls like circular deps, version drift, and hoisting issues. |
+| Update README | `devops/update-readme/` | Detect feature commits and update README sections (Features, API, Usage) with accurate repo-aware changes, then stage only README for a docs commit. Use when users add features/routes/components and want README maintained automatically. |
+| Using Git Worktrees | `devops/using-git-worktrees/` | Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verification |
 
 ### Docs
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Architecture Document | `docs/architecture-document/` | Generating enterprise-grade HLD/LLD documents from Architecture.md |
-| Code Documentation | `docs/code-documentation/` | Writing API docs, README files, and inline comments |
-| Doc Co-authoring | `docs/doc-coauthoring/` | Collaborative document editing workflow |
-| Documentation Analyzer | `docs/documentation-analyzer/` | Analyzing codebases and generating documentation |
-| DOCX | `docs/document-skills/docx/` | Word documents with tracked changes and OOXML |
-| PDF | `docs/document-skills/pdf/` | PDF manipulation with pypdf, pdfplumber, reportlab |
-| PPTX | `docs/document-skills/pptx/` | PowerPoint creation/editing with html2pptx |
-| XLSX | `docs/document-skills/xlsx/` | Spreadsheets with financial model standards |
-| Naming Analyzer | `docs/naming-analyzer/` | Suggesting better variable, function, and class names |
-| PRD to Code | `docs/prd-to-code/` | Converting PRDs to application code (6-phase process) |
-| Technical Writing | `docs/technical-writing/` | READMEs, API docs, ADRs, runbooks, and developer guides |
-| Writing Plans | `docs/writing-plans/` | Creating phased execution plans before implementation |
+| Architecture Document | `docs/architecture-document/` | Generate professional enterprise-grade HLD and LLD documents from the living Architecture.md. Outputs DOCX (editable) or PPTX (executive summary) using existing document skills. |
+| Code Documentation | `docs/code-documentation/` | Writing effective code documentation - API docs, README files, inline comments, and technical guides. Use for documenting codebases, APIs, or writing developer guides. |
+| Doc Coauthoring | `docs/doc-coauthoring/` | Guide users through a structured workflow for co-authoring documentation. Use when user wants to write documentation, proposals, technical specs, decision docs, or similar structured content. This workflow helps users efficiently transfer context, refine content through iteration, and verify the doc works for readers. Trigger when user mentions writing docs, creating proposals, drafting specs, or similar documentation tasks. |
+| DOCX | `docs/document-skills/docx/` | Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. When Claude needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks |
+| PDF | `docs/document-skills/pdf/` | Comprehensive PDF manipulation toolkit for extracting text and tables, creating new PDFs, merging/splitting documents, and handling forms. When Claude needs to fill in a PDF form or programmatically process, generate, or analyze PDF documents at scale. |
+| PPTX | `docs/document-skills/pptx/` | Presentation creation, editing, and analysis. When Claude needs to work with presentations (.pptx files) for: (1) Creating new presentations, (2) Modifying or editing content, (3) Working with layouts, (4) Adding comments or speaker notes, or any other presentation tasks |
+| XLSX | `docs/document-skills/xlsx/` | Comprehensive spreadsheet creation, editing, and analysis with support for formulas, formatting, data analysis, and visualization. When Claude needs to work with spreadsheets (.xlsx, .xlsm, .csv, .tsv, etc) for: (1) Creating new spreadsheets with formulas and formatting, (2) Reading or analyzing data, (3) Modify existing spreadsheets while preserving formulas, (4) Data analysis and visualization in spreadsheets, or (5) Recalculating formulas |
+| Documentation Analyzer | `docs/documentation-analyzer/` | Analyze codebases, explain code functionality, and generate comprehensive documentation. Use when documenting a project, creating README files, or understanding complex code. |
+| Naming Analyzer | `docs/naming-analyzer/` | Suggest better variable, function, and class names based on context and conventions. |
+| PRD To Code | `docs/prd-to-code/` | Transform PRD documents into working application code using a systematic 6-phase methodology. Use when starting projects from requirements or converting specs to implementation. |
+| Technical Writing | `docs/technical-writing/` | Technical documentation best practices for READMEs, API docs, architecture docs, runbooks, and developer guides. Use when writing or reviewing documentation, creating onboarding guides, or establishing documentation standards. |
+| Writing Plans | `docs/writing-plans/` | Use when you have a spec or requirements for a multi-step task, before touching code |
 
 ### Frontend
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Algorithmic Art | `frontend/algorithmic-art/` | Generating p5.js algorithmic artwork with seeded randomness |
-| Artifacts Builder | `frontend/artifacts-builder/` | Building multi-component HTML artifacts (React, Tailwind, shadcn) |
-| Banner Design | `frontend/banner-design/` | Banners for social media, ads, website heroes, and print (22 styles, multi-platform) |
-| Brand Design | `frontend/brand-design/` | Logo generation (55 styles), corporate identity program, icon design, social photos |
-| Brand Guidelines | `frontend/brand-guidelines/` | Applying brand colors and typography consistently |
-| Brand Voice | `frontend/brand-voice/` | Brand voice, visual identity, messaging frameworks, and brand consistency |
-| Canvas Design | `frontend/canvas-design/` | Creating canvas-based visual art in PNG and PDF |
-| CSS Architecture | `frontend/css-architecture/` | Design token hierarchy, Tailwind config, CSS Modules, responsive and animation patterns |
-| Design System Tokens | `frontend/design-system-tokens/` | Three-layer token architecture (primitive → semantic → component), CSS variables, spacing/typography scales |
-| Enterprise Dashboard Aesthetic System | `frontend/enterprise-dashboard-aesthetic-system/` | Harmonizing React/Vite enterprise dashboards into cohesive executive analytics cockpits with tokenized surfaces, story-card heroes, and tasteful motion |
-| Frontend Design | `frontend/frontend-design/` | Production-grade frontend interfaces |
-| High-End Visual Design | `frontend/high-end-visual-design/` | Awwwards-tier UI/UX — exact fonts, spacing, shadows, card structures, and motion that make sites feel expensive |
-| Mockup | `frontend/mockup/` | Framework-aware UI mockups with feasibility checks |
-| Next.js App Router | `frontend/nextjs-app-router/` | Next.js 13+ App Router, Server Components, Server Actions, Route Handlers |
-| Premium React | `frontend/premium-react/` | High-quality animated React UIs with Framer Motion, GSAP, and Tailwind |
-| React Best Practices | `frontend/react-best-practices/` | Modern React hooks, component patterns, and state management |
-| Responsive Mobile Native | `frontend/responsive-mobile-native/` | Converting desktop web apps to mobile-native feel: breakpoints, navigation transformation, PWA setup, touch rules, bottom sheets |
-| React Dev | `frontend/react-dev/` | Type-safe React 18-19 patterns and TypeScript integration |
-| React useEffect | `frontend/react-useeffect/` | When NOT to use Effect — official React best practices |
-| shadcn/Radix | `frontend/shadcn-radix/` | shadcn/ui component system, Radix primitives, theming, and form patterns |
-| Slides | `frontend/slides/` | Strategic HTML presentations with Chart.js, design tokens, and copywriting formulas |
-| Streamlit Animate | `frontend/streamlit-animate/` | Enterprise-safe animations and micro-interactions for Streamlit apps |
-| Streamlit Dev | `frontend/streamlit-dev/` | Production Streamlit dashboards with caching and theming |
-| Theme Factory | `frontend/theme-factory/` | Creating and managing UI themes with pre-set color/font combos |
-| UI Review | `frontend/ui-review/` | Reviewing UI against design, WCAG 2.2 AA, and brand guidelines |
-| UI Styling Patterns | `frontend/ui-styling-patterns/` | shadcn/ui + Tailwind CSS utility styling, accessible components, dark mode, and canvas visuals |
-| UI/UX Intelligence | `frontend/ui-ux-intelligence/` | Data-backed design decisions: 161 color palettes, 57 font pairings, 99 UX guidelines, 25 chart types |
-| UX Design | `frontend/ux-design/` | Designing user experiences with brand color system and accessibility standards |
-| Warm Editorial UI | `frontend/warm-editorial-ui/` | Warm editorial design system — cream surfaces, Syne + DM Sans typography, multi-layer shadows, generous radius |
-| Warm New | `frontend/warm-new/` | Alternate warm design token system and implementation guide for fast prototyping |
-| Webapp Development | `frontend/webapp-development/` | End-to-end web application development workflow |
-| Word Cloud | `frontend/word-cloud/` | Generate static or animated word clouds from text/files with theming and shape masking |
+| Algorithmic Art | `frontend/algorithmic-art/` | Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. |
+| Artifacts Builder | `frontend/artifacts-builder/` | Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state management, routing, or shadcn/ui components - not for simple single-file HTML/JSX artifacts. |
+| Banner Design | `frontend/banner-design/` | Design banners for social media, ads, website heroes, and print. Multiple art direction options across 22 styles (minimalist, gradient, bold typography, glassmorphism, 3D, neon, etc.) for Facebook, Twitter/X, LinkedIn, YouTube, Instagram, Google Display, website hero, and print. |
+| Brand Guidelines | `frontend/brand-guidelines/` | Apply brand colors and typography to artifacts. Use when brand colors, style guidelines, visual formatting, or company design standards apply. Ensures consistency across branded content. |
+| Brand Voice | `frontend/brand-voice/` | Brand voice, visual identity, messaging frameworks, asset management, and brand consistency. Use for branded content, tone of voice, marketing assets, brand compliance, and style guide work. |
+| Canvas Design | `frontend/canvas-design/` | Create beautiful visual art in .png and .pdf documents using design philosophy. Use when the user asks to create a poster, piece of art, design, or other static visual piece. Creates original visual designs. |
+| CSS Architecture | `frontend/css-architecture/` | CSS architecture, design token strategy, Tailwind conventions, CSS Modules, container queries, dark mode, responsive patterns, and animation architecture. Use for design token naming, CSS custom properties, Tailwind config, container queries, dark mode implementation, fluid typography, or CSS animation decisions. Complements frontend-design (what to achieve) with how to implement it. |
+| Design System Tokens | `frontend/design-system-tokens/` | Token architecture and component specifications. Three-layer tokens (primitive → semantic → component), CSS variables, spacing/typography scales, and component state definitions. Use for design token creation and systematic design. |
+| Enterprise Dashboard Aesthetic System | `frontend/enterprise-dashboard-aesthetic-system/` | Use when: upgrading React/Vite enterprise dashboards, harmonizing dashboard pages, improving executive analytics UI aesthetics, creating cohesive dashboard design systems, adding tasteful motion, or turning data-heavy pages into a polished narrative cockpit. Applies to RevSight-style FastAPI + React + Tailwind + shadcn dashboards. |
+| Frontend Design | `frontend/frontend-design/` | Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, artifacts, posters, or applications. Generates creative, polished code that avoids generic AI aesthetics while strictly adhering to the user's technical standards. |
+| High End Visual Design | `frontend/high-end-visual-design/` | Teaches the AI to design like a high-end agency. Defines the exact fonts, spacing, shadows, card structures, and animations that make a website feel expensive. Blocks all the common defaults that make AI designs look cheap or generic. |
+| Mockup | `frontend/mockup/` | Create framework-aware UI mockups with feasibility checks. Prevents wasted effort by validating that proposed designs work within the target framework's constraints. |
+| Next.js App Router | `frontend/nextjs-app-router/` | Next.js 13+ App Router conventions, Server vs Client Components, Server Actions, Middleware, data fetching, Metadata API, and route handlers. Use for Next.js App Router directory structure, Server Actions, SSR/RSC patterns, generateMetadata, layout/page/error/loading.tsx conventions, route groups, parallel routes, or hydration issues. Companion to react-dev and react-best-practices. |
+| Premium React | `frontend/premium-react/` | React/Tailwind premium visual design and animation engineering. Use for premium visual design, animation engineering, Framer Motion, Bento grids, scroll reveals, magnetic buttons, parallax, cursor followers, or creative React/Tailwind UI. Prerequisite frontend-design must be loaded first. |
+| React Best Practices | `frontend/react-best-practices/` | Modern React development guidelines covering hooks, component patterns, state management, performance optimization, and TypeScript integration. |
+| React Dev | `frontend/react-dev/` | This skill should be used when building React components with TypeScript, typing hooks, handling events, or when React TypeScript, React 19, Server Components are mentioned. Covers type-safe patterns for React 18-19 including generic components, proper event typing, and routing integration (TanStack Router, React Router). |
+| React Useeffect | `frontend/react-useeffect/` | React useEffect best practices from official docs. Use when writing/reviewing useEffect, useState for derived values, data fetching, or state synchronization. Teaches when NOT to use Effect and better alternatives. |
+| Responsive Mobile Native | `frontend/responsive-mobile-native/` | Use this skill whenever the user wants to make a web app or website work on mobile, adapt a desktop-first app for mobile or tablet, make a site "feel native" on phones, add responsive behaviour, fix a layout that breaks on small screens, or ship a single codebase that works on desktop and mobile without two separate apps. Also triggers for: "make this PWA", "mobile-friendly", "tablet layout", "bottom nav", "touch gestures", "works on iPhone/Android", "responsive design", or any request to support small screens alongside an existing desktop UI. Use this skill proactively — if the user is building or fixing any web UI and mobile support is clearly missing or incomplete, suggest and apply this skill. |
+| Shadcn Radix | `frontend/shadcn-radix/` | shadcn/ui component library, Radix UI primitives, theming with CSS variables, react-hook-form + zod forms, TanStack Table data tables, and cva variant composition. Use for shadcn setup, shadcn add, components.json, shadcn theming, Radix accessible components, shadcn form patterns, data tables, command palette, date picker, combobox, or drawer/sheet. References css-architecture for tokens and react-best-practices for structure. |
+| Slides | `frontend/slides/` | Create strategic HTML presentations with Chart.js, design tokens, responsive layouts, copywriting formulas, and contextual slide strategies. |
+| Streamlit Animate | `frontend/streamlit-animate/` | Use this skill when adding animations or micro-interactions to an existing Streamlit application. Covers enterprise-safe hover effects, skeleton loaders, expander transitions, and gradient accents via CSS injection. Always combine with the streamlit-dev skill when building or modifying the broader app. |
+| Streamlit Dev | `frontend/streamlit-dev/` | Build production-ready Streamlit dashboards with best-practice patterns, caching, components, and theming. Use when implementing any Streamlit page, component, chart, or UI feature. |
+| Theme Factory | `frontend/theme-factory/` | Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact that has been creating, or can generate a new theme on-the-fly. |
+| UI Review | `frontend/ui-review/` | Review UI implementations against design requirements, accessibility standards (WCAG 2.2 AA), and brand guidelines. Use when reviewing designs or validating UI before release. |
+| UI Styling Patterns | `frontend/ui-styling-patterns/` | Create accessible user interfaces with shadcn/ui components (Radix UI + Tailwind), Tailwind CSS utility-first styling, and canvas-based visual designs. Use for responsive layouts, accessible components, theme customization, dark mode, and consistent styling patterns. |
+| UI UX Intelligence | `frontend/ui-ux-intelligence/` | UI/UX design intelligence with CSV knowledge bases: 50+ styles, 161 color palettes, 57 font pairings, 161 product types, 99 UX guidelines, and 25 chart types. Use when making design decisions that need data-backed palettes, font pairing lookups, or style-specific implementation guidance. |
+| UX Design | `frontend/ux-design/` | Design user experiences with consistent brand color system and accessibility standards |
+| Warm Editorial UI | `frontend/warm-editorial-ui/` | Apply the "Warm Editorial Refinement" design system — a sophisticated, executive-grade aesthetic with warm cream surfaces (light mode) and warm charcoal surfaces (dark mode), Bahnschrift + Plus Jakarta Sans typography, generous rounded corners, multi-layer shadows, and a warm neutral palette. Supports both light and dark themes via CSS custom properties and the `.dark` class. Use this skill whenever the user wants to build an app, dashboard, component, or web UI using the abc-project visual style. Trigger on phrases like "use our design system", "apply our template", "make it look like abc-project", "use the warm editorial style", "use our brand template", "add dark mode", or any request to build a new tool/app/dashboard for XYZ Brand or similar contexts. This is the canonical design template for all new frontend builds. |
+| Warm New | `frontend/warm-new/` | Apply the "Warm New" design system for React/web UIs using the RevSight design tokens and implementation guide. Use this skill whenever the user requests a UI, dashboard, or component with the RevSight look, or references the attached design tokens/implementation guide. Always ensure dropdown/select panels have a smooth, modern appearance (not blocky), and follow all theme, typography, and component rules from the attached guides. |
+| Webapp Development | `frontend/webapp-development/` | End-to-end web application development workflow with brand theming and standard patterns |
+| Word Cloud | `frontend/word-cloud/` | Generate beautiful word clouds — static or animated — from any input source. Handles text extraction from PDF, DOCX, XLSX, PPTX, HTML, CSV, TXT and produces production-ready components. Includes light/dark theming, sentiment/POS color coding, shape masking, and multiple animation modes. |
 
 ### Testing
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Component Testing | `testing/component-testing/` | Vitest + Testing Library for React component unit and integration testing |
-| Performance Testing | `testing/performance-testing/` | Load testing, benchmarking, and profiling with Locust, k6, pytest-benchmark |
-| Playwright | `testing/playwright/` | Browser automation and E2E testing with auto-detection |
-| TDD Workflow | `testing/tdd-workflow/` | Red-green-refactor cycle for test-driven development |
-| Test Strategy | `testing/test-strategy/` | Test planning, risk-based prioritisation, coverage goals, and test pyramids |
-| UI Testing | `testing/ui-testing/` | Automated Playwright UI tests for Streamlit and web apps |
-| Webapp Testing | `testing/webapp-testing/` | Interacting with and testing local web apps via Playwright — verify UI, capture screenshots, inspect browser logs |
+| Component Testing | `testing/component-testing/` | React component testing with Vitest, Testing Library, MSW, and renderHook. Use for Vitest setup, jsdom/happy-dom config, Testing Library queries, userEvent, component unit tests, testing React hooks, MSW API mocking, snapshot testing, or testing loading/error states. Complements playwright (E2E) and tdd-workflow (methodology). |
+| Performance Testing | `testing/performance-testing/` | Performance testing, load testing, and benchmarking for APIs, databases, and web applications. Use when planning load tests, setting performance budgets, profiling bottlenecks, or validating scalability. Covers Locust, k6, pytest-benchmark, browser performance, and database query profiling. |
+| Playwright | `testing/playwright/` | Complete browser automation with Playwright. Auto-detects dev servers, writes clean test scripts to /tmp. Test pages, fill forms, take screenshots, check responsive design, validate UX, test login flows, check links, automate any browser task. Use when user wants to test websites, automate browser interactions, validate web functionality, or perform any browser-based testing. |
+| Tdd Workflow | `testing/tdd-workflow/` | Test-Driven Development workflow — red-green-refactor cycle |
+| Test Strategy | `testing/test-strategy/` | Test planning and strategy for projects of any size. Use when defining what to test, choosing test types, setting coverage goals, building test pyramids, or planning quality gates. Produces TEST-STRATEGY.md with prioritized test plan. Routes to Tester agent for execution. |
+| UI Testing | `testing/ui-testing/` | Create automated UI tests using Playwright for Streamlit and web applications. Use when writing end-to-end tests, automating UI testing, or testing new features. |
+| Webapp Testing | `testing/webapp-testing/` | Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs. |
 
 ### Workflow
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Agent MD Refactor | `workflow/agent-md-refactor/` | Refactoring bloated agent instruction files to follow progressive disclosure principles |
-| Agent Orchestration | `workflow/agent-orchestration/` | End-to-end multi-agent pipeline from spec to production |
-| Asking Questions | `workflow/asking-questions/` | When and how to ask clarifying questions before implementing |
-| Best Practices | `workflow/best-practices/` | Transform vague prompts into optimised AI prompts |
-| Brainstorming | `workflow/brainstorming/` | Structured ideation before implementing features or changes |
-| Context Curator | `workflow/context-curator/` | Compress and prioritise codebase context before feeding reasoning agents |
-| Relay | `workflow/relay/` | Creating or updating root `relay.md` with verified session-continuation context |
-| Developer Growth | `workflow/developer-growth-analysis/` | Analyzing coding patterns and curating personalized learning resources |
-| File Organizer | `workflow/file-organizer/` | Organizing files, finding duplicates, suggesting structure |
-| Game-Changing Features | `workflow/game-changing-features/` | Finding 10x product opportunities and high-leverage improvements |
-| Golden Plan | `workflow/golden-plan/` | Comprehensive, evidence-gated implementation plans for large builds (8+ phases, full-stack, complex data binding) |
-| Intent Writer | `workflow/intent-writer/` | Structuring freetext ideas into formal Intent Documents for the agent pipeline |
-| Onboard Project | `workflow/onboard-project/` | Bootstrapping AI configuration (copilot-instructions.md, project-config.md) |
-| Pipeline State | `workflow/pipeline-state/` | Reading and writing `.github/pipeline-state.json` for pipeline tracking |
-| Receiving Code Review | `workflow/receiving-code-review/` | Processing code review feedback with technical rigor |
-| Requesting Code Review | `workflow/requesting-code-review/` | Verifying work and preparing it for review before merging |
-| Skill Creator | `workflow/skill-creator/` | Create, modify, and benchmark skills — including eval runs, variance analysis, and description optimisation |
-| Verification Loop | `workflow/verification-loop/` | Systematic lint, test, type-check, and review cycle |
-| Data Contract Pipeline | `workflow/data-contract-pipeline/` | Build/audit typed data pipelines from source to frontend with drift detection |
-| Preflight | `workflow/preflight/` | Plan-vs-codebase validation — verifies API contracts, types, fields, dependencies, and paths before implementation |
+| Agent Md Refactor | `workflow/agent-md-refactor/` | Refactor bloated agent instruction files (AGENTS.md, .cursorrules, .github/ files, etc.) to follow progressive disclosure principles. Splits monolithic files into organized, linked documentation. |
+| Agent Orchestration | `workflow/agent-orchestration/` | End-to-end blueprint for orchestrating the full agent pipeline — from spec intake through planning, implementation, testing, and debugging |
+| Ask Questions If Underspecified | `workflow/asking-questions/` | Clarify requirements before implementing. Do not use automatically, only when invoked explicitly. |
+| Best Practices | `workflow/best-practices/` | Transforms vague prompts into optimized Claude Code prompts. Adds verification, specific context, constraints, and proper phasing. Invoke with /best-practices. |
+| Brainstorming | `workflow/brainstorming/` | You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation. |
+| Context Curator | `workflow/context-curator/` | Compress and prioritize codebase context before handing work to reasoning agents, minimizing token waste while preserving the required decision inputs. |
+| Data Contract Pipeline | `workflow/data-contract-pipeline/` | **WORKFLOW SKILL** - Build, audit, and validate data-to-UI contracts for apps. Use whenever the user mentions data mapping, UI lineage, DB-to-UI, DisplayDTOs, source-to-screen mapping, data contracts, schema drift, typed API responses, frontend type alignment, mockup grounding, requirements-to-UI mapping, or asks whether a UI is backed by real DB/file data. Works for DBs, JSON, Markdown, CSV, XLSX, YAML, APIs, and UI mockups. |
+| Developer Growth Analysis | `workflow/developer-growth-analysis/` | Analyzes your recent Claude Code chat history to identify coding patterns, development gaps, and areas for improvement, curates relevant learning resources from HackerNews, and automatically sends a personalized growth report to your Slack DMs. |
+| File Organizer | `workflow/file-organizer/` | Intelligently organizes your files and folders across your computer by understanding context, finding duplicates, suggesting better structures, and automating cleanup tasks. Reduces cognitive load and keeps your digital workspace tidy without manual effort. |
+| Game Changing Features | `workflow/game-changing-features/` | Find 10x product opportunities and high-leverage improvements. Use when user wants strategic product thinking, mentions '10x', wants to find high-impact features, or says 'what would make this 10x better', 'product strategy', or 'what should we build next'. |
+| Golden Nuggets | `workflow/golden-nuggets/` | Extract durable tribal knowledge ('gold nuggets') from a codebase or a set of changed files and route each to its correct destination - instruction file, runbook, hub, or (in CI capture mode) a review inbox. This SKILL.md is the single source of truth for nugget categories, routing rules, write rules, inbox format, and verification gates. It is read by the knowledge-transfer agent (pipeline mode), by the /golden-nuggets prompt (independent mode), and referenced by the CI extraction script (capture mode). Use when capturing what was learned after a feature, fix, sprint, incident, or release. |
+| Golden Plan | `workflow/golden-plan/` | USE THIS SKILL whenever a user asks for a comprehensive implementation plan, a full-stack build plan, a UI+backend plan, or says 'create a plan for building X' where X spans multiple phases or systems. Also activate when the user says 'plan this project', 'I need a detailed plan', 'build plan', 'implementation plan', or attaches a mockup/wireframe and asks how to build it. Produces a zero-ambiguity, evidence-gated plan with self-contained per-phase prompts, exhaustive data binding tables, per-phase validation checklists, and a global quality gate. Evidence-gated: before writing phases, verify required artefacts (mockup, data sample, API contract, scaffold inventory); if any BLOCKER is missing, ask for it and wait before proceeding. Dual-mode: generic by default, junai-pipeline only when explicitly requested. Agent-agnostic — any agent with read/search/edit tools can use this skill. |
+| Intent Writer | `workflow/intent-writer/` | Structure freetext ideas, backlog items, or vague requirements into a formal Intent Document that preserves user intent across the entire agent pipeline chain. |
+| Onboard Project | `workflow/onboard-project/` | Bootstrap a new project's AI configuration by generating copilot-instructions.md and populating project-config.md. Idempotent — safe to re-run on existing projects. |
+| Pipeline State | `workflow/pipeline-state/` | Read and write `.github/pipeline-state.json` to track stage progress, artefacts, supervision gates, and handoff payloads in the agent pipeline. |
+| Preflight | `workflow/preflight/` | Plan-vs-codebase validation — verifies API contracts, type names, field accuracy, dependencies, and paths before implementation begins |
+| Receiving Code Review | `workflow/receiving-code-review/` | Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation |
+| Relay | `workflow/relay/` | Create or update a root relay.md session-continuation document for any repository. Use this skill whenever the user asks to preserve project context, resume later, hand work to a future session, create a session relay, summarize current implementation state, or generate a reusable continuation prompt. The workflow is generic and must discover project structure at runtime. |
+| Requesting Code Review | `workflow/requesting-code-review/` | Use when completing tasks, implementing major features, or before merging to verify work meets requirements |
+| Skill Creator | `workflow/skill-creator/` | Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy. |
+| Verification Loop | `workflow/verification-loop/` | Systematic code change verification — lint, test, type-check, review |
 
 ### Media
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Draw.io | `media/draw-io/` | .drawio XML editing, PNG conversion, layout adjustment, and AWS icons |
-| Excalidraw | `media/excalidraw/` | Brand-themed Excalidraw diagrams for documentation |
-| Image Enhancer | `media/image-enhancer/` | Improving screenshot quality — resolution, sharpness, contrast |
-| Mermaid Diagrams | `media/mermaid-diagrams/` | Class, sequence, flowchart, ERD, C4, state, and gantt diagrams |
-| NotebookLM | `media/notebooklm/` | Querying Google NotebookLM for source-grounded answers |
-| PlantUML | `media/plantuml/` | Brand-themed PlantUML diagrams for documentation |
-| Slack GIF Creator | `media/slack-gif-creator/` | Creating animated GIFs optimized for Slack |
-| SVG Create | `media/svg-create/` | Brand-themed SVG diagrams with accessible design |
-| Video Downloader | `media/video-downloader/` | Downloading and processing video for offline viewing |
-| YouTube Transcript | `media/youtube-transcript/` | Extracting YouTube captions and subtitles |
+| Draw Io | `media/draw-io/` | draw.io diagram creation, editing, and review. Use for .drawio XML editing, PNG conversion, layout adjustment, and AWS icon usage. |
+| Excalidraw | `media/excalidraw/` | Brand-themed Excalidraw diagrams for project documentation |
+| Image Enhancer | `media/image-enhancer/` | Improves the quality of images, especially screenshots, by enhancing resolution, sharpness, and clarity. Perfect for preparing images for presentations, documentation, or social media posts. |
+| Mermaid Diagrams | `media/mermaid-diagrams/` | Create software diagrams using Mermaid text-based syntax. Use for class diagrams (domain modeling, OOP design), sequence diagrams (API flows, interactions), flowcharts (processes, algorithms, user journeys), ERD (database schemas), C4 architecture diagrams, state diagrams, git graphs, gantt charts, and data visualization. |
+| Notebooklm | `media/notebooklm/` | Use this skill to query your Google NotebookLM notebooks directly from Claude Code for source-grounded, citation-backed answers from Gemini. Browser automation, library management, persistent auth. Drastically reduced hallucinations through document-only responses. |
+| Plantuml | `media/plantuml/` | Brand-themed PlantUML diagrams for project documentation |
+| Slack Gif Creator | `media/slack-gif-creator/` | Toolkit for creating animated GIFs optimized for Slack, with validators for size constraints and composable animation primitives. This skill applies when users request animated GIFs or emoji animations for Slack from descriptions like "make me a GIF for Slack of X doing Y". |
+| SVG Create | `media/svg-create/` | Brand-themed SVG diagrams with consistent color palette and accessible design |
+| Video Downloader | `media/video-downloader/` | Downloads videos from YouTube and other platforms for offline viewing, editing, or archival. Handles various formats and quality options. |
+| Youtube Transcript | `media/youtube-transcript/` | Download YouTube video transcripts when user provides a YouTube URL or asks to download/get/fetch a transcript from YouTube. Also use when user wants to transcribe or get captions/subtitles from a YouTube video. |
 
 ### Productivity
 
 | Skill | Path | When to Use |
 |-------|------|-------------|
-| Competitive Ads | `productivity/competitive-ads-extractor/` | Extracting and analyzing competitor ads from ad libraries |
-| Content Research | `productivity/content-research-writer/` | Researching and writing high-quality content with citations |
-| Domain Brainstormer | `productivity/domain-name-brainstormer/` | Brainstorming creative domain names and checking availability |
-| GitHub Issues | `productivity/github-issues/` | Writing well-structured GitHub issues with acceptance criteria |
-| Internal Comms | `productivity/internal-comms/` | Writing status reports, newsletters, and incident reports |
-| Invoice Organizer | `productivity/invoice-organizer/` | Organizing invoices and receipts for tax preparation |
-| Jira Issues | `productivity/jira-issues/` | Creating and managing Jira tickets from natural language |
-| Job Application | `productivity/job-application/` | Preparing tailored cover letters and job applications |
-| Lead Research | `productivity/lead-research-assistant/` | Identifying high-quality leads for business development |
-| Meeting Insights | `productivity/meeting-insights-analyzer/` | Analyzing meeting notes and transcripts for patterns and feedback |
-| Raffle Winner | `productivity/raffle-winner-picker/` | Random winner selection from lists and spreadsheets |
+| Competitive Ads Extractor | `productivity/competitive-ads-extractor/` | Extracts and analyzes competitors' ads from ad libraries (Facebook, LinkedIn, etc.) to understand what messaging, problems, and creative approaches are working. Helps inspire and improve your own ad campaigns. |
+| Content Research Writer | `productivity/content-research-writer/` | Assists in writing high-quality content by conducting research, adding citations, improving hooks, iterating on outlines, and providing real-time feedback on each section. Transforms your writing process from solo effort to collaborative partnership. |
+| Domain Name Brainstormer | `productivity/domain-name-brainstormer/` | Generates creative domain name ideas for your project and checks availability across multiple TLDs (.com, .io, .dev, .ai, etc.). Saves hours of brainstorming and manual checking. |
+| GitHub Issues | `productivity/github-issues/` | Create well-structured GitHub issues with proper labels, descriptions, and acceptance criteria. Use when creating bug reports, feature requests, or tracking tasks. |
+| Internal Comms | `productivity/internal-comms/` | Write internal communications using company formats. Use when writing status reports, leadership updates, company newsletters, FAQs, incident reports, project updates, or any internal communications. |
+| Invoice Organizer | `productivity/invoice-organizer/` | Automatically organizes invoices and receipts for tax preparation by reading messy files, extracting key information, renaming them consistently, and sorting them into logical folders. Turns hours of manual bookkeeping into minutes of automated organization. |
+| Job Application | `productivity/job-application/` | Write tailored cover letters and job applications using a structured methodology. Analyzes job descriptions, maps experience, and generates personalized applications. |
+| Lead Research Assistant | `productivity/lead-research-assistant/` | Identifies high-quality leads for your product or service by analyzing your business, searching for target companies, and providing actionable contact strategies. Perfect for sales, business development, and marketing professionals. |
+| Meeting Insights Analyzer | `productivity/meeting-insights-analyzer/` | Analyzes meeting transcripts and recordings to uncover behavioral patterns, communication insights, and actionable feedback. Identifies when you avoid conflict, use filler words, dominate conversations, or miss opportunities to listen. Perfect for professionals seeking to improve their communication and leadership skills. |
+| Raffle Winner Picker | `productivity/raffle-winner-picker/` | Picks random winners from lists, spreadsheets, or Google Sheets for giveaways, raffles, and contests. Ensures fair, unbiased selection with transparency. |

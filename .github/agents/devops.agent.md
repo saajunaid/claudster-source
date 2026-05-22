@@ -177,14 +177,20 @@ Do not declare success from local checks alone when the request included push/de
 
 When this agent performs CI/CD or deployment work, return:
 
-- `repo`: repository path or name
-- `branch`: branch used for the operation
-- `commit_sha`: commit used for push/deploy
-- `workflow_run`: run id/url when available
-- `job_results`: job-level pass/fail summary
-- `prod_validation`: expected SHA, service status, and health result when deployment is expected
-- `files_changed`: tracked files modified by the fix
-- `follow_ups`: remaining risk, deferred steps, or required approvals
+| Field | Value |
+|-------|-------|
+| `artefact_path` | `.github/workflows/**`, deployment config files, and `.github/agent-docs/<feature>-deployment-notes.md` if deployment notes are produced |
+| `required_fields` | `chain_id`, `status`, `approval` in deployment notes if produced |
+| `approval_on_completion` | `pending` |
+| `next_agent` | `done` when deployment is complete, otherwise `security-analyst` or `tester` when follow-up validation is required |
+| `repo` | repository path or name |
+| `branch` | branch used for the operation |
+| `commit_sha` | commit used for push/deploy |
+| `workflow_run` | run id/url when available |
+| `job_results` | job-level pass/fail summary |
+| `prod_validation` | expected SHA, service status, and health result when deployment is expected |
+| `files_changed` | tracked files modified by the fix |
+| `follow_ups` | remaining risk, deferred steps, or required approvals |
 
 ### 8. Completion Reporting Protocol
 

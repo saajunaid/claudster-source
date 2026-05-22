@@ -140,7 +140,7 @@ Before implementing, evaluate the request against these red flags:
 | Request contradicts existing architecture | ⚠️ Flag it. Cite the architecture doc section. Ask for confirmation. |
 | Request duplicates existing functionality | ⚠️ Point to existing code. Suggest reuse. |
 | Request has no tests and is non-trivial | ⚠️ Insist on tests. Write them yourself if needed. |
-| Request would break existing API contracts | 🛑 STOP. Write an escalation to `agent-docs/escalations/`. |
+| Request would break existing API contracts | 🛑 STOP. Write an escalation to `.github/agent-docs/escalations/`. |
 | Request introduces hardcoded secrets | 🛑 STOP. Refuse. Suggest `.env` pattern. |
 | Request is too vague to implement safely | ⚠️ Ask clarifying questions before proceeding. |
 
@@ -156,7 +156,7 @@ Before implementing, evaluate the request against these red flags:
 
 ### Phase 2b: Deliverables Extraction (MANDATORY for M/L tasks)
 
-After reading the plan/spec and before writing any code, extract a **concrete deliverables checklist** — not exit criteria (which are outcome-based) but a literal inventory of structural elements the plan requires.
+After reading the plan/spec and before writing any code, extract a **concrete artefacts checklist** — not exit criteria (which are outcome-based) but a literal inventory of structural elements the plan requires.
 
 For each step you are implementing, scan the plan for:
 - **New functions/classes** the plan names (e.g., `render_left_column`, `render_center_column`)
@@ -177,7 +177,7 @@ Record these as a checklist in your first message:
 - [ ] Replace: `_render_analytics_kpi()` → `render_kpi_card()`
 ```
 
-> **Rule:** If the plan says "REWRITE" for a file, the deliverables checklist must include every structural element from the plan's pseudocode for that file. "REWRITE" ≠ "swap a few function calls" — it means the page architecture changes.
+> **Rule:** If the plan says "REWRITE" for a file, the artefacts checklist must include every structural element from the plan's pseudocode for that file. "REWRITE" ≠ "swap a few function calls" — it means the page architecture changes.
 
 > **Rule:** The Evidence Bundle (Phase 5) MUST include **grep proof** for every item in this checklist. If an item is missing from the final code, it must be explicitly listed as "NOT DONE" with a reason.
 
@@ -185,11 +185,11 @@ Record these as a checklist in your first message:
 
 If the plan includes any of these structured sections, consume them directly instead of self-extracting:
 
-- **Data binding specs** (exact JSON field paths per component) → Add each binding as a deliverable: "Field `data.path` bound to Component"
-- **Existing Scaffold Audit** → Cross-reference your deliverables against files marked "Working — build on top" or "DO NOT recreate"
+- **Data binding specs** (exact JSON field paths per component) → Add each binding as an artefact item: "Field `data.path` bound to Component"
+- **Existing Scaffold Audit** → Cross-reference your artefacts against files marked "Working — build on top" or "DO NOT recreate"
 - **Validation Checklist** → Each item becomes a checklist entry in your Evidence Bundle
-- **IMPORTANT warnings** → Add each as a deliverable constraint: "MUST NOT recreate `api/client.ts`"
-- **Empty state specs** → Add each as a deliverable: "Empty state for `field` displays exact message"
+- **IMPORTANT warnings** → Add each as an artefact constraint: "MUST NOT recreate `api/client.ts`"
+- **Empty state specs** → Add each as an artefact item: "Empty state for `field` displays exact message"
 
 These plan sections override your own extraction where they provide explicit data. Your extraction covers anything the plan didn't structure explicitly.
 
@@ -267,7 +267,7 @@ If regressions cannot be resolved after **2 fix attempts**, do not continue:
 |-----------|----------------|
 | **DB migration** | Execute the down-migration documented in your Evidence Bundle §Baseline before Phase 3 began (e.g. `alembic downgrade -1`). Record the revert revision in the Evidence Bundle. |
 | **Hotfix** | Restore previous file state: `git revert HEAD --no-commit`, verify tests recover, commit the revert. Record the revert hash in the Evidence Bundle. |
-| **All cases** | Set `status: blocked` in `pipeline-state.json` and call `notify_orchestrator` with the reason. Write an escalation to `agent-docs/escalations/` with `severity: blocking`. HARD STOP — do not hand off broken code.
+| **All cases** | Set `status: blocked` in `pipeline-state.json` and call `notify_orchestrator` with the reason. Write an escalation to `.github/agent-docs/escalations/` with `severity: blocking`. HARD STOP — do not hand off broken code.
 
 ### Phase 5: Evidence Bundle
 
@@ -382,10 +382,10 @@ On entry, read `_notes.handoff_payload` from `pipeline-state.json`. If `required
 Before accepting any task, verify it falls within your responsibilities (high-rigor implementation, evidence-first coding, critical fixes). If asked to design architecture, create PRDs, or plan features: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artefact Output Protocol
-Your primary artefacts are code files (committed to the repo). Write Evidence Bundles to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
+Your primary artefacts are code files (committed to the repo). Write Evidence Bundles to `.github/agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `.github/agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
-If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
+If a `chain_id` is provided or an Intent Document exists in `.github/agent-docs/intents/`:
 1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your implementation against the Intent Document's Goal and Constraints
 3. If your implementation would diverge from original intent, STOP and flag the drift
@@ -411,11 +411,11 @@ When your handoff includes \intent_references\ or \design_intent\:
 Before starting work that depends on an upstream artefact (e.g., Plan, Architecture): check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `.github/agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
-Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
+Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
@@ -585,7 +585,7 @@ If `handoff_payload.intent_references` is **non-empty**:
 
 | Field | Value |
 |-------|-------|
-| `artefact_path` | `src/**` (code) + `agent-docs/anchor-evidence-<feature>.md` (Evidence Bundle) |
+| `artefact_path` | `src/**` (code) + `.github/agent-docs/anchor-evidence-<feature>.md` (Evidence Bundle) |
 | `required_fields` | `chain_id`, `status`, `approval`, `task_size`, `baseline`, `verification`, `evidence_bundle` |
 | `approval_on_completion` | `pending` |
 | `next_agent` | `security-analyst` (if `security_sensitive: true` in Evidence Bundle) or `tester` (all other cases) |

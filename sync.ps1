@@ -172,6 +172,38 @@ function Get-JunaiPythonCommand {
     return $null
 }
 
+function Invoke-JunaiPoolDeploy {
+    param(
+        [Parameter(Mandatory)][string]$ProjectRoot
+    )
+
+    $python = Get-JunaiPythonCommand
+    if (-not $python) {
+        throw "No Python interpreter available for pool deployment."
+    }
+
+    $scriptPath = Join-Path $REPO_ROOT ".github\tools\pool-sync\pool_sync.py"
+    if (-not (Test-Path $scriptPath)) {
+        throw "Pool deploy script not found: $scriptPath"
+    }
+
+    $args = @()
+    $args += $python.PrefixArgs
+    $args += @($scriptPath, "--pool-root", $REPO_ROOT, "deploy", "--project", $ProjectRoot, "--json")
+
+    $json = & $python.Path @args
+    if ($LASTEXITCODE -ne 0) {
+        throw "Pool deployment failed: $json"
+    }
+
+    $text = ($json | Out-String)
+    if ([string]::IsNullOrWhiteSpace($text)) {
+        throw "Pool deployment returned no output."
+    }
+
+    return ($text | ConvertFrom-Json)
+}
+
 function Get-PackageJsonVersion {
     param([Parameter(Mandatory)][string]$PackageJsonPath)
 
@@ -889,41 +921,23 @@ function junai-pull {
     Write-Host "  JUNAI PULL  junai --> $(Split-Path $ProjectRoot -Leaf)" -ForegroundColor Cyan
     Write-Host "  -----------------------------------------" -ForegroundColor DarkGray
 
-    # Pre-sync hygiene: drop generated caches in pool + target project .github
-    Remove-JunaiCacheDirs -RootPath $JUNO_GITHUB -Label "pool"
+    # Pre-sync hygiene: drop generated caches in canonical pool + target project .github
+    Remove-JunaiCacheDirs -RootPath (Join-Path $REPO_ROOT ".github") -Label "pool"
     Remove-JunaiCacheDirs -RootPath $target -Label "project"
-
-    foreach ($folder in $POOL_FOLDERS) {
-        $src = Join-Path $JUNO_GITHUB $folder
-        $dest = Join-Path $target $folder
-        if (Test-Path $src) {
-            # Clean destination first to avoid folder nesting and stale files.
-            if (Test-Path $dest) {
-                Remove-Item $dest -Recurse -Force
-            }
-            Copy-Item $src $target -Recurse -Force
-            Write-Host "  [OK]  $folder" -ForegroundColor Green
-        } else {
-            # If a folder no longer exists in pool, remove stale copy locally.
-            if (Test-Path $dest) {
-                Remove-Item $dest -Recurse -Force
-                Write-Host "  [OK]  $folder - removed stale local folder" -ForegroundColor Green
-            } else {
-                Write-Host "  [--]  $folder - not found in pool, skipped" -ForegroundColor Yellow
-            }
-        }
+    $deployResult = Invoke-JunaiPoolDeploy -ProjectRoot $ProjectRoot
+    foreach ($folder in @($deployResult.copied_directories)) {
+        Write-Host "  [OK]  $folder" -ForegroundColor Green
     }
-
-    foreach ($file in $POOL_FILES) {
-        $src = Join-Path $JUNO_GITHUB $file
-        $dest = Join-Path $target $file
-        if (Test-Path $src) {
-            Copy-Item $src $dest -Force
-            Write-Host "  [OK]  $file" -ForegroundColor Green
-        } else {
-            Write-Host "  [--]  $file - not found in pool, skipped" -ForegroundColor Yellow
-        }
+    foreach ($file in @($deployResult.copied_files)) {
+        Write-Host "  [OK]  $file" -ForegroundColor Green
     }
+    foreach ($regionFile in @($deployResult.managed_regions)) {
+        Write-Host "  [OK]  $regionFile (managed region)" -ForegroundColor Green
+    }
+    if ($deployResult.registry_written) {
+        Write-Host "  [OK]  skills/_registry.md (profile-filtered)" -ForegroundColor Green
+    }
+    Write-Host "  [OK]  .pool-version" -ForegroundColor Green
 
     # Deploy .vscode/mcp.json (pre-configured with ${workspaceFolder} — profile-agnostic)
     $mcpSrc = Join-Path $JUNO_POOL ".vscode\mcp.json"
@@ -937,7 +951,7 @@ function junai-pull {
     Restore-LocalOnlyPoolFiles -GithubRoot $target -Backup $localOnlyBackup
 
     Write-Host ""
-    Write-Host "  Done. project-config.md was NOT overwritten." -ForegroundColor DarkGray
+    Write-Host "  Done. Owned project paths were preserved; .pool-version was updated." -ForegroundColor DarkGray
     Write-Host ""
 }
 

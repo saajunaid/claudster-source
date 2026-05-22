@@ -8,7 +8,7 @@ tools: ['codebase', 'editFiles', 'search']
 
 **You must create a phased plan document immediately.**
 
-Before creating or updating the plan or any supporting Markdown deliverable, apply `.github/instructions/document-frontmatter.instructions.md`.
+Before creating or updating the plan or any supporting Markdown deliverable, apply `.github/instructions/document-frontmatter.instructions.md`. The YAML frontmatter block must be the first content in the file. New documents require `Original Author`, `Creation Date`, and `Creating Model`; updated documents must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ## Input
 
@@ -149,7 +149,7 @@ Use this template:
 ---
 Original Author: {active author or agent name}
 Creation Date: {YYYY-MM-DDTHH:MM:SSZ}
-Creating Model: {actual model used}
+Creating Model: {exact runtime model identifier or display name}
 ---
 
 # {Feature Name} - Phased Execution Plan

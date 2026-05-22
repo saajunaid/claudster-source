@@ -221,11 +221,11 @@ When you find 🔴 Critical Issues, or the changeset touches 10+ files, load `.g
 
 When reviewing code for a feature that used the automated pipeline (Intent → PRD → Architecture → Plan → Implementation), perform a **chain audit** before approving:
 
-1. **Verify `chain_id` consistency**: All artefacts in `agent-docs/` for this feature carry the same `chain_id`
+1. **Verify `chain_id` consistency**: All artefacts in `.github/agent-docs/` for this feature carry the same `chain_id`
 2. **Intent satisfaction**: Compare implementation against the Intent Document's Success Criteria — are they all met?
 3. **Approval gates respected**: Check that PRD, Architecture, and Plan artefacts have `approval: approved`
-4. **Manifest up to date**: Verify `agent-docs/ARTIFACTS.md` lists all artefacts for this chain
-5. **No unresolved escalations**: Check `agent-docs/escalations/` for open items with this `chain_id`
+4. **Manifest up to date**: Verify `.github/agent-docs/ARTIFACTS.md` lists all artefacts for this chain
+5. **No unresolved escalations**: Check `.github/agent-docs/escalations/` for open items with this `chain_id`
 
 Include a **Chain Audit** section in your review report when applicable.
 
@@ -239,10 +239,10 @@ Include a **Chain Audit** section in your review report when applicable.
 Before accepting any task, verify it falls within your responsibilities (code review, quality assessment, security review). If asked to fix code directly: state clearly what's outside scope, identify the correct agent (`@implement` or `@janitor`), and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artefact Output Protocol
-Write code review reports to `agent-docs/reviews/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
+Write code review reports to `.github/agent-docs/reviews/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `.github/agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
-If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
+If a `chain_id` is provided or an Intent Document exists in `.github/agent-docs/intents/`:
 1. Read the Intent Document FIRST — before reviewing code
 2. Cross-reference the implementation against the Intent Document's Goal and Constraints
 3. Flag any drift from original intent in your review report
@@ -268,11 +268,11 @@ When your handoff includes \intent_references\ or \design_intent\:
 Before starting a review: check if the implementation artefact has `approval: pending` (it should). After completing your review: set the result (`approved` / `revision-requested`).
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artefact (e.g., plan was ambiguous causing implementation issues, architecture design led to anti-patterns): write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact (e.g., plan was ambiguous causing implementation issues, architecture design led to anti-patterns): write an escalation to `.github/agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
-Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
+Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
@@ -314,7 +314,7 @@ Context health: [Green | Yellow | Red] — [brief assessment]
 
 1. **Commit** — include `pipeline-state.json`:
    ```
-   git add agent-docs/reviews/review-<feature>.md .github/pipeline-state.json
+   git add .github/agent-docs/reviews/review-<feature>.md .github/pipeline-state.json
    git commit -m "chore(review): <feature> review complete — <approved|revision-requested>"
    ```
 
@@ -426,7 +426,7 @@ Do NOT omit this block — the Orchestrator requires it to complete the Pipeline
 
 | Field | Value |
 |-------|-------|
-| `artefact_path` | `agent-docs/reviews/review-<feature>.md` |
+| `artefact_path` | `.github/agent-docs/reviews/review-<feature>.md` |
 | `required_fields` | `chain_id`, `status`, `approval`, `verdict`, `issues` |
 | `approval_on_completion` | `approved` or `revision-requested` |
 | `next_agent` | `implement` (on `revision-requested`) or `done` (on `approved`) |

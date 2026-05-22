@@ -93,11 +93,14 @@ Do not claim validation passed unless it was actually run or documented as alrea
 
 ## `relay.md` Format
 
-Use this exact filename at the repository root:
+Use this exact filename at the repository root: `relay.md`.
 
-```text
-relay.md
-```
+### Metadata Source Rules
+
+- Use full ISO 8601 UTC timestamps for `Creation Date` and `Last Updated`, for example `2026-05-21T13:30:00Z`.
+- Use the exact current model identifier or display name from the chat/runtime model selector or session metadata for `Creating Model` and `Last Model Used`, for example `gpt-5.4`, `gpt-5.3-codex`, or `GPT-5.5`.
+- Do not infer the model from the agent name, product name, or broad family. Generic agent, product, or family labels are not acceptable when the runtime exposes a precise model name.
+- If the runtime does not expose an exact model identifier, record the most precise deterministic runtime identity available and say the exact ID was unavailable, for example `Codex (GPT-5-based; exact runtime model ID unavailable)`.
 
 ### New File Frontmatter
 
@@ -106,12 +109,10 @@ When creating a new file:
 ```yaml
 ---
 Original Author: <agent/user>
-Creation Date: YYYY-MM-DD
-Creating Model: <model>
+Creation Date: YYYY-MM-DDTHH:MM:SSZ
+Creating Model: <exact runtime model identifier or display name>
 ---
 ```
-
-Use the current date in `YYYY-MM-DD` format. If the model name is unavailable, use `unspecified`.
 
 ### Existing File Frontmatter
 
@@ -124,8 +125,8 @@ When updating an existing file:
 ```yaml
 ---
 Last Author: <agent/user>
-Last Updated: YYYY-MM-DD
-Last Model Used: <model>
+Last Updated: YYYY-MM-DDTHH:MM:SSZ
+Last Model Used: <exact runtime model identifier or display name>
 Original Author: <preserved>
 Creation Date: <preserved>
 Creating Model: <preserved>
@@ -138,7 +139,7 @@ If an original field is missing and cannot be recovered, use `unknown` for that 
 
 Use exactly these top-level headings:
 
-```markdown
+```
 # Relay
 
 ## Purpose
@@ -174,7 +175,7 @@ Summarize the repository's goal and the current development direction. Cite only
 
 List completed work visible from plans, documentation, git history, tests, or changed files. Prefer evidence-backed bullets:
 
-```markdown
+```
 - Completed <work> based on `<verified/path.md>`.
 ```
 
@@ -190,7 +191,7 @@ Provide one exact next action. Include a fallback action if the first next step 
 
 List verified paths only:
 
-```markdown
+```
 - `<path>` - why it matters.
 ```
 
@@ -211,9 +212,9 @@ Capture decisions needed, missing access, conflicting docs, ambiguous plan state
 
 ### Resume Prompt
 
-Provide a fenced prompt that a user can paste into a new session:
+Provide a ready-to-paste prompt inside a bare fenced code block. The opening fence must be exactly three backticks with no language label.
 
-```markdown
+```
 Read `relay.md` first, then read the important files listed there. Continue from <current workstream>. The next step is <exact action>. Preserve unrelated user changes and run <validation command> when appropriate.
 ```
 
@@ -225,11 +226,13 @@ Before finishing:
 
 - [ ] `relay.md` exists at the repository root.
 - [ ] Required frontmatter fields are present.
+- [ ] `Creation Date` and `Last Updated` use full ISO 8601 UTC timestamps ending in `Z`.
+- [ ] `Creating Model` and `Last Model Used` use the exact runtime model identifier or display name when available, not only a generic model family.
 - [ ] Original metadata is preserved when updating an existing file.
 - [ ] All required body sections are present.
 - [ ] Every listed file path was verified.
 - [ ] Validation state distinguishes run, not run, pass, and fail.
-- [ ] The resume prompt names the next action.
+- [ ] The resume prompt names the next action and is wrapped in a bare fenced code block with no language label.
 - [ ] No project-specific terminology appears unless discovered in the target repository.
 
 ## Final Response

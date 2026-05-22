@@ -39,6 +39,7 @@ SKILLS_REGISTRY = SKILLS_DIR / "_registry.md"
 RUNTIME_TARGETS = GITHUB_DIR / "runtime-targets.json"
 DIST_RUNTIME_ROOT = REPO_ROOT / "dist" / "runtime-resources"
 PIPELINE_RUNNER_DIR = GITHUB_DIR / "tools" / "pipeline-runner"
+POOL_SYNC_DIR = GITHUB_DIR / "tools" / "pool-sync"
 REGISTRY_PATH = PIPELINE_RUNNER_DIR / "agents.registry.json"
 PIPELINE_RUNNER_PY = PIPELINE_RUNNER_DIR / "pipeline_runner.py"
 STATE_TEMPLATE = GITHUB_DIR / "pipeline-state.template.json"
@@ -122,6 +123,17 @@ GENERATED_ARTIFACTS = {
 
 # File extensions to scan for privacy violations
 SCAN_TEXT_EXTENSIONS = {".md", ".py", ".json", ".yml", ".yaml", ".txt", ".js", ".ts", ".tsx", ".jsx"}
+REQUIRED_OWNED_TOP_LEVEL_PATHS = [
+    "agent-docs",
+    "plans",
+    "handoffs",
+    "pipeline-state.json",
+    ".pool-version",
+    "project-config.md",
+]
+
+if str(POOL_SYNC_DIR) not in sys.path:
+    sys.path.insert(0, str(POOL_SYNC_DIR))
 
 
 # ---------------------------------------------------------------------------
@@ -181,6 +193,33 @@ def _read_text_safe(path: Path) -> str | None:
         return None
 
 
+def _load_pool_manifest():
+    try:
+        from manifest import load_manifest  # type: ignore[import]
+
+        return load_manifest(REPO_ROOT), None
+    except Exception as exc:  # noqa: BLE001
+        return None, exc
+
+
+def _generated_registry_text() -> tuple[str | None, Exception | None]:
+    try:
+        from generate_registry import render_registry, collect_public_skills  # type: ignore[import]
+
+        return render_registry(collect_public_skills(REPO_ROOT)), None
+    except Exception as exc:  # noqa: BLE001
+        return None, exc
+
+
+def _generated_public_skill_paths() -> tuple[set[str] | None, Exception | None]:
+    try:
+        from generate_registry import collect_public_skills  # type: ignore[import]
+
+        return {skill.path for skill in collect_public_skills(REPO_ROOT)}, None
+    except Exception as exc:  # noqa: BLE001
+        return None, exc
+
+
 def _split_frontmatter(text: str) -> tuple[dict, str] | None:
     # Tolerate VS Code prompt-file convention where frontmatter is wrapped
     # in a ```prompt ... ``` code fence.
@@ -207,7 +246,34 @@ def _split_frontmatter(text: str) -> tuple[dict, str] | None:
 
 
 # ---------------------------------------------------------------------------
-# Check 1 — Registry agent_file resolution + transition uniqueness
+# Check 1 — Manifest classification
+# ---------------------------------------------------------------------------
+
+def check_manifest_contract() -> CheckResult:
+    r = CheckResult(name="Manifest contract — tiers, ownership, classification")
+    manifest, error = _load_pool_manifest()
+    if error is not None or manifest is None:
+        r.passed = False
+        r.failures.append(f"Could not load pool manifest: {error}")
+        return r
+
+    r.info.append(f"top-level classified paths: {len(manifest.top_level_tiers)}")
+    r.info.append(f"profiles: {sorted(manifest.profiles)}")
+
+    for path in REQUIRED_OWNED_TOP_LEVEL_PATHS:
+        tier = manifest.top_level_tiers.get(path)
+        if tier != "owned":
+            r.failures.append(f"{path} must be tier 'owned', found {tier!r}")
+
+    if manifest.top_level_tiers.get("copilot-instructions.md") != "managed_region":
+        r.failures.append("copilot-instructions.md must be tier 'managed_region'")
+
+    r.passed = not r.failures
+    return r
+
+
+# ---------------------------------------------------------------------------
+# Check 2 — Registry agent_file resolution + transition uniqueness
 # ---------------------------------------------------------------------------
 
 def check_registry() -> CheckResult:
@@ -297,7 +363,7 @@ def check_dependency_closure_profile(profile: str, profile_root: Path) -> CheckR
 
 
 # ---------------------------------------------------------------------------
-# Check 2 — Gate consistency: registry vs schema vs runner allowlist
+# Check 3 — Gate consistency: registry vs schema vs runner allowlist
 # ---------------------------------------------------------------------------
 
 def _registry_gates() -> set[str]:
@@ -376,7 +442,7 @@ def check_gate_consistency() -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# Check 3 — Public-resource privacy scan
+# Check 4 — Public-resource privacy scan
 # ---------------------------------------------------------------------------
 
 def _scan_text_for_privacy(text: str) -> list[str]:
@@ -450,7 +516,7 @@ def check_privacy_scan(roots: list[Path]) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# Check 4 — Generated artifacts under distributable folders
+# Check 5 — Generated artifacts under distributable folders
 # ---------------------------------------------------------------------------
 
 def check_generated_artifacts(roots: list[Path]) -> CheckResult:
@@ -471,7 +537,7 @@ def check_generated_artifacts(roots: list[Path]) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# Check 5 — Prompt frontmatter validation
+# Check 6 — Prompt frontmatter validation
 # ---------------------------------------------------------------------------
 
 def check_prompts() -> CheckResult:
@@ -535,8 +601,33 @@ def check_prompts_in_dir(prompts_dir: Path, label: str) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# Check 6 — Skill registry drift vs disk
+# Check 7 — Skill frontmatter + registry drift
 # ---------------------------------------------------------------------------
+
+def check_skill_frontmatter() -> CheckResult:
+    r = CheckResult(name="Skills — frontmatter contract")
+    count = 0
+    for skill_md in sorted(SKILLS_DIR.rglob("SKILL.md")):
+        count += 1
+        text = _read_text_safe(skill_md)
+        if text is None:
+            r.failures.append(f"{skill_md.relative_to(REPO_ROOT)}: cannot read")
+            continue
+        parsed = _split_frontmatter(text)
+        if parsed is None:
+            r.failures.append(
+                f"{skill_md.relative_to(REPO_ROOT)}: missing or invalid YAML frontmatter"
+            )
+            continue
+        meta, _ = parsed
+        for field_name in ("name", "description"):
+            if not str(meta.get(field_name, "")).strip():
+                r.failures.append(
+                    f"{skill_md.relative_to(REPO_ROOT)}: missing '{field_name}' in frontmatter"
+                )
+    r.info.append(f"validated {count} skill file(s)")
+    r.passed = not r.failures
+    return r
 
 def _disk_public_skills() -> set[str]:
     """Return set of '<category>/<skill>/' paths present on disk, excluding vmie."""
@@ -603,7 +694,18 @@ def _registry_listed_skills_from_file(registry_file: Path) -> set[str]:
 
 def check_skill_registry() -> CheckResult:
     r = CheckResult(name="Skill registry — _registry.md vs disk")
-    disk = _disk_public_skills()
+    expected, generation_error = _generated_registry_text()
+    if generation_error is not None or expected is None:
+        r.passed = False
+        r.failures.append(f"Could not generate expected registry: {generation_error}")
+        return r
+
+    disk, disk_error = _generated_public_skill_paths()
+    if disk_error is not None or disk is None:
+        r.passed = False
+        r.failures.append(f"Could not enumerate public skills: {disk_error}")
+        return r
+
     listed = _registry_listed_skills()
 
     missing_in_registry = disk - listed
@@ -612,6 +714,14 @@ def check_skill_registry() -> CheckResult:
         r.failures.append(f"Skill on disk but not in _registry.md: {s}")
     for s in sorted(extra_in_registry):
         r.failures.append(f"Skill listed in _registry.md but not on disk: {s}")
+
+    current_text = _read_text_safe(SKILLS_REGISTRY)
+    if current_text is None:
+        r.failures.append(f"Cannot read skill registry: {SKILLS_REGISTRY.relative_to(REPO_ROOT)}")
+    elif current_text != expected:
+        r.failures.append(
+            "Skill registry content does not match generated output from SKILL.md frontmatter"
+        )
 
     r.info.append(f"disk={len(disk)} listed={len(listed)}")
     r.passed = not r.failures
@@ -782,7 +892,7 @@ def check_liffey_content_restrictions(profile_root: Path) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# Check 7 — Golden-plan quality
+# Check 8 — Golden-plan quality
 # ---------------------------------------------------------------------------
 
 def check_golden_plan() -> CheckResult:
@@ -992,11 +1102,13 @@ def main(argv: list[str] | None = None) -> int:
             results.append(check_liffey_content_restrictions(profile_root))
     else:
         results = [
+            check_manifest_contract(),
             check_registry(),
             check_gate_consistency(),
             check_privacy_scan(roots),
             check_generated_artifacts(roots),
             check_prompts(),
+            check_skill_frontmatter(),
             check_skill_registry(),
             check_document_frontmatter_contract(),
             check_golden_plan(),

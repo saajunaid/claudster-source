@@ -7,6 +7,54 @@ applyTo: ".github/pipeline-state.json"
 
 This file is deployed and maintained by the junai VS Code extension. It is refreshed automatically when you run **Update Agent Pool** — do not edit it by hand. For project-specific context, edit `.github/copilot-instructions.md` instead (the extension manages only a small `<!-- junai:start -->` … `<!-- junai:end -->` section there; your content outside the markers is never touched).
 
+## Pool Deploy Model
+
+Pool deployment is now manifest-driven. `.github/pool.manifest.yml` is the source of truth for:
+
+- **managed** paths copied from the canonical pool into project `.github/`
+- **owned** paths that stay project-local and must not be overwritten during updates
+- **managed-region** files such as `copilot-instructions.md`, where only the `<!-- junai:start -->` … `<!-- junai:end -->` region is pool-managed
+- **private** paths excluded from deployment and promotion
+
+Each deployed project records:
+
+- `.github/.junai-profile` — optional profile selector. If missing or blank, deployment defaults to `full`.
+- `.github/.pool-version` — deployment stamp written after a successful update with `pool_sha`, `deployed_at`, and `profile`.
+
+Use the read-only pool commands to inspect drift:
+
+- `junai pool version`
+- `junai pool status --project <path>`
+- `junai pool diff --project <path>`
+- `junai pool promote --project <path> --reason "<why>"`
+- `junai pool nuggets review --project <path>`
+
+Profile-excluded skills are not treated as missing drift. Project-owned folders such as `agent-docs/`, `plans/`, `handoffs/`, and local runtime state must remain untouched by pool deployment. There is no automatic project-to-pool mirror; any promotion back to the pool requires an explicit review branch and human decision.
+
+## Pool Promotion and Nugget Review
+
+Use these rules when the task involves shared `.github/` resources:
+
+- `junai pool promote` is the only supported path for promoting reusable managed project changes back into the pool.
+- Promotion must stop on a `promote/<project-name>-<YYYYMMDD>` branch for review. Do not merge automatically.
+- `agent-docs/`, `plans/`, `handoffs/`, `.pool-version`, and other project-owned paths must stay local.
+- `junai pool nuggets review` reads `.github/agent-docs/nuggets-inbox.md`, rewrites durable lessons, and either keeps them local, promotes them through the promotion primitive, or discards them.
+- `nuggets-inbox.md` itself is runtime state. Never promote it to the pool.
+
+## Knowledge Capture Loop
+
+Release capture writes raw candidates only to `.github/agent-docs/nuggets-inbox.md`.
+
+The intended loop is:
+
+1. Pool deploy updates managed `.github/` resources and writes `.github/.pool-version`.
+2. Project CI appends raw release candidates to `agent-docs/nuggets-inbox.md`.
+3. A human runs `junai pool nuggets review --project <path>`.
+4. The reviewed lesson is either kept local, promoted to a pool review branch, or discarded.
+5. Approved pool changes fan out on a later deploy.
+
+Do not let CI write live instruction files. Do not auto-review candidates. Do not auto-promote pool changes.
+
 ## Activation Gate (Critical)
 
 Apply this instruction set only when at least one condition is true:
@@ -43,8 +91,8 @@ Each agent lives in `.github/agents/<name>.agent.md`. Each has a YAML frontmatte
 | **PRD** | Captures requirements into a formal PRD document |
 | **Implement** | Writes production code following the plan |
 | **Tester / Code Reviewer / Debug / Security Analyst** | Quality gates at various pipeline stages |
-| **Knowledge Transfer** | Institutional memory — extracts durable knowledge from completed sessions and writes to `docs/gold-nuggets-log.md` and instruction files |
-| **Janitor** | Housekeeping — archives stale artefacts, removes dead code |
+| **Knowledge Transfer** | Institutional memory — extracts durable knowledge from completed sessions, writes live instruction or runbook updates, and uses CI capture only for raw inbox candidates |
+| **Janitor** | Housekeeping — archives stale artefacts, removes dead code, and can report pool drift or pending nugget candidates without mutating them |
 
 ---
 
@@ -126,7 +174,7 @@ All inter-agent artefacts are registered here. Status values: `current` | `super
 
 ### Artefact Locations
 - `chain_id` format: `FEAT-YYYY-MMDD-{slug}` — links all artefacts for a feature
-- `agent-docs/` — **transient** inter-agent working space (not project docs)
+- `.github/agent-docs/` — **transient** inter-agent working space (not project docs)
 - `docs/` — **permanent** canonical project documentation
 - ADR path: `docs/architecture/agentic-adr/ADR-{feature-slug}.md`
 - Plans: `.github/plans/<feature-slug>.md`

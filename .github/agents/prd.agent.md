@@ -6,15 +6,15 @@ model: Claude Sonnet 4.6
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator
-    prompt: Stage complete. PRD artefact written to docs/prd/prd.md. Read pipeline-state.json and _routing_decision, then route.
+    prompt: Stage complete. PRD artefact written to .github/agent-docs/prd/<feature-slug>.md. Read pipeline-state.json and _routing_decision, then route.
     send: false
   - label: Design Architecture
     agent: Architect
-    prompt: Design the system architecture based on the PRD at docs/prd/prd.md.
+    prompt: Design the system architecture based on the PRD at .github/agent-docs/prd/<feature-slug>.md.
     send: false
   - label: Create Implementation Plan
     agent: Planner
-    prompt: Create a detailed implementation plan based on the PRD at docs/prd/prd.md.
+    prompt: Create a detailed implementation plan based on the PRD at .github/agent-docs/prd/<feature-slug>.md.
     send: false
 ---
 
@@ -48,7 +48,7 @@ You receive work from: **Planner** (refine requirements), **Architect** (formali
 When receiving a handoff:
 1. Review any architecture or plan context provided in the conversation
 2. Start with discovery questions — do not assume requirements are complete
-3. Reference existing PRDs in `agent-docs/prd/` for format consistency
+3. Reference existing PRDs in `.github/agent-docs/prd/` for format consistency
 
 
 ### Handoff Payload & Skill Loading
@@ -303,10 +303,10 @@ Use concrete, measurable criteria. Avoid vague terms.
 Before accepting any task, verify it falls within your responsibilities (requirements gathering, PRD creation, discovery interviews). If asked to write code, design architecture, or create plans: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artefact Output Protocol
-Write PRD documents to `agent-docs/prd/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts. Set `approval: pending` so the user can review before the Architect proceeds.
+Write PRD documents to `.github/agent-docs/prd/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `.github/agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts. Set `approval: pending` so the user can review before the Architect proceeds.
 
 ### 3. Chain-of-Origin (Intent Preservation)
-If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
+If a `chain_id` is provided or an Intent Document exists in `.github/agent-docs/intents/`:
 1. Read the Intent Document FIRST — before starting discovery
 2. Use the Intent Document's Goal, Success Criteria, and Constraints as the foundation for your PRD
 3. Cross-reference every FR/NFR back to the Intent Document
@@ -317,11 +317,11 @@ If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/
 Before starting: check if an upstream Intent Document has `approval: approved`. If it's `pending` or `revision-requested`, do NOT proceed — inform the user. After completing the PRD: set your artefact to `approval: pending` for user review.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artefact (e.g., Intent Document has contradictory constraints, unclear goals): write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact (e.g., Intent Document has contradictory constraints, unclear goals): write an escalation to `.github/agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
-Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
+Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
@@ -471,7 +471,7 @@ deferred:
 
 | Field | Value |
 |-------|-------|
-| `artefact_path` | `agent-docs/prd/<feature-slug>.md` |
+| `artefact_path` | `.github/agent-docs/prd/<feature-slug>.md` |
 | `required_fields` | `chain_id`, `status`, `approval`, `functional_requirements`, `non_functional_requirements` |
 | `approval_on_completion` | `pending` |
 | `next_agent` | `architect` |

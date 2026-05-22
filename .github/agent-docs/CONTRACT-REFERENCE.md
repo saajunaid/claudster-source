@@ -271,19 +271,7 @@ Every agent's contract follows this schema:
 | Field | Value |
 |-------|-------|
 | **Agent** | UX Designer |
-| `artefact_path` | `agent-docs/ux/ux-<feature>.md` |
-| `required_fields` | `chain_id`, `status`, `approval`, `user_flows`, `pain_points`, `success_criteria` |
-| `approval_on_completion` | `pending` |
-| `next_agent` | `ui-ux-designer` |
-
----
-
-### UI/UX Designer
-
-| Field | Value |
-|-------|-------|
-| **Agent** | UI/UX Designer |
-| `artefact_path` | `agent-docs/ux/design-<feature>.md` |
+| `artefact_path` | `agent-docs/ux/design-<feature>.md` or `agent-docs/ux/reviews/<feature>.md` |
 | `required_fields` | `chain_id`, `status`, `approval`, `component_specs`, `interaction_flows`, `brand_tokens` |
 | `approval_on_completion` | `pending` |
 | `next_agent` | `frontend-developer` or `streamlit-developer` |

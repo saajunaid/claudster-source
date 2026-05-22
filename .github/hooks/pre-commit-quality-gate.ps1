@@ -4,6 +4,22 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "[hook] pre-commit quality gate"
 
+if (Test-Path "validate_pool.py") {
+    $pythonCmd = $null
+    if (Test-Path ".venv\\Scripts\\python.exe") {
+        $pythonCmd = ".venv\\Scripts\\python.exe"
+    } elseif (Get-Command python -ErrorAction SilentlyContinue) {
+        $pythonCmd = "python"
+    } elseif (Get-Command py -ErrorAction SilentlyContinue) {
+        $pythonCmd = "py -3"
+    }
+
+    if ($pythonCmd) {
+        Write-Host "[hook] python validate_pool.py"
+        Invoke-Expression "$pythonCmd validate_pool.py"
+    }
+}
+
 $isPythonRepo = (Test-Path "pyproject.toml") -or (Test-Path "requirements.txt")
 $isNodeRepo = Test-Path "package.json"
 

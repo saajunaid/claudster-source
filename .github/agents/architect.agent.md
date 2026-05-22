@@ -78,7 +78,7 @@ You receive work from: **PRD** (design for requirements), **Planner** (review ar
 
 When receiving a handoff:
 1. Read the PRD or plan context provided — identify key constraints and non-functional requirements
-3. Check `agent-docs/architecture/` for existing architecture artefacts to stay consistent
+3. Check `.github/agent-docs/architecture/` for existing architecture artefacts to stay consistent
 4. Reference existing architecture documents for the current system design
 
 
@@ -228,7 +228,7 @@ Before designing UI components, validate that the target framework (from `projec
 
 ### Diagram Format: draw.io (MANDATORY)
 
-All architecture diagrams MUST be produced as **draw.io XML** saved to `.drawio` files in `agent-docs/architecture/diagrams/`.
+All architecture diagrams MUST be produced as **draw.io XML** saved to `.drawio` files in `.github/agent-docs/architecture/diagrams/`.
 
 **Required**:
 - Load `.github/skills/media/draw-io/SKILL.md` before creating any diagram
@@ -360,7 +360,7 @@ Brief overview of system and architectural approach.
 
 #### System Context
 
-Create a **draw.io system context diagram** saved to `agent-docs/architecture/diagrams/system-context.drawio`.
+Create a **draw.io system context diagram** saved to `.github/agent-docs/architecture/diagrams/system-context.drawio`.
 
 The diagram must show:
 - Person: `<ORG_NAME>` User (from `project-config.md` profile)
@@ -372,7 +372,7 @@ Reference in markdown: `![System Context](diagrams/system-context.drawio.png)`
 
 #### Component Architecture
 
-Create a **draw.io component diagram** saved to `agent-docs/architecture/diagrams/component-architecture.drawio`.
+Create a **draw.io component diagram** saved to `.github/agent-docs/architecture/diagrams/component-architecture.drawio`.
 
 The diagram must show layered architecture:
 - Presentation Layer: UI Pages, Components
@@ -537,7 +537,7 @@ Architecture has two homes with distinct purposes — keep both current:
 
 | Location | Purpose | Lifecycle |
 |----------|---------|-----------|
-| `agent-docs/architecture/` | **Decision artefacts** — point-in-time design records tied to a `chain_id`, with approval gates. Janitor archives after 30 days. | Transient |
+| `.github/agent-docs/architecture/` | **Decision artefacts** — point-in-time design records tied to a `chain_id`, with approval gates. Janitor archives after 30 days. | Transient |
 | `docs/Architecture.md` + `docs/architecture/` | **Canonical project docs** — cumulative, always reflects the current system state. Read by developers and all agents. | Permanent |
 | `docs/architecture/agentic-adr/` | **Pipeline-produced ADRs** — final ADR documents published by this agent. Path convention distinguishes pipeline-authored decisions from manually written docs. | Permanent |
 
@@ -547,13 +547,13 @@ After your architecture artefact receives `approval: approved` and implementatio
 
 1. **Update `docs/Architecture.md`** — consolidate approved design changes into the relevant sections (component descriptions, data flows, NFRs, tech decisions)
 2. **Publish ADR** — write (or copy) the final Architecture Decision Record to `docs/architecture/agentic-adr/ADR-{feature-slug}.md`. This is the canonical ADR path for all pipeline-produced decisions. Do NOT write ADRs directly to `docs/architecture/ADR-*.md`.
-3. **Sync diagrams** — copy final `.drawio` files from `agent-docs/architecture/diagrams/` to `docs/architecture/` so the project docs reference current diagrams
+3. **Sync diagrams** — copy final `.drawio` files from `.github/agent-docs/architecture/diagrams/` to `docs/architecture/` so the project docs reference current diagrams
 4. **Remove stale content** — if your new design supersedes a section in `docs/Architecture.md`, update or remove the old content (don't just append)
 
 ### What NOT to sync
 
 - Draft artefacts still at `approval: pending` — wait for approval
-- Design alternatives / rationale — these stay in `agent-docs/` only (decision log, not project docs)
+- Design alternatives / rationale — these stay in `.github/agent-docs/` only (decision log, not project docs)
 - Escalations — never copy to project docs
 
 ### Diagram cross-referencing
@@ -596,10 +596,10 @@ If the architecture deviates from or extends the approved PRD — e.g., adding c
 Before accepting any task, verify it falls within your responsibilities (architecture design, system diagrams, component design, NFR analysis). If asked to write production code or manage projects: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. For any UI architecture, verify the proposed approach is feasible in the project's tech stack. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artefact Output Protocol
-Write architecture documents and diagrams to `agent-docs/architecture/`. Include the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
+Write architecture documents and diagrams to `.github/agent-docs/architecture/`. Include the required YAML header (`status`, `chain_id`, `approval` fields). Update `.github/agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
-If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
+If a `chain_id` is provided or an Intent Document exists in `.github/agent-docs/intents/`:
 1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your architecture against the Intent Document's Goal and Constraints
 3. If your design would diverge from original intent, STOP and flag the drift
@@ -609,11 +609,11 @@ If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/
 Before starting work that depends on an upstream artefact (e.g., PRD): check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user. After completing your architecture: set your artefact to `approval: pending` for user review.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artefact (e.g., PRD has conflicting requirements, Intent Document constraints are infeasible): write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact (e.g., PRD has conflicting requirements, Intent Document constraints are infeasible): write an escalation to `.github/agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
-Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
+Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
@@ -760,7 +760,7 @@ deferred:
 
 | Field | Value |
 |-------|-------|
-| `artefact_path` | `agent-docs/architecture/<feature-slug>.md` |
+| `artefact_path` | `.github/agent-docs/architecture/<feature-slug>.md` |
 | `required_fields` | `chain_id`, `status`, `approval`, `component_breakdown`, `adr_list`, `nfr_compliance_matrix` |
 | `approval_on_completion` | `pending` |
 | `next_agent` | `plan` |

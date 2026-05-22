@@ -1,3 +1,8 @@
+---
+name: pipeline-state
+description: Read and write `.github/pipeline-state.json` to track stage progress, artefacts, supervision gates, and handoff payloads in the agent pipeline.
+---
+
 # Pipeline State Skill
 
 **Skill ID:** `workflow/pipeline-state`  

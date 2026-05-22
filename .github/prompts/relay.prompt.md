@@ -51,6 +51,13 @@ If multiple plans exist, identify the active one by evidence: recent edits, chec
 
 Write the file at the repository root as `relay.md`.
 
+### Metadata Source Rules
+
+- Use full ISO 8601 UTC timestamps for `Creation Date` and `Last Updated`, for example `2026-05-21T13:30:00Z`.
+- Use the exact current model identifier or display name from the chat/runtime model selector or session metadata for `Creating Model` and `Last Model Used`, for example `gpt-5.4`, `gpt-5.3-codex`, or `GPT-5.5`.
+- Do not infer the model from the agent name, product name, or broad family. Generic agent, product, or family labels are not acceptable when the runtime exposes a precise model name.
+- If the runtime does not expose an exact model identifier, record the most precise deterministic runtime identity available and say the exact ID was unavailable, for example `Codex (GPT-5-based; exact runtime model ID unavailable)`.
+
 ### New File Frontmatter
 
 Use this frontmatter when `relay.md` does not exist:
@@ -58,8 +65,8 @@ Use this frontmatter when `relay.md` does not exist:
 ```yaml
 ---
 Original Author: <agent/user>
-Creation Date: YYYY-MM-DD
-Creating Model: <model>
+Creation Date: YYYY-MM-DDTHH:MM:SSZ
+Creating Model: <exact runtime model identifier or display name>
 ---
 ```
 
@@ -74,8 +81,8 @@ When `relay.md` already exists:
 ```yaml
 ---
 Last Author: <agent/user>
-Last Updated: YYYY-MM-DD
-Last Model Used: <model>
+Last Updated: YYYY-MM-DDTHH:MM:SSZ
+Last Model Used: <exact runtime model identifier or display name>
 Original Author: <preserved>
 Creation Date: <preserved>
 Creating Model: <preserved>
@@ -88,7 +95,7 @@ If an original field is missing in an existing file, preserve any available meta
 
 Use exactly these top-level sections:
 
-```markdown
+```
 # Relay
 
 ## Purpose
@@ -120,7 +127,7 @@ Use exactly these top-level sections:
 - `Important Files To Read First`: List only verified paths, with one-line reasons.
 - `Validation State`: Include last known validation result and commands to run next. If not run, say not run.
 - `Open Questions Or Blockers`: Include ambiguity, missing access, failing checks, or decisions needed.
-- `Resume Prompt`: Provide a ready-to-paste prompt for a future agent.
+- `Resume Prompt`: Provide a ready-to-paste prompt for a future agent inside a bare fenced code block. The opening fence must be exactly three backticks with no language label.
 
 ## Resume Prompt Requirements
 
@@ -131,6 +138,8 @@ The resume prompt must be self-contained and short enough to paste into a new se
 3. Continue from the named plan or workstream.
 4. Run or preserve the listed validation commands as appropriate.
 5. Avoid overwriting unrelated user changes.
+
+Wrap the Resume Prompt content in triple backticks, but do not add a language label. The opening fence must be exactly three backticks and must not be labelled as `text`, `markdown`, or any other language.
 
 ## Step 4: Report Back
 

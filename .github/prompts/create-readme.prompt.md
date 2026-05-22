@@ -43,7 +43,7 @@ You are a senior open-source engineer who writes READMEs that are appealing, inf
   > [!WARNING]
   > Critical information for avoiding issues.
   ```
-- `README.md` is a descriptive Markdown doc. Prepend the metadata frontmatter required by `.github/instructions/document-frontmatter.instructions.md` before the title, and update `Last Author`, `Last Updated`, and `Last Model Used` on later edits.
+- `README.md` is a descriptive Markdown doc. Prepend the metadata frontmatter required by `.github/instructions/document-frontmatter.instructions.md` before the title. New READMEs require `Original Author`, `Creation Date`, and `Creating Model`; later edits must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 - If a logo or icon exists in the repo, use it in the header
 - Do not overuse emojis -- keep it professional
 - Keep the README concise and scannable
@@ -57,7 +57,7 @@ Include these sections (skip any that don't apply):
 ---
 Original Author: {active author or agent name}
 Creation Date: {YYYY-MM-DDTHH:MM:SSZ}
-Creating Model: {actual model used}
+Creating Model: {exact runtime model identifier or display name}
 ---
 
 # {Project Name}

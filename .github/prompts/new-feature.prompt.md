@@ -39,8 +39,8 @@ Intent Documents created or updated in this flow must follow `.github/instructio
 2. Follow the skill to structure the input into an Intent Document
 3. Ask clarifying questions to fill gaps (goal, success criteria, constraints, out of scope)
 4. Run the framework feasibility pre-check
-5. Write the Intent Document to `agent-docs/intents/`
-6. Update `agent-docs/ARTIFACTS.md`
+5. Write the Intent Document to `.github/agent-docs/intents/`
+6. Update `.github/agent-docs/ARTIFACTS.md`
 7. Present the Intent Document to the user for approval
 
 ---
@@ -54,8 +54,8 @@ Intent Documents created or updated in this flow must follow `.github/instructio
 1. Read `skills/workflow/intent-writer/SKILL.md`
 2. Follow the skill to create the Intent Document
 3. Run the framework feasibility pre-check
-4. Write the Intent Document to `agent-docs/intents/`
-5. Update `agent-docs/ARTIFACTS.md`
+4. Write the Intent Document to `.github/agent-docs/intents/`
+5. Update `.github/agent-docs/ARTIFACTS.md`
 6. Present the Intent Document to the user for approval
 
 ---
@@ -65,7 +65,7 @@ Intent Documents created or updated in this flow must follow `.github/instructio
 Present the Intent Document summary to the user:
 
 ```
-Intent Document created: agent-docs/intents/{chain_id}.md
+Intent Document created: .github/agent-docs/intents/{chain_id}.md
 
 Goal: {goal summary}
 Constraints: {key constraints}
@@ -89,7 +89,7 @@ Intent Document approved. Next step:
 
 Open a new chat and use the @prd agent with this prompt:
 
-"Read the Intent Document at agent-docs/intents/{chain_id}.md and create 
+"Read the Intent Document at .github/agent-docs/intents/{chain_id}.md and create 
 a Product Requirements Document. The chain_id is {chain_id}."
 ```
 

@@ -32,7 +32,7 @@ Before Phase 0, explicitly choose an execution mode:
 
 If the user does not explicitly request junai pipeline, use `generic`.
 
-**Document metadata:** Every plan, status tracker, and other descriptive Markdown artefact created by this skill must follow `.github/instructions/document-frontmatter.instructions.md`.
+**Document metadata:** Every plan, status tracker, and other descriptive Markdown artefact created by this skill must follow `.github/instructions/document-frontmatter.instructions.md`. The YAML frontmatter block must be the first content in the file. New documents require `Original Author`, `Creation Date`, and `Creating Model`; updated documents must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ---
 
@@ -149,11 +149,11 @@ Write the plan to the output file using the template below, section-by-section i
 
 ### Plan Template
 
-```markdown
+````
 ---
 Original Author: <active author or agent name>
 Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
-Creating Model: <actual model used>
+Creating Model: <exact runtime model identifier or display name>
 ---
 
 # Plan: [Project Name] — [Sub-title e.g. "React UI Build" or "Backend API + Data Pipeline"]
@@ -275,6 +275,8 @@ Tell the agent to read these SKILL.md files before starting:
 
 [SELF-CONTAINED, COPY-PASTE PROMPT — includes all context needed to execute the phase
 without reading any other document. Structure:]
+
+**Fence rule:** Every generated `### Phase Prompt` must be wrapped in a bare fenced code block. The opening fence must be exactly three backticks with no language label. Do not use labelled fences such as `text`, `markdown`, `bash`, or any other language for phase prompts.
 
 ```
 You are implementing Phase N ([Name]) of the [project name].
@@ -423,7 +425,7 @@ Every component across all phases must pass these gates before the plan is consi
 - [ ] `npm run build` (or equivalent) produces zero warnings
 - [ ] All tests pass
 [Add project-specific gate items here]
-```
+````
 
 ---
 
@@ -479,11 +481,11 @@ When revising an existing plan file, preserve `Original Author`, `Creation Date`
 Alongside the plan file, **always** create `.github/plans/<feature-slug>-status.md` using
 this template (one row per phase, populated from the Pre-Flight Scan):
 
-```markdown
+```
 ---
 Original Author: <active author or agent name>
 Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
-Creating Model: <actual model used>
+Creating Model: <exact runtime model identifier or display name>
 ---
 
 # Plan Status — [Project Name]

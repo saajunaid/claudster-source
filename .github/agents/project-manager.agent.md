@@ -171,10 +171,10 @@ Auto-load these skills when the condition matches — do not skip.
 Before accepting any task, verify it falls within your responsibilities (project coordination, work breakdown, progress tracking, risk management). If asked to implement code, design architecture, or write PRDs: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artefact Output Protocol
-When producing status reports, work breakdowns, or coordination documents for other agents, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
+When producing status reports, work breakdowns, or coordination documents for other agents, write them to `.github/agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `.github/agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
-If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
+If a `chain_id` is provided or an Intent Document exists in `.github/agent-docs/intents/`:
 1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Ensure all task breakdowns and status tracking align with the original intent
 3. Carry the same `chain_id` in all artefacts you produce
@@ -183,11 +183,11 @@ If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/
 When tracking progress, verify that upstream artefacts have `approval: approved` before marking dependent tasks as ready to start. Flag any `pending` or `revision-requested` artefacts as blockers.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `.github/agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
-Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
+Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
@@ -324,7 +324,7 @@ deferred:
 
 | Field | Value |
 |-------|-------|
-| `artefact_path` | `agent-docs/pm-update-<date>.md` (status update) |
+| `artefact_path` | `.github/agent-docs/pm-update-<date>.md` (status update) |
 | `required_fields` | `chain_id`, `status`, `blocked_by`, `next_actions` |
 | `approval_on_completion` | `pending` |
 | `next_agent` | `plan` (for new feature cycle) or `user` (for decision gate) |

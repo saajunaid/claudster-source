@@ -91,6 +91,18 @@ Auto-load these skills when the condition matches — do not skip.
 4. **Clean Comments**: Remove outdated/TODO comments
 5. **Simplify Logic**: Reduce unnecessary complexity
 
+## Pool Drift and Nugget Inbox (Read-Only)
+
+When the user asks about shared pool resources, copied `.github/` drift, or pending knowledge candidates, treat that as a reporting task unless they explicitly request a write flow.
+
+1. Run `junai pool status --project <path>` to detect stale pool deployments or missing stamps.
+2. Run `junai pool diff --project <path>` to report unpromoted managed drift.
+3. Check `.github/agent-docs/nuggets-inbox.md` and count only entries with `status: pending`.
+4. Recommend `junai pool nuggets review --project <path>` when pending candidates exist.
+5. Never run `junai pool promote` automatically.
+6. Never run `junai pool nuggets review` automatically.
+7. Never promote, review, or rewrite pool content unless the user explicitly asks for that write action.
+
 ## Cleanup Checklist
 
 ### Imports
@@ -176,12 +188,12 @@ if items:
 
 ## Artefact Hygiene (Agent-Docs Maintenance)
 
-In addition to code cleanup, you are responsible for maintaining the `agent-docs/` folder:
+In addition to code cleanup, you are responsible for maintaining the `.github/agent-docs/` folder:
 
-1. **Scan `agent-docs/ARTIFACTS.md`** for entries with `status: superseded` or `status: archived` that are older than 30 days
-2. **Move stale artefacts** to `agent-docs/.archive/` (preserve the file, just relocate it)
+1. **Scan `.github/agent-docs/ARTIFACTS.md`** for entries with `status: superseded` or `status: archived` that are older than 30 days
+2. **Move stale artefacts** to `.github/agent-docs/.archive/` (preserve the file, just relocate it)
 3. **Update the manifest** — remove the moved entry from the active table and note it was archived
-4. **Resolve cleared escalations** — check `agent-docs/escalations/` for items marked as resolved and archive them
+4. **Resolve cleared escalations** — check `.github/agent-docs/escalations/` for items marked as resolved and archive them
 5. **Never delete artefacts** — always archive, never permanently remove
 
 ---
@@ -191,13 +203,13 @@ In addition to code cleanup, you are responsible for maintaining the `agent-docs
 > **These protocols apply to EVERY task you perform. They are non-negotiable.**
 
 ### 1. Scope Boundary
-Before accepting any task, verify it falls within your responsibilities (code cleanup, formatting, dead code removal, import organization, artefact hygiene). If asked to implement features, fix bugs, or design systems: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
+Before accepting any task, verify it falls within your responsibilities (code cleanup, formatting, dead code removal, import organization, artefact hygiene, and read-only pool drift reporting). If asked to implement features, fix bugs, design systems, or mutate pool resources: state clearly what's outside scope, identify the correct agent or command, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artefact Output Protocol
-When producing cleanup reports or artefact hygiene summaries, write them to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
+When producing cleanup reports or artefact hygiene summaries, write them to `.github/agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `.github/agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
-If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
+If a `chain_id` is provided or an Intent Document exists in `.github/agent-docs/intents/`:
 1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your cleanup work against the Intent Document's Constraints
 3. Carry the same `chain_id` in all artefacts you produce
@@ -222,11 +234,11 @@ When your handoff includes \intent_references\ or \design_intent\:
 Before starting work that depends on an upstream artefact: check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `.github/agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
-Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
+Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:

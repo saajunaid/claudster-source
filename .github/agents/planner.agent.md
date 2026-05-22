@@ -357,7 +357,7 @@ Every implementation phase MUST include these sections OUTSIDE the prompt block 
 
 And these sections INSIDE the phase body (consumed by the implementing agent):
 
-4. **What to build** — per-deliverable subsections with data binding specs (exact JSON field paths for UI components), empty state message text, and `IMPORTANT:` warnings for known traps
+4. **What to build** — per-artefact subsections with data binding specs (exact JSON field paths for UI components), empty state message text, and `IMPORTANT:` warnings for known traps
 5. **Validation Checklist** — behavioral, testable criteria (not generic "tests pass" — specific behaviors like "KpiFlipCard flip animation works independently on each card")
 
 See the `writing-plans` skill for the full Enhanced Per-Phase Template.
@@ -454,7 +454,7 @@ Before finalizing any plan, validate against these known failure modes:
 | NFR-208 | PRD §4.2 | Phase 5, Step 1 (criterion: contrast ≥ 4.5:1) | ✅ Covered |
 | Risk-003 | Arch §9 | Phase 3, Step 3 (mitigation in Key Details) | ✅ Covered |
 | FR-260 | PRD §3.6 | Phase 6A (dedicated analysis phase) | ✅ Covered |
-| ALT-002 | Arch §7.4 | N/A | ⚠️ Out of Scope — rationale: deferred to v2.1 |
+| ALT-002 | Arch Â§7.4 | N/A | ⚠️ Out of Scope — rationale: deferred to v2.1 |
 ```
 
 4. **Any requirement without a plan step** must either:
@@ -622,10 +622,10 @@ When invoked via the **"Amend Plan"** handoff from the Debug agent, the Planner 
 Before accepting any task, verify it falls within your responsibilities (analyzing requirements, creating implementation plans, assigning agents/prompts). If asked to write production code: state clearly what's outside scope, identify the correct agent (typically `@implement`), and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artefact Output Protocol
-Write plans to `.github/plans/`. When producing analysis reports or assessments, write artefacts to `agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
+Write plans to `.github/plans/`. When producing analysis reports or assessments, write artefacts to `.github/agent-docs/` with the required YAML header (`status`, `chain_id`, `approval` fields). Update `.github/agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
-If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
+If a `chain_id` is provided or an Intent Document exists in `.github/agent-docs/intents/`:
 1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your plan against the Intent Document's Goal and Constraints
 3. If your plan would diverge from original intent, STOP and flag the drift
@@ -636,11 +636,11 @@ If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/
 Before starting work that depends on an upstream artefact (e.g., PRD, Architecture): check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user. After completing your plan: set your artefact to `approval: pending` for user review.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artefact (e.g., architecture has gaps, PRD requirements are contradictory): write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact (e.g., architecture has gaps, PRD requirements are contradictory): write an escalation to `.github/agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
-Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
+Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:

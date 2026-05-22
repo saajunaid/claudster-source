@@ -3,6 +3,23 @@ set -eu
 
 echo "[hook] pre-commit quality gate"
 
+if [ -f "validate_pool.py" ]; then
+  if [ -x ".venv/bin/python" ]; then
+    PYTHON_BIN=".venv/bin/python"
+  elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+  elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
+  else
+    PYTHON_BIN=""
+  fi
+
+  if [ -n "$PYTHON_BIN" ]; then
+    echo "[hook] python validate_pool.py"
+    "$PYTHON_BIN" validate_pool.py
+  fi
+fi
+
 if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ]; then
   if command -v ruff >/dev/null 2>&1; then
     echo "[hook] ruff check ."

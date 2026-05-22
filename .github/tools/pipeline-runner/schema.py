@@ -6,7 +6,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-StageStatus = Literal["not_started", "in_progress", "complete", "blocked"]
+StageStatus = Literal["not_started", "in_progress", "complete", "blocked", "skipped"]
 PipelineMode = Literal["supervised", "assisted", "autopilot"]
 
 

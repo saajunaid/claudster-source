@@ -303,7 +303,7 @@ Produce a structured report (see Output Format below).
 
 The report is written to the path specified by the invoking agent. Default: `.github/agent-docs/preflight-report.md`
 
-Apply `.github/instructions/document-frontmatter.instructions.md` when creating or updating the report.
+Apply `.github/instructions/document-frontmatter.instructions.md` when creating or updating the report. The YAML frontmatter block must be the first content in the file. New reports require `Original Author`, `Creation Date`, and `Creating Model`; revised reports must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ```markdown
 ---
@@ -320,7 +320,7 @@ counts:
 decisions_pending: <N>
 Original Author: <active author or agent name>
 Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
-Creating Model: <actual model used>
+Creating Model: <exact runtime model identifier or display name>
 ---
 
 # Preflight Validation Report

@@ -121,7 +121,7 @@ After reading `pipeline-state.json` (and clearing any stale halt above), classif
 | `file_missing` | `pipeline-state.json` does not exist on disk | No pipeline has been created |
 | `uninitialized` | `current_stage` is absent, null, or empty string **OR** `project` is absent/null/empty/placeholder (`"<project-name>"`) **OR** `feature` is absent/null/empty/placeholder (`"<feature-slug>"`) **OR** `stages` is `{}` (empty object) | State file exists but no pipeline has been properly initialised |
 | `closed` | `current_stage == "closed"` | Previous pipeline completed; no active work |
-| `active` | `current_stage` is a known stage (`intent`, `prd`, `architect`, `plan`, `implement`, `tester`, `review`) **AND** `stages` is non-empty | Pipeline is in progress |
+| `active` | `current_stage` is a known stage in `.github/tools/pipeline-runner/agents.registry.json` **AND** `stages` is non-empty | Pipeline is in progress |
 | `corrupted` | `current_stage` is non-empty but NOT a known stage name (e.g. typo like `"implment"`) **OR** `_routing_decision` exists but is not a valid object with `next_stage` and `blocked` fields | State is malformed — cannot safely route |
 
 > **Evaluation order:** Check `file_missing` first, then `uninitialized`, then `closed`, then `active`. If none match, classify as `corrupted`.
@@ -162,22 +162,25 @@ After loading state, read `_notes._routing_decision` and branch on `pipeline_mod
 3. If `_routing_decision` does not exist:
    - **State Health guard:** If state health is NOT `active` (i.e. `file_missing`, `uninitialized`, `closed`, or `corrupted`) → this case was already handled by State Validation above. Do NOT proceed further — do not fall through to the `current_stage` checks below.
    - If `current_stage: intent` (state health is `active`):
-     - **Disk-scan (all modes):** Before running any intake interview, search for artefacts on disk using the `feature` slug from `pipeline-state.json`:
-       - **Plan:** `plans/<feature-slug>.md` (root only — a file in `plans/backlog/` is a backlog item, not a ready plan)
-       - **PRD:** any `.md` file in `agent-docs/prd/` whose filename contains the feature slug
-       - **ADR/arch:** any `.md` file in `agent-docs/architecture/` whose filename contains the feature slug
+     - **Artefact discovery (all modes):** Before running any intake interview, run `junai pipeline discover-artefacts --feature <feature-slug> --write-registry` and use its JSON result as the source of truth. If the command is unavailable, fall back to the disk-scan rules below.
+     - **Disk-scan fallback:** Search for artefacts on disk using the `feature` slug from `pipeline-state.json`:
+       - **Plan:** `.github/plans/<feature-slug>.md`, then any `.md` file in `.github/plans/` whose filename contains the feature slug. Ignore `.github/plans/backlog/` because backlog items are not ready implementation plans. Also check legacy `plans/<feature-slug>.md` only as a fallback.
+       - **PRD:** any `.md` file in `.github/agent-docs/prd/` or legacy `agent-docs/prd/` whose filename contains the feature slug.
+       - **ADR/arch:** any `.md` file in `.github/agent-docs/architecture/`, legacy `agent-docs/architecture/`, `docs/architecture/agentic-adr/`, or `docs/architecture/` whose filename contains the feature slug.
 
        Use the table below to determine the correct entry stage:
        | What exists on disk | Auto-detected entry stage |
        |---|---|
-       | `plans/<feature-slug>.md` exists | `implement` (pre-approve intent, adr, plan gates) |
-       | PRD matching feature slug but no plan | `plan` (pre-approve intent, adr gates) |
-       | ADR/arch matching feature slug but no PRD | `architect` (pre-approve intent gate) |
+       | Approved plan exists | `preflight` (pre-approve intent, adr, plan gates; validate the plan before implementation) |
+       | Approved plan exists and a current PASS preflight report already validates that exact plan | `implement` (pre-approve intent, adr, plan, and plan_validated gates) |
+       | PRD matching feature slug but no plan | `architect` if no ADR exists, otherwise `plan` (pre-approve intent gate; pre-approve adr gate only when an approved ADR exists) |
+       | ADR/arch matching feature slug but no PRD | `plan` if the architecture is approved, otherwise `architect` for approval/rework |
        | Nothing matching feature slug | `intent` → `prd` (normal intake) |
 
        Then proceed based on mode:
        - **`autopilot`:** If artefacts found — immediately execute the §9 fast-track advancement procedure. No user message required. If nothing found — normal intake, auto-proceed after `intent_approved`.
        - **`supervised` / `assisted`:** If artefacts found — present the detected entry stage to the user: *"I found existing artefacts for `<feature-slug>`: [list]. Recommend entering at `<stage>` and pre-approving upstream gates. Confirm to proceed, or say 'start fresh' to run full intake."* Wait for user confirmation before executing the fast-track. If nothing found — Run Intake Protocol (§9) normally.
+       - **Source artefact rule:** Every skipped upstream stage still needs an artefact path because runner guards enforce `artefact_exists` and, for PRD/architecture/plan stages, `artefact_approved`. Prefer the matching stage artefact when it exists. If the user is explicitly fast-tracking from a single approved plan, record that approved plan path as the source artefact for skipped intent/PRD/architecture/plan stages and note the shortcut in `_notes._routing_decision.reason`.
    - If `current_stage` is any other known stage (state health is `active`, stage is not `intent`) → possible stage drift or mid-pipeline re-entry. Run Stage Drift / Re-entry Resync (§9.2) **before** any routing.
 
 #### Pipeline Status Banner (required — bottom of every response)
@@ -265,9 +268,23 @@ Read `pipeline_mode` from `pipeline-state.json` root (default: `supervised`).
 |------|-----------|
 | `supervised` | Present every routing decision as a handoff button (`send: false`). Wait for user click at every stage transition AND every supervision gate. |
 | `assisted` | Invoke agents automatically at every transition (no handoff button needed). Stop and ask the user at every supervision gate. |
-| `autopilot` ⚠️ *beta* | Invoke agents automatically. Only `intent_approved` requires user approval. All other gates auto-satisfied (call `satisfy_gate` immediately after the relevant stage). On tester budget exhaustion, auto-routes to Debug (T-28). On all other halts, write `PIPELINE_HALT.md` + fire desktop notification. See §4 for smart gate rules. |
+| `autopilot` ⚠️ *beta* | Invoke agents automatically. Only `intent_approved` requires user approval. All other gates auto-satisfied (call `satisfy_gate` immediately after the relevant stage). On tester budget exhaustion, auto-routes to Debug (T-28). On all other halts, write `PIPELINE_HALT.md` + fire desktop notification. See Â§4 for smart gate rules. |
 
 The mode is evaluated at every transition and can be changed mid-pipeline via `set_pipeline_mode` MCP tool or by saying *"Switch to [mode] mode"* in chat.
+
+#### 3.1.1 Autopilot From Approved Plan
+
+When the user explicitly provides an approved implementation plan and asks for unattended execution, use the runner-backed fast-track path:
+
+1. Run `junai pipeline discover-artefacts --feature <feature-slug> --write-registry`.
+2. Confirm the selected plan has `approval: approved`.
+3. Run `junai pipeline fast-track --from-plan <plan-path> --entry preflight --mode autopilot`.
+4. Route to Preflight from `_notes._routing_decision`.
+5. If Preflight passes, satisfy `plan_validated`, route to Implement, and continue phase-by-phase without asking for user approval.
+6. If Preflight fails, route to Planner for corrections. Do not override a failed validation in autopilot.
+7. If an agent raises a blocking ambiguity, writes a blocking escalation, exhausts retries, or the runner returns `blocked: true`, halt with `PIPELINE_HALT.md`.
+
+This is possible only when the plan is already approved and complete enough for Preflight. Autopilot removes approval prompts; it does not remove validation, testing, review, retry budgets, or halt conditions.
 
 > **Mid-pipeline mode change rule (GAP-M1):** If the user switches mode while a routing decision is already pending — i.e., `_routing_decision` exists in `pipeline-state.json` and is not blocked — **immediately re-apply the routing logic under the new mode in the same response.** Do not wait for the next user message. Procedure:
 > 1. Call `set_pipeline_mode` to persist the new mode.
@@ -284,7 +301,7 @@ The mode is evaluated at every transition and can be changed mid-pipeline via `s
 All stage-to-agent mappings and pipeline transitions are defined in a **single source of truth**:
 
 ```
-tools/pipeline-runner/agents.registry.json
+.github/tools/pipeline-runner/agents.registry.json
 ```
 
 You do not need to memorise the routing table. When you need to know which agent handles a stage, read that file.
@@ -465,7 +482,7 @@ When a specialist agent completes and control returns to Orchestrator, verify th
 1. **Read the prescribed tier** from `_notes.handoff_payload.evidence_tier` (NOT from the Plan artefact — the handoff_payload is the immutable source for this stage).
 2. **Verify by tier**:
    - **`standard`**: Artefact exists at declared path + `stages[stage].status == "complete"` + required fields present in artefact (§2 pre-flight handles this on next routing).
-   - **`anchor`**: All `standard` checks PLUS: an `agent-docs/anchor-evidence-*.md` file exists with `## Baseline`, `## Verification`, and `## Evidence Bundle` sections.
+   - **`anchor`**: All `standard` checks PLUS: an `.github/agent-docs/anchor-evidence-*.md` file exists with `## Baseline`, `## Verification`, and `## Evidence Bundle` sections.
 3. **Skill compliance**: Check that `_notes._skills_loaded[]` includes every path from `handoff_payload.required_skills[]`. If skills are missing, warn but do not block.
 4. **On failure**: Block the stage and request the specialist to complete the missing evidence. Do NOT advance to the next stage.
 5. **If `evidence_tier` is absent or `null`**: Skip enforcement (backwards compatibility with pre-Wave 4 pipelines).
@@ -484,7 +501,7 @@ When a specialist completes a phase, check whether intent verification is requir
 5. **Hotfix exception**: If `pipeline-state.json` has `"type": "hotfix"`, skip this gate — hotfixes have no intent references.
 
 ### 6. Escalation Handling
-If an escalation file exists in `agent-docs/escalations/` with severity `blocking`:
+If an escalation file exists in `.github/agent-docs/escalations/` with severity `blocking`:
 - Do NOT auto-proceed
 - Surface the escalation to the user with the file path and severity
 - Wait for user instruction before continuing
@@ -493,7 +510,7 @@ If an escalation file exists in `agent-docs/escalations/` with severity `blockin
 On first invocation:
 1. Check if `.github/pipeline-state.json` exists — if not, prompt user for `feature` name and initialise it
 2. Read `project-config.md` for project context
-3. Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there.
+3. Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there.
 4. Report current pipeline position to the user before taking any action
 
 ### 8. What You Do NOT Do
@@ -601,12 +618,12 @@ When a user initiates a session without an existing pipeline in progress, map th
 |---|---|---|---|---|
 | "I have an idea / new feature" | `intent` → `prd` | None — all gates require approval | supervised | Unknown scope; gates protect against scope drift |
 | "I have a PRD, need architecture" | `architect` | `intent_approved: true` | supervised | Architecture decisions benefit from human review gates |
-| "I have a plan, need implementation" | `implement` | `intent_approved: true`, `adr_approved: true`, `plan_approved: true` | supervised | Multi-phase work; human oversight per phase |
+| "I have a plan, need implementation" | `preflight` | `intent_approved: true`, `adr_approved: true`, `plan_approved: true` | supervised | Existing plan should be validated against the current codebase before implementation |
 | "Bug/hotfix — known root cause" | `implement` (fast-track) | All gates auto-approved; note `type: hotfix` in state | either | Safe: scope locked. Auto fine if confident, supervised if uncertain |
 | "Bug/hotfix — unknown root cause" | `debug` (fast-track) | All gates auto-approved; note `type: hotfix` in state | supervised | Debug output may need human interpretation before implement |
 | "Deferred items from `pipeline-state.json`" | `implement` (fast-track) | All gates auto-approved; load `deferred[]` as scope | assisted | Scope pre-locked from previous run; low re-entry risk |
 
-**Mode recommendation output (supervised/assisted only):**
+**Mode recommendation output (required) (supervised/assisted only):**
 In `supervised` or `assisted` mode, output this line before any routing action:
 
 > **Recommended mode: `<supervised|assisted|autopilot>`** — <one-sentence rationale>
@@ -620,9 +637,27 @@ Initialise `pipeline-state.json` at the correct starting stage and pre-set the a
 
 #### Fast-track advancement procedure (required when "Entry stage ≠ intent")
 
-When §9 table says "Entry stage: `implement`" (or any stage other than `intent`), the pipeline-runner always starts at `intent` after a reset. You MUST advance through intermediate stages using MCP tools — NEVER write `current_stage` directly viaEditFiles.
+Preferred command:
 
-The tool call sequence to reach `implement` from a fresh `intent` state:
+```
+junai pipeline fast-track --from-plan <approved-plan-path> --entry preflight --mode <supervised|assisted|autopilot>
+```
+
+Use `--entry implement` only when `junai pipeline discover-artefacts` reports that the exact plan already has a PASS preflight report. In autopilot, this command is the supported "run from this plan without more user approvals" entrypoint:
+
+```
+junai pipeline fast-track --from-plan <approved-plan-path> --entry preflight --mode autopilot
+```
+
+After the command succeeds, read `_notes._routing_decision` and route to the reported `target_agent` normally. Do not manually recreate the state alignment unless the command is unavailable.
+
+Manual fallback:
+
+When §9 table says "Entry stage: `preflight`", `implement`, or any stage other than `intent`, the pipeline-runner always starts at `intent` after a reset. You MUST advance through intermediate stages using MCP tools — NEVER write `current_stage` directly via editFiles.
+
+Before advancing, make sure each skipped stage has an artefact path that exists on disk. Use the real matching stage artefact when available; for an explicitly approved plan-only fast-track, use the approved plan path as the source artefact for skipped upstream stages so `artefact_exists` / `artefact_approved` guards still pass.
+
+The tool call sequence to reach `preflight` from a fresh `intent` state:
 
 ```
 # 1. Satisfy all pre-approved gates (in any order)
@@ -633,13 +668,20 @@ satisfy_gate(gate="plan_approved")     # if pre-approved
 # 2. Advance each stage in sequence using notify_orchestrator
 #    result_status MUST match the transition "event" in agents.registry.json
 #    Standard stage advancement = "complete" (NOT "approved")
-notify_orchestrator(stage_completed="intent",    result_status="complete")   → current_stage becomes prd
-notify_orchestrator(stage_completed="prd",       result_status="complete")   → current_stage becomes architect
-notify_orchestrator(stage_completed="architect", result_status="complete")   → current_stage becomes plan
-notify_orchestrator(stage_completed="plan",      result_status="complete")   → current_stage becomes implement
+notify_orchestrator(stage_completed="intent",    result_status="complete", artefact_path="<source-artefact>") → current_stage becomes prd
+notify_orchestrator(stage_completed="prd",       result_status="complete", artefact_path="<source-artefact>") → current_stage becomes architect
+notify_orchestrator(stage_completed="architect", result_status="complete", artefact_path="<source-artefact>") → current_stage becomes plan
+notify_orchestrator(stage_completed="plan",      result_status="complete", artefact_path="<approved-plan>")   → current_stage becomes preflight
 ```
 
-> **Why this matters:** "Entry stage: `implement`" means "the pipeline should be at `implement` when work starts." It does NOT mean "write `implement` directly into `current_stage`." The runner advances the field via `notify_orchestrator`. Skipping this and writing the field directly bypasses the transition guard and produces a corrupted state.
+To enter `implement` from an already validated plan, complete the sequence above and then advance preflight:
+
+```
+satisfy_gate(gate="plan_validated")  # only after a PASS preflight result for this exact plan
+notify_orchestrator(stage_completed="preflight", result_status="passed", artefact_path=".github/agent-docs/preflight-report.md") → current_stage becomes implement
+```
+
+> **Why this matters:** "Entry stage: `implement`" means "the pipeline should be at `implement` when work starts." It does NOT mean "write `implement` directly into `current_stage`." The runner advances the field via `notify_orchestrator`. Skipping this and writing the field directly bypasses transition guards and produces a corrupted state.
 
 **Reality check before fast-track:** After `pipeline_reset`, re-read `pipeline-state.json` to confirm `current_stage: intent` before starting the advancement sequence. If `current_stage` is already at the desired entry stage (e.g. a prior session completed partial advancement), skip the already-passed steps.
 
@@ -747,7 +789,7 @@ Shall I start with item 1?
    Actual state: stages [<list>] appear complete based on commits
    ```
 2. Ask user to confirm: *"Based on git history, it looks like [stages] are done. Should I align the pipeline state and route to [next_stage]?"*
-3. If confirmed: run `pipeline advance --stage <actual_current_stage>` to sync state file
+3. If confirmed: run `junai pipeline advance --completed-stage <actual_current_stage> --result-status <transition_event> --artefact-path <existing_artefact_path>` to sync state file. Use the exact `result_status` event from `.github/tools/pipeline-runner/agents.registry.json` (`complete`, `passed`, `approved`, etc.).
 4. Commit the corrected state:
    ```
    git add .github/pipeline-state.json
@@ -760,7 +802,7 @@ Shall I start with item 1?
 **Supervised / assisted mode:** Ask the user directly: *"What stages have been completed since the last Orchestrator session? I'll align the state before routing."* Never guess. Never advance a stage without user confirmation when drift is ambiguous. If re-entry drift is repeated across sessions, surface it as a warning and recommend switching to supervised mode until the pipeline is stable.
 
 **Autopilot mode:**
-- If drift is **unambiguous** — git log contains conventional commits clearly attributable to specific stages for this feature slug (e.g. `feat(prd): distilbert-intent-classifier`, `feat(plan): distilbert-intent-classifier`) and the full stage sequence can be reconstructed without guessing: auto-confirm alignment, run `pipeline advance --stage <actual_current_stage>`, commit the state correction (`chore(pipeline): resync state — drift detected on re-entry`), and proceed. No user message needed.
+- If drift is **unambiguous** — git log contains conventional commits clearly attributable to specific stages for this feature slug (e.g. `feat(prd): distilbert-intent-classifier`, `feat(plan): distilbert-intent-classifier`) and the full stage sequence can be reconstructed without guessing: auto-confirm alignment, run `junai pipeline advance --completed-stage <actual_current_stage> --result-status <transition_event> --artefact-path <existing_artefact_path>`, commit the state correction (`chore(pipeline): resync state — drift detected on re-entry`), and proceed. No user message needed.
 - If drift is **ambiguous** — no conventional commits, conflicting signals, or git history is insufficient to reconstruct the stage sequence: write `PIPELINE_HALT.md` with reason `"stage drift — ambiguous re-entry in autopilot; manual resync required"` and halt. Do NOT guess. Treat this identically to any other autopilot halt condition (notify user, do not auto-proceed).
 
 ---
@@ -887,7 +929,7 @@ Recovery path: see below
 | Artefact not approved (guard: `artefact_approved` failed) | "The artefact at `<path>` does not have `approval: approved` in its YAML header." | User adds approval header → say *"Artefact approved, resume pipeline"* |
 | Gate unsatisfied | "Gate `<gate_name>` must be satisfied before advancing." | Review the gate content → say *"Approve <gate_name>"* → orchestrator calls `satisfy_gate` MCP tool |
 | Tester retry budget exhausted (T-15) | "Tester has failed `<retry_count>` times (max: `<max_retries>`). Pipeline blocked." | User reviews failures → say *"Route to debug agent"* → orchestrator manually advances to debug stage |
-| Blocking escalation exists | "A blocking escalation exists in `agent-docs/escalations/`. Pipeline cannot advance." | User resolves escalation → updates severity to `resolved` → say *"Escalation resolved, unblock pipeline"* → orchestrator clears `blocked_by` and re-runs runner |
+| Blocking escalation exists | "A blocking escalation exists in `.github/agent-docs/escalations/`. Pipeline cannot advance." | User resolves escalation → updates severity to `resolved` → say *"Escalation resolved, unblock pipeline"* → orchestrator clears `blocked_by` and re-runs runner |
 | Guard failed on stage completion (e.g. `all_phases_done` — phase count mismatch) | "Pipeline blocked at `<stage>` — guard failed: `<reason>`. `current_stage` is now LOCKED as BLOCKED, blocking all further tool calls." | See **T-27 recovery sequence** below |
 
 > **T-27 recovery sequence** (use when `blocked_by` is set AND `current_stage` is "BLOCKED" due to a phase/guard mismatch, not a true fatal error):
@@ -919,7 +961,7 @@ Recovery path: see below
    **Time:** <ISO timestamp>
    ---
    To resume: open Copilot Chat → select Orchestrator → say "resume pipeline"
-   Resolve the blocking issue first. If an escalation caused this halt, see `agent-docs/escalations/`.
+   Resolve the blocking issue first. If an escalation caused this halt, see `.github/agent-docs/escalations/`.
    ```
 2. Fire a desktop notification via `run_command` MCP tool:
    ```

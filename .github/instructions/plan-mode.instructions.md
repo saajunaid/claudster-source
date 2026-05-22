@@ -192,7 +192,7 @@ When exiting, summarize:
 Exiting plan mode. Here's what we established:
 
 **Project**: {name}
-**PRD Location**: docs/prd/prd.md
+**PRD Location**: `.github/agent-docs/prd/<feature-slug>.md`
 **Next Steps**: 
 1. Architect agent for system design
 2. SQL Expert agent for database schema

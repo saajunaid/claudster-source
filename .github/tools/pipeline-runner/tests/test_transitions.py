@@ -167,7 +167,7 @@ def test_t11_ux_research_to_ui_design(make_state, workspace_root: Path) -> None:
     assert result.transition_id == "T-11"
 
 
-def test_t12_ui_design_to_implement(make_state, workspace_root: Path) -> None:
+def test_t12_ui_design_to_preflight(make_state, workspace_root: Path) -> None:
     artefact = workspace_root / "ui.md"
     _write_frontmatter(artefact)
     state = make_state(
@@ -181,7 +181,7 @@ def test_t12_ui_design_to_implement(make_state, workspace_root: Path) -> None:
         workspace_root,
     )
     assert result.transition_id == "T-12"
-    assert result.next_stage == "implement"
+    assert result.next_stage == "preflight"
 
 
 def test_t13_implement_loop_when_more_phases_remain(make_state, workspace_root: Path) -> None:
@@ -460,14 +460,15 @@ def test_t27_stays_blocked_if_blocked_by_present(make_state, workspace_root: Pat
     assert result.blocked is True
 
 
-def test_unknown_stage_event_blocks(make_state, workspace_root: Path) -> None:
+def test_t40_janitor_complete_closes_pipeline(make_state, workspace_root: Path) -> None:
     state = make_state("janitor")
     result = compute_next_transition(
         state,
         CompletionEvent(stage_completed="janitor", result_status="complete"),
         workspace_root,
     )
-    assert result.blocked is True
+    assert result.transition_id == "T-40"
+    assert result.next_stage == "closed"
 
 
 def test_invalid_event_blocks(make_state, workspace_root: Path) -> None:

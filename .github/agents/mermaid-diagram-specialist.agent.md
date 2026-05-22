@@ -640,10 +640,10 @@ On entry, read `_notes.handoff_payload` from `pipeline-state.json`. If `required
 Before accepting any task, verify it falls within your responsibilities (creating Mermaid diagrams for documentation, architecture, workflows, and data models). If asked to create draw.io diagrams, write code, or design systems: state clearly what's outside scope, identify the correct agent, and do NOT attempt partial work. Do not delete files outside your artefact scope without explicit user approval.
 
 ### 2. Artefact Output Protocol
-When producing diagrams for inter-agent communication, write them to the appropriate `agent-docs/` subfolder with the required YAML header (`status`, `chain_id`, `approval` fields). Update `agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
+When producing diagrams for inter-agent communication, write them to the appropriate `.github/agent-docs/` subfolder with the required YAML header (`status`, `chain_id`, `approval` fields). Update `.github/agent-docs/ARTIFACTS.md` manifest after creating or superseding artefacts.
 
 ### 3. Chain-of-Origin (Intent Preservation)
-If a `chain_id` is provided or an Intent Document exists in `agent-docs/intents/`:
+If a `chain_id` is provided or an Intent Document exists in `.github/agent-docs/intents/`:
 1. Read the Intent Document FIRST — before any other agent's artefacts
 2. Cross-reference your diagram against the Intent Document's Goal and Constraints
 3. Carry the same `chain_id` in all artefacts you produce
@@ -668,11 +668,11 @@ When your handoff includes \intent_references\ or \design_intent\:
 Before starting work that depends on an upstream artefact: check if that artefact has `approval: approved`. If upstream is `pending` or `revision-requested`, do NOT proceed — inform the user.
 
 ### 5. Escalation Protocol
-If you find a problem with an upstream artefact: write an escalation to `agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
+If you find a problem with an upstream artefact: write an escalation to `.github/agent-docs/escalations/` with severity (`blocking`/`warning`). Do NOT silently work around upstream problems.
 
 ### 6. Bootstrap Check
 First action on any task: read `project-config.md`. If the profile is blank AND placeholder values are empty, tell the user to run the onboarding prompt first (`.github/prompts/onboarding.prompt.md`).
-Read `agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
+Read `.github/agent-docs/GLOSSARY.md` for canonical terminology. Use only the terms defined there — especially `artefact` (not artifact), `stage` (pipeline-level), and `phase` (plan-level).
 
 ### 6.1 Routing Summary (Pipeline Awareness)
 On startup, if `.github/pipeline-state.json` exists, read `_notes._routing_decision` and output a one-line summary:
@@ -825,7 +825,7 @@ Auto-load these skills when the condition matches — do not skip.
 
 | Field | Value |
 |-------|-------|
-| `artefact_path` | `diagrams/<name>.mmd` or `agent-docs/architecture/<name>.mmd` |
+| `artefact_path` | `diagrams/<name>.mmd` or `.github/agent-docs/architecture/<name>.mmd` |
 | `required_fields` | N/A (diagram file is the artefact) |
 | `approval_on_completion` | N/A |
 | `next_agent` | `architect` or `plan` (for documentation reference) |

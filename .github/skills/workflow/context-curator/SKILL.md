@@ -1,3 +1,8 @@
+---
+name: context-curator
+description: Compress and prioritize codebase context before handing work to reasoning agents, minimizing token waste while preserving the required decision inputs.
+---
+
 # Context Curator Skill
 
 **Skill ID:** `workflow/context-curator`  
@@ -41,6 +46,8 @@ Before curating context, answer these questions:
 ## Step 2 — Build the Context Package
 
 Collect ONLY these items, in this order:
+
+If the context package is written as a standalone Markdown handoff or context document, apply `.github/instructions/document-frontmatter.instructions.md`. New context documents require `Original Author`, `Creation Date`, and `Creating Model`; updated context documents must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ### Tier 1 — Always Include (MUST READ)
 | Item | Source | What to extract |

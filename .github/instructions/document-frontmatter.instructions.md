@@ -6,7 +6,11 @@ priority: 120
 
 # Document Frontmatter Instructions
 
-Apply this rule whenever you create or update a **descriptive Markdown deliverable**, including:
+Apply this rule whenever you create or update a **descriptive Markdown deliverable**. The YAML frontmatter block must be the first content in the file, before the title, blockquotes, comments, or generated status headers.
+
+This applies to outputs produced by planning, intent, preflight, relay, ADR, README, handoff, documentation, and report workflows, including outputs from `writing-plans`, `golden-plan`, `intent-writer`, `preflight`, `relay`, `plan.prompt.md`, `adr.prompt.md`, and `create-readme.prompt.md`.
+
+Include frontmatter for:
 - planning documents
 - PRDs, ADRs, design docs, architecture docs, and requirements docs
 - README files, runbooks, guides, reports, analyses, and handoffs
@@ -19,7 +23,7 @@ When creating a **new** document, add YAML frontmatter at the top and include:
 ```yaml
 Original Author: <active author or agent name>
 Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
-Creating Model: <actual model used for this document>
+Creating Model: <exact runtime model identifier or display name>
 ```
 
 When **updating** an existing document, preserve those original fields and add or update:
@@ -27,7 +31,7 @@ When **updating** an existing document, preserve those original fields and add o
 ```yaml
 Last Author: <active author or agent name>
 Last Updated: <YYYY-MM-DDTHH:MM:SSZ>
-Last Model Used: <actual model used for this update>
+Last Model Used: <exact runtime model identifier or display name>
 ```
 
 > For newly created documents, `Last Author`, `Last Updated`, and `Last Model Used` are optional and should be omitted until the first update.
@@ -43,8 +47,10 @@ Last Model Used: <actual model used for this update>
   - `Creating Model: Unknown`
   Then add the current `Last Author`, `Last Updated`, and `Last Model Used` fields.
 - Use the active author identity for author fields, for example `GitHub Copilot`, `Planner`, `Architect`, `PRD`, or the human author if explicitly provided.
-- Use the actual model used in that session for model fields.
-- Use full ISO 8601 UTC timestamps for metadata values, in `YYYY-MM-DDTHH:MM:SSZ` format.
+- Use the exact model identifier or display name exposed by the active runtime for model fields, for example `gpt-5.4`, `gpt-5.3-codex`, or `GPT-5.5`.
+- Do not record only a generic model family such as `GPT-5`, `GPT-4`, `Claude`, or `Gemini` when a more specific runtime model identifier or display name is available.
+- If the runtime does not expose an exact model identifier, record the most precise deterministic runtime identity available and say that the exact ID was unavailable, for example `Codex (GPT-5-based; exact runtime model ID unavailable)`. Do not silently fall back to the family label alone.
+- Use full ISO 8601 UTC timestamps for metadata values, in `YYYY-MM-DDTHH:MM:SSZ` format. Do not use local timezone offsets in these fields.
 - Despite the field name `Creation Date`, the value must be a full timestamp for auditability and provenance.
 - For non-Markdown descriptive deliverables that support a native metadata/header block, mirror the same fields in that format.
 
