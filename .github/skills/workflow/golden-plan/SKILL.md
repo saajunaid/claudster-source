@@ -1,7 +1,7 @@
-﻿---
+---
 name: golden-plan
 context: fork
-description: "USE THIS SKILL whenever a user asks for a comprehensive implementation plan, a full-stack build plan, a UI+backend plan, or says 'create a plan for building X' where X spans multiple phases or systems. Also activate when the user says 'plan this project', 'I need a detailed plan', 'build plan', 'implementation plan', or attaches a mockup/wireframe and asks how to build it. Produces a zero-ambiguity, evidence-gated plan with self-contained per-phase prompts, exhaustive data binding tables, per-phase validation checklists, and a global quality gate. Evidence-gated: before writing phases, verify required artefacts (mockup, data sample, API contract, scaffold inventory); if any BLOCKER is missing, ask for it and wait before proceeding. Dual-mode: generic by default, junai-pipeline only when explicitly requested. Agent-agnostic â€” any agent with read/search/edit tools can use this skill."
+description: "USE THIS SKILL whenever a user asks for a comprehensive implementation plan, a full-stack build plan, a UI+backend plan, or says 'create a plan for building X' where X spans multiple phases or systems. Also activate when the user says 'plan this project', 'I need a detailed plan', 'build plan', 'implementation plan', or attaches a mockup/wireframe and asks how to build it. Produces a zero-ambiguity, evidence-gated plan with self-contained per-phase prompts, exhaustive data binding tables, per-phase validation checklists, and a global quality gate. Evidence-gated: before writing phases, verify required artefacts (mockup, data sample, API contract, scaffold inventory); if any BLOCKER is missing, ask for it and wait before proceeding. Dual-mode: generic by default, junai-pipeline only when explicitly requested. Agent-agnostic - any agent with read/search/edit tools can use this skill."
 ---
 
 # Golden Plan
@@ -12,7 +12,7 @@ Activate this skill when the request is for a **comprehensive implementation pla
 
 - 8 or more phases across a project
 - Full-stack work (backend + frontend or data + UI)
-- Complex data binding between a backend and a UI (JSON â†’ React, API â†’ Streamlit, etc.)
+- Complex data binding between a backend and a UI (JSON -> React, API -> Streamlit, etc.)
 - A visual reference (HTML mockup, Figma, screenshot) that must be matched pixel-for-pixel
 - Multiple agents executing different phases in sequence
 
@@ -27,8 +27,8 @@ Do NOT use for:
 
 Before Phase 0, explicitly choose an execution mode:
 
-- **Mode A â€” `generic` (default):** no junai pipeline assumptions, no orchestrator routing requirements, works with default Copilot/default agents.
-- **Mode B â€” `junai-pipeline` (opt-in):** include orchestrator/stage-routing conventions and pipeline artefact conventions.
+- **Mode A - `generic` (default):** no junai pipeline assumptions, no orchestrator routing requirements, works with default Copilot/default agents.
+- **Mode B - `junai-pipeline` (opt-in):** include orchestrator/stage-routing conventions and pipeline artefact conventions.
 
 If the user does not explicitly request junai pipeline, use `generic`.
 
@@ -36,64 +36,64 @@ If the user does not explicitly request junai pipeline, use `generic`.
 
 ---
 
-## Phase 0 â€” Evidence Gathering (REQUIRED before writing any plan content)
+## Phase 0 - Evidence Gathering (REQUIRED before writing any plan content)
 
 Before writing a single phase, you MUST gather and validate evidence. Do not produce plan output while any BLOCKER evidence item is unresolved.
 
 Run through the checklist below. For each item, determine its tier:
 
-- **BLOCKER** â€” Plan cannot proceed without this. Stop and ask the user for it.
-- **WARNING** â€” Plan can proceed but the affected phases will have noted assumptions. Inform the user what you are assuming.
-- **OPTIONAL** â€” Nice to have. Note its absence but proceed.
+- **BLOCKER** - Plan cannot proceed without this. Stop and ask the user for it.
+- **WARNING** - Plan can proceed but the affected phases will have noted assumptions. Inform the user what you are assuming.
+- **OPTIONAL** - Nice to have. Note its absence but proceed.
 
 ### Evidence Checklist
 
-#### E1 â€” Visual Reference
+#### E1 - Visual Reference
 - Does a mockup, wireframe, HTML prototype, or screenshot of the target UI exist?
 - If yes: what file/path? Is it frozen (will not change during implementation)?
 - **Tier:** BLOCKER for UI-heavy plans. WARNING for backend-only plans.
 
-#### E2 â€” Live Data Sample
+#### E2 - Live Data Sample
 - Is there a real data sample (JSON file, CSV, DB query result) representative of production data?
 - Does it reflect the CURRENT schema (not a stale sample)?
 - Can field names be read directly from it (avoid field name guessing)?
 - **Tier:** BLOCKER for plans with any data binding. WARNING if schema is defined elsewhere (Pydantic DTOs, TypeScript interfaces).
 
-#### E3 â€” API / Backend Contract
+#### E3 - API / Backend Contract
 - Are endpoints already defined (routes, method, request params, response shape)?
 - Do typed DTOs exist (Pydantic models, TypeScript interfaces)?
 - Is the serialization convention documented (camelCase vs snake_case)?
-- **Tier:** BLOCKER for full-stack plans. WARNING if backend and frontend are built in the same plan (contract will be defined during planning itself â€” mark those sections clearly as `[DEFINED IN THIS PLAN]`).
+- **Tier:** BLOCKER for full-stack plans. WARNING if backend and frontend are built in the same plan (contract will be defined during planning itself - mark those sections clearly as `[DEFINED IN THIS PLAN]`).
 
-#### E4 â€” Existing Scaffold Inventory
+#### E4 - Existing Scaffold Inventory
 - What is already built? (List files, packages, installed dependencies.)
 - What must NOT be recreated or deleted?
 - What needs overhauling vs net-new creation?
 - **Tier:** BLOCKER. Without this, the plan will generate conflicting or duplicate code.
 
-#### E5 â€” Technology Decisions
+#### E5 - Technology Decisions
 - Is the tech stack finalised? (Charts library, state management, routing, test runner, animation, etc.)
 - Are any decisions still open?
 - **Tier:** BLOCKER for phases that depend on the decision. Open decisions must be flagged as `[TECH-DECISION OPEN]` in affected phases.
 
-#### E6 â€” Scope Boundary
+#### E6 - Scope Boundary
 - What is explicitly in v1 vs deferred to a future release?
 - Are any data fields known to be empty/missing in v1 (dispatch issues, schema gaps, etc.)?
 - **Tier:** WARNING. Missing scope boundary causes unbounded implementations.
 
-#### E7 â€” Agent / Skill Availability
+#### E7 - Agent / Skill Availability
 - Which agents will execute phases? (Or default: `@Implement` for code phases, `@Tester` for test phases.)
 - Which model should execute each phase? Add one explicit model recommendation per phase; do not leave this implicit.
 - Are the domain skills referenced in phase prompts present on disk? (Verify paths before listing.)
-- **Tier:** OPTIONAL. Skill paths that do not exist should be omitted from phase prompts â€” do not list phantom skills.
+- **Tier:** OPTIONAL. Skill paths that do not exist should be omitted from phase prompts - do not list phantom skills.
 
-#### E8 â€” Output Destination
+#### E8 - Output Destination
 - Where should the plan file be saved? (Default: `.github/plans/<feature-slug>.md`)
 - Where should the associated tracker be saved? (Default: `.github/agent-docs/<feature-slug>-status.md`)
 - Is there a `chain_id` to use? (Format: `FEAT-YYYY-MMDD-{slug}`)
 - **Tier:** OPTIONAL. Default path is used if not specified.
 
-#### E9 — Phase Model Selection
+#### E9 - Phase Model Selection
 - Every phase MUST include a `**Model:**` line immediately after `**Objective:**`.
 - Recommend the best model for the phase, not the cheapest model by default.
 - Use premium reasoning/coding models for foundation contracts, backend/API work, SQL/data lineage, performance-sensitive work, broad integration, and final verification.
@@ -108,51 +108,51 @@ Run through the checklist below. For each item, determine its tier:
 
 After running the checklist:
 
-1. **All BLOCKERs satisfied** â†’ Proceed to Phase 1 (Pre-flight Scan).
-2. **Any BLOCKER missing** â†’ Load `.github/skills/workflow/asking-questions/SKILL.md` and follow its question structure (numbered questions, multiple-choice options, fast-path `defaults` reply). Do not generate any plan content yet. Example:
+1. **All BLOCKERs satisfied** -> Proceed to Phase 1 (Pre-flight Scan).
+2. **Any BLOCKER missing** -> Load `.github/skills/workflow/asking-questions/SKILL.md` and follow its question structure (numbered questions, multiple-choice options, fast-path `defaults` reply). Do not generate any plan content yet. Example:
 
    ```
-   EVIDENCE GATE â€” BLOCKED
+   EVIDENCE GATE - BLOCKED
 
    Before I can write this plan, I need a few things. Reply with answers
    or `defaults` to accept my assumptions.
 
    1) Live data sample (E2):
-      a) [path/to/sample.json] â€” I'll read it directly
+      a) [path/to/sample.json] - I'll read it directly
       b) Point me to the Pydantic DTO / TypeScript interface file instead
-      c) Not available yet â€” assume from field names in the mockup
+      c) Not available yet - assume from field names in the mockup
 
    2) Existing scaffold location (E4):
-      a) [path/to/frontend/] â€” I'll inventory it
-      b) Not built yet â€” plan will be greenfield
-      c) Not sure â€” use default (greenfield)
+      a) [path/to/frontend/] - I'll inventory it
+      b) Not built yet - plan will be greenfield
+      c) Not sure - use default (greenfield)
 
    Once these are answered I will produce the full plan.
    ```
 
-3. **WARNINGs present** â†’ Proceed, but note each WARNING at the top of Context & Decisions with an `âš ï¸ ASSUMPTION:` callout.
+3. **WARNINGs present** -> Proceed, but note each WARNING at the top of Context & Decisions with a `WARNING: ASSUMPTION:` callout.
 
 ---
 
-## Phase 1 â€” Pre-flight Scan
+## Phase 1 - Pre-flight Scan
 
 Before writing any phase content, produce a **pre-flight summary** in this exact format:
 
 ```
 ## Pre-Flight Scan
 
-Phase 0  â€” Context & Decisions:              reference section, depends on none
-Phase 1  â€” [Name]:                           ~N tasks, depends on [phases or "none"]
-Phase 2  â€” [Name]:                           ~N tasks, depends on [phases]
+Phase 0  - Context & Decisions:              reference section, depends on none
+Phase 1  - [Name]:                           ~N tasks, depends on [phases or "none"]
+Phase 2  - [Name]:                           ~N tasks, depends on [phases]
 ...
-Phase N  â€” [Name]:                           ~N tasks, depends on [phases]
+Phase N  - [Name]:                           ~N tasks, depends on [phases]
 ```
 
-Commit to an expected task count per phase. Do not start writing phase content until this is complete. The pre-flight is your contract with yourself â€” use it to enforce equal depth across phases.
+Commit to an expected task count per phase. Do not start writing phase content until this is complete. The pre-flight is your contract with yourself - use it to enforce equal depth across phases.
 
 ---
 
-## Phase 2 â€” Plan Construction
+## Phase 2 - Plan Construction
 
 Write the plan to the output file using the template below, section-by-section in order. Keep each section complete before moving to the next.
 
@@ -167,22 +167,22 @@ Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
 Creating Model: <exact runtime model identifier or display name>
 ---
 
-# Plan: [Project Name] â€” [Sub-title e.g. "React UI Build" or "Backend API + Data Pipeline"]
+# Plan: [Project Name] - [Sub-title e.g. "React UI Build" or "Backend API + Data Pipeline"]
 
 > **Updated:** YYYY-MM-DDTHH:MM:SSZ
 > **Status:** READY FOR EXECUTION
 > **Execution mode:** `generic` <!-- or `junai-pipeline` -->
 > **Visual reference:** [path to mockup or "N/A"]
-> **Data source:** [path to canonical data sample or "See E3 â€” API Contract section"]
+> **Data source:** [path to canonical data sample or "See E3 - API Contract section"]
 > **Output destination:** [path where plan is saved]
 > **Execution tracker:** `.github/agent-docs/<feature-slug>-status.md`
-> **Execution:** Manual â€” one agent session per phase. See protocol below.
+> **Execution:** Manual - one agent session per phase. See protocol below.
 
 ---
 
 ## Pre-Flight Scan
 
-[Paste output from Phase 1 â€” Pre-flight Scan here]
+[Paste output from Phase 1 - Pre-flight Scan here]
 
 ---
 
@@ -196,11 +196,11 @@ validation before starting the next.
 
 **Per-phase workflow:**
 1. Open a new chat session with the agent named in the phase header
-2. Load the skills listed under **Skills to load** â€” tell the agent:
+2. Load the skills listed under **Skills to load** - tell the agent:
    "Read these SKILL.md files before starting: [paths]"
 3. Attach the files listed under **Files to attach**
 4. Also attach this plan file and the associated execution tracker
-5. Paste the **Phase Prompt** exactly as written â€” it is self-contained
+5. Paste the **Phase Prompt** exactly as written - it is self-contained
 6. When the agent finishes, run the commands in the **Validation Checklist**
 7. After validation passes, create the phase implementation commit with the phase-scoped commit message
 8. Capture the phase implementation commit hash
@@ -221,10 +221,10 @@ starting Phase N+1. Never carry debt forward.
 ## 0. Context & Decisions
 
 ### What this plan builds
-[2-4 sentences â€” what the user will have when all phases are complete]
+[2-4 sentences - what the user will have when all phases are complete]
 
-### âš ï¸ Assumptions
-[List any E-tier WARNINGs from evidence gathering here. If none, write "None â€” all evidence verified."]
+### WARNING Assumptions
+[List any E-tier WARNINGs from evidence gathering here. If none, write "None - all evidence verified."]
 
 ### Technology decisions
 
@@ -239,9 +239,9 @@ List every data domain and its v1 availability:
 
 | Domain / Tab | Data availability | Strategy |
 |---|---|---|
-| [e.g. Executive Overview] | âœ… Real data | Live API |
-| [e.g. Geography] | âš ï¸ Array always `[]` in v1 | Live API + empty state with explanation |
-| [e.g. Modem platform] | âŒ 0% populated | Full empty state (do not build chart) |
+| [e.g. Executive Overview] | Available real data | Live API |
+| [e.g. Geography] | Partially available; array is always `[]` in v1 | Live API + empty state with explanation |
+| [e.g. Modem platform] | Unavailable; 0% populated | Full empty state (do not build chart) |
 
 ### Existing scaffold (do NOT recreate)
 
@@ -253,7 +253,7 @@ List every data domain and its v1 availability:
 
 | File | What changes | Risk of regression |
 |------|-------------|-------------------|
-| [path] | [description of change] | [low / medium / high â€” and why] |
+| [path] | [description of change] | [low / medium / high - and why] |
 
 ### API contract
 
@@ -268,17 +268,17 @@ Only include if the backend exists or is being defined in this plan:
 
 [Then repeat the following block for EACH PHASE]
 
-## Phase N â€” [Name]
+## Phase N - [Name]
 
 **Agent:** `@[AgentName]`
-**Objective:** [One sentence â€” what this phase produces. No implementation detail here.]
+**Objective:** [One sentence - what this phase produces. No implementation detail here.]
 **Model:** `[GPT-5.4 | GPT-5.3-Codex | Claude Sonnet 4.6 | GPT-5.4-Mini | other available model]` - [one-line rationale that explains why this model is sufficient for the phase without compromising implementation quality]
 
 ### Skills to load
 
 Tell the agent to read these SKILL.md files before starting:
 [Only list skills whose paths you have VERIFIED exist on disk]
-- `.github/skills/[category]/[name]/SKILL.md` â€” [one-line description]
+- `.github/skills/[category]/[name]/SKILL.md` - [one-line description]
 
 ### Instructions to follow
 
@@ -291,7 +291,7 @@ Tell the agent to read these SKILL.md files before starting:
 
 ### Phase Prompt
 
-[SELF-CONTAINED, COPY-PASTE PROMPT â€” includes all context needed to execute the phase
+[SELF-CONTAINED, COPY-PASTE PROMPT - includes all context needed to execute the phase
 without reading any other document. Structure:]
 
 **Fence rule:** Every generated `### Phase Prompt` must be wrapped in a bare fenced code block. The opening fence must be exactly three backticks with no language label. Do not use labelled fences such as `text`, `markdown`, `bash`, or any other language for phase prompts.
@@ -300,7 +300,7 @@ without reading any other document. Structure:]
 You are implementing Phase N ([Name]) of the [project name].
 Read `[plan file path]` Phase N section in full before making any changes.
 
-PRINCIPLES: [TDD / KISS / YAGNI / DRY / Readability â€” adjust per phase]
+PRINCIPLES: [TDD / KISS / YAGNI / DRY / Readability - adjust per phase]
 
 SKILLS TO READ FIRST (load these SKILL.md files):
 - [paths]
@@ -308,13 +308,13 @@ SKILLS TO READ FIRST (load these SKILL.md files):
 INSTRUCTIONS TO FOLLOW:
 - [paths]
 
-[CRITICAL context the agent needs to NOT make common mistakes â€” e.g.
+[CRITICAL context the agent needs to NOT make common mistakes - e.g.
 "The API already returns camelCase. Do NOT add a key transformation layer."
-"client.ts already exists â€” do NOT recreate it."
-"types/nps.ts has all interfaces â€” import from there, do not re-declare."]
+"client.ts already exists - do NOT recreate it."
+"types/nps.ts has all interfaces - import from there, do not re-declare."]
 
 Deliverables (in order):
-1. [Specific deliverable â€” file path + what it exports]
+1. [Specific deliverable - file path + what it exports]
 2. [Specific deliverable]
 ...
 
@@ -339,14 +339,14 @@ NO "similar to above". NO "same as Phase N". NO "...". EVERY deliverable fully s
 **File:** `[exact path]`
 
 [Full interface/type definitions, implementation spec, code where exact values matter.
-If the code is the spec â€” write the code. Do not describe code, write it.]
+If the code is the spec - write the code. Do not describe code, write it.]
 
 #### N.2 [Deliverable name]
 [...]
 
-### Validation Checklist â€” Phase N complete when
+### Validation Checklist - Phase N complete when
 
-[SPECIFIC, VERIFIABLE assertions â€” not "does it work?" but exact checks:]
+[SPECIFIC, VERIFIABLE assertions - not "does it work?" but exact checks:]
 - [ ] `npm run build` succeeds (or `python -m pytest` depending on stack)
 - [ ] [Specific file] exists and exports [specific symbol]
 - [ ] [Specific behavior] renders/returns [specific value]
@@ -355,7 +355,7 @@ If the code is the spec â€” write the code. Do not describe code, write it.
 - [ ] Zero [hardcoded colors / any types / console.log / etc.]
 - [ ] Phase implementation is validated, committed, and the associated execution tracker row is marked complete with status, gate, changed files, validation evidence, commit hash, push state, and useful comments.
 
-### Phase Gate â€” run after all checklist items pass
+### Phase Gate - run after all checklist items pass
 
 ```bash
 # 1. Commit validated phase implementation
@@ -380,7 +380,7 @@ git rev-parse HEAD
 Maps every UI component to its exact data source path. All implementing agents must
 consult this before wiring any component to data.
 
-### DB-[SECTION] â€” [Section Name e.g. "App Shell", "Tab 1 â€” Overview"]
+### DB-[SECTION] - [Section Name e.g. "App Shell", "Tab 1 - Overview"]
 
 | UI Element / Component | Data path | Type | Notes |
 |-----------------------|-----------|------|-------|
@@ -393,15 +393,15 @@ consult this before wiring any component to data.
 ## Query Catalog
 
 Every DB-backed UI field must trace to a specific executable SQL query.
-This section is the authoritative reference for data analysis â€” it answers
+This section is the authoritative reference for data analysis - it answers
 "what query fetches what for the UI?"
 
 Include one block per repository function. Queries must use **named bind parameters**
 (`:param`), be schema-qualified (`{schema}.TableName`, default `dbo`), and include an
-`OFFSET+FETCH` or `TOP N` bound â€” never unbounded.
+`OFFSET+FETCH` or `TOP N` bound - never unbounded.
 
 ```sql
--- [EntityName] â€” [repository_module].[function_name]
+-- [EntityName] - [repository_module].[function_name]
 -- UI fields populated: fieldA, fieldB, embeddedStatus, derivedFromBlob
 -- Parameters: :filter_val (optional), :offset (int), :page_size (int)
 SELECT
@@ -414,22 +414,22 @@ ORDER BY t.created_at DESC
 OFFSET :offset ROWS FETCH NEXT :page_size ROWS ONLY;
 ```
 
-**Derived fields from `payload_col` (extracted by normalizer â€” not in SQL):**
+**Derived fields from `payload_col` (extracted by normalizer - not in SQL):**
 
 | UI field | Payload path / section | Adapter |
 |---|---|---|
 | `embeddedStatus` | NULL check on `payload_col` | n/a |
-| `derivedField1` | `payload_col â†’ json_key` | `embedded_json_adapter` |
-| `derivedField2` | `payload_col â†’ ## Section Header` | `embedded_markdown_adapter` |
+| `derivedField1` | `payload_col -> json_key` | `embedded_json_adapter` |
+| `derivedField2` | `payload_col -> ## Section Header` | `embedded_markdown_adapter` |
 
-[Repeat one block per repository function â€” single-row lookups, filters, aggregates, etc.]
+[Repeat one block per repository function - single-row lookups, filters, aggregates, etc.]
 
 ---
 
 ## Derived Values Reference
 
 Values computed client-side. NOT present in the raw data. All implementing agents must
-derive these â€” never fetch them as separate API calls.
+derive these - never fetch them as separate API calls.
 
 | Value name | Formula | Used by |
 |-----------|---------|---------|
@@ -442,9 +442,9 @@ derive these â€” never fetch them as separate API calls.
 
 Every component across all phases must pass these gates before the plan is considered done:
 
-- [ ] Zero hardcoded colours â€” always CSS variable tokens or named constants
-- [ ] Zero hardcoded data inside components â€” all data flows from props or hooks
-- [ ] TypeScript strict mode â€” no `any` type anywhere (or Python typing â€” no untyped params)
+- [ ] Zero hardcoded colours - always CSS variable tokens or named constants
+- [ ] Zero hardcoded data inside components - all data flows from props or hooks
+- [ ] TypeScript strict mode - no `any` type anywhere (or Python typing - no untyped params)
 - [ ] All empty states render without errors when arrays are `[]` or data is `null`
 - [ ] Dark mode: all components render correctly (if applicable)
 - [ ] No `console.log` statements in production code
@@ -456,7 +456,7 @@ Every component across all phases must pass these gates before the plan is consi
 
 ---
 
-## Phase 3 â€” Self-Sweep (Mandatory Final Step)
+## Phase 3 - Self-Sweep (Mandatory Final Step)
 
 After completing the plan document, re-read the **last 40% of the output** before delivering it.
 
@@ -469,11 +469,11 @@ Search for these decay signals:
 | `as above` | `as above for remaining endpoints` |
 | `\betc\b\.?` | `deriveYtd, deriveMoM, etc.` |
 | `{ ?\.\.\. ?}` | `expect(result).toBe({ ... })` |
-| `similar to (Phase\|Step\|Section)` | `similar to Phase 4` |
-| `and \d+ more\|and others` | `and 3 more endpoints` |
-| `repeat for\|do the same for` | `repeat for remaining products` |
+| `similar to (Phase|Step|Section)` | `similar to Phase 4` |
+| `and \d+ more|and others` | `and 3 more endpoints` |
+| `repeat for|do the same for` | `repeat for remaining products` |
 
-**If any match is found:** Expand it in-place â€” write the full content that was compressed.
+**If any match is found:** Expand it in-place - write the full content that was compressed.
 **Do not deliver the plan until zero decay signals remain in the last 40%.**
 
 ---
@@ -482,13 +482,13 @@ Search for these decay signals:
 
 When a new phase must be inserted into an **existing plan** (discovered mid-project):
 
-1. **Do NOT renumber** existing phases â€” renumbering breaks agent prompts that reference phase numbers.
-2. **Use a suffix** for inserted phases: Phase 9 â†’ Phase 9A, then 9B if another is added later.
+1. **Do NOT renumber** existing phases - renumbering breaks agent prompts that reference phase numbers.
+2. **Use a suffix** for inserted phases: Phase 9 -> Phase 9A, then 9B if another is added later.
 3. **Update the Pre-flight Scan** at the top to include the new phase.
 4. **Add a `## Phase 9A` block** with the full structure (Prompt, What to build, Validation Checklist).
 5. **Update the Output Destination header** to reflect the new `Updated:` date and status.
-6. **Do NOT modify completed phase sections** â€” treat them as immutable history.
-7. **Update frontmatter metadata** â€” preserve the original fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+6. **Do NOT modify completed phase sections** - treat them as immutable history.
+7. **Update frontmatter metadata** - preserve the original fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ---
 
@@ -498,8 +498,8 @@ Every generated plan MUST have an associated execution tracker. Put the tracker 
 
 Save the completed plan to:
 
-- `.github/plans/<feature-slug>.md` â€” default for both modes
-- `.github/plans/backlog/<feature-slug>.md` â€” optional backlog location
+- `.github/plans/<feature-slug>.md` - default for both modes
+- `.github/plans/backlog/<feature-slug>.md` - optional backlog location
 
 If mode is **`junai-pipeline`**, additionally register the artefact in `.github/agent-docs/ARTIFACTS.md` with `status: current`.
 
@@ -517,7 +517,7 @@ Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
 Creating Model: <exact runtime model identifier or display name>
 ---
 
-# Plan Status â€” [Project Name]
+# Plan Status - [Project Name]
 
 > Plan: `.github/plans/<feature-slug>.md`
 > Tracker: `.github/agent-docs/<feature-slug>-status.md`
@@ -532,16 +532,16 @@ Creating Model: <exact runtime model identifier or display name>
 | N | [Name] | @[Agent] | [model] | Pending | not_run | - | | | | unknown | |
 
 ## Status key
-- â³ Pending â€” not started
-- ðŸ”„ In Progress â€” agent session open
-- âœ… Complete â€” gate passed, committed
-- âŒ Blocked â€” gate failed, needs fix
-- â­ï¸ Skipped â€” explicitly deferred
+- Pending - not started
+- In Progress - agent session open
+- Complete - gate passed, committed
+- Blocked - gate failed, needs fix
+- Skipped - explicitly deferred
 ```
 
 **Gate rule:** The executing agent validates the phase, creates the phase implementation commit, captures that commit hash, then marks the tracker row complete with the hash and comments. Never mark a phase complete before all validation checklist items pass and the phase implementation commit exists. The `Comments` column is required; use it for concise handoff notes, blockers, decisions, caveats, or follow-up context discovered during the phase.
 
-**Next step after saving:** Load `.github/skills/workflow/preflight/SKILL.md` and run it against the completed plan before any agent begins implementation. Preflight catches wrong endpoints, stale type names, missing dependencies, and field name mismatches that slipped past plan authorship â€” far cheaper to fix in the plan than mid-implementation.
+**Next step after saving:** Load `.github/skills/workflow/preflight/SKILL.md` and run it against the completed plan before any agent begins implementation. Preflight catches wrong endpoints, stale type names, missing dependencies, and field name mismatches that slipped past plan authorship - far cheaper to fix in the plan than mid-implementation.
 
 ---
 
@@ -550,6 +550,6 @@ Creating Model: <exact runtime model identifier or display name>
 | Skill | When to use instead |
 |-------|-------------------|
 | `docs/writing-plans/SKILL.md` | Smaller plans (< 8 phases), TDD micro-task granularity, single developer session |
-| `workflow/brainstorming/SKILL.md` | Scope is still vague â€” use to harden requirements before this skill |
-| `workflow/preflight/SKILL.md` | After the plan is written â€” validates it against the actual codebase before agents start |
-| `large-task-fidelity.instructions.md` | Always apply in addition to this skill during plan OUTPUT â€” not a substitute |
+| `workflow/brainstorming/SKILL.md` | Scope is still vague - use to harden requirements before this skill |
+| `workflow/preflight/SKILL.md` | After the plan is written - validates it against the actual codebase before agents start |
+| `large-task-fidelity.instructions.md` | Always apply in addition to this skill during plan OUTPUT - not a substitute |
