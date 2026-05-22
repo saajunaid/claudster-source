@@ -94,6 +94,7 @@ Run through the checklist below. For each item, determine its tier:
 - **Tier:** OPTIONAL. Default path is used if not specified.
 
 #### E9 - Phase Model Selection
+- Every phase MUST include `**Agent:**`, `**Objective:**`, then `**Model:**` in that exact order.
 - Every phase MUST include a `**Model:**` line immediately after `**Objective:**`.
 - Recommend the best model for the phase, not the cheapest model by default.
 - Use premium reasoning/coding models for foundation contracts, backend/API work, SQL/data lineage, performance-sensitive work, broad integration, and final verification.
@@ -156,6 +157,8 @@ Commit to an expected task count per phase. Do not start writing phase content u
 
 Write the plan to the output file using the template below, section-by-section in order. Keep each section complete before moving to the next.
 
+Generate the plan file and its execution tracker in the same run. A golden-plan output is incomplete if either file is missing.
+
 ---
 
 ### Plan Template
@@ -201,12 +204,13 @@ validation before starting the next.
 3. Attach the files listed under **Files to attach**
 4. Also attach this plan file and the associated execution tracker
 5. Paste the **Phase Prompt** exactly as written - it is self-contained
-6. When the agent finishes, run the commands in the **Validation Checklist**
+6. When the agent finishes, validate the phase implementation by running every item in the **Validation Checklist**
 7. After validation passes, create the phase implementation commit with the phase-scoped commit message
-8. Capture the phase implementation commit hash
+8. Capture the phase implementation commit hash with `git rev-parse HEAD`
 9. Update the associated execution tracker row as complete with status, gate, validation evidence, changed files, commit hash, push state, and useful comments
 10. Commit the tracker update or amend it into the phase commit according to the repository commit policy
-11. Return to advisory chat, share checklist results + errors. Get a green light before proceeding
+11. Do not consider the phase complete until Step 10 is finished and the tracker row reflects the validated commit hash and comments
+12. Return to advisory chat, share checklist results + errors. Get a green light before proceeding
 
 **Drift rule:** If a bug or gap is found after Phase N, fix it in the same session before
 starting Phase N+1. Never carry debt forward.
@@ -327,6 +331,7 @@ After all items pass:
 3. Update the associated execution tracker declared in the plan header: `.github/agent-docs/<feature-slug>-status.md`.
 4. Mark Phase N complete in the tracker row with status, gate, completed date, executor/model, changed files, validation evidence, commit hash, push state, and comments.
 5. Commit the tracker update or amend it into the phase commit according to the repository's commit policy.
+6. Do not consider the phase complete until the tracker row is updated after validation and commit, and the row includes the commit hash and comments.
 ```
 
 ### What to build
@@ -353,7 +358,7 @@ If the code is the spec - write the code. Do not describe code, write it.]
 - [ ] [Known empty state] returns graceful message, no crash
 - [ ] Dark mode: [specific component] renders correctly
 - [ ] Zero [hardcoded colors / any types / console.log / etc.]
-- [ ] Phase implementation is validated, committed, and the associated execution tracker row is marked complete with status, gate, changed files, validation evidence, commit hash, push state, and useful comments.
+- [ ] Phase implementation is validated, committed, `git rev-parse HEAD` was captured, and the associated execution tracker row is marked complete with status, gate, changed files, validation evidence, commit hash, push state, and useful comments.
 
 ### Phase Gate - run after all checklist items pass
 
@@ -496,6 +501,8 @@ When a new phase must be inserted into an **existing plan** (discovered mid-proj
 
 Every generated plan MUST have an associated execution tracker. Put the tracker path in the plan header as `> **Execution tracker:** .github/agent-docs/<feature-slug>-status.md`.
 
+Golden-plan must create both files together. Never emit the plan without creating its associated tracker in the same run.
+
 Save the completed plan to:
 
 - `.github/plans/<feature-slug>.md` - default for both modes
@@ -539,7 +546,9 @@ Creating Model: <exact runtime model identifier or display name>
 - Skipped - explicitly deferred
 ```
 
-**Gate rule:** The executing agent validates the phase, creates the phase implementation commit, captures that commit hash, then marks the tracker row complete with the hash and comments. Never mark a phase complete before all validation checklist items pass and the phase implementation commit exists. The `Comments` column is required; use it for concise handoff notes, blockers, decisions, caveats, or follow-up context discovered during the phase.
+**Gate rule:** The executing agent validates the phase, creates the phase implementation commit, captures that commit hash, then marks the tracker row complete with the hash and comments. Never mark a phase complete before all validation checklist items pass and the phase implementation commit exists.
+
+**Comments rule:** The `Comments` column is required for completed, blocked, or skipped phases. Use it for concise handoff notes, blockers, decisions, caveats, known limitations, or follow-up context discovered during the phase.
 
 **Next step after saving:** Load `.github/skills/workflow/preflight/SKILL.md` and run it against the completed plan before any agent begins implementation. Preflight catches wrong endpoints, stale type names, missing dependencies, and field name mismatches that slipped past plan authorship - far cheaper to fix in the plan than mid-implementation.
 
