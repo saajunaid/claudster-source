@@ -32,7 +32,7 @@ Before Phase 0, explicitly choose an execution mode:
 
 If the user does not explicitly request junai pipeline, use `generic`.
 
-**Document metadata:** Every plan, status tracker, and other descriptive Markdown artefact created by this skill must follow `.github/instructions/document-frontmatter.instructions.md`. The YAML frontmatter block must be the first content in the file. New documents require `Original Author`, `Creation Date`, and `Creating Model`; updated documents must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
+**Document metadata:** Every plan, status tracker, and other descriptive Markdown artefact created by this skill must follow `.github/instructions/document-frontmatter.instructions.md`. The YAML frontmatter block must be the first content in the file. New documents require `Original Author` (the human owner of the plan, not an inferred name — ASK if unknown, never guess), `Creation Date`, `Creating Model`, and `Executing Coding Agent` (the agent + model + persona that will run the plan, e.g. "Copilot coding agent (model Opus 4.8, persona @architect)"); updated documents must preserve those fields and add or update `Last Author`, `Last Updated`, and `Last Model Used`.
 
 ---
 
@@ -85,6 +85,8 @@ Run through the checklist below. For each item, determine its tier:
 - Which agents will execute phases? (Or default: `@Implement` for code phases, `@Tester` for test phases.)
 - Which model should execute each phase? Add one explicit model recommendation per phase; do not leave this implicit.
 - Are the domain skills referenced in phase prompts present on disk? (Verify paths before listing.)
+- Which coding-agent HARNESS executes each phase? Distinguish: (a) **Copilot coding agent** — loads custom `.github/agents/*.agent.md` personas + auto-loads skills; pick this when the phase needs your toolset. (b) **Claude coding agent** / **Codex agent** — run their own loop, do NOT load custom personas; pick only for pure-execution phases, and point them at skill FILES by path. Note the model under the chosen harness (Copilot can run Opus/Sonnet/GPT; Claude agent runs Anthropic models; Codex runs GPT models).
+- The `Original Author` (human) must be confirmed, not inferred from any name appearing in source documents or commit history. If the owner is unknown, ASK before writing frontmatter.
 - **Tier:** OPTIONAL. Skill paths that do not exist should be omitted from phase prompts - do not list phantom skills.
 
 #### E8 - Output Destination
