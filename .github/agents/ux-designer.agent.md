@@ -2,7 +2,7 @@
 name: UX Designer
 description: "Expert UX designer and design critic: creates research-backed designs (JTBD, wireframes, specs) AND provides evidence-based critique with NN Group citations. Two modes: Design (generative) and Review (critique). Pushes back on bad ideas with data."
 tools: [read, search, web, edit, execute, problems]
-model: Claude Opus 4.6
+model: Claude Opus 4.8
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

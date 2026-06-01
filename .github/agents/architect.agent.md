@@ -2,7 +2,7 @@
 name: Architect
 description: Solution architecture expert - designs systems, creates diagrams, and provides architectural guidance
 tools: [read, search, edit, execute, web, problems, context7/*, microsoft/markitdown/*]
-model: Claude Opus 4.6
+model: Claude Opus 4.8
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator
