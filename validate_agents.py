@@ -35,6 +35,7 @@ AGENTS_DIR = Path(__file__).parent / ".github" / "agents"
 
 KNOWN_MODELS: set[str] = {
     "Claude Opus 4.6",
+    "Claude Opus 4.8",
     "Claude Sonnet 4.6",
     "Gemini 3.1 Pro (Preview)",
     "GPT-5.3-Codex",

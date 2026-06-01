@@ -89,6 +89,7 @@ EXTRA_POOL_ROOTS = [
 # Models allowed in prompt frontmatter (matches validate_agents.KNOWN_MODELS)
 KNOWN_MODELS = {
     "Claude Opus 4.6",
+    "Claude Opus 4.8",
     "Claude Sonnet 4.6",
     "Gemini 3.1 Pro (Preview)",
     "GPT-5.3-Codex",
