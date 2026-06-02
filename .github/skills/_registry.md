@@ -155,6 +155,7 @@
 | Relay | `workflow/relay/` | Create or update a root relay.md session-continuation document for any repository. Use this skill whenever the user asks to preserve project context, resume later, hand work to a future session, create a session relay, summarize current implementation state, or generate a reusable continuation prompt. The workflow is generic and must discover project structure at runtime. |
 | Requesting Code Review | `workflow/requesting-code-review/` | Use when completing tasks, implementing major features, or before merging to verify work meets requirements |
 | Skill Creator | `workflow/skill-creator/` | Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy. |
+| State Tracking | `workflow/state-tracking/` | USE THIS SKILL when an agent needs to maintain a living record of task progress across multiple sessions or hand-offs. Covers append-only audit logs, CURRENT_STATE head-of-line pattern, relay hand-off protocol, and recovery from mid-session interruptions. Works in both generic and junai-pipeline modes. |
 | Verification Loop | `workflow/verification-loop/` | Systematic code change verification — lint, test, type-check, review |
 
 ### Media
