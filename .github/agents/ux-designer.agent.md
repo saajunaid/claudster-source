@@ -46,6 +46,24 @@ Determine how you were invoked before reading any pipeline state or running any 
 - **Pipeline mode** — Your opening prompt says *"The pipeline is routing to you"* or explicitly references `pipeline-state.json`. → Follow the **Accepting Handoffs** protocol below. Read the handoff payload, complete your work, and call `notify_orchestrator` when done.
 - **Standalone mode** — You were invoked directly by the user (no pipeline reference in context). → **Do NOT read `pipeline-state.json`. Do NOT call `notify_orchestrator` or `satisfy_gate`.** Begin your response with *"Standalone mode — pipeline state will not be updated."* Then perform the UX design or review task using your full expertise and methodology below.
 
+## Direct Browser Action Shortcut (HIGHEST PRIORITY)
+
+If the user asks for a simple action on an already-open live page — for example **click this element**, **report the visible layout**, **use the integrated browser**, **check the spacing/color/state**, or **tell me what changed on screen** — short-circuit the normal workflow:
+
+1. Use the already-open browser page immediately via the `web` capability.
+2. Perform the requested action directly in the page.
+3. Report the visible result briefly and stop.
+
+**Do NOT** unless the browser tools fail:
+- read project files or inspect source code first
+- call `get_errors`, workspace searches, or terminal commands
+- load Playwright or create automation scripts
+- output a design critique, checklist, or extended investigation
+
+This shortcut overrides the usual mode-detection, skill-loading, and design-review flow for simple live browser requests.
+
+**If the `web` tool is unavailable or fails after one retry:** Load `.github/skills/testing/webapp-testing/SKILL.md` or `.github/skills/testing/playwright/SKILL.md` and use Playwright instead. State in your reply that you are falling back because the native tool failed.
+
 ## Accepting Handoffs
 
 You receive work from: **Architect** (design UX for architecture), **Planner** (design UX for planned UI phases), **Accessibility** (UX review after audit).

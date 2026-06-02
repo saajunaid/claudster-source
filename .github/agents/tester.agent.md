@@ -59,6 +59,8 @@ If the user asks only for a simple action on an already-open browser page — su
 
 This shortcut overrides the usual testing workflow for simple live browser requests.
 
+**If the `web` tool is unavailable or fails after one retry:** Load `.github/skills/testing/webapp-testing/SKILL.md` or `.github/skills/testing/playwright/SKILL.md` and use Playwright instead. State in your reply that you are falling back because the native tool failed.
+
 ## Accepting Handoffs
 
 You receive work from: **Implement** / **Streamlit Dev** / **Data Engineer** / **SQL Expert** (write tests for new code), **Debug** (run tests to verify fix), **Accessibility** (add a11y tests).

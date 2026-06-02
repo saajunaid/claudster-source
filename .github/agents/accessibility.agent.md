@@ -45,6 +45,9 @@ If the user asks only for a simple action on an already-open browser page — su
 - output a checklist or extended audit narrative
 
 This shortcut overrides the usual accessibility-audit flow for simple live browser requests.
+
+**If the `web` tool is unavailable or fails after one retry:** Load `.github/skills/testing/webapp-testing/SKILL.md` and use Playwright instead. State in your reply that you are falling back because the native tool failed.
+
 ## Accepting Handoffs
 
 You receive work from: **Frontend Developer** (check accessibility), **Implement** (check accessibility), **UX Designer** (check accessibility).

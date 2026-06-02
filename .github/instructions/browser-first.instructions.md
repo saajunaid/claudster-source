@@ -21,6 +21,17 @@ When the user explicitly asks to use the **integrated browser** or asks for a si
 3. Report the visible result briefly.
 4. Stop unless the user asked for more.
 
+## What "native browser tools" means
+
+The `web` capability (VS Code integrated browser tool). Concretely:
+- Navigating to a URL
+- Clicking elements by selector or label
+- Reading visible text / DOM state
+- Taking screenshots
+- Filling form fields
+
+These are synchronous, in-process actions on the open browser panel. They do NOT include: running Playwright scripts, launching headless Chrome via terminal, or calling any MCP tool.
+
 ## Do NOT do these first
 - Read source files or inspect HTML
 - Run `get_errors`
@@ -29,8 +40,21 @@ When the user explicitly asks to use the **integrated browser** or asks for a si
 - Load or use Playwright
 - Produce a checklist, diagnostic wrapper, or long progress narrative
 
-## Fallback rule
-Only inspect code, use Playwright, or run diagnostics **if the native browser tools fail or are unavailable**.
+## Fallback rule — explicit Playwright handoff
+
+Only escalate to Playwright or other automation **if**:
+- The `web` native tool is unavailable in your current session
+- The native tool fails after one retry
+- The task requires multi-step automation that native tools cannot perform (e.g. multi-page flow, network interception, cross-origin iframe)
+
+When escalating, load the relevant skill before writing any Playwright code:
+
+```
+Load .github/skills/workflow/playwright/SKILL.md (if it exists) or
+Load .github/skills/webapp/webapp-testing/SKILL.md
+```
+
+State clearly in your response that you are falling back because the native `web` tool failed/is unavailable.
 
 ## Example
 If the user says:
