@@ -91,7 +91,7 @@ Run through the checklist below. For each item, determine its tier:
 
 #### E8 - Output Destination
 - Where should the plan file be saved? (Default: `.github/plans/<feature-slug>.md`)
-- Where should the associated tracker be saved? (Default: `.github/agent-docs/<feature-slug>-status.md`)
+- Where should the associated tracker be saved? (Default: `.github/plans/tracker/<feature-slug>-tracker.md`)
 - Is there a `chain_id` to use? (Format: `FEAT-YYYY-MMDD-{slug}`)
 - **Tier:** OPTIONAL. Default path is used if not specified.
 
@@ -153,6 +153,8 @@ Phase N  - [Name]:                           ~N tasks, depends on [phases]
 
 Commit to an expected task count per phase. Do not start writing phase content until this is complete. The pre-flight is your contract with yourself - use it to enforce equal depth across phases.
 
+**Dependency sequencing rule:** Phases MUST be listed in execution order — all dependencies of phase N must appear before phase N. No forward dependencies. If phase 3 requires output from phase 4, restructure the order before writing any phase content. The `depends on` column is not decorative; it must reflect real execution constraints. If two phases have no dependency relationship, list the one with higher risk or longer duration first.
+
 ---
 
 ## Phase 2 - Plan Construction
@@ -180,7 +182,7 @@ Creating Model: <exact runtime model identifier or display name>
 > **Visual reference:** [path to mockup or "N/A"]
 > **Data source:** [path to canonical data sample or "See E3 - API Contract section"]
 > **Output destination:** [path where plan is saved]
-> **Execution tracker:** `.github/agent-docs/<feature-slug>-status.md`
+> **Execution tracker:** `.github/plans/tracker/<feature-slug>-tracker.md`
 > **Execution:** Manual - one agent session per phase. See protocol below.
 
 ---
@@ -330,7 +332,7 @@ Do not mark done unless all items pass. If any fail, fix and re-verify.
 After all items pass:
 1. Create the phase implementation commit: `git add -A && git commit -m "phase(N): [Name] complete"`.
 2. Capture the phase implementation commit hash with `git rev-parse HEAD`.
-3. Update the associated execution tracker declared in the plan header: `.github/agent-docs/<feature-slug>-status.md`.
+3. Update the associated execution tracker declared in the plan header: `.github/plans/tracker/<feature-slug>-tracker.md`.
 4. Mark Phase N complete in the tracker row with status, gate, completed date, executor/model, changed files, validation evidence, commit hash, push state, and comments.
 5. Commit the tracker update or amend it into the phase commit according to the repository's commit policy.
 6. Do not consider the phase complete until the tracker row is updated after validation and commit, and the row includes the commit hash and comments.
@@ -373,7 +375,7 @@ git commit -m "phase(N): [Name] complete"
 git rev-parse HEAD
 
 # 3. Update tracker
-#    Use .github/agent-docs/<feature-slug>-status.md and mark Phase N complete with:
+#    Use .github/plans/tracker/<feature-slug>-tracker.md and mark Phase N complete with:
 #    status, gate, completed date, executor/model, changed files,
 #    validation evidence, commit hash, push state, and comments.
 ```
@@ -501,7 +503,7 @@ When a new phase must be inserted into an **existing plan** (discovered mid-proj
 
 ## Output Destination
 
-Every generated plan MUST have an associated execution tracker. Put the tracker path in the plan header as `> **Execution tracker:** .github/agent-docs/<feature-slug>-status.md`.
+Every generated plan MUST have an associated execution tracker. Put the tracker path in the plan header as `> **Execution tracker:** .github/plans/tracker/<feature-slug>-tracker.md`.
 
 Golden-plan must create both files together. Never emit the plan without creating its associated tracker in the same run.
 
@@ -516,7 +518,7 @@ When revising an existing plan file, preserve `Original Author`, `Creation Date`
 
 ### Plan Status Tracker
 
-Alongside the plan file, **always** create `.github/agent-docs/<feature-slug>-status.md` using
+Alongside the plan file, **always** create `.github/plans/tracker/<feature-slug>-tracker.md` using
 this template (one row per phase, populated from the Pre-Flight Scan). The plan header must reference this exact tracker path:
 
 ```
@@ -529,7 +531,7 @@ Creating Model: <exact runtime model identifier or display name>
 # Plan Status - [Project Name]
 
 > Plan: `.github/plans/<feature-slug>.md`
-> Tracker: `.github/agent-docs/<feature-slug>-status.md`
+> Tracker: `.github/plans/tracker/<feature-slug>-tracker.md`
 > Started: YYYY-MM-DDTHH:MM:SSZ
 > Last updated: YYYY-MM-DDTHH:MM:SSZ
 
@@ -551,6 +553,12 @@ Creating Model: <exact runtime model identifier or display name>
 **Gate rule:** The executing agent validates the phase, creates the phase implementation commit, captures that commit hash, then marks the tracker row complete with the hash and comments. Never mark a phase complete before all validation checklist items pass and the phase implementation commit exists.
 
 **Comments rule:** The `Comments` column is required for completed, blocked, or skipped phases. Use it for concise handoff notes, blockers, decisions, caveats, known limitations, or follow-up context discovered during the phase.
+
+**Plan Completion Protocol:** When every tracker row has `status: Complete`, the plan is done. The executing agent (or the Janitor backstop) MUST:
+1. Filesystem-move the plan file from `.github/plans/<feature-slug>.md` to `.github/plans/done/<feature-slug>.md` using `Move-Item`/`mv`/`run_command` — NOT `git mv` (the `done/` folder is gitignored in project repos).
+2. Update the plan frontmatter: set `status: done` and add `Archived: <YYYY-MM-DD>`.
+3. Log the move in the tracker `Comments` field of the last completed phase row.
+4. Never delete plan files — only move to `done/`.
 
 **Next step after saving:** Load `.github/skills/workflow/preflight/SKILL.md` and run it against the completed plan before any agent begins implementation. Preflight catches wrong endpoints, stale type names, missing dependencies, and field name mismatches that slipped past plan authorship - far cheaper to fix in the plan than mid-implementation.
 

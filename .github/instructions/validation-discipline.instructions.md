@@ -96,3 +96,13 @@ Test-Path "src\commands\ask.ts"
 | "Probably not there" based on visual scan | Always verify absence with a targeted search before filing a verdict |
 | Conflating working tree state with remote sync state | These are orthogonal — check each independently |
 | Infer `src/foo.ts` from a filename summary | Verify with `Get-ChildItem`, `file_search`, or `Test-Path` first |
+
+---
+
+## Related Skill
+
+For the full pre-commit verification loop (builds, types, lint, tests, security scan, orphan scan, diff review), load:
+
+> `.github/skills/workflow/verification-loop/SKILL.md`
+
+This instruction file governs *fact-checking discipline* (is a thing absent / present / pushed?). The verification-loop skill governs *implementation quality gates* (does the build pass, are there dead exports, is the diff clean?). Use both together before any commit.

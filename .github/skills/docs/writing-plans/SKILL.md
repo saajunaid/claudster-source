@@ -121,6 +121,8 @@ For each phase below, follow this workflow:
 
 **Drift rule:** If you find bugs introduced by Phase N, fix them in the SAME session
 before starting Phase N+1. Never carry implementation debt forward between phases.
+
+**Dependency sequencing rule:** Write phases in execution order \u2014 every phase's dependencies must appear before that phase in the plan. If Phase 3 requires output from Phase 4, reorder before writing. No forward dependencies.
 ```
 
 ## Phase 0 — Context & Decisions
