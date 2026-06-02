@@ -39,6 +39,8 @@ KNOWN_MODELS: set[str] = {
     "Claude Sonnet 4.6",
     "Gemini 3.1 Pro (Preview)",
     "GPT-5.3-Codex",
+    "GPT-5.4",
+    "GPT-5.4-mini",
     # Add new models here as they are introduced
 }
 

@@ -93,6 +93,8 @@ KNOWN_MODELS = {
     "Claude Sonnet 4.6",
     "Gemini 3.1 Pro (Preview)",
     "GPT-5.3-Codex",
+    "GPT-5.4",
+    "GPT-5.4-mini",
 }
 
 # Privacy denylist — case-insensitive substring matches

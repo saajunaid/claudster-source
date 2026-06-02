@@ -2,7 +2,7 @@
 name: Frontend Developer
 description: Expert frontend developer for HTML, CSS, and web standards
 tools: [read, search, edit, execute, web, problems, testFailure, changes, junai-mcp/*, context7/*]
-model: GPT-5.3-Codex
+model: GPT-5.4
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

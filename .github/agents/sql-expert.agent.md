@@ -2,7 +2,7 @@
 name: SQL Expert
 description: Expert in SQL Server database design, queries, stored procedures, and optimization
 tools: [read, search, edit, execute, problems, context7/*]
-model: GPT-5.3-Codex
+model: GPT-5.4-mini
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

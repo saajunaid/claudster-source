@@ -2,7 +2,7 @@
 name: Streamlit Developer
 description: Expert Streamlit developer for building production-ready dashboards with branding and performance
 tools: [read, search, edit, execute, web, problems, context7/*]
-model: GPT-5.3-Codex
+model: GPT-5.4-mini
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator

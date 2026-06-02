@@ -2,7 +2,7 @@
 name: Data Engineer
 description: Expert in ETL/ELT pipelines, data integration, and database-agnostic data engineering
 tools: [read, search, edit, execute, problems, context7/*]
-model: GPT-5.3-Codex
+model: GPT-5.4
 handoffs:
   - label: Return to Orchestrator
     agent: Orchestrator
