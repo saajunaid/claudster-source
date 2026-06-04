@@ -42,6 +42,7 @@
 | Refactoring | `coding/refactoring/` | Safely refactor code while maintaining behavior. Use when improving code structure, reducing duplication, extracting functions, or modernizing legacy code. |
 | Security Review | `coding/security-review/` | Security review workflow — OWASP, code scanning, cloud infrastructure |
 | SQL | `coding/sql/` | Write high-quality, optimized SQL with best practices for performance, NULL handling, security, and readability. Database-agnostic patterns with dialect-specific notes. |
+| Understand Anything | `coding/understand-anything/` | Analyze any codebase or knowledge base and produce a searchable interactive knowledge graph. Use this skill whenever the user asks to understand a codebase, analyze project architecture, map a repo, generate an architecture diagram, create onboarding docs, explain a specific file or function, analyze the impact of a PR or diff, chat about code, or run any /understand command. Also triggers on phrases like "how does this project work", "map out the codebase", "what changed in this PR", "explain this file", "onboard me to this project", "what does X depend on", "analyze this repo", "generate a knowledge graph", or "what is the architecture of this project". Always use this skill for /understand, /understand-chat, /understand-dashboard, /understand-diff, /understand-domain, /understand-explain, /understand-knowledge, and /understand-onboard commands. |
 
 ### Data
 
