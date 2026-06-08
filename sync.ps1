@@ -1039,30 +1039,44 @@ function junai-push {
     # same commit: marketplace.json at the repo root (.claude-plugin/), the plugin
     # under plugin/. Repo is PUBLIC — vmie/ and any private skill categories are
     # purged from the plugin bundle after copy.
-    $PLUGIN_PRIVATE_FOLDERS = @("vmie")
+    # Private skills purged from BOTH public plugin bundles. After skill flattening these
+    # are flat dirs (skills/<name>/), not a skills/vmie/ category — so purge by skill name.
+    $PLUGIN_PRIVATE_SKILLS = @("golden-workflow", "windows-deployment")
     $claudePython = Get-JunaiPythonCommand
     if ($claudePython) {
         Push-Location $ProjectRoot
-        & $claudePython.Path @($claudePython.PrefixArgs + @("export_runtime_resources.py", "--profile", "claude"))
+        & $claudePython.Path @($claudePython.PrefixArgs + @("export_runtime_resources.py", "--profile", "claude", "--profile", "claude-extras"))
         $claudeExportOk = ($LASTEXITCODE -eq 0)
         Pop-Location
         $claudeBundle = Join-Path $ProjectRoot "dist\runtime-resources\claude"
-        if ($claudeExportOk -and (Test-Path (Join-Path $claudeBundle "plugin"))) {
+        $extrasBundle = Join-Path $ProjectRoot "dist\runtime-resources\claude-extras"
+        $haveCore   = $claudeExportOk -and (Test-Path (Join-Path $claudeBundle "plugin"))
+        $haveExtras = $claudeExportOk -and (Test-Path (Join-Path $extrasBundle "plugin-extras"))
+        if ($haveCore -and $haveExtras) {
+            # marketplace.json (lists both plugins) ships from the core bundle root
             $destMarket = Join-Path $JUNO_POOL ".claude-plugin"
             if (Test-Path $destMarket) { Remove-Item $destMarket -Recurse -Force }
             Copy-Item (Join-Path $claudeBundle ".claude-plugin") $JUNO_POOL -Recurse -Force
+
+            # core plugin → junai/plugin ; extras plugin → junai/plugin-extras
             $destPlugin = Join-Path $JUNO_POOL "plugin"
             if (Test-Path $destPlugin) { Remove-Item $destPlugin -Recurse -Force }
             Copy-Item (Join-Path $claudeBundle "plugin") $JUNO_POOL -Recurse -Force
-            # Purge private skill categories from public plugin bundle
-            foreach ($privateFolder in $PLUGIN_PRIVATE_FOLDERS) {
-                $privatePath = Join-Path $destPlugin "skills\$privateFolder"
-                if (Test-Path $privatePath) {
-                    Remove-Item $privatePath -Recurse -Force
-                    Write-Host "  [OK]  purged private skills/$privateFolder from plugin bundle" -ForegroundColor Green
+            $destExtras = Join-Path $JUNO_POOL "plugin-extras"
+            if (Test-Path $destExtras) { Remove-Item $destExtras -Recurse -Force }
+            Copy-Item (Join-Path $extrasBundle "plugin-extras") $JUNO_POOL -Recurse -Force
+
+            # Purge private skills from both public bundles
+            foreach ($dest in @($destPlugin, $destExtras)) {
+                foreach ($privateSkill in $PLUGIN_PRIVATE_SKILLS) {
+                    $privatePath = Join-Path $dest "skills\$privateSkill"
+                    if (Test-Path $privatePath) {
+                        Remove-Item $privatePath -Recurse -Force
+                        Write-Host "  [OK]  purged private skills/$privateSkill from $(Split-Path $dest -Leaf)" -ForegroundColor Green
+                    }
                 }
             }
-            Write-Host "  [OK]  claude plugin (.claude-plugin + plugin/)" -ForegroundColor Green
+            Write-Host "  [OK]  claudster plugins (.claude-plugin + plugin/ + plugin-extras/)" -ForegroundColor Green
         } else {
             Write-Host "  [WARN]  claude plugin export failed; bundle not synced this run." -ForegroundColor Yellow
         }

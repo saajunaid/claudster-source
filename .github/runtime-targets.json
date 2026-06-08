@@ -482,7 +482,6 @@
       "_comment_layout": "Two-level bundle: marketplace.json at the bundle root (= junai repo root after publish), the plugin under plugin/ (= junai/plugin/). The junai repo hosts other content (.github mirror, src/), so the plugin cannot sit at repo root with source '.'; it lives in plugin/ and the marketplace points there.",
       "workspace_root": "plugin",
       "extra_roots": { "harness": "claude-harness", "scriptsrc": "scripts" },
-      "include_private": ["vmie"],
       "plugin": {
         "name": "claudster",
         "description": "claudster — agent-agnostic dev harness: lean subagents, TDD commands, tiered skills, and a CLAUDE.md generator.",
@@ -496,7 +495,10 @@
         "name": "claudster",
         "owner": { "name": "junaid" },
         "description": "claudster plugin marketplace",
-        "plugin_source": "./plugin"
+        "plugins": [
+          {"name": "claudster", "source": "./plugin", "description": "claudster — agent-agnostic dev harness: lean subagents, TDD commands, a core dev skill set, loop hooks, and a CLAUDE.md generator."},
+          {"name": "claudster-extras", "source": "./plugin-extras", "description": "claudster-extras — the full claudster skill library (cloud, data, the long tail of frontend/coding, media, productivity). Disabled by default; enable on demand to keep always-on context lean."}
+        ]
       },
       "files": [
         {"root": "harness", "source": "settings.template.json", "destination": "settings.template.json"},
@@ -513,56 +515,77 @@
         {"root": "harness", "source": "claude-md", "destination": "claude-md"},
         {"root": "harness", "source": "hooks", "destination": "hooks", "excluded_names": ["notify.py"]},
         {
+          "_comment": "CORE tier — ~38 high-frequency dev skills, flattened to skills/<name>/ so Claude Code's plugin loader (flat discovery) actually registers them. The long tail lives in the claude-extras target. Office skills (pdf/docx/pptx/xlsx) are Anthropic-proprietary and ship via Anthropic's own document-skills, not here.",
           "source": "skills",
           "destination": "skills",
+          "flatten_skills": true,
           "included_skills": {
             "coding": [
-              "anchor-review", "api-client-patterns", "api-design", "architecture-design",
-              "backend-development", "backend-to-frontend-handoff", "caching-patterns", "codebase-audit",
-              "code-explainer", "code-review", "error-handling", "fastapi-dev", "javascript-typescript",
-              "llm-application-dev", "mcp-builder", "observability", "python", "refactoring",
-              "security-review", "sql", "understand-anything"
+              "api-design", "backend-development", "code-review", "codebase-audit", "error-handling",
+              "fastapi-dev", "javascript-typescript", "python", "refactoring", "security-review", "sql"
             ],
             "testing": [
-              "component-testing", "performance-testing", "playwright", "tdd-workflow", "test-strategy",
-              "ui-testing", "webapp-testing"
+              "playwright", "tdd-workflow", "test-strategy", "webapp-testing"
             ],
             "workflow": [
-              "agent-md-refactor", "asking-questions", "best-practices", "brainstorming", "context-curator",
-              "data-contract-pipeline", "golden-nuggets", "golden-plan", "intent-writer", "onboard-project",
-              "preflight", "receiving-code-review", "relay", "requesting-code-review", "setup-project-ai",
-              "skill-creator", "state-tracking", "verification-loop"
+              "best-practices", "brainstorming", "context-curator", "golden-plan", "preflight",
+              "skill-creator"
             ],
             "docs": [
-              "architecture-document", "code-documentation", "doc-coauthoring", "documentation-analyzer",
-              "naming-analyzer", "prd-to-code", "technical-writing", "writing-plans"
+              "code-documentation", "technical-writing", "writing-plans"
             ],
             "devops": [
-              "changelog-generator", "ci-cd-pipeline", "deploy-local", "gh-cli", "git-commit", "monorepo",
-              "update-readme", "using-git-worktrees"
+              "ci-cd-pipeline", "gh-cli", "git-commit", "using-git-worktrees"
             ],
             "data": [
-              "data-analysis", "database-design", "data-loader", "data-validation", "db-testing",
-              "schema-migration"
+              "database-design"
             ],
             "frontend": [
-              "css-architecture", "design-system-tokens", "enterprise-dashboard-aesthetic-system",
-              "frontend-design", "high-end-visual-design", "mockup", "nextjs-app-router", "premium-react",
-              "react-best-practices", "react-dev", "react-useeffect", "responsive-mobile-native",
-              "shadcn-radix", "streamlit-animate", "streamlit-dev", "theme-factory", "ui-review",
-              "ui-styling-patterns", "ui-ux-intelligence", "ux-design", "warm-editorial-ui",
-              "warm-new", "webapp-development", "word-cloud"
+              "css-architecture", "frontend-design", "mockup", "react-best-practices", "react-dev",
+              "ui-review", "warm-editorial-ui"
             ],
             "media": [
-              "draw-io", "excalidraw", "mermaid-diagrams", "plantuml", "svg-create"
-            ],
-            "productivity": [
-              "github-issues", "jira-issues"
-            ],
-            "vmie": [
-              "golden-workflow", "windows-deployment"
+              "draw-io", "mermaid-diagrams"
             ]
           }
+        }
+      ]
+    },
+    {
+      "name": "claude-extras",
+      "_comment": "EXTRAS tier — the full skill library MINUS the core (and minus the proprietary document-skills bundle). Ships as a second plugin (claudster-extras) under plugin-extras/, listed in the same marketplace. Disabled by default; users enable it on demand so the long tail costs zero always-on context. Skills-only: agents/commands/hooks live in the core plugin. Uses excluded_skills (denylist) rather than an allowlist so new pool skills join extras automatically.",
+      "_comment_private": "include_private lifts vmie locally (golden-workflow, windows-deployment); sync.ps1 purges skills/vmie from the public plugin-extras bundle, same as the core plugin.",
+      "workspace_root": "plugin-extras",
+      "include_private": ["vmie"],
+      "plugin": {
+        "name": "claudster-extras",
+        "description": "claudster-extras — the full claudster skill library beyond the core tier (cloud, data, the long tail of coding/frontend, media, productivity). Enable on demand to keep always-on context lean.",
+        "author": { "name": "junaid", "url": "https://github.com/saajunaid/junai" },
+        "homepage": "https://github.com/saajunaid/junai",
+        "repository": "https://github.com/saajunaid/junai",
+        "license": "MIT",
+        "keywords": ["claudster", "skills", "extras", "claude-code"]
+      },
+      "copies": [
+        {
+          "_comment": "Everything except the core 38 and the proprietary document-skills bundle. document-skills is excluded because it is a 3-level nested bundle (docs/document-skills/<pdf|docx|pptx|xlsx>) of Anthropic-proprietary skills that neither flatten nor belong in a public bundle.",
+          "source": "skills",
+          "destination": "skills",
+          "flatten_skills": true,
+          "excluded_skills": [
+            "document-skills",
+            "api-design", "backend-development", "code-review", "codebase-audit", "error-handling",
+            "fastapi-dev", "javascript-typescript", "python", "refactoring", "security-review", "sql",
+            "playwright", "tdd-workflow", "test-strategy", "webapp-testing",
+            "best-practices", "brainstorming", "context-curator", "golden-plan", "preflight",
+            "skill-creator",
+            "code-documentation", "technical-writing", "writing-plans",
+            "ci-cd-pipeline", "gh-cli", "git-commit", "using-git-worktrees",
+            "database-design",
+            "css-architecture", "frontend-design", "mockup", "react-best-practices", "react-dev",
+            "ui-review", "warm-editorial-ui",
+            "draw-io", "mermaid-diagrams"
+          ]
         }
       ]
     }

@@ -60,15 +60,19 @@ def copy_tree(
     excluded_names: set[str] | None = None,
     included_names: set[str] | None = None,
     depth2_included: dict[str, set[str]] | None = None,
+    depth2_excluded: set[str] | None = None,
     stats: ExportStats | None = None,
 ) -> int:
-    """Copy a directory tree with optional top-level and depth-2 allowlists.
+    """Copy a directory tree with optional top-level and depth-2 allow/deny lists.
 
     included_names:   allowlist at depth 0 (direct children of source).
     depth2_included:  per-category allowlist at depth 1.  A dict mapping
                       category-name → set of allowed item names.  Categories
                       absent from the dict are excluded entirely when the dict
                       is provided (i.e. it is a full allowlist across categories).
+    depth2_excluded:  category-agnostic denylist at depth 1 — skill names to skip
+                      regardless of category.  Used by the extras bundle, which copies
+                      everything-minus-core (no allowlist, just a denylist of the core).
     """
     excluded_names = excluded_names or set()
     included_names = included_names or set()
@@ -111,6 +115,11 @@ def copy_tree(
                     if stats is not None:
                         stats.bump_skip("not_included")
                     continue
+            # depth-1: category-agnostic skill denylist (extras = everything minus core)
+            if is_depth1 and depth2_excluded and d in depth2_excluded:
+                if stats is not None:
+                    stats.bump_skip("excluded_skill")
+                continue
             kept_dirs.append(d)
         dirs[:] = kept_dirs
 
@@ -151,6 +160,38 @@ def copy_file(source: Path, destination: Path) -> int:
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
     return 1
+
+
+def flatten_skill_tree(skills_dir: Path, stats: ExportStats | None = None) -> int:
+    """Collapse skills/<category>/<skill>/ → skills/<skill>/ for plugin discovery.
+
+    Claude Code discovers plugin skills at skills/<name>/SKILL.md (flat, one level deep).
+    The pool is organized by category, so each skill dir is lifted up one level and the
+    now-empty category dir is dropped. Top-level files (e.g. _registry.md) are left in
+    place. A category child that is NOT a leaf skill (no SKILL.md of its own — e.g. a
+    nested skill *bundle*) is left where it is; such bundles must be kept out of the
+    roster since they don't fit the flat model. Returns the number of skills moved.
+    """
+    if not skills_dir.exists():
+        return 0
+    moved = 0
+    for category in sorted(p for p in skills_dir.iterdir() if p.is_dir()):
+        for skill in sorted(p for p in category.iterdir() if p.is_dir()):
+            if not (skill / "SKILL.md").is_file():
+                continue  # not a leaf skill (bundle) — leave for roster exclusion
+            target = skills_dir / skill.name
+            if target.exists():
+                raise ValueError(
+                    f"flatten_skills: name collision '{skill.name}' in {skills_dir}"
+                )
+            shutil.move(str(skill), str(target))
+            moved += 1
+        leftover = list(category.iterdir())
+        if not leftover:
+            category.rmdir()
+        elif stats is not None:
+            stats.bump_skip("flatten_left_nonempty")
+    return moved
 
 
 def convert_tools_to_claude_format(copilot_tools: list[str]) -> str:
@@ -368,35 +409,49 @@ def write_plugin_manifests(bundle_root: Path, plugin_dir: Path, target: dict[str
         marketplace_manifest: dict[str, Any] = {"name": mkt["name"], "owner": mkt["owner"]}
         if mkt.get("description"):
             marketplace_manifest["description"] = mkt["description"]
-        marketplace_manifest["plugins"] = [
-            {
-                "name": plugin["name"],
-                "source": mkt.get("plugin_source", "./plugin"),
-                "description": plugin.get("description", ""),
-            }
-        ]
+        # A marketplace may list multiple plugins explicitly (core + extras). When the
+        # manifest provides a `plugins` array, ship it verbatim; otherwise fall back to a
+        # single entry built from this target's plugin block.
+        if mkt.get("plugins"):
+            marketplace_manifest["plugins"] = mkt["plugins"]
+        else:
+            marketplace_manifest["plugins"] = [
+                {
+                    "name": plugin["name"],
+                    "source": mkt.get("plugin_source", "./plugin"),
+                    "description": plugin.get("description", ""),
+                }
+            ]
         (mkt_meta / "marketplace.json").write_text(
             json.dumps(marketplace_manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
         )
 
 
-def write_bundle_registry(skills_dir: Path) -> int:
+def write_bundle_registry(skills_dir: Path, category_map: dict[str, str] | None = None) -> int:
     """Regenerate _registry.md from the skills actually present in the bundle.
 
     Self-contained (no pool manifest dependency) so the shipped subset's registry matches
-    what was exported, not the full 133-skill pool. Returns the number of rows written.
+    what was exported, not the full 133-skill pool. Handles both the categorized layout
+    (skills/<category>/<skill>/SKILL.md) and the flattened plugin layout
+    (skills/<skill>/SKILL.md) — for the latter the category comes from `category_map`
+    (skill-name → category), defaulting to "general". Returns the number of rows written.
     """
     if not skills_dir.exists():
         return 0
+    category_map = category_map or {}
     by_category: dict[str, list[tuple[str, str, str]]] = {}
     for skill_md in sorted(skills_dir.rglob("SKILL.md")):
         rel = skill_md.relative_to(skills_dir)
         if len(rel.parts) < 2:
             continue
-        category = rel.parts[0]
+        name_dir = rel.parts[-2]
+        if len(rel.parts) >= 3:
+            category = rel.parts[0]            # categorized layout
+        else:
+            category = category_map.get(name_dir, "general")  # flattened layout
         frontmatter, _ = split_frontmatter(skill_md.read_text(encoding="utf-8"))
         data = extract_simple_frontmatter(frontmatter)
-        name = data.get("name", rel.parts[-2])
+        name = data.get("name", name_dir)
         description = " ".join(data.get("description", "").split())
         display = " ".join(w.capitalize() for w in name.replace("-", " ").split())
         path = "/".join(rel.parts[:-1]) + "/"
@@ -470,11 +525,15 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
         excluded_names: set[str] = set(private_roots)
         included_names: set[str] = set(copy_spec.get("included_names", []))
         depth2_included: dict[str, set[str]] | None = None
+        depth2_excluded: set[str] | None = None
         if source_rel == "skills":
             excluded_names |= skill_exclusions
             raw_skill_roster = copy_spec.get("included_skills")
             if raw_skill_roster:
                 depth2_included = {cat: set(skills) for cat, skills in raw_skill_roster.items()}
+            excluded_skills = set(copy_spec.get("excluded_skills", []))
+            if excluded_skills:
+                depth2_excluded = excluded_skills
         excluded_names |= set(copy_spec.get("excluded_names", []))
         if not source.exists():
             stats.bump_skip("missing_source")
@@ -486,8 +545,11 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
             excluded_names=excluded_names,
             included_names=included_names,
             depth2_included=depth2_included,
+            depth2_excluded=depth2_excluded,
             stats=stats,
         )
+        if copy_spec.get("flatten_skills"):
+            flatten_skill_tree(destination, stats)
 
     for file_spec in target.get("files", []):
         source_rel = file_spec["source"].replace("\\", "/").strip("/")
@@ -531,7 +593,17 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
     # marketplace.json at the bundle root (output_root); plugin.json + content under workspace_root.
     if target.get("plugin"):
         write_plugin_manifests(output_root, workspace_root, target)
-        rows = write_bundle_registry(workspace_root / "skills")
+        # Build a full skill→category map from the source pool so the flattened registry
+        # keeps real categories (works for both allowlist and denylist rosters).
+        cat_map: dict[str, str] = {}
+        canonical_skills = canonical_root / "skills"
+        if canonical_skills.exists():
+            for cat_dir in canonical_skills.iterdir():
+                if cat_dir.is_dir():
+                    for sk in cat_dir.iterdir():
+                        if sk.is_dir():
+                            cat_map[sk.name] = cat_dir.name
+        rows = write_bundle_registry(workspace_root / "skills", cat_map or None)
         if rows:
             stats.bump_skip("registry_rows_written", rows)
 

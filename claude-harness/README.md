@@ -29,6 +29,25 @@ claude-harness/
 └── stack-map.json         stack-detection signals → which fragments/commands/subagents apply
 ```
 
+## Skills: two-plugin tiering (lean context)
+Claude Code loads every enabled plugin's skill descriptions into **every** session, so a large flat
+skill set is a standing context tax. claudster splits skills across two plugins in one marketplace:
+
+- **`claudster`** (this plugin) — agents, commands, loop hooks, and a **core** set (~38) of
+  high-frequency dev skills. Always enabled; modest always-on cost.
+- **`claudster-extras`** — the **long tail** (cloud, data, the rest of frontend/coding, media,
+  productivity). **Disabled by default**; enable only when you need it:
+  ```
+  claude plugin install claudster-extras@claudster   # one-time
+  claude plugin enable  claudster-extras             # when you need the breadth
+  claude plugin disable claudster-extras             # back to lean
+  ```
+  While disabled it costs **zero** always-on context. (Plugin skills must live flat at
+  `skills/<name>/SKILL.md` to be discovered — the build flattens the pool's category layout.)
+
+Office skills (`pdf`/`docx`/`pptx`/`xlsx`) are Anthropic's proprietary document-skills and are **not**
+shipped here — install Anthropic's document-skills (or keep them in `~/.claude/skills/`).
+
 ## Running on local / non-Anthropic models (portability seam)
 The harness is **model-portable by design** — it's markdown interpreted by a CLI, not code bound to a
 provider. The one Anthropic-specific detail is each subagent's `model: opus|sonnet|haiku` frontmatter.
