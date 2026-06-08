@@ -1,0 +1,22 @@
+{
+  "$comment": "Maps logical model tiers (used in subagent `model:` frontmatter) to concrete model IDs. This indirection is what makes the harness portable to non-Anthropic / local models: under a LiteLLM gateway (ANTHROPIC_BASE_URL → proxy), override the tiers below to point at whatever is available. The `model:` field in an agent is a LOGICAL TIER, not a hard model ID.",
+  "default": {
+    "opus": "claude-opus-4-8",
+    "sonnet": "claude-sonnet-4-6",
+    "haiku": "claude-haiku-4-5-20251001"
+  },
+  "roles": {
+    "$comment": "Role → tier. Lets routing express intent (planning wants the strongest model; bulk coding can be cheaper/local) independent of which concrete model fills each tier.",
+    "planner": "opus",
+    "verify": "opus",
+    "reviewer": "sonnet",
+    "coder": "sonnet",
+    "bulk": "haiku"
+  },
+  "local_fallback_example": {
+    "$comment": "Reference config for the planner=remote / coder=local split. Opus plans and verifies via the Anthropic API; a local model (served by Ollama/vLLM behind a LiteLLM proxy) does the coding/bulk work. Copy these over `default` in a per-deployment override to activate. Model IDs are illustrative — set to whatever your gateway serves.",
+    "opus": "claude-opus-4-8",
+    "sonnet": "ollama/qwen2.5-coder:32b",
+    "haiku": "ollama/qwen2.5-coder:7b"
+  }
+}

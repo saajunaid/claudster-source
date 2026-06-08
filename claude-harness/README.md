@@ -10,16 +10,13 @@ Proven end-to-end in the Phase 0 spike (`E:\Projects\_harness-spike`); see that 
 ## Layout
 ```
 claude-harness/
-├── agents/            lean subagents (own context, report back) — deployed to .claude/agents/
-│   ├── tester.md
-│   ├── code-reviewer.md
-│   └── preflight.md
+├── agents/            10 lean subagents (own context, report back) — deployed to .claude/agents/
+│   ├── tester.md · code-reviewer.md · preflight.md          (Phase 0 trio)
+│   ├── security-analyst.md · codebase-audit.md · debug.md   (Phase 2)
+│   ├── anchor.md · knowledge-transfer.md                    (Phase 2)
+│   └── data-engineer.md · sql-expert.md                     (Phase 2)
 ├── commands/          slash commands — deployed to .claude/commands/
-│   ├── feature-plan.md
-│   ├── tdd.md
-│   ├── prd.md
-│   ├── handoff.md
-│   └── relay.md
+│   ├── feature-plan.md · tdd.md · prd.md · handoff.md · setup-project-ai.md
 ├── claude-md/         CLAUDE.md fragment library — composed into the project's CLAUDE.md hierarchy
 │   ├── root.md.tmpl       universal root (identity placeholders + harness + laws)
 │   ├── agents.md.tmpl     AGENTS.md mirror (Codex / agent-agnostic)
@@ -28,8 +25,27 @@ claude-harness/
 │   ├── frontend-react.md  → frontend/CLAUDE.md (when React/Vite detected)
 │   └── tests-pytest.md    → tests/CLAUDE.md  (when pytest detected)
 ├── settings.template.json base .claude/settings.json
+├── model-aliases.json     logical model tier → concrete model (portability seam — see below)
 └── stack-map.json         stack-detection signals → which fragments/commands/subagents apply
 ```
+
+## Running on local / non-Anthropic models (portability seam)
+The harness is **model-portable by design** — it's markdown interpreted by a CLI, not code bound to a
+provider. The one Anthropic-specific detail is each subagent's `model: opus|sonnet|haiku` frontmatter.
+Treat that as a **logical tier**, resolved through `model-aliases.json`, not a hard model ID.
+
+To run under a gateway (the local-LLM fallback path):
+1. Stand up a **LiteLLM** proxy in front of your models (local GPU via Ollama/vLLM, or any provider).
+2. Point Claude Code at it: `ANTHROPIC_BASE_URL=<proxy>`, `ANTHROPIC_AUTH_TOKEN=<gateway/virtual key>`,
+   optionally `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` to populate the model picker. (Codex uses
+   the equivalent OpenAI base-URL seam.)
+3. Override the tiers in `model-aliases.json` — e.g. keep `opus` remote for planning/verification, map
+   `sonnet`/`haiku` to a **local coder model** (`local_fallback_example` shows the planner=remote /
+   coder=local split). This is the intended future shape: Opus plans, a local model codes.
+
+Caveats (don't hide them): a gateway is a server someone must run — subscription users gain nothing from
+it and should leave it off (default). Claude Code sends `anthropic-beta` headers some non-Anthropic
+backends reject (400). Keep the seam **optional, default-off**, same posture as the pipeline MCP.
 
 ## Design rules (learned in Phase 0)
 - **Deterministic vs generative split.** Mechanical steps (placeholder substitution, venv/deps,

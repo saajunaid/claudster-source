@@ -414,6 +414,74 @@
       "copies": [
         {"source": "skills", "destination": "skills"}
       ]
+    },
+    {
+      "name": "claude",
+      "_comment": "Claude Code bundle — the lean Phase 0-2 harness (subagents + commands + CLAUDE.md fragments) sourced from claude-harness/, plus the tiered dev skill set (core + frontend) from .github/skills. Flat layout (workspace_root='.') feeds Phase 4 plugin packaging. Skills tier table: .github/plans/phase-3-commands-skills-export.md §Step 1.",
+      "_comment_private": "include_private lifts vmie out of the global exclusion for THIS bundle only — vmie skills are crucial to local Windows/deploy workflows and we are personal-first. REMOVE include_private (and the vmie skills entry below) when creating a PUBLIC plugin target in Phase 4.",
+      "workspace_root": ".",
+      "extra_roots": { "harness": "claude-harness" },
+      "include_private": ["vmie"],
+      "files": [
+        {"root": "harness", "source": "settings.template.json", "destination": "settings.template.json"},
+        {"root": "harness", "source": "stack-map.json", "destination": "stack-map.json"},
+        {"root": "harness", "source": "model-aliases.json", "destination": "model-aliases.json"},
+        {"root": "harness", "source": "README.md", "destination": "README.md"}
+      ],
+      "copies": [
+        {"root": "harness", "source": "agents", "destination": "agents"},
+        {"root": "harness", "source": "commands", "destination": "commands"},
+        {"root": "harness", "source": "claude-md", "destination": "claude-md"},
+        {
+          "source": "skills",
+          "destination": "skills",
+          "included_skills": {
+            "coding": [
+              "anchor-review", "api-client-patterns", "api-design", "architecture-design",
+              "backend-development", "backend-to-frontend-handoff", "caching-patterns", "codebase-audit",
+              "code-explainer", "code-review", "error-handling", "fastapi-dev", "javascript-typescript",
+              "llm-application-dev", "mcp-builder", "observability", "python", "refactoring",
+              "security-review", "sql", "understand-anything"
+            ],
+            "testing": [
+              "component-testing", "performance-testing", "playwright", "tdd-workflow", "test-strategy",
+              "ui-testing", "webapp-testing"
+            ],
+            "workflow": [
+              "agent-md-refactor", "asking-questions", "best-practices", "brainstorming", "context-curator",
+              "data-contract-pipeline", "golden-nuggets", "golden-plan", "intent-writer", "onboard-project",
+              "preflight", "receiving-code-review", "relay", "requesting-code-review", "setup-project-ai",
+              "skill-creator", "state-tracking", "verification-loop"
+            ],
+            "docs": [
+              "architecture-document", "code-documentation", "doc-coauthoring", "documentation-analyzer",
+              "naming-analyzer", "prd-to-code", "technical-writing", "writing-plans"
+            ],
+            "devops": [
+              "changelog-generator", "ci-cd-pipeline", "deploy-local", "gh-cli", "git-commit", "monorepo",
+              "update-readme", "using-git-worktrees"
+            ],
+            "data": [
+              "data-analysis", "database-design", "data-loader", "data-validation", "db-testing",
+              "schema-migration"
+            ],
+            "frontend": [
+              "css-architecture", "design-system-tokens", "enterprise-dashboard-aesthetic-system",
+              "frontend-design", "high-end-visual-design", "mockup", "nextjs-app-router", "premium-react",
+              "react-best-practices", "react-dev", "react-useeffect", "responsive-mobile-native",
+              "shadcn-radix", "streamlit-animate", "streamlit-dev", "theme-factory", "ui-review",
+              "ui-styling-patterns", "ui-ux-intelligence", "ux-design", "warm-editorial-ui",
+              "webapp-development"
+            ],
+            "media": [
+              "draw-io", "excalidraw", "mermaid-diagrams", "plantuml", "svg-create"
+            ],
+            "vmie": [
+              "golden-workflow", "windows-deployment"
+            ]
+          }
+        }
+      ]
     }
   ]
 }

@@ -21,6 +21,9 @@ For the plan (or the named phase) check each claim against the codebase:
    UI primitive the plan assumes exists — confirm the component/package is actually present.)
 6. **Conventions** — does the plan's approach fit the patterns in the relevant `CLAUDE.md`? Flag drift.
 7. **Test strategy** — does the plan put a failing test first for each behavior change (TDD law)?
+8. **Local-coder readiness** — could a low-capability model implement each phase with no reasoning of
+   its own? Flag any phase that leaves a judgment call open, names a file/symbol vaguely, omits exact
+   data bindings, or has a non-literal exit gate. (Supports the planner→coder handoff.)
 
 ## Method
 - Read the plan. For each claim, run the cheapest check that confirms or refutes it (Glob/Grep/Read).
@@ -32,12 +35,17 @@ preflight:
   verdict: PASS | FAIL
   phase: <which phase/scope validated, or "whole plan">
   findings:
-    - category: <paths|symbols|api|data|deps|conventions|tests>
+    - category: <paths|symbols|api|data|deps|conventions|tests|local-coder>
       severity: blocker | warning
       claim: <what the plan asserts>
       reality: <what the codebase actually shows>
       fix: <what the plan should say instead>
+  local_coder_ready: yes | no
+  local_coder_gaps:
+    - phase: <phase> — <what a weak coder would have to reason out / what's underspecified>
   verified_ok:
     - <short list of key claims that checked out>
 ```
-`PASS` requires zero `blocker` findings. Be concrete: cite the file/symbol you checked.
+`PASS` requires zero `blocker` findings. `local_coder_ready: no` lists the phases that lean on implied
+reasoning (a warning, not a hard blocker unless the plan targets a local coder). Be concrete: cite the
+file/symbol you checked.

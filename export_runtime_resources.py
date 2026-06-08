@@ -349,9 +349,28 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
     output_root = PROJECT_ROOT / manifest["output_root"] / target["name"]
     workspace_root = output_root / target["workspace_root"]
     stats = ExportStats(profile=target["name"])
+    # extra_roots: a target may pull some copies/files from a second source root
+    # (e.g. the claude target sources agents/commands from `claude-harness/`, not `.github`).
+    extra_roots: dict[str, Path] = {
+        key: PROJECT_ROOT / rel for key, rel in target.get("extra_roots", {}).items()
+    }
+
+    def _base_root(spec: dict[str, Any]) -> Path:
+        root_key = spec.get("root")
+        if root_key:
+            if root_key not in extra_roots:
+                raise ValueError(
+                    f"{target['name']}: copy/file references unknown root '{root_key}'"
+                )
+            return extra_roots[root_key]
+        return canonical_root
     exclusion_cfg = manifest.get("exclusions", {})
-    skill_exclusions = set(exclusion_cfg.get("skills", []))
-    private_roots = set(exclusion_cfg.get("private_roots", []))
+    # A target may opt back into otherwise-private content (e.g. the personal `claude`
+    # bundle includes vmie; a future public plugin target omits it). include_private
+    # lifts the named items out of the global exclusions for THIS target only.
+    include_private = set(target.get("include_private", []))
+    skill_exclusions = set(exclusion_cfg.get("skills", [])) - include_private
+    private_roots = set(exclusion_cfg.get("private_roots", [])) - include_private
     private_paths = _normalize_paths(exclusion_cfg.get("private_paths", []))
 
     ensure_clean_dir(output_root)
@@ -362,7 +381,7 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
             print(f"[SKIP] {target['name']}: copy '{source_rel}' is in exclusions")
             stats.bump_skip("private_path")
             continue
-        source = canonical_root / copy_spec["source"]
+        source = _base_root(copy_spec) / copy_spec["source"]
         destination = workspace_root / copy_spec["destination"]
         excluded_names: set[str] = set(private_roots)
         included_names: set[str] = set(copy_spec.get("included_names", []))
@@ -393,7 +412,7 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
             print(f"[SKIP] {target['name']}: file '{source_rel}' is in exclusions")
             stats.bump_skip("private_path")
             continue
-        source = canonical_root / file_spec["source"]
+        source = _base_root(file_spec) / file_spec["source"]
         destination = workspace_root / file_spec["destination"]
         if not source.exists():
             stats.bump_skip("missing_source")
@@ -514,11 +533,16 @@ def main() -> int:
     output_root = PROJECT_ROOT / manifest["output_root"]
     leaks: list[str] = []
     target_names = {t["name"] for t in selected_targets}
+    include_private_by_target = {
+        t["name"]: set(t.get("include_private", [])) for t in selected_targets
+    }
     for path in output_root.rglob("*"):
         rel_parts = path.relative_to(output_root).parts
-        if rel_parts and rel_parts[0] not in target_names:
+        if not rel_parts or rel_parts[0] not in target_names:
             continue
-        if any(part in forbidden_names for part in rel_parts):
+        # a target that opted into private content is not "leaking" it
+        tgt_forbidden = forbidden_names - include_private_by_target.get(rel_parts[0], set())
+        if any(part in tgt_forbidden for part in rel_parts):
             leaks.append(str(path.relative_to(output_root)))
     if leaks:
         print(f"[FAIL] Private content leaked into export ({len(leaks)} paths):")

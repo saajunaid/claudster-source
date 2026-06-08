@@ -68,8 +68,25 @@ Before writing the plan, consider dispatching the **preflight** subagent to vali
 | 1 | not started | — | |
 ```
 
+## Plan quality gate — local-coder ready (MANDATORY)
+The plan must be executable by a **low-capability local coder model** (the planner→coder handoff: a
+strong model plans, a cheaper/local model implements). The plan carries the intelligence; the coder
+only follows it. Before finishing, verify every phase against this gate — a phase that fails it is not
+done:
+- **Exact paths** — every file to create/edit is named in full (no "the relevant service file").
+- **Exact symbols** — function/class/component names and signatures are spelled out, not described.
+- **Pre-decided judgment** — no "choose an approach", "use a suitable library", or open options left to
+  the coder. If there's a decision, make it here with the rationale.
+- **Explicit data bindings** — exact field paths / response shapes the code must read or produce.
+- **Copy-paste verification** — each phase's exit gate is a literal command to run + expected output,
+  not "tests pass".
+- **No abbreviation** — never "etc.", "similar to Phase 1", "and so on". Write every item in full.
+
+If any phase relies on the implementer *reasoning out* a gap, close the gap in the plan now.
+
 ## Step 4 — Report
-Output the plan path, the phase list (one line each), and: *"To start: `read the plan and implement
-Phase 1`. To resume later: `/handoff` at session end, then `read relay.md` next time."*
+Output the plan path, the phase list (one line each), confirm the local-coder gate passed (or list the
+phases that need tightening), and: *"To start: `read the plan and implement Phase 1`. To resume later:
+`/handoff` at session end, then `read relay.md` next time."*
 
 Do not start implementing — this command only produces the plan.
