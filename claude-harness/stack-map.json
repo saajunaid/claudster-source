@@ -3,7 +3,7 @@
   "always": {
     "root_fragment": "root.md.tmpl",
     "agents_mirror": "agents.md.tmpl",
-    "subagents": ["tester.md", "code-reviewer.md", "preflight.md"],
+    "subagents": ["tester.md", "code-reviewer.md", "preflight.md", "security-analyst.md", "codebase-audit.md", "debug.md", "anchor.md", "knowledge-transfer.md", "data-engineer.md", "sql-expert.md"],
     "commands": ["feature-plan.md", "tdd.md", "prd.md", "handoff.md", "setup-project-ai.md"]
   },
   "detectors": [
