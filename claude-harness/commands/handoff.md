@@ -45,6 +45,12 @@ Read relay.md, then the plan it points to. Continue from <phase/step>. Next acti
 \`\`\`
 ```
 
+## Step 0 — capture learnings first (knowledge-transfer)
+Before writing relay.md, dispatch the `knowledge-transfer` subagent if any non-trivial
+implementation or debugging happened this session. It writes durable findings (root causes,
+workarounds, constraints) into the right CLAUDE.md / instructions files so docs stay current.
+Skip if the session was read-only, design-only, or nothing non-obvious emerged.
+
 ## Rules
 - Only verified facts and real paths. Mark anything unconfirmed as `Unknown`.
 - Update the plan's tracker rows too (status + last commit) — relay and tracker must agree.

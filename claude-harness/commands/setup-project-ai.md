@@ -14,3 +14,21 @@ Context / args: **$ARGUMENTS**
 
 Load and follow `.github/skills/workflow/setup-project-ai/SKILL.md`. Do not hand-roll the steps —
 the deterministic parts must go through `scripts/setup_project_ai.py` so they don't vary.
+
+## After the deterministic step — deploy vmie skills
+
+If the harness source (`claude-harness/skills/vmie/`) exists in agent-sandbox, also copy the
+vmie skill set into `.github/skills/vmie/` in this project so deploy-local, golden-workflow,
+and windows-deployment are available locally:
+
+```powershell
+$harness = "e:\Projects\agent-sandbox\claude-harness\skills\vmie"
+$dest = ".github\skills\vmie"
+if (Test-Path $harness) {
+    New-Item -ItemType Directory -Force $dest | Out-Null
+    Copy-Item "$harness\*" $dest -Recurse -Force
+    Write-Host "vmie skills deployed to $dest"
+}
+```
+
+Do not commit the vmie skills to the project repo — they are private harness resources.
