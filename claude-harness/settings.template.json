@@ -17,5 +17,47 @@
       "Bash(git push:*)",
       "Bash(rm:*)"
     ]
+  },
+  "hooks": {
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,datetime; d=json.load(sys.stdin); open('agent-log.jsonl','a').write(json.dumps({'ts':datetime.datetime.utcnow().isoformat()+'Z','agent':d.get('agent_name','unknown'),'verdict':str(d.get('result',''))[:300]})+chr(10))\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f relay.md && printf '\\n=== relay.md ===\\n' && cat relay.md || true"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f relay.md && printf '\\n=== [PreCompact] relay.md ===\\n' && cat relay.md || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\n[HARNESS] Session ending — update relay.md + extract nuggets to docs/gold-nuggets-log.md if needed.\\n'"
+          }
+        ]
+      }
+    ]
   }
 }
