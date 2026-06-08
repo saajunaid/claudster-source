@@ -356,6 +356,27 @@ ensure_dir() {
 
 ---
 
+## Commit-message & line-oriented validators
+
+A validator that inspects only the **first line** of input is fragile to a leading blank line:
+
+```bash
+# commit-msg hook: reject non-conventional subjects
+head -1 "$MSG_FILE" | grep -qE '^(feat|fix|docs|...)(\(.+\))?!?: .{1,72}$'
+```
+
+If the commit message has a leading blank line, `head -1` sees `""` and the check fails even on a valid
+subject. This bites callers who build the message with a **PowerShell here-string** — `git commit -m @'`
+… `'@` injects a leading newline, so the subject lands on line 2.
+
+- **Hook side:** prefer scanning for the subject anywhere in the first non-blank line, or strip leading
+  blank lines first (`sed '/./,$!d'`), rather than a bare `head -1`.
+- **Caller side (PowerShell → git):** pass the subject and body as separate `-m` flags
+  (`git commit -m "feat(x): subject" -m "body…"`) instead of a single here-string `-m`. The first `-m`
+  is guaranteed to be the subject with no leading newline.
+
+---
+
 ## Style Conventions
 
 - Indent with 4 spaces (no tabs)
