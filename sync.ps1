@@ -1034,6 +1034,32 @@ function junai-push {
         }
     }
 
+    # ── Claude Code plugin bundle (Phase 4) ───────────────────────────────────
+    # Export the `claude` target and place it in the junai repo so it ships in the
+    # same commit: marketplace.json at the repo root (.claude-plugin/), the plugin
+    # under plugin/. junai is private, so the personal bundle (incl. vmie) is fine.
+    $claudePython = Get-JunaiPythonCommand
+    if ($claudePython) {
+        Push-Location $ProjectRoot
+        & $claudePython.Path @($claudePython.PrefixArgs + @("export_runtime_resources.py", "--profile", "claude"))
+        $claudeExportOk = ($LASTEXITCODE -eq 0)
+        Pop-Location
+        $claudeBundle = Join-Path $ProjectRoot "dist\runtime-resources\claude"
+        if ($claudeExportOk -and (Test-Path (Join-Path $claudeBundle "plugin"))) {
+            $destMarket = Join-Path $JUNO_POOL ".claude-plugin"
+            if (Test-Path $destMarket) { Remove-Item $destMarket -Recurse -Force }
+            Copy-Item (Join-Path $claudeBundle ".claude-plugin") $JUNO_POOL -Recurse -Force
+            $destPlugin = Join-Path $JUNO_POOL "plugin"
+            if (Test-Path $destPlugin) { Remove-Item $destPlugin -Recurse -Force }
+            Copy-Item (Join-Path $claudeBundle "plugin") $JUNO_POOL -Recurse -Force
+            Write-Host "  [OK]  claude plugin (.claude-plugin + plugin/)" -ForegroundColor Green
+        } else {
+            Write-Host "  [WARN]  claude plugin export failed; bundle not synced this run." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "  [--]  claude plugin - python not found, skipped" -ForegroundColor DarkGray
+    }
+
     Remove-LocalOnlyPoolFiles -GithubRoot $JUNO_GITHUB
 
     # Commit and push junai

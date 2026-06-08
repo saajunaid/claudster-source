@@ -343,34 +343,39 @@ def prune_registry(
     return original_count - len(pruned_stages)
 
 
-def write_plugin_manifests(bundle_dir: Path, target: dict[str, Any]) -> None:
-    """Emit .claude-plugin/plugin.json (+ marketplace.json) for a plugin-shaped target.
+def write_plugin_manifests(bundle_root: Path, plugin_dir: Path, target: dict[str, Any]) -> None:
+    """Emit the plugin + marketplace manifests for a plugin-shaped target.
 
-    The bundle is simultaneously the marketplace and a single plugin: both manifests live
-    in <bundle>/.claude-plugin/ and the plugin source is '.' (the repo root).
+    Two-level layout: `marketplace.json` lives at the bundle root (which becomes the host
+    repo root after publish), and the plugin itself — including `plugin.json` — lives in a
+    subdirectory (`plugin/`). The marketplace's `plugin_source` points at that subdir. This
+    is required because the host repo (junai) carries other content, so the plugin cannot
+    occupy the repo root with `source: "."`.
     """
     plugin = target.get("plugin")
     if not plugin:
         return
-    meta_dir = bundle_dir / ".claude-plugin"
-    meta_dir.mkdir(parents=True, exist_ok=True)
+    plugin_meta = plugin_dir / ".claude-plugin"
+    plugin_meta.mkdir(parents=True, exist_ok=True)
     plugin_manifest = {k: v for k, v in plugin.items() if v not in (None, "", [], {})}
-    (meta_dir / "plugin.json").write_text(
+    (plugin_meta / "plugin.json").write_text(
         json.dumps(plugin_manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     mkt = target.get("marketplace")
     if mkt:
+        mkt_meta = bundle_root / ".claude-plugin"
+        mkt_meta.mkdir(parents=True, exist_ok=True)
         marketplace_manifest: dict[str, Any] = {"name": mkt["name"], "owner": mkt["owner"]}
         if mkt.get("description"):
             marketplace_manifest["description"] = mkt["description"]
         marketplace_manifest["plugins"] = [
             {
                 "name": plugin["name"],
-                "source": mkt.get("plugin_source", "."),
+                "source": mkt.get("plugin_source", "./plugin"),
                 "description": plugin.get("description", ""),
             }
         ]
-        (meta_dir / "marketplace.json").write_text(
+        (mkt_meta / "marketplace.json").write_text(
             json.dumps(marketplace_manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
         )
 
@@ -523,8 +528,9 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
         _check_dependency_closure(workspace_root, stats)
 
     # Plugin packaging (Phase 4): emit .claude-plugin manifests + a bundle-scoped skill registry.
+    # marketplace.json at the bundle root (output_root); plugin.json + content under workspace_root.
     if target.get("plugin"):
-        write_plugin_manifests(workspace_root, target)
+        write_plugin_manifests(output_root, workspace_root, target)
         rows = write_bundle_registry(workspace_root / "skills")
         if rows:
             stats.bump_skip("registry_rows_written", rows)
