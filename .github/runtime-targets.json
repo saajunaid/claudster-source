@@ -481,11 +481,11 @@
       "_comment_private": "include_private lifts vmie out of the global exclusion for THIS bundle only — vmie skills are crucial to local Windows/deploy workflows and we are personal-first. REMOVE include_private (and the vmie skills entry below) when creating a PUBLIC plugin target in Phase 4.",
       "_comment_layout": "Two-level bundle: marketplace.json at the bundle root (= junai repo root after publish), the plugin under plugin/ (= junai/plugin/). The junai repo hosts other content (.github mirror, src/), so the plugin cannot sit at repo root with source '.'; it lives in plugin/ and the marketplace points there.",
       "workspace_root": "plugin",
-      "extra_roots": { "harness": "claude-harness" },
+      "extra_roots": { "harness": "claude-harness", "scriptsrc": "scripts" },
       "include_private": ["vmie"],
       "plugin": {
-        "name": "junai",
-        "description": "junai — agent-agnostic dev harness: lean subagents, TDD commands, tiered skills, and a CLAUDE.md generator.",
+        "name": "claudster",
+        "description": "claudster — agent-agnostic dev harness: lean subagents, TDD commands, tiered skills, and a CLAUDE.md generator.",
         "author": { "name": "junaid", "url": "https://github.com/saajunaid/junai" },
         "homepage": "https://github.com/saajunaid/junai",
         "repository": "https://github.com/saajunaid/junai",
@@ -493,9 +493,9 @@
         "keywords": ["harness", "subagents", "tdd", "fastapi", "react", "claude-code", "agent-agnostic"]
       },
       "marketplace": {
-        "name": "junai",
+        "name": "claudster",
         "owner": { "name": "junaid" },
-        "description": "junai plugin marketplace",
+        "description": "claudster plugin marketplace",
         "plugin_source": "./plugin"
       },
       "files": [
@@ -504,12 +504,14 @@
         {"root": "harness", "source": "model-aliases.json", "destination": "model-aliases.json"},
         {"root": "harness", "source": "litellm.config.example.yaml", "destination": "litellm.config.example.yaml"},
         {"root": "harness", "source": "LOCAL-MODELS.md", "destination": "LOCAL-MODELS.md"},
-        {"root": "harness", "source": "README.md", "destination": "README.md"}
+        {"root": "harness", "source": "README.md", "destination": "README.md"},
+        {"root": "scriptsrc", "source": "setup_project_ai.py", "destination": "scripts/setup_project_ai.py"}
       ],
       "copies": [
         {"root": "harness", "source": "agents", "destination": "agents"},
         {"root": "harness", "source": "commands", "destination": "commands"},
         {"root": "harness", "source": "claude-md", "destination": "claude-md"},
+        {"root": "harness", "source": "hooks", "destination": "hooks", "excluded_names": ["notify.py"]},
         {
           "source": "skills",
           "destination": "skills",

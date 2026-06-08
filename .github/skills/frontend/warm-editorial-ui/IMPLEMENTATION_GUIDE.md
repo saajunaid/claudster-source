@@ -1,6 +1,6 @@
 # RevSight Implementation Guide
 
-This document is the practical implementation companion to [DESIGN_TOKENS.md](C:/Users/jshaik/Downloads/Mobile%20Revenue%20Assurance-handoff/mobile-revenue-assurance/project/DESIGN_TOKENS.md).
+This document is the practical implementation companion to [DESIGN_TOKENS.md](DESIGN_TOKENS.md).
 
 Use it when rebuilding the mockup as a standard React web application.
 
@@ -16,10 +16,10 @@ This guide exists to make sure the UI is implemented consistently without:
 
 Use these files as the main references:
 
-- [DESIGN_TOKENS.md](C:/Users/jshaik/Downloads/Mobile%20Revenue%20Assurance-handoff/mobile-revenue-assurance/project/DESIGN_TOKENS.md)
-- [styles.css](C:/Users/jshaik/Downloads/Mobile%20Revenue%20Assurance-handoff/mobile-revenue-assurance/project/styles.css)
-- [src/shell.jsx](C:/Users/jshaik/Downloads/Mobile%20Revenue%20Assurance-handoff/mobile-revenue-assurance/project/src/shell.jsx)
-- [index.html](C:/Users/jshaik/Downloads/Mobile%20Revenue%20Assurance-handoff/mobile-revenue-assurance/project/index.html)
+- [DESIGN_TOKENS.md](DESIGN_TOKENS.md)
+- [styles.css](styles.css)
+- [src/shell.jsx](src/shell.jsx)
+- [index.html](index.html)
 
 If implementation decisions conflict with ad hoc styling in a page, prefer the token system and shell patterns.
 
@@ -159,9 +159,9 @@ Before considering the React implementation complete, verify:
 
 ## Handoff Checklist For The Next Agent
 
-- Read [DESIGN_TOKENS.md](C:/Users/jshaik/Downloads/Mobile%20Revenue%20Assurance-handoff/mobile-revenue-assurance/project/DESIGN_TOKENS.md) first
-- Reuse the theme tokens already present in [styles.css](C:/Users/jshaik/Downloads/Mobile%20Revenue%20Assurance-handoff/mobile-revenue-assurance/project/styles.css)
-- Preserve the shell behavior already established in [src/shell.jsx](C:/Users/jshaik/Downloads/Mobile%20Revenue%20Assurance-handoff/mobile-revenue-assurance/project/src/shell.jsx)
+- Read [DESIGN_TOKENS.md](DESIGN_TOKENS.md) first
+- Reuse the theme tokens already present in [styles.css](styles.css)
+- Preserve the shell behavior already established in [src/shell.jsx](src/shell.jsx)
 - Do not swap the font system back to generic defaults
 - Do not reintroduce terracotta or unrelated editorial accent colors
 - Do not hard-code page-specific colors that bypass the token system
@@ -174,4 +174,4 @@ If a future implementation decision is unclear, follow this order:
 1. Use the existing token system.
 2. Reuse an existing shell or component pattern.
 3. Add a new token only if the current system cannot express the need cleanly.
-4. Update [DESIGN_TOKENS.md](C:/Users/jshaik/Downloads/Mobile%20Revenue%20Assurance-handoff/mobile-revenue-assurance/project/DESIGN_TOKENS.md) if a new token is introduced.
+4. Update [DESIGN_TOKENS.md](DESIGN_TOKENS.md) if a new token is introduced.

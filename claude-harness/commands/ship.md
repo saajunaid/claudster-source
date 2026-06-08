@@ -1,22 +1,32 @@
 ---
-description: Commit, push, and monitor the Gitea CalVer/NSSM deploy pipeline to prod
+description: Commit, push, and monitor the deploy pipeline (auto-detects Gitea, GitHub Actions, or local-only)
 argument-hint: "[commit message]"
 ---
 
 # /ship — commit → push → CI → prod
 
-Ship the current working changes to prod via the Gitea CalVer/NSSM pipeline.
+Ship the current working changes via this repo's actual delivery pipeline. The pipeline differs per
+repo, so **detect it first**, then follow the matching lane. Preflight, staging, and commit are
+identical across lanes; only monitoring and validation differ.
 
 Optional message: **$ARGUMENTS** (if empty, derive a conventional commit message from staged changes)
 
-Read `CLAUDE.md` and `.gitea/workflows/ci.yml` before starting so you know the actual gate names
-and NSSM service identifiers for this repo. Follow the `deploy-local` skill workflow exactly.
+## Step 0 — Detect the pipeline (do this before anything else)
+Inspect the repo and pick exactly one lane:
+- **Gitea lane** — `.gitea/workflows/` exists. Monitor via the Gitea API; follow the `deploy-local`
+  skill (CalVer/NSSM prod deploy). This is the agent-sandbox/VMIE local setup.
+- **GitHub lane** — `.github/workflows/` exists (and no `.gitea/`). Monitor via the `gh` CLI.
+- **Local-only lane** — neither exists, or there is no push remote. Commit (and push if a remote
+  exists); there is no CI to monitor — say so explicitly and stop after the push + local validation.
 
-## Steps — do not skip or reorder
+Read `CLAUDE.md` and the detected workflow file(s) before starting so you use this repo's real gate
+names, branch, and service identifiers — never assume.
+
+## Steps 1–3 — common to every lane
 
 **1. PREFLIGHT** — Run local quality gates that mirror CI:
 - Backend: `ruff check .` (must be clean before any commit)
-- Frontend: `npm run typecheck && npm run build` (if frontend/ exists)
+- Frontend: `npm run typecheck && npm run build` (if `frontend/` exists)
 - Tests: run only if the user says they're needed or a gate explicitly requires them
 - Fix any failures before proceeding. Do not commit broken code.
 
@@ -29,44 +39,64 @@ git rev-parse HEAD      # record SHA for monitoring
 ```
 Use conventional commits: `fix:`, `feat:`, `chore:`, `refactor:`, `docs:`. Scope = affected module.
 
-**3. PUSH**
+**3. PUSH** — to the repo's default branch (confirm the branch first; don't assume `main`):
 ```
-git push origin main
+git push origin <branch>
 ```
-Confirm the push succeeded and the SHA is accepted by the remote.
+Confirm the push succeeded and the SHA is accepted by the remote. (Local-only lane: skip if there is
+no remote, and note that nothing was pushed.)
 
-**4. MONITOR CI** — Poll the Gitea API using the token from `config/.env.gitea` (load it first):
+## Step 4 — MONITOR CI (lane-specific)
+
+**Gitea lane** — Poll the Gitea API using the token from `config/.env.gitea` (load it first):
 ```powershell
 $envFile = Join-Path (Get-Location) "config/.env.gitea"
-# ... (load VMIE_BOT_TOKEN from file — see deploy-local skill)
+# ... (load the bot token from file — see deploy-local skill)
 ```
 Track jobs in order: `lint_and_test` → `frontend_checks` (if present) → `deploy_prod` →
-`release_metadata` → `notify`. Report status as each job completes. If any job fails, classify
-the failure and apply the minimum fix (see deploy-local skill §6).
+`release_metadata` → `notify`. Report status as each job completes. On failure, classify it and apply
+the minimum fix (see `deploy-local` skill §6).
 
-**5. PROD VALIDATION** — After `deploy_prod` succeeds:
-- Prod checkout SHA matches the pushed commit
-- NSSM services for this repo are Running
-- Health endpoint returns green
-- Version endpoint shows the expected SHA/CalVer (if the repo exposes one)
+**GitHub lane** — Watch the run the push triggered via the `gh` CLI:
+```
+gh run list --branch <branch> --limit 1                 # find the run id for the pushed SHA
+gh run watch <run-id> --exit-status                      # stream until done; non-zero on failure
+gh run view <run-id> --log-failed                        # on failure, pull only the failing job logs
+```
+Report each job's status as it resolves. On failure, classify it and apply the minimum source fix.
 
-**6. REPORT** — Emit the deploy report:
+**Local-only lane** — no CI; skip monitoring.
+
+## Step 5 — PROD / POST-DEPLOY VALIDATION
+- **Gitea lane:** after `deploy_prod` succeeds — prod checkout SHA matches the pushed commit; NSSM
+  services for this repo are Running; health endpoint green; version endpoint shows the expected
+  SHA/CalVer (if exposed).
+- **GitHub lane:** if the workflow deploys, validate against its target the same way (deployed SHA /
+  health / version endpoint). If it's CI-only (no deploy job), confirm the run is green and stop.
+- **Local-only lane:** run the app's smoke/health check locally if one exists; otherwise report that
+  validation is limited to the green preflight.
+
+## Step 6 — REPORT
 ```
 Repo:            <name>
+Pipeline:        gitea | github | local-only
 Commit:          <sha> — <message>
-CI jobs:         lint_and_test ✓  deploy_prod ✓  release_metadata ✓
-Prod SHA:        matches ✓
-Prod health:     green ✓
-CalVer tag:      v<tag> → <sha>
+CI jobs:         <job ✓ / ✗ per job, or "n/a (local-only)">
+Prod/Target SHA: matches ✓ | n/a
+Health:          green ✓ | n/a
+Release tag:     <tag> → <sha> | n/a
 ```
 
 ## Rules
 - Never push before preflight gates are green.
 - Never use `git add -A` without reviewing `git status` first.
-- Do not change `.gitea/workflows/` to make a failing gate pass — fix the source.
-- Tag-triggered runs after `release_metadata` are expected; verify `deploy_prod` is **skipped** in them.
-- If prod health is red after deploy, report it immediately — do not attempt a silent re-deploy.
+- Do not edit a workflow file (`.gitea/workflows/` or `.github/workflows/`) to make a failing gate
+  pass — fix the source.
+- Gitea lane: tag-triggered runs after `release_metadata` are expected; verify `deploy_prod` is
+  **skipped** in them.
+- If health is red after deploy, report it immediately — do not attempt a silent re-deploy.
 
 ## Skill reference
-Full procedures for CI monitoring, prod validation, queue triage, and failure remediation are in
-`skills/devops/deploy-local/SKILL.md`. Load it when any step needs more detail.
+Full procedures for the Gitea lane (CI monitoring, prod validation, queue triage, failure remediation)
+are in `skills/devops/deploy-local/SKILL.md`. For the GitHub lane, the `gh-cli` skill covers `gh run`
+usage. Load whichever matches the detected lane when a step needs more detail.

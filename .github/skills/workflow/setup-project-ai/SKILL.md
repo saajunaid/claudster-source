@@ -29,8 +29,14 @@ AGENTS.md                 Codex/agent-agnostic mirror of root
 ## Procedure
 
 ### Step 1 — Run the deterministic generator
-The generator lives in the harness source (agent-sandbox): `scripts/setup_project_ai.py`, templates in
-`claude-harness/`. Run a dry-run first to see stack detection and unresolved placeholders:
+**Resolve `<harness-root>` first** — the generator ships in two places and finds its own templates:
+- **Installed as the claudster plugin (the common case):** `<harness-root>` = `${CLAUDE_PLUGIN_ROOT}`,
+  so the script is `${CLAUDE_PLUGIN_ROOT}/scripts/setup_project_ai.py`. Templates (`claude-md/`,
+  `settings.template.json`, `stack-map.json`) sit at the plugin root and are auto-located.
+- **agent-sandbox dev checkout:** `<harness-root>` = the agent-sandbox repo root; the script is
+  `scripts/setup_project_ai.py` with templates in the sibling `claude-harness/`.
+
+Run a dry-run first to see stack detection and unresolved placeholders:
 
 ```
 python <harness-root>/scripts/setup_project_ai.py <target-project-dir> \
@@ -100,5 +106,7 @@ If this is a multi-session effort, run `/handoff` to write `relay.md`.
   `.github/pipeline-state.json`).
 - **Agent-agnostic.** `CLAUDE.md` and `AGENTS.md` are mirrors; subagents/commands/skills are plain
   markdown Codex can also read. The same harness serves Claude Code and Codex CLI.
-- **Packaging (later):** for distribution the generator + `claude-harness/` ship together (Phase 4
-  plugin). For now they live in agent-sandbox; reference that path as `<harness-root>`.
+- **Packaging:** the generator ships **inside the claudster plugin** (`scripts/setup_project_ai.py`
+  with the templates at the plugin root), so `/setup-project-ai` runs from a plain plugin install with
+  no agent-sandbox checkout. The same script also runs from agent-sandbox for harness development.
+  Resolve its path via `<harness-root>` as described in Step 1.

@@ -12,22 +12,27 @@ env, and smoke-test.
 
 Context / args: **$ARGUMENTS**
 
-Load and follow `.github/skills/workflow/setup-project-ai/SKILL.md`. Do not hand-roll the steps —
-the deterministic parts must go through `scripts/setup_project_ai.py` so they don't vary.
+Load and follow the `setup-project-ai` skill. Do not hand-roll the steps — the deterministic parts
+must go through the bundled generator so they don't vary. Resolve its path per the skill's Step 1:
+- Plugin install: `${CLAUDE_PLUGIN_ROOT}/scripts/setup_project_ai.py`
+- agent-sandbox checkout: `scripts/setup_project_ai.py`
 
-## After the deterministic step — deploy vmie skills
+## After the deterministic step — deploy vmie skills (optional, personal)
 
-If the harness source (`claude-harness/skills/vmie/`) exists in agent-sandbox, also copy the
-vmie skill set into `.github/skills/vmie/` in this project so deploy-local, golden-workflow,
-and windows-deployment are available locally:
+`vmie` skills (deploy-local, golden-workflow, windows-deployment) are **private** and are not shipped
+in the public plugin. This step is for a local harness author who keeps a vmie source on disk; it is a
+no-op for everyone else. Point `CLAUDSTER_HARNESS_SRC` at your harness root (the folder containing
+`skills/vmie/`) and run:
 
 ```powershell
-$harness = "e:\Projects\agent-sandbox\claude-harness\skills\vmie"
+$src = if ($env:CLAUDSTER_HARNESS_SRC) { Join-Path $env:CLAUDSTER_HARNESS_SRC "skills\vmie" } else { $null }
 $dest = ".github\skills\vmie"
-if (Test-Path $harness) {
+if ($src -and (Test-Path $src)) {
     New-Item -ItemType Directory -Force $dest | Out-Null
-    Copy-Item "$harness\*" $dest -Recurse -Force
+    Copy-Item "$src\*" $dest -Recurse -Force
     Write-Host "vmie skills deployed to $dest"
+} else {
+    Write-Host "vmie source not found (set CLAUDSTER_HARNESS_SRC) — skipping; public installs have no vmie."
 }
 ```
 

@@ -24,7 +24,23 @@ import re
 import sys
 from pathlib import Path
 
-HARNESS_DIR = Path(__file__).resolve().parent.parent / "claude-harness"
+def _resolve_harness_dir() -> Path:
+    """Locate the harness resource root (templates, settings template, stack map).
+
+    Two supported layouts:
+      • agent-sandbox dev:  scripts/setup_project_ai.py  → ../claude-harness/
+      • bundled in plugin:  plugin/scripts/setup_project_ai.py → ../  (claude-md/ et al.
+        sit directly at the plugin root, with no claude-harness/ subdir).
+    Pick the first candidate that actually carries the templates.
+    """
+    here = Path(__file__).resolve().parent
+    for cand in (here.parent / "claude-harness", here.parent):
+        if (cand / "claude-md").is_dir() and (cand / "settings.template.json").is_file():
+            return cand
+    return here.parent / "claude-harness"  # dev default; missing-template error surfaced later
+
+
+HARNESS_DIR = _resolve_harness_dir()
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Z0-9_]+)\}\}")
 SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".mypy_cache",
              ".ruff_cache", ".pytest_cache", "dist", "build", ".tanstack", ".codex-tmp"}

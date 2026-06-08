@@ -1,8 +1,22 @@
-"""Auto-lint after Edit/Write. Runs ruff for .py, eslint for .ts/.tsx."""
+"""Auto-lint after Edit/Write (PostToolUse). Runs ruff for .py, eslint for .ts/.tsx/.js/.jsx.
+
+Surfaces lint findings on the just-edited file so they're fixed in the same loop rather
+than at CI time. Best-effort: if the linter isn't installed or the payload is unexpected,
+it exits silently — linting must never block an edit. Cross-platform (pure Python).
+"""
 import json
 import os
 import subprocess
 import sys
+
+# Linter output may contain Unicode (paths, glyphs); force UTF-8 stdout so a
+# narrow Windows console can't raise UnicodeEncodeError.
+_reconfig = getattr(sys.stdout, "reconfigure", None)
+if _reconfig:
+    try:
+        _reconfig(encoding="utf-8")
+    except Exception:
+        pass
 
 try:
     data = json.load(sys.stdin)
@@ -18,20 +32,23 @@ if not file_path or not os.path.isfile(file_path):
 
 ext = os.path.splitext(file_path)[1].lower()
 
+
+def run(cmd):
+    """Run a linter, tolerating a missing executable (returns None then)."""
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True)
+    except (FileNotFoundError, OSError):
+        return None
+
+
 if ext == ".py":
-    r = subprocess.run(
-        ["ruff", "check", "--select", "E,F,W", "--quiet", file_path],
-        capture_output=True, text=True,
-    )
-    if r.stdout.strip():
+    r = run(["ruff", "check", "--select", "E,F,W", "--quiet", file_path])
+    if r and r.stdout.strip():
         print(f"[lint] ruff:\n{r.stdout.strip()}", flush=True)
 
 elif ext in (".ts", ".tsx", ".js", ".jsx"):
-    r = subprocess.run(
-        ["npx", "--no", "eslint", "--format", "compact", file_path],
-        capture_output=True, text=True,
-    )
-    if r.returncode != 0 and r.stdout.strip():
+    r = run(["npx", "--no", "eslint", "--format", "compact", file_path])
+    if r and r.returncode != 0 and r.stdout.strip():
         print(f"[lint] eslint:\n{r.stdout.strip()[:600]}", flush=True)
 
 sys.exit(0)

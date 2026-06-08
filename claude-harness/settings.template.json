@@ -1,5 +1,5 @@
 {
-  "$comment": "Base harness settings deployed by setup-project-ai. The generator adds stack-specific Bash allow entries (pytest/npm/etc.) based on detection. Pipeline MCP server is NOT registered by default — the lightweight loop (plan file + relay) is the default. To enable the optional pipeline power-mode, add an mcpServers.junai entry pointing at the FastMCP server plus a .github/pipeline-state.json.",
+  "$comment": "Base harness settings deployed by setup-project-ai (permissions only). The generator adds stack-specific Bash allow entries (pytest/npm/etc.) based on detection. HOOKS ARE NOT DEFINED HERE: the harness loop hooks (relay.md resume, agent-log, session-end nudge, auto-lint) ship with the claudster plugin via plugin/hooks/hooks.json and auto-activate on install — defining them here too would double-fire and re-introduce machine-specific paths. Pipeline MCP server is NOT registered by default — the lightweight loop (plan file + relay) is the default. To enable the optional pipeline power-mode, add an mcpServers.junai entry pointing at the FastMCP server plus a .github/pipeline-state.json.",
   "permissions": {
     "allow": [
       "Read",
@@ -16,68 +16,6 @@
     "ask": [
       "Bash(git push:*)",
       "Bash(rm:*)"
-    ]
-  },
-  "hooks": {
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python -c \"import sys,json,datetime; d=json.load(sys.stdin); open('agent-log.jsonl','a').write(json.dumps({'ts':datetime.datetime.utcnow().isoformat()+'Z','agent':d.get('agent_name','unknown'),'verdict':str(d.get('result',''))[:300]})+chr(10))\" 2>/dev/null || true"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "test -f relay.md && printf '\\n=== relay.md ===\\n' && cat relay.md || true"
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "test -f relay.md && printf '\\n=== [PreCompact] relay.md ===\\n' && cat relay.md || true"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "printf '\\n[HARNESS] Session ending — update relay.md + extract nuggets to docs/gold-nuggets-log.md if needed.\\n'"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python 'C:/Users/jshaik/.claude/hooks/auto_lint.py' 2>/dev/null || true"
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python 'C:/Users/jshaik/.claude/hooks/auto_lint.py' 2>/dev/null || true"
-          }
-        ]
-      }
     ]
   }
 }
