@@ -392,6 +392,75 @@ function KpiCard({ label, value, delta, color, trend }) {
 
 ---
 
+## Dropdown / Select Panel Styling
+
+Dropdowns must have a smooth, modern appearance — never blocky or browser-default.
+
+Use these control-specific tokens (add to `:root` alongside the main token set):
+
+```css
+:root {
+  --control-bg:           var(--surface-2);
+  --control-bg-hover:     var(--surface-hover);
+  --control-bg-active:    var(--surface-3);
+  --control-border:       var(--border);
+  --control-border-strong:var(--border-strong);
+  --control-ring:         var(--brand);
+  --shadow-control:       var(--shadow-xs);
+  --shadow-control-strong:var(--shadow-sm);
+  --radius-control:       var(--r-sm);   /* 8px */
+}
+```
+
+```css
+.select-panel {
+  background: var(--control-bg);
+  border: 1.5px solid var(--control-border);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-control-strong);
+  padding: 6px 0;
+  min-width: 180px;
+  transition: box-shadow 0.18s, border-color 0.18s;
+}
+.select-panel:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--control-ring), var(--shadow-control-strong);
+  border-color: var(--control-border-strong);
+}
+.select-panel__option {
+  padding: 8px 18px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.select-panel__option:hover { background: var(--control-bg-hover); }
+```
+
+- For shadcn/ui `<Select>`: override `SelectContent` and `SelectItem` with these tokens
+- Never use native browser `<select>` appearance without overriding all visual states
+- Test in both light and dark mode — tokens swap automatically via `.dark`
+
+---
+
+## Appearance Settings Rules
+
+These UX rules apply to all apps using this design system:
+
+- **Theme / accent controls belong in the Settings tab only.** Do not place color or theme pickers in the main nav, topbar, or sidebar.
+- **The dark/light mode toggle must always be rendered as an icon (sun/moon), never as text.**
+
+```tsx
+// Correct: icon-only toggle in Settings tab
+<button className="theme-toggle" aria-label="Switch theme" onClick={toggle}>
+  {dark ? <MoonIcon /> : <SunIcon />}
+</button>
+```
+
+- Place in the Settings tab, not in the topbar or sidebar footer
+- Use `aria-label` for screen reader accessibility
+
+---
+
 ## What Makes This Style Distinctive
 
 1. **Warm vs cold**: Surfaces are `#F8F7F5` and `#F2F0ED` — cream/linen, not cold `#F9FAFB`

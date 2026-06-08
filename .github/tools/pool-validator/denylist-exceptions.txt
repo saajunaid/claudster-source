@@ -30,3 +30,7 @@ recipes/enterprise-dashboard.recipe.md
 
 # --- Remediation plan deliberately enumerates leaked tokens for cleanup tracking ---
 plans/2026-04-27-ai-resource-pool-remediation.md
+
+# --- LiteLLM example config — contains placeholder token string, not a real credential ---
+litellm.config.example.yaml
+LOCAL-MODELS.md

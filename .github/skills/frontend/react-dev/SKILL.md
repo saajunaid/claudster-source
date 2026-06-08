@@ -378,6 +378,74 @@ NEVER:
 
 </rules>
 
+<animation>
+
+## Framer Motion
+
+Install: `npm i framer-motion`. Add `'use client'` to any component using motion primitives.
+
+```tsx
+import { motion, AnimatePresence, useInView, useMotionValue, useSpring } from 'framer-motion'
+
+// Spring config — use for all entrance/hover animations
+const spring = { type: 'spring', stiffness: 300, damping: 30 }
+
+// Entrance
+<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={spring} />
+
+// Hover lift
+<motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={spring} />
+
+// Staggered list
+const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } }
+const item      = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }
+<motion.ul variants={container} initial="hidden" animate="show">
+  {items.map(i => <motion.li key={i.id} variants={item}>{i.name}</motion.li>)}
+</motion.ul>
+
+// Exit animations — AnimatePresence required for `exit` to fire
+<AnimatePresence>
+  {open && (
+    <motion.div key="panel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      ...
+    </motion.div>
+  )}
+</AnimatePresence>
+
+// Scroll reveal
+function ScrollReveal({ children }: { children: React.ReactNode }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-80px' })
+  return (
+    <motion.div ref={ref} initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, ease: 'easeOut' }}>
+      {children}
+    </motion.div>
+  )
+}
+
+// Magnetic cursor follower
+function CursorFollower() {
+  const x = useMotionValue(0), y = useMotionValue(0)
+  const springX = useSpring(x, { stiffness: 500, damping: 40 })
+  const springY = useSpring(y, { stiffness: 500, damping: 40 })
+  useEffect(() => {
+    const move = (e: MouseEvent) => { x.set(e.clientX - 8); y.set(e.clientY - 8) }
+    window.addEventListener('mousemove', move)
+    return () => window.removeEventListener('mousemove', move)
+  }, [])
+  return <motion.div className="fixed size-4 rounded-full bg-brand pointer-events-none z-[9999]" style={{ x: springX, y: springY }} />
+}
+```
+
+**Performance rules:**
+- Animate only `transform` (translate/scale/rotate) and `opacity` — never `width`, `height`, `top`, `left`, or `margin` (causes reflow)
+- Keep animated subtrees shallow — each `motion.div` adds reconciliation cost
+- Use `will-change: transform` sparingly — only on elements animating constantly; remove after animation ends
+- Wrap `AnimatePresence` around conditional renders, not lists — use `variants` + `staggerChildren` for lists
+
+</animation>
+
 <references>
 
 - [hooks.md](references/hooks.md) - useState, useRef, useReducer, useContext, custom hooks
