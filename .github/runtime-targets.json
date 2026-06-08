@@ -422,6 +422,21 @@
       "workspace_root": ".",
       "extra_roots": { "harness": "claude-harness" },
       "include_private": ["vmie"],
+      "plugin": {
+        "name": "junai",
+        "description": "junai — agent-agnostic dev harness: lean subagents, TDD commands, tiered skills, and a CLAUDE.md generator.",
+        "author": { "name": "junaid", "url": "https://github.com/saajunaid/junai" },
+        "homepage": "https://github.com/saajunaid/junai",
+        "repository": "https://github.com/saajunaid/junai",
+        "license": "MIT",
+        "keywords": ["harness", "subagents", "tdd", "fastapi", "react", "claude-code", "agent-agnostic"]
+      },
+      "marketplace": {
+        "name": "junai",
+        "owner": { "name": "junaid" },
+        "description": "junai plugin marketplace",
+        "plugin_source": "."
+      },
       "files": [
         {"root": "harness", "source": "settings.template.json", "destination": "settings.template.json"},
         {"root": "harness", "source": "stack-map.json", "destination": "stack-map.json"},

@@ -343,6 +343,85 @@ def prune_registry(
     return original_count - len(pruned_stages)
 
 
+def write_plugin_manifests(bundle_dir: Path, target: dict[str, Any]) -> None:
+    """Emit .claude-plugin/plugin.json (+ marketplace.json) for a plugin-shaped target.
+
+    The bundle is simultaneously the marketplace and a single plugin: both manifests live
+    in <bundle>/.claude-plugin/ and the plugin source is '.' (the repo root).
+    """
+    plugin = target.get("plugin")
+    if not plugin:
+        return
+    meta_dir = bundle_dir / ".claude-plugin"
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    plugin_manifest = {k: v for k, v in plugin.items() if v not in (None, "", [], {})}
+    (meta_dir / "plugin.json").write_text(
+        json.dumps(plugin_manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    mkt = target.get("marketplace")
+    if mkt:
+        marketplace_manifest: dict[str, Any] = {"name": mkt["name"], "owner": mkt["owner"]}
+        if mkt.get("description"):
+            marketplace_manifest["description"] = mkt["description"]
+        marketplace_manifest["plugins"] = [
+            {
+                "name": plugin["name"],
+                "source": mkt.get("plugin_source", "."),
+                "description": plugin.get("description", ""),
+            }
+        ]
+        (meta_dir / "marketplace.json").write_text(
+            json.dumps(marketplace_manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+
+
+def write_bundle_registry(skills_dir: Path) -> int:
+    """Regenerate _registry.md from the skills actually present in the bundle.
+
+    Self-contained (no pool manifest dependency) so the shipped subset's registry matches
+    what was exported, not the full 133-skill pool. Returns the number of rows written.
+    """
+    if not skills_dir.exists():
+        return 0
+    by_category: dict[str, list[tuple[str, str, str]]] = {}
+    for skill_md in sorted(skills_dir.rglob("SKILL.md")):
+        rel = skill_md.relative_to(skills_dir)
+        if len(rel.parts) < 2:
+            continue
+        category = rel.parts[0]
+        frontmatter, _ = split_frontmatter(skill_md.read_text(encoding="utf-8"))
+        data = extract_simple_frontmatter(frontmatter)
+        name = data.get("name", rel.parts[-2])
+        description = " ".join(data.get("description", "").split())
+        display = " ".join(w.capitalize() for w in name.replace("-", " ").split())
+        path = "/".join(rel.parts[:-1]) + "/"
+        by_category.setdefault(category, []).append((display, path, description))
+
+    lines = [
+        "# Skills Registry",
+        "",
+        "> Bundle skill inventory generated from `SKILL.md` frontmatter for the shipped subset.",
+        "> Load a skill by reading its `SKILL.md`.",
+        "",
+        "---",
+        "",
+        "## Skills by Category",
+        "",
+    ]
+    count = 0
+    for category in sorted(by_category):
+        lines.append(f"### {category.capitalize()}")
+        lines.append("")
+        lines.append("| Skill | Path | When to Use |")
+        lines.append("|-------|------|-------------|")
+        for display, path, description in sorted(by_category[category]):
+            lines.append(f"| {display} | `{path}` | {description} |")
+            count += 1
+        lines.append("")
+    (skills_dir / "_registry.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    return count
+
+
 def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportStats:
     """Export one runtime target from the canonical .github source."""
     canonical_root = PROJECT_ROOT / manifest["canonical_root"]
@@ -442,6 +521,13 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
         if pruned:
             stats.bump_skip("registry_stages_pruned", pruned)
         _check_dependency_closure(workspace_root, stats)
+
+    # Plugin packaging (Phase 4): emit .claude-plugin manifests + a bundle-scoped skill registry.
+    if target.get("plugin"):
+        write_plugin_manifests(workspace_root, target)
+        rows = write_bundle_registry(workspace_root / "skills")
+        if rows:
+            stats.bump_skip("registry_rows_written", rows)
 
     return stats
 
