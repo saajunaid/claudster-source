@@ -471,10 +471,13 @@
               "react-best-practices", "react-dev", "react-useeffect", "responsive-mobile-native",
               "shadcn-radix", "streamlit-animate", "streamlit-dev", "theme-factory", "ui-review",
               "ui-styling-patterns", "ui-ux-intelligence", "ux-design", "warm-editorial-ui",
-              "webapp-development"
+              "warm-new", "webapp-development", "word-cloud"
             ],
             "media": [
               "draw-io", "excalidraw", "mermaid-diagrams", "plantuml", "svg-create"
+            ],
+            "productivity": [
+              "github-issues", "jira-issues"
             ],
             "vmie": [
               "golden-workflow", "windows-deployment"
