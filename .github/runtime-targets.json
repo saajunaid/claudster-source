@@ -410,9 +410,69 @@
     },
     {
       "name": "codex",
-      "workspace_root": ".codex",
+      "_comment": "Codex CLI bundle — lite tier (skills + AGENTS.md + MCP example). No subagents/commands (Claude-native only). Skills mirror the claude bundle exactly. workspace_root='.' so bundle dirs map to project-root layout: .agents/skills/ (project skills), AGENTS.md, .codex/config.toml.example.",
+      "_comment_private": "include_private lifts vmie out of global exclusions — same personal-first stance as the claude bundle.",
+      "workspace_root": ".",
+      "extra_roots": {"harness": "claude-harness"},
+      "include_private": ["vmie"],
+      "files": [
+        {"root": "harness", "source": "claude-md/agents.md.tmpl", "destination": "AGENTS.md"},
+        {"root": "harness", "source": "config.toml.example", "destination": ".codex/config.toml.example"}
+      ],
       "copies": [
-        {"source": "skills", "destination": "skills"}
+        {
+          "source": "skills",
+          "destination": ".agents/skills",
+          "excluded_names": ["_registry.md"],
+          "included_skills": {
+            "coding": [
+              "anchor-review", "api-client-patterns", "api-design", "architecture-design",
+              "backend-development", "backend-to-frontend-handoff", "caching-patterns", "codebase-audit",
+              "code-explainer", "code-review", "error-handling", "fastapi-dev", "javascript-typescript",
+              "llm-application-dev", "mcp-builder", "observability", "python", "refactoring",
+              "security-review", "sql", "understand-anything"
+            ],
+            "testing": [
+              "component-testing", "performance-testing", "playwright", "tdd-workflow", "test-strategy",
+              "ui-testing", "webapp-testing"
+            ],
+            "workflow": [
+              "agent-md-refactor", "asking-questions", "best-practices", "brainstorming", "context-curator",
+              "data-contract-pipeline", "golden-nuggets", "golden-plan", "intent-writer", "onboard-project",
+              "preflight", "receiving-code-review", "relay", "requesting-code-review", "setup-project-ai",
+              "skill-creator", "state-tracking", "verification-loop"
+            ],
+            "docs": [
+              "architecture-document", "code-documentation", "doc-coauthoring", "documentation-analyzer",
+              "naming-analyzer", "prd-to-code", "technical-writing", "writing-plans"
+            ],
+            "devops": [
+              "changelog-generator", "ci-cd-pipeline", "deploy-local", "gh-cli", "git-commit", "monorepo",
+              "update-readme", "using-git-worktrees"
+            ],
+            "data": [
+              "data-analysis", "database-design", "data-loader", "data-validation", "db-testing",
+              "schema-migration"
+            ],
+            "frontend": [
+              "css-architecture", "design-system-tokens", "enterprise-dashboard-aesthetic-system",
+              "frontend-design", "high-end-visual-design", "mockup", "nextjs-app-router", "premium-react",
+              "react-best-practices", "react-dev", "react-useeffect", "responsive-mobile-native",
+              "shadcn-radix", "streamlit-animate", "streamlit-dev", "theme-factory", "ui-review",
+              "ui-styling-patterns", "ui-ux-intelligence", "ux-design", "warm-editorial-ui",
+              "warm-new", "webapp-development", "word-cloud"
+            ],
+            "media": [
+              "draw-io", "excalidraw", "mermaid-diagrams", "plantuml", "svg-create"
+            ],
+            "productivity": [
+              "github-issues", "jira-issues"
+            ],
+            "vmie": [
+              "golden-workflow", "windows-deployment"
+            ]
+          }
+        }
       ]
     },
     {
