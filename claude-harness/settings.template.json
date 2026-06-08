@@ -58,6 +58,26 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python 'C:/Users/jshaik/.claude/hooks/auto_lint.py' 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python 'C:/Users/jshaik/.claude/hooks/auto_lint.py' 2>/dev/null || true"
+          }
+        ]
+      }
     ]
   }
 }
