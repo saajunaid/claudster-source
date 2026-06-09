@@ -55,8 +55,13 @@ Skip if the session was read-only, design-only, or nothing non-obvious emerged.
 - Only verified facts and real paths. Mark anything unconfirmed as `Unknown`.
 - Update the plan's tracker rows too (status + last commit) — relay and tracker must agree.
 - Don't commit unless asked. Report where `relay.md` was written and the one next action.
-- **Prune the Done section.** Phases already merged to `main` (confirmed by a tag or commit) must be
-  compressed to a single line: `- **RW-N**: merged to main as vYYYY.MM.DD.N (<commit>) ✅`. Only the
-  current in-progress phase keeps detailed bullets. This prevents relay.md from growing unboundedly
-  across long projects — a 200-line relay.md injected twice at session start is a major context bloat
-  source.
+- **Prune the Done section — two rules, both apply:**
+  1. **Merge-based:** Phases already merged to `main` (confirmed by a tag or commit) must be compressed
+     to a single line: `- **RW-N**: merged to main as vYYYY.MM.DD.N (<commit>) ✅`. Only the current
+     in-progress phase keeps detailed bullets.
+  2. **Count-based:** The Done section must contain at most **8 bullets total** after writing. If there
+     are more, collapse the oldest into one summary line:
+     `- [N prior milestones — see git log for full history]`
+     Keep the 8 most recent bullets below it.
+  Target: relay.md stays under ~80 lines on disk. inject_relay.py caps injection at 120 lines as a
+  safety net, but the file itself should never reach that ceiling.
