@@ -23,9 +23,21 @@ follows the harness loop: **RED → GREEN → REFACTOR → VERIFY → COMMIT**. 
 Before writing the plan, consider dispatching the **preflight** subagent to validate your assumptions
 (paths, symbols, APIs, primitives) against the codebase — it routinely catches wrong assumptions early.
 
-## Step 3 — Write the plan to `.github/plans/<feature-slug>.md`
+## Step 3 — Write the plan to `.claudster/plans/<feature-slug>.md`
+
+Create `.claudster/plans/` if it doesn't exist.
 
 ```markdown
+---
+type: plan
+status: draft
+feature: <feature-slug>
+creation-agent: claudster
+Original Author: Claude Code
+Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
+Creating Model: <model-id>
+---
+
 # <Feature> — Implementation Plan
 **Created:** <ISO date>  •  **Status:** Phase 1 of N  •  **Spine for:** <one-line goal>
 
@@ -85,8 +97,8 @@ done:
 If any phase relies on the implementer *reasoning out* a gap, close the gap in the plan now.
 
 ## Step 4 — Report
-Output the plan path, the phase list (one line each), confirm the local-coder gate passed (or list the
-phases that need tightening), and: *"To start: `read the plan and implement Phase 1`. To resume later:
-`/handoff` at session end, then `read relay.md` next time."*
+Output the plan path (`.claudster/plans/<feature-slug>.md`), the phase list (one line each), confirm the
+local-coder gate passed (or list the phases that need tightening), and: *"To start: `read the plan and
+implement Phase 1`. To resume later: `/handoff` at session end, then `read relay.md` next time."*
 
 Do not start implementing — this command only produces the plan.

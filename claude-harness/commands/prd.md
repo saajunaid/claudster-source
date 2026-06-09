@@ -20,8 +20,18 @@ Interview the user to fill gaps. Ask only what you can't infer from the codebase
 
 Ask in small batches; stop interviewing once the spec is testable.
 
-## Write to `.github/agent-docs/prd/<feature-slug>.md`
+## Write to `.claudster/prd/<feature-slug>.md`
 ```markdown
+---
+type: prd
+status: draft
+feature: <feature-slug>
+creation-agent: claudster
+Original Author: Claude Code
+Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
+Creating Model: <model-id>
+---
+
 # PRD — <feature>
 **Created:** <ISO date>  •  **Status:** draft
 
@@ -54,3 +64,5 @@ Ask in small batches; stop interviewing once the spec is testable.
 ## Report
 Output the PRD path and the FR list. Suggest: *"Next: `/feature-plan <feature>`."* Don't design the
 implementation here — PRD is the *what*, the plan is the *how*.
+
+Create `.claudster/prd/` if it doesn't exist.

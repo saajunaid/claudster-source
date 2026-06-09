@@ -16,7 +16,7 @@ Every non-trivial change follows this loop. The **plan file is the durable spine
 session death, so progress is never lost to context limits.
 
 ```
-1. PLAN      /feature-plan <desc>   → writes .github/plans/<feature>.md (phased)
+1. PLAN      /feature-plan <desc>   → writes .claudster/plans/<feature>.md (phased)
 2. per phase, in the MAIN thread:
    a. RED      write the failing test first   (TDD — see Law 1)
    b. GREEN    minimal code to pass
@@ -37,7 +37,7 @@ session overflow. Dispatch aggressively. (Proven: subagent review catches real d
 thread misses, while keeping main-thread context small.)
 
 ### Resuming a session
-On a fresh session read in order: `relay.md` (if present) → the active plan in `.github/plans/` → its
+On a fresh session read in order: `relay.md` (if present) → the active plan in `.claudster/plans/` → its
 tracker. The conversation is disposable; these files are the truth.
 
 ## The Laws (non-negotiable)
@@ -54,12 +54,29 @@ tracker. The conversation is disposable; these files are the truth.
 - **Commits**: Conventional Commits (`feat:`, `fix:`, `test:`, `chore:`). One logical change per commit.
 - **Terse**: lead with the answer; results/code over prose.
 - **Secrets**: never commit; keep env/config secrets git-ignored. Never print credentials.
+- **Document frontmatter**: Every descriptive Markdown deliverable you write (plan, PRD, ADR, design doc,
+  runbook, analysis, handoff) must open with a YAML frontmatter block:
+  ```yaml
+  ---
+  type: plan|prd|adr|design|runbook|handoff|analysis|review
+  status: draft|current|done|superseded
+  feature: <feature-slug>
+  creation-agent: claudster
+  Original Author: <Claude Code or human name>
+  Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
+  Creating Model: <exact model ID, e.g. claude-sonnet-4-6>
+  ---
+  ```
+  On update, add/refresh: `Last Author`, `Last Updated`, `Last Model Used`.
+  Do NOT add frontmatter to: `relay.md`, `CLAUDE.md`, skill files, or agent config files.
 
 ## Where things live
 | Need | Location |
 |---|---|
-| Active plans | `.github/plans/<feature>.md` |
-| Agent-produced docs (PRD, ADR, reports) | `.github/agent-docs/` |
+| Active plans | `.claudster/plans/<feature>.md` |
+| PRDs | `.claudster/prd/<feature-slug>.md` |
+| ADRs, design docs, runbooks | `.claudster/adr/`, `.claudster/design/`, `.claudster/runbooks/` |
+| Agent-produced docs (evals, reviews, debug) | `.claudster/agent-docs/` |
 | Session resume doc | `relay.md` (repo root) |
 | Custom commands | `.claude/commands/` |
 | Subagents | `.claude/agents/` |

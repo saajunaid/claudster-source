@@ -21,6 +21,10 @@ Include frontmatter for:
 When creating a **new** document, add YAML frontmatter at the top and include:
 
 ```yaml
+type: plan|prd|adr|design|runbook|handoff|analysis|review
+status: draft|current|done|superseded
+feature: <feature-slug or chain_id that owns this document>
+creation-agent: claudster
 Original Author: <active author or agent name>
 Creation Date: <YYYY-MM-DDTHH:MM:SSZ>
 Creating Model: <exact runtime model identifier or display name>
@@ -35,6 +39,12 @@ Last Model Used: <exact runtime model identifier or display name>
 ```
 
 > For newly created documents, `Last Author`, `Last Updated`, and `Last Model Used` are optional and should be omitted until the first update.
+
+**Field notes:**
+- `type` — document category; choose the closest match from the list above.
+- `status` — lifecycle state; update when the document is superseded or completed.
+- `feature` — the feature slug or chain ID that this document belongs to (e.g. `feat-2026-0609-auth-rework`). Use `standalone` if the document is not tied to a feature.
+- `creation-agent` — the plugin or tool that created the document. Use `claudster` for documents produced by the claudster Claude Code plugin; use `github-copilot` for documents produced by the GitHub Copilot junai-vscode extension; use `human` for manually authored documents.
 
 ## Merge rules
 
@@ -56,14 +66,28 @@ Last Model Used: <exact runtime model identifier or display name>
 
 ## Examples
 
-### New planning document
+### New planning document (claudster / Claude Code)
 
 ```yaml
 ---
-chain_id: FEAT-2026-0520-doc-metadata
 type: plan
-status: current
-approval: pending
+status: draft
+feature: feat-2026-0609-auth-rework
+creation-agent: claudster
+Original Author: Claude Code
+Creation Date: 2026-06-09T14:30:00Z
+Creating Model: claude-sonnet-4-6
+---
+```
+
+### New planning document (junai-vscode / GitHub Copilot)
+
+```yaml
+---
+type: plan
+status: draft
+feature: FEAT-2026-0520-doc-metadata
+creation-agent: github-copilot
 Original Author: Planner
 Creation Date: 2026-05-20T18:42:11Z
 Creating Model: Claude Sonnet 4.6
@@ -74,12 +98,15 @@ Creating Model: Claude Sonnet 4.6
 
 ```yaml
 ---
-title: Incident Runbook
-Original Author: GitHub Copilot
+type: runbook
+status: current
+feature: standalone
+creation-agent: claudster
+Original Author: Claude Code
 Creation Date: 2026-05-18T09:14:32Z
-Creating Model: GPT-5.4
-Last Author: GitHub Copilot
-Last Updated: 2026-05-20T19:03:27Z
-Last Model Used: GPT-5.4
+Creating Model: claude-sonnet-4-6
+Last Author: Claude Code
+Last Updated: 2026-06-09T15:00:00Z
+Last Model Used: claude-sonnet-4-6
 ---
 ```
