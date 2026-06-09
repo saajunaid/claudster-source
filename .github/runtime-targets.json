@@ -484,7 +484,7 @@
       "extra_roots": { "harness": "claude-harness", "scriptsrc": "scripts" },
       "plugin": {
         "name": "claudster",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "description": "claudster — agent-agnostic dev harness: lean subagents, TDD commands, tiered skills, and a CLAUDE.md generator.",
         "author": { "name": "junaid", "url": "https://github.com/saajunaid/junai" },
         "homepage": "https://github.com/saajunaid/junai",
@@ -560,7 +560,7 @@
       "include_private": ["vmie"],
       "plugin": {
         "name": "claudster-extras",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "description": "claudster-extras — the full claudster skill library beyond the core tier (cloud, data, the long tail of coding/frontend, media, productivity). Enable on demand to keep always-on context lean.",
         "author": { "name": "junaid", "url": "https://github.com/saajunaid/junai" },
         "homepage": "https://github.com/saajunaid/junai",
