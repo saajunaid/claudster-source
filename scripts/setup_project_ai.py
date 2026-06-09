@@ -213,6 +213,7 @@ def merge_settings(target: Path, stack: dict, dry: bool) -> str:
             if a not in allow:
                 allow.append(a)
     dest = target / ".claude" / "settings.json"
+    notes: list[str] = []
     if dest.exists():
         existing = json.loads(dest.read_text(encoding="utf-8"))
         ex_allow = existing.get("permissions", {}).get("allow", [])
@@ -220,6 +221,11 @@ def merge_settings(target: Path, stack: dict, dry: bool) -> str:
             if a not in ex_allow:
                 ex_allow.append(a)
         existing.setdefault("permissions", {})["allow"] = ex_allow
+        # Strip stale hooks block — the claudster plugin owns all hooks via hooks.json.
+        # Defining them here too causes double-fire at session start / pre-compact.
+        if "hooks" in existing:
+            del existing["hooks"]
+            notes.append("removed stale hooks block (now owned by claudster plugin)")
         out = existing
         verb = "merge"
     else:
@@ -229,7 +235,8 @@ def merge_settings(target: Path, stack: dict, dry: bool) -> str:
     if not dry:
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
-    return f"{verb}: .claude/settings.json ({len(allow)} allow rules)"
+    suffix = f" [{'; '.join(notes)}]" if notes else ""
+    return f"{verb}: .claude/settings.json ({len(allow)} allow rules){suffix}"
 
 
 def ensure_frontend_test_harness(target: Path, stack: dict, dry: bool) -> list[str]:
