@@ -15,9 +15,13 @@ Your job right now is to propose the visual direction and get approval before to
 
 ## Step 1 — Load the right skill
 
-If this is a VMIE app (appointment-assist, nps-lens, rev-sight, app-sight): load `warm-editorial-ui`.
-If this is a standalone or public-facing product: load `frontend-design`.
-If this is a data dashboard: load `enterprise-dashboard-aesthetic-system`.
+**VMIE app** (appointment-assist, nps-lens, rev-sight, app-sight): load `warm-editorial-ui`.
+
+**Matching a known brand** (Stripe, Linear, Vercel, Supabase, Notion, Apple, Cursor, PostHog, or any company the user names): load `popular-web-designs` and read the matching template. Use that brand's exact tokens as the basis for your brief proposal.
+
+**Data dashboard** (not VMIE): load `enterprise-dashboard-aesthetic-system`.
+
+**Standalone or public-facing product** (no brand specified): load `frontend-design`.
 
 ## Step 2 — Propose the brief (3 things only)
 
@@ -42,6 +46,8 @@ LAYOUT APPROACH
   <2 sentences: grid structure, whitespace philosophy, any asymmetry or grid-breaking>
 ```
 
+If you loaded `popular-web-designs` for a specific brand, use that brand's actual colors and fonts in the brief — not approximations.
+
 ## Step 3 — Wait
 
 Do not proceed until the user responds with one of:
@@ -54,3 +60,24 @@ Do not proceed until the user responds with one of:
 Once approved: implement using the loaded skill as your design system.
 Use Framer Motion for the approved animation moment.
 Every component must reflect the agreed colour story and font pairing — no fallback to defaults.
+
+### Quality Standards (enforce these during build)
+
+**Avoid AI design slop:**
+- No aggressive gradients unless specifically in the brief
+- No glassmorphism by default — only if it fits the brand
+- No generic SaaS card grids as the default layout
+- No fake dashboards with placeholder charts and made-up metrics
+- No filler text ("Lorem ipsum", "User Name", "Description here")
+- No decorative emojis in headings or UI chrome
+
+**Motion discipline:**
+- Use animation as communication, not decoration
+- Always respect `prefers-reduced-motion` media query
+- One hero animation moment — not every element animating on load
+- 44px minimum touch targets on mobile
+
+**Verification:**
+- Confirm the file exists before reporting done
+- Check browser console for errors if possible
+- Never claim to have verified something you did not verify
