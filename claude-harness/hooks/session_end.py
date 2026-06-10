@@ -22,8 +22,11 @@ except Exception:
     pass
 
 print(
-    "\n[HARNESS] Session ending — update relay.md so the next session resumes exactly, "
-    "and extract any durable lessons to docs/gold-nuggets-log.md."
+    "\n[HARNESS] Session ending. Two things survive context death:\n"
+    "  1. relay.md — refresh it so the next session resumes exactly (run /handoff).\n"
+    "  2. Durable lessons — if you wrote or fixed code this session, dispatch the\n"
+    "     knowledge-transfer subagent BEFORE relay.md. Don't skip it just because you\n"
+    "     hand-wrote some docs. Record the outcome in relay.md's 'Learnings captured' line."
 )
 
 sys.exit(0)

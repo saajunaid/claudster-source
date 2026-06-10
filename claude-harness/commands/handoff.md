@@ -7,7 +7,20 @@ description: End-of-session handoff — capture exact state so the next session 
 You are ending a work session. Produce/refresh `relay.md` at the repo root so the next session (you, a
 future you, or another agent on any tool) can resume immediately. This is the anti-context-rot checkpoint.
 
-## Gather verified signals (don't guess)
+## Step 1 — capture learnings FIRST (knowledge-transfer)
+**Before** gathering git signals or writing relay.md, decide on `knowledge-transfer` — and the default
+is to run it.
+
+- **Trigger (default ON):** if this session's `git diff` touched any code or config, OR you debugged
+  anything / proved a non-obvious behavior → you **MUST** dispatch the `knowledge-transfer` subagent first.
+- **Skip ONLY if** the session was purely read-only, design/planning, or discussion — nothing was built,
+  fixed, or proven. When in doubt, dispatch. "I already wrote some docs by hand" is **not** a reason to
+  skip — the subagent routes/consolidates across the right files and catches what you'd miss.
+- It writes durable findings (root causes, workarounds, constraints, rejected approaches) into the right
+  CLAUDE.md / instructions / runbooks. Docs only — never code.
+- **Record the outcome** in relay.md's `## Learnings captured` line (below). A skip must state its reason.
+
+## Step 2 — gather verified signals (don't guess)
 ```
 git status --short
 git branch --show-current
@@ -15,7 +28,7 @@ git log --oneline -5
 ```
 Then read the active plan in `.github/plans/` and its tracker.
 
-## Write `relay.md` (overwrite) with exactly these sections
+## Step 3 — write `relay.md` (overwrite) with exactly these sections
 ```markdown
 # Relay — <feature>
 **Updated:** <ISO timestamp>
@@ -39,17 +52,14 @@ Then read the active plan in `.github/plans/` and its tracker.
 ## Open questions / blockers
 <Decisions needed, ambiguities, anything unverified. "None" if truly none.>
 
+## Learnings captured
+knowledge-transfer: <✓ ran → files written | ✗ skipped → reason>
+
 ## Resume prompt
 \`\`\`
 Read relay.md, then the plan it points to. Continue from <phase/step>. Next action: <exact>.
 \`\`\`
 ```
-
-## Step 0 — capture learnings first (knowledge-transfer)
-Before writing relay.md, dispatch the `knowledge-transfer` subagent if any non-trivial
-implementation or debugging happened this session. It writes durable findings (root causes,
-workarounds, constraints) into the right CLAUDE.md / instructions files so docs stay current.
-Skip if the session was read-only, design-only, or nothing non-obvious emerged.
 
 ## Rules
 - Only verified facts and real paths. Mark anything unconfirmed as `Unknown`.
