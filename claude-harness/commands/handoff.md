@@ -28,7 +28,12 @@ git log --oneline -5
 ```
 Then read the active plan in `.github/plans/` and its tracker.
 
-## Step 3 — write `relay.md` (overwrite) with exactly these sections
+## Step 3 — write the resume doc (overwrite) with exactly these sections
+> **Where to write:** solo / single active branch → `relay.md` at the repo root (default).
+> **Team / parallel branches** → write `.claude/relay/<current-branch>.md` instead, so two
+> developers never merge-conflict on one shared relay.md. The SessionStart hook prefers the
+> per-branch file automatically when it exists, else falls back to `relay.md`.
+
 ```markdown
 # Relay — <feature>
 **Updated:** <ISO timestamp>

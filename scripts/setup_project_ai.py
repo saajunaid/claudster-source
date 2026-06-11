@@ -212,6 +212,7 @@ def merge_settings(target: Path, stack: dict, dry: bool) -> str:
         for a in det.get("settings_allow", []):
             if a not in allow:
                 allow.append(a)
+    statusline = {"type": "command", "command": "bash .claude/statusline-command.sh"}
     dest = target / ".claude" / "settings.json"
     notes: list[str] = []
     if dest.exists():
@@ -226,10 +227,14 @@ def merge_settings(target: Path, stack: dict, dry: bool) -> str:
         if "hooks" in existing:
             del existing["hooks"]
             notes.append("removed stale hooks block (now owned by claudster plugin)")
+        if "statusLine" not in existing:  # never clobber a user's own status line
+            existing["statusLine"] = statusline
+            notes.append("added status line")
         out = existing
         verb = "merge"
     else:
         base["permissions"]["allow"] = allow
+        base["statusLine"] = statusline
         out = base
         verb = "write"
     if not dry:
@@ -291,6 +296,71 @@ def check_venv(target: Path, install: bool, dry: bool) -> list[str]:
         notes.append("venv: MISSING — create with `python -m venv .venv` then "
                      "`pip install -e .[dev]` (or re-run with --install)")
     return notes
+
+
+# Enforced "green before push" gate. Installed into .git/hooks/pre-push. Pure POSIX sh
+# so it runs under Git's bundled shell on Windows/Linux/macOS. Auto-skips tools that
+# aren't installed; only blocks when a present tool actually fails.
+PRE_PUSH_HOOK = r"""#!/usr/bin/env sh
+# Managed by claudster setup-project-ai. Delete this file to opt out.
+set -eu
+echo "[claudster] pre-push quality gate"
+fail=0
+if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ]; then
+  command -v ruff   >/dev/null 2>&1 && { echo "[gate] ruff check ."; ruff check . || fail=1; }
+  command -v mypy   >/dev/null 2>&1 && { echo "[gate] mypy ."; mypy . || fail=1; }
+  command -v pytest >/dev/null 2>&1 && { echo "[gate] pytest -q"; pytest -q || fail=1; }
+fi
+if [ -f "package.json" ] && command -v npm >/dev/null 2>&1; then
+  npm run 2>/dev/null | grep -q " lint"      && { echo "[gate] npm run lint"; npm run lint --silent || fail=1; }
+  npm run 2>/dev/null | grep -q " typecheck" && { echo "[gate] npm run typecheck"; npm run typecheck --silent || fail=1; }
+  npm run 2>/dev/null | grep -q " test"       && { echo "[gate] npm test"; npm test --silent || fail=1; }
+fi
+if [ "$fail" -ne 0 ]; then
+  echo "[claudster] push BLOCKED — fix the above, or 'git push --no-verify' to override." >&2
+  exit 1
+fi
+echo "[claudster] gate passed — pushing."
+"""
+
+
+def install_git_hooks(target: Path, force: bool, dry: bool) -> list[str]:
+    """Install the enforced pre-push quality gate into .git/hooks/pre-push."""
+    notes: list[str] = []
+    git = target / ".git"
+    if not git.exists():
+        return ["pre-push gate: no .git (not a git repo) — skipped"]
+    if git.is_file():  # worktree/submodule: .git is a pointer file
+        return ["pre-push gate: .git is a worktree pointer — skipped (install manually if wanted)"]
+    hooks_dir = git / "hooks"
+    dest = hooks_dir / "pre-push"
+    if dest.exists() and not force:
+        managed = "claudster" in dest.read_text(encoding="utf-8", errors="ignore")
+        return [f"pre-push gate: exists ({'ours' if managed else 'yours — left intact, use --force to replace'}) — skipped"]
+    if not dry:
+        hooks_dir.mkdir(parents=True, exist_ok=True)
+        dest.write_text(PRE_PUSH_HOOK, encoding="utf-8", newline="\n")
+        try:
+            import os, stat
+            dest.chmod(dest.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        except Exception:
+            pass
+    notes.append("pre-push gate: installed .git/hooks/pre-push (green-before-push enforced)")
+    return notes
+
+
+def deploy_statusline(target: Path, force: bool, dry: bool) -> list[str]:
+    """Copy the status-line script into .claude/ so settings.json can reference it."""
+    src = HARNESS_DIR / "statusline-command.sh"
+    if not src.is_file():
+        return []
+    dest = target / ".claude" / "statusline-command.sh"
+    if dest.exists() and not force:
+        return ["status line: .claude/statusline-command.sh present — skipped"]
+    if not dry:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+    return ["status line: wrote .claude/statusline-command.sh"]
 
 
 # ── main ─────────────────────────────────────────────────────────────────────
@@ -367,6 +437,14 @@ def main() -> int:
 
     print("\n-- settings")
     print(f"   {merge_settings(target, stack, args.dry_run)}")
+
+    print("-- status line")
+    for line in deploy_statusline(target, args.force, args.dry_run):
+        print(f"   {line}")
+
+    print("-- git hooks")
+    for line in install_git_hooks(target, args.force, args.dry_run):
+        print(f"   {line}")
 
     fe_notes = ensure_frontend_test_harness(target, stack, args.dry_run)
     if fe_notes:

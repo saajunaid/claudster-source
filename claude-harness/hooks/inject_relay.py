@@ -1,12 +1,17 @@
-"""Inject relay.md into context at SessionStart / PreCompact.
+"""Inject the session-resume doc into context at SessionStart / PreCompact.
 
 The harness loop treats relay.md as the durable session-resume doc. Printing it to
 stdout from a SessionStart/PreCompact hook surfaces it in the next context window, so a
-fresh session resumes with zero re-discovery. No-ops silently when relay.md is absent.
+fresh session resumes with zero re-discovery. No-ops silently when none is present.
 Cross-platform (pure Python) — works the same on Windows, Linux, and macOS.
+
+Team/parallel-branch mode: a per-branch file at `.claude/relay/<branch>.md` is preferred
+when present, so two developers on two branches never collide on a single committed
+relay.md. Solo/default stays exactly `relay.md` at the repo root — fully backward-compatible.
 """
 import json
 import os
+import subprocess
 import sys
 
 # relay.md may contain any Unicode; force UTF-8 so a narrow Windows console
@@ -25,8 +30,32 @@ try:
 except Exception:
     pass
 
-RELAY = "relay.md"
 INJECT_MAX_LINES = 120
+
+
+def _resolve_relay() -> str:
+    """Prefer a per-branch relay file when present, else the root relay.md.
+
+    Team mode: `.claude/relay/<branch>.md` keeps each branch's resume state in its own
+    file so parallel developers never merge-conflict on relay.md. Falls back to the
+    plain `relay.md` (solo/default). Branch lookup is best-effort; any failure → relay.md.
+    """
+    try:
+        branch = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True, text=True, timeout=3,
+        ).stdout.strip()
+    except Exception:
+        branch = ""
+    if branch and branch != "HEAD":
+        slug = "".join(c if (c.isalnum() or c in "-_.") else "-" for c in branch)
+        per_branch = os.path.join(".claude", "relay", f"{slug}.md")
+        if os.path.isfile(per_branch):
+            return per_branch
+    return "relay.md"
+
+
+RELAY = _resolve_relay()
 
 def _truncate_relay(text: str) -> str:
     """Cap injected output at INJECT_MAX_LINES.

@@ -504,9 +504,9 @@
       "files": [
         {"root": "harness", "source": "settings.template.json", "destination": "settings.template.json"},
         {"root": "harness", "source": "stack-map.json", "destination": "stack-map.json"},
-        {"root": "harness", "source": "model-aliases.json", "destination": "model-aliases.json"},
         {"root": "harness", "source": "litellm.config.example.yaml", "destination": "litellm.config.example.yaml"},
         {"root": "harness", "source": "LOCAL-MODELS.md", "destination": "LOCAL-MODELS.md"},
+        {"root": "harness", "source": "statusline-command.sh", "destination": "statusline-command.sh"},
         {"root": "harness", "source": "README.md", "destination": "README.md"},
         {"root": "scriptsrc", "source": "setup_project_ai.py", "destination": "scripts/setup_project_ai.py"}
       ],

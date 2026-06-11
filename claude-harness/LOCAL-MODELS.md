@@ -21,7 +21,28 @@ when vLLM is up, it should be ~15 minutes, not a research task.
 | `gemma-4-e4b` | Gemma-4-E4B | alt tiny | classification |
 | `nomic-embed` | Nomic-Embed-Text-v1.5 | — | embeddings/RAG only (NOT a chat tier) |
 
-Full mapping + rationale: `model-aliases.json`.
+## Tier → model mapping (this is the whole mapping; there is no separate config file)
+
+Subagent `model:` frontmatter is a **logical tier** (`opus`/`sonnet`/`haiku`), not a hard model ID.
+Routing is resolved at the **gateway** (Claude Code's `ANTHROPIC_BASE_URL` → your LiteLLM proxy), not by
+any file in this repo — so the table below is documentation of intent, and the proxy config
+(`litellm.config.example.yaml`) is what actually executes.
+
+| Tier | `default` (Anthropic, out-of-the-box) | `hybrid` (recommended) | `local` (all on-prem) |
+|---|---|---|---|
+| `opus` (plan/verify) | `claude-opus-4-8` | `claude-opus-4-8` (remote) | `qwen2.5-vl-32b` |
+| `sonnet` (code/review) | `claude-sonnet-4-6` | `qwen2.5-coder-14b` (local) | `qwen2.5-coder-14b` |
+| `haiku` (bulk/fast) | `claude-haiku-4-5` | `mistral-7b` (local) | `mistral-7b` |
+
+**Role → tier** (intent, independent of which concrete model fills the tier): planner/verify → `opus`;
+coder/reviewer → `sonnet`; bulk → `haiku`.
+
+**Alternates** (documented, swap in via the proxy as your GPU allows): `deepseek-coder-v2-lite` (fast MoE
+coder → sonnet for speed), `gemma-4-12b-qat` (efficient quantized mid, constrained GPU), `gemma-4-e4b`
+(tiny/ultra-fast → haiku for classification). `nomic-embed` is embeddings/RAG only — never a chat tier.
+
+> There is intentionally **no `model-aliases.json`**: nothing consumed it, and the gateway already owns
+> resolution. Keep this table + `litellm.config.example.yaml` as the single source of truth.
 
 ## Enablement checklist
 1. **vLLM up** — confirm the endpoint serves the models; note its base URL.
@@ -33,7 +54,7 @@ Full mapping + rationale: `model-aliases.json`.
    $env:ANTHROPIC_AUTH_TOKEN = "<litellm master key>"
    $env:CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY = "1"
    ```
-4. **Pick a profile** (`model-aliases.json` → `profiles`):
+4. **Pick a profile** (the tier→model table above):
    - `hybrid` (recommended first) — Opus plans/verifies (remote), local model codes. Lowest risk:
      the strong model owns the plan, the local model only executes it.
    - `local` — everything local. Use once the hybrid path is proven.
