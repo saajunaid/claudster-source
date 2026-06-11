@@ -43,3 +43,22 @@ agent-docs/WORKFLOW-WALLCHART.md
 skills/devops/windows-deployment/
 skills/devops/golden-workflow/
 skills/docs/vm-ppt/
+
+# --- Flattened plugin-bundle dist paths (flatten_skills drops the category dir, so
+# skills/<category>/<name>/ becomes skills/<name>/). The --include-dist scan walks the
+# exported bundles, so each allowlisted skill above also needs its category-less form here.
+# All entries below mirror an already-vetted source entry (example credentials in teaching
+# docs, or the intentional vmie- naming convention). ---
+skills/ci-cd-pipeline/SKILL.md
+skills/playwright/lib/helpers.js
+skills/aws-agentic-ai/cross-service/credential-management.md
+skills/aws-serverless-eda/references/security-best-practices.md
+skills/building-mcp-server-on-cloudflare/references/oauth-setup.md
+skills/brand-design/SKILL.md
+skills/jira-issues/SKILL.md
+skills/windows-deployment/
+skills/vm-ppt/
+
+# --- The allowlist file itself documents the vmie- substring in comments; exempt it so the
+# --include-dist scan of mirror copies doesn't flag its own documentation. ---
+tools/pool-validator/denylist-exceptions.txt
