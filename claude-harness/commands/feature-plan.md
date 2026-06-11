@@ -23,6 +23,19 @@ follows the harness loop: **RED → GREEN → REFACTOR → VERIFY → COMMIT**. 
 Before writing the plan, consider dispatching the **preflight** subagent to validate your assumptions
 (paths, symbols, APIs, primitives) against the codebase — it routinely catches wrong assumptions early.
 
+### Assign a model tier + effort per phase (don't default everything to the priciest)
+Match capability to each phase's difficulty — not one model for the whole plan. Use Claude Code's
+evergreen `/model` aliases so this never rots as model names change:
+- **cheap** (`/model haiku`) — mechanical, fully-specced, repeat-of-an-existing-pattern phases.
+- **mid** (`/model sonnet`) — standard feature work with clear specs. **This is the default.**
+- **frontier** (`/model opus`) — novel architecture, tricky algorithms, security-sensitive or
+  judgment-heavy seams; also recommend a `code-reviewer` pass.
+- **ultra** (`/model fable`) — RARE: long-horizon / multi-step / can't-self-verify work (large-codebase
+  reasoning, scientific). ~2× opus's rate-limit burn — reserve for the few phases that truly need it.
+Default to **mid**; reserve frontier/ultra for phases that earn them. Effort is a secondary knob: leave
+it at your session default and note **"bump to `high`"** only on a genuinely hard phase. `max` is manual
+escalation, never a planned default.
+
 ## Step 3 — Write the plan to `.claudster/plans/<feature-slug>.md`
 
 Create `.claudster/plans/` if it doesn't exist.
@@ -53,6 +66,9 @@ Creating Model: <model-id>
 ## Phases
 
 ### Phase 1 — <name>  ⏳
+> ⚠️ **Switch model BEFORE starting this phase** — run `/model <alias>`; the *active* model does the
+> work, not the one named here.
+**Model:** <tier> (`/model <alias>`) — <one-line rationale tied to this phase's difficulty>
 **Goal:** <one sentence>
 **Touches:** `<files>`
 **TDD:**
@@ -75,9 +91,9 @@ Creating Model: <model-id>
 |---|---|
 
 ## Tracker (update as you go — this is the resume signal)
-| Phase | Status | Commit | Notes |
-|---|---|---|---|
-| 1 | not started | — | |
+| Phase | Model | Status | Commit | Notes |
+|---|---|---|---|---|
+| 1 | mid | not started | — | |
 ```
 
 ## Plan quality gate — local-coder ready (MANDATORY)
@@ -93,12 +109,15 @@ done:
 - **Copy-paste verification** — each phase's exit gate is a literal command to run + expected output,
   not "tests pass".
 - **No abbreviation** — never "etc.", "similar to Phase 1", "and so on". Write every item in full.
+- **Model tier named** — every phase names a tier (cheap/mid/frontier/ultra) + a one-line rationale; no
+  phase silently defaults to the most expensive model. Default mid; frontier/ultra only where justified.
 
 If any phase relies on the implementer *reasoning out* a gap, close the gap in the plan now.
 
 ## Step 4 — Report
-Output the plan path (`.claudster/plans/<feature-slug>.md`), the phase list (one line each), confirm the
-local-coder gate passed (or list the phases that need tightening), and: *"To start: `read the plan and
+Output the plan path (`.claudster/plans/<feature-slug>.md`), the phase list (one line each, with each
+phase's model tier), confirm the local-coder gate passed (or list the phases that need tightening),
+and: *"To start: `read the plan and
 implement Phase 1`. To resume later: `/handoff` at session end, then `read relay.md` next time."*
 
 Do not start implementing — this command only produces the plan.

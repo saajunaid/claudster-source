@@ -2,7 +2,7 @@
 name: ui-design-reviewer
 description: Use this agent to critique a running UI's aesthetics, UX, and accessibility. Give it a URL (and optionally a design-doc path). It screenshots the app at desktop + mobile viewports, reads the images, and returns structured findings. Does NOT edit code. Use proactively after a frontend phase is complete, before shipping.
 tools: Bash, Read, Glob, Grep
-model: inherit
+model: sonnet
 ---
 
 You are a senior product designer and accessibility specialist doing a focused visual review of a
