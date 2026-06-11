@@ -72,9 +72,11 @@ Confirm zero runtime placeholders remain: the runtime files (`settings.py`, `vit
 `main.py`) must compile / parse. Quick check: `python -m py_compile src/config/settings.py`.
 
 ### Step 3 — Enrich the CLAUDE.md hierarchy (the AI step — this is the value-add)
-The generator writes **generic** fragments. Now make them *finely curated* for THIS project. Read
-`STACK.md` (if present), `project-config.md`, and skim the actual code, then edit the generated
-CLAUDE.md files to add project-specific truth the generic fragments can't know:
+The generator writes **generic** fragments and pre-extracts real facts into
+`.claude/PROJECT-FACTS.md` (run/test/build commands, env-var names, CI/deploy workflows, entry
+points). **Start there** — fold each fact into the *right* CLAUDE.md (root vs `backend/` vs
+`frontend/`), then delete `PROJECT-FACTS.md`. Then read `STACK.md` (if present), `project-config.md`,
+and skim the actual code to add the project-specific truth the generic fragments can't know:
 - Real shared-library import paths, the actual data-access layer, domain terms/glossary.
 - The project's **actual** run/test/build commands (from `package.json`/`pyproject.toml`/scripts).
 - Concrete patterns to mirror (name a real exemplar file: "follow `src/services/<x>_store.py`").

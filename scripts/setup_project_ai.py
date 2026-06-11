@@ -363,6 +363,110 @@ def deploy_statusline(target: Path, force: bool, dry: bool) -> list[str]:
     return ["status line: wrote .claude/statusline-command.sh"]
 
 
+def extract_project_facts(target: Path, stack: dict) -> dict:
+    """Mechanically pull the facts the AI enrichment step (skill Step 3) otherwise has to
+    hunt for: run/test/build commands, env-var names, CI/deploy workflows, entry points.
+    Best-effort — any unreadable source is skipped. NEVER reads a real .env (only *.example),
+    and captures variable NAMES only, never values."""
+    facts: dict[str, list[str]] = {"commands": [], "env": [], "workflows": [], "entry": []}
+
+    # npm scripts (root + frontend/)
+    for pj in (target / "package.json", target / "frontend" / "package.json"):
+        if pj.is_file():
+            try:
+                scripts = json.loads(pj.read_text(encoding="utf-8")).get("scripts", {})
+                rel = pj.parent.relative_to(target)
+                prefix = "" if str(rel) == "." else f"(in {rel}/) "
+                for name in scripts:
+                    facts["commands"].append(f"{prefix}npm run {name}")
+            except Exception:
+                pass
+
+    # python scripts + the obvious test runner
+    pp = target / "pyproject.toml"
+    if pp.is_file():
+        try:
+            import tomllib
+            data = tomllib.loads(pp.read_text(encoding="utf-8"))
+            tables = [data.get("project", {}).get("scripts", {}),
+                      data.get("tool", {}).get("poetry", {}).get("scripts", {})]
+            for table in tables:
+                for name in (table or {}):
+                    facts["commands"].append(f"{name}  (pyproject script)")
+        except Exception:
+            pass
+    if pp.is_file() or (target / "requirements.txt").is_file():
+        facts["commands"].append("pytest -q   (if pytest configured)")
+
+    # env var NAMES from example files only — never the real .env (it holds secrets)
+    for envf in (".env.example", ".env.sample", ".env.template"):
+        ef = target / envf
+        if ef.is_file():
+            try:
+                for line in ef.read_text(encoding="utf-8").splitlines():
+                    s = line.strip()
+                    if s and not s.startswith("#") and "=" in s:
+                        nm = s.split("=", 1)[0].strip()
+                        if nm and nm == nm.upper() and nm.replace("_", "").isalnum():
+                            facts["env"].append(nm)
+            except Exception:
+                pass
+            break
+
+    # CI / deploy workflows
+    for wfdir in (".gitea/workflows", ".github/workflows"):
+        d = target / wfdir
+        if d.is_dir():
+            for f in sorted(list(d.glob("*.yml")) + list(d.glob("*.yaml"))):
+                facts["workflows"].append(f"{wfdir}/{f.name}")
+
+    # entry points: detected stack folders + common entry files
+    for det in stack.get("matched", []):
+        tgt = det.get("target")
+        if not tgt:
+            continue
+        folder = (target / tgt).parent
+        if folder.exists() and str(folder.relative_to(target)) != ".":
+            facts["entry"].append(f"{folder.relative_to(target)}/  ({det.get('id', 'stack')})")
+    for cand in ("main.py", "app.py", "manage.py", "src/main.tsx", "src/main.ts",
+                 "src/index.tsx", "src/App.tsx"):
+        if (target / cand).is_file():
+            facts["entry"].append(cand)
+
+    for k, vals in facts.items():
+        seen: set[str] = set()
+        facts[k] = [v for v in vals if not (v in seen or seen.add(v))]
+    return facts
+
+
+def write_project_facts(target: Path, facts: dict, dry: bool) -> list[str]:
+    """Seed .claude/PROJECT-FACTS.md so the AI enrichment step starts from real data."""
+    if not any(facts.values()):
+        return ["project facts: nothing auto-extractable — skipped"]
+    out = [
+        "# Project facts — auto-extracted by setup-project-ai",
+        "",
+        "> Starting point for CLAUDE.md enrichment (skill Step 3). Pulled mechanically from",
+        "> package.json / pyproject.toml / .env.example / workflows — **verify, refine, fold the",
+        "> right ones into the matching CLAUDE.md (root vs backend/ vs frontend/), then delete this file.**",
+        "",
+    ]
+
+    def sec(title: str, items: list[str]) -> list[str]:
+        return [f"## {title}", "", *[f"- `{i}`" for i in items], ""] if items else []
+
+    out += sec("Commands (run / test / build)", facts["commands"])
+    out += sec("Environment variables (names only — values live in your real .env)", facts["env"])
+    out += sec("CI / deploy workflows", facts["workflows"])
+    out += sec("Entry points / key folders", facts["entry"])
+    dest = target / ".claude" / "PROJECT-FACTS.md"
+    if not dry:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text("\n".join(out), encoding="utf-8")
+    n = sum(len(v) for v in facts.values())
+    return [f"project facts: wrote .claude/PROJECT-FACTS.md ({n} facts — fold into the hierarchy, then delete)"]
+
+
 # ── main ─────────────────────────────────────────────────────────────────────
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
@@ -426,6 +530,10 @@ def main() -> int:
 
     print("\n-- CLAUDE.md hierarchy")
     for line in compose_claude_md(target, stack, ident, args.force, args.dry_run):
+        print(f"   {line}")
+
+    print("-- project facts (auto-extracted → seed for enrichment)")
+    for line in write_project_facts(target, extract_project_facts(target, stack), args.dry_run):
         print(f"   {line}")
 
     print("\n-- subagents")
