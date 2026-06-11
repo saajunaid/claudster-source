@@ -819,20 +819,19 @@ h1,h2,h3.display-font{font-family:'Space Grotesk','Segoe UI',system-ui,sans-seri
 h1{font-size:38px;font-weight:700;letter-spacing:-.05em}
 .subtitle{color:var(--ink-3);font-size:14px;margin-top:6px}
 .brand-strip{margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--line)}
-/* hamster logo */
-.hamster-logo{display:flex;align-items:center;gap:20px;
+/* running hamster logo */
+.hamster-logo{display:flex;align-items:center;gap:20px}
+.h-run{position:relative;height:6em;width:9ch;
   font-family:'JetBrains Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
   color:var(--amber);font-size:11px;line-height:1.5}
-.h-pre{margin:0;white-space:pre}
-.h-wheel{position:relative;height:7.5em;width:9ch}
-.wf{position:absolute;top:0;left:0;margin:0;white-space:pre}
-.wf1{animation:wf-a .6s linear infinite    0s}
-.wf2{animation:wf-a .6s linear infinite -.3s}
-@keyframes wf-a{0%,49.9%{opacity:1}50%,100%{opacity:0}}
-.h-brand{display:flex;align-items:center;gap:8px;padding-left:4px}
+.rf{position:absolute;top:0;left:0;margin:0;white-space:pre}
+.rf1{animation:rf-a .9s linear infinite    0s}
+.rf2{animation:rf-a .9s linear infinite -.6s}
+.rf3{animation:rf-a .9s linear infinite -.3s}
+@keyframes rf-a{0%,32.9%{opacity:1}33%,100%{opacity:0}}
+.h-brand{display:flex;flex-direction:column;gap:5px;padding-left:4px}
 .brand-name{font-family:'Space Grotesk',system-ui,sans-serif;font-size:13px;font-weight:700;
   letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
-.brand-sep{color:var(--line);font-size:14px}
 .brand-tag{font-size:12px;color:var(--ink-4)}
 .summary-bar{display:inline-flex;align-items:center;gap:10px;margin-top:16px;
   padding:8px 16px;background:var(--surface);border:1px solid var(--line);
@@ -1059,27 +1058,22 @@ def render_html(metrics: dict, findings: list[dict], days: int,
 <div class="page">
   <div class="brand-strip">
     <div class="hamster-logo">
-      <div>
-        <pre class="h-pre">  (\\(\\
- ( ˘ω˘ )
- (っ  っ)
- ─────────</pre>
-        <div class="h-wheel">
-          <pre class="wf wf1">╭───────╮
-│ ╲ │ ╱ │
-│──(●)──│
-│ ╱ │ ╲ │
-╰───────╯</pre>
-          <pre class="wf wf2">╭───────╮
-│   │   │
-│──(●)──│
-│   │   │
-╰───────╯</pre>
-        </div>
+      <div class="h-run">
+        <pre class="rf rf1"> (\\(\\
+( ˘ω˘ )
+(っ っ)
+ ╱  ╲</pre>
+        <pre class="rf rf2"> (\\(\\
+( ˘ω˘ )
+(っ っ)
+ │  │</pre>
+        <pre class="rf rf3"> (\\(\\
+( ˘ω˘ )
+(っ っ)
+ ╲  ╱</pre>
       </div>
       <div class="h-brand">
         <span class="brand-name">◆ claudster</span>
-        <span class="brand-sep">·</span>
         <span class="brand-tag">usage review</span>
       </div>
     </div>
