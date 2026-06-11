@@ -528,6 +528,16 @@ def main() -> int:
             print(f"     {f}: {', '.join(toks)}")
         print(f"   tokens needing values: {', '.join(sorted(seen))}")
 
+    # Fail-loud gate: in --substitute mode (a fresh-from-template render) any leftover
+    # {{TOKEN}} means a half-rendered harness. Refuse to emit — exit 3 so the bootstrap
+    # aborts rather than shipping a CLAUDE.md with literal {{TOKEN}}s a future session
+    # would read as truth. Report-only runs (existing repos) are never gated.
+    if args.substitute and leftovers:
+        print("\nERROR: unresolved {{TOKEN}}s remain after --substitute — refusing to emit a "
+              "half-rendered harness.\n       Provide the missing values via --set and re-run.",
+              file=sys.stderr)
+        return 3
+
     print("\n-- CLAUDE.md hierarchy")
     for line in compose_claude_md(target, stack, ident, args.force, args.dry_run):
         print(f"   {line}")
