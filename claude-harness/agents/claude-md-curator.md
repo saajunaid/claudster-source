@@ -31,6 +31,9 @@ You NEVER write to any file. You return proposed changes only. The main thread d
 | **Duplicate** | Same rule in root + subfolder CLAUDE.md | Keep most specific, delete other |
 | **Superseded** | Old rule contradicted by a newer entry | Delete old entry |
 | **Log/session record** | "This session we added X" | Delete — belongs in relay.md |
+| **Bootstrap artifact** | Describes the template/scaffold, not this app; unrendered `{{TOKEN}}`; rules only true in the template source | Delete or rewrite for the real project |
+| **Factual error** | A precise code claim contradicted by the actual source (verify with Grep/Read) | Correct it — **never** propagate the wrong fact |
+| **Dead `.claude/` path** | Cites `.claude/skills/…` (or other `.claude/` paths) that don't exist in this repo | Delete — copy-paste artifact, not live tooling |
 
 ## Step 1 — Discover all CLAUDE.md files
 
@@ -47,6 +50,35 @@ Also check:
 - Does every file path mentioned still exist? (`Glob` to verify)
 - Does every package/tool mentioned still appear in `requirements.txt`, `pyproject.toml`, or `package.json`?
 - Is any rule duplicated verbatim or nearly verbatim in another CLAUDE.md in this project?
+
+### Three accuracy checks (structural review alone misses these — all three were found in a real run)
+
+**A. Bootstrap-artifact origin check.** A CLAUDE.md copied from a scaffold/template without customisation
+describes the *template*, not the app. Treat a section as `bootstrap_artifact` (propose delete/rewrite) when
+you see template-origin markers — generalise, don't only match a fixed list:
+- Title still names a template/scaffold, or unrendered `{{TOKEN}}` placeholders remain.
+- Intro describes "a canonical scaffold", "not a runnable app", or how the *template repo itself* behaves.
+- Rules only true in the template source — e.g. "tokens are unrendered → SyntaxError", "pytest fails on
+  conftest import / use `--noconftest`", or references to bootstrap flags (`-NoAuth`, prune-anchors, …) in a
+  repo that is plainly the rendered app, not the template.
+These are inapplicable to the real project — propose removing or rewriting them for it.
+
+**B. Code-claim verification (don't propagate wrong facts).** For any rule that makes a *precise* claim about
+code — a symbol/variable name, a file path, a method/flag/config key, or error/logging behaviour — verify it
+before trusting it (you have `Grep` and `Read`):
+- Symbols / flag values / config keys → `Grep` the cited symbol in the relevant file.
+- "path is relative to cwd" / a specific path → `Read` the actual `Path(...)` / resolution in source.
+- "no error is raised" / "returns None silently" → `Grep` the cited function for `raise`, `logger.warning`,
+  `return None`.
+Mark each claim `accurate`, `uncertain` (unverifiable → leave it, per the Rules), or `factual_error`. For a
+`factual_error`, put the **corrected fact** in `proposed_curated_content`. **Never carry a known factual
+error forward into the proposed content.**
+
+**C. Dead `.claude/` path references (common in sub-folder files).** Sub-folder CLAUDE.mds generated from
+plugin/templates often cite paths that exist only in the plugin source. For any line referencing a path under
+`.claude/` (skills, commands, hooks), verify it exists in *this* repo. If `.claude/skills/` (or
+`.claude/commands/`) is referenced but absent under the repo root, flag every such reference `stale` and
+propose deletion — they're copy-paste artifacts and don't affect the live, plugin-provided tooling.
 
 ## Step 3 — Size budget check
 
@@ -90,6 +122,8 @@ claude_md_curator:
 - If a rule contradicts another, flag both and ask the main thread which to keep.
 - If you're unsure whether something is still accurate (e.g., a path you can't verify), mark it
   `uncertain` in the reason field — do not flag for deletion.
+- A `factual_error` (a code claim verified wrong via check B) must be **corrected** in
+  `proposed_curated_content` — never carried forward unchanged, and never silently deleted without the fix.
 - Do not flag rules just because they seem obvious to you — only flag if they're derivable from
   reading the code without specialist knowledge.
 - `proposed_curated_content` must be complete and ready to paste — not a diff, not a summary.

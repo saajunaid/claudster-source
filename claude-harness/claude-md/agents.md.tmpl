@@ -35,7 +35,7 @@ doc under `.github/agent-docs/`, then continue from the summary rather than the 
 
 ## Conventions & resources (plain files — read whatever the agent)
 - Per-area detail: `src/CLAUDE.md`, `frontend/CLAUDE.md`, `tests/CLAUDE.md` (as present).
-- Reusable how-to: `.claude/skills/<name>/SKILL.md`.
+- Reusable how-to: the claudster plugin's skills, invoked by name (e.g. `fastapi-dev`) — auto-triggered when a task matches; not a project file.
 - Subagent briefs reusable as checklists: `.claude/agents/{tester,code-reviewer,preflight}.md`.
 - Commands as runnable procedures: `.claude/commands/{feature-plan,tdd,prd,handoff}.md`.
 - Commits: Conventional Commits. Terse output. Never commit secrets.

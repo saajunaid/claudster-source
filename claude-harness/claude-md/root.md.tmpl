@@ -2,7 +2,7 @@
 
 > Lean root: project identity, the development harness, and the non-negotiable laws. Deep per-area
 > standards live in folder-level `CLAUDE.md` files (`src/`, `frontend/`, `tests/`, …) and load only
-> when you work there. Reusable how-to knowledge lives in `.claude/skills/`.
+> when you work there. Reusable how-to knowledge comes from the **claudster plugin's skills** (invoked by name / auto-triggered when a task matches) — not a per-project folder.
 > Codex CLI reads `AGENTS.md`, which mirrors this file.
 
 ## What this project is
@@ -80,4 +80,4 @@ tracker. The conversation is disposable; these files are the truth.
 | Session resume doc | `relay.md` (repo root) |
 | Custom commands | `.claude/commands/` |
 | Subagents | `.claude/agents/` |
-| Reusable skills | `.claude/skills/` |
+| Reusable skills | claudster plugin (by name; not copied into the project) |

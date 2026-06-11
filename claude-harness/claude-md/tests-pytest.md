@@ -38,4 +38,4 @@ If a frontend exists, its unit/component tests (e.g. Vitest + Testing Library) l
 with the same TDD discipline. Ensure a DOM environment (jsdom/happy-dom) and a setup file are wired
 before writing component tests.
 
-Skills: `.claude/skills/tdd-workflow`, `.claude/skills/test-strategy`, `.claude/skills/webapp-testing`.
+Skills (claudster plugin, by name): `tdd-workflow`, `test-strategy`, `webapp-testing`.

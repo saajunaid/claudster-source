@@ -21,4 +21,4 @@ Scope: Python backend. Inherits all root laws (TDD, no absolute paths, no silent
 4. Wire the entrypoint.
 5. Run the suite → green. Run the linter.
 
-Skills: `.claude/skills/python`, `.claude/skills/error-handling`, `.claude/skills/refactoring`.
+Skills (claudster plugin, by name): `python`, `error-handling`, `refactoring`.
