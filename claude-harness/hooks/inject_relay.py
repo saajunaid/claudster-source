@@ -81,7 +81,7 @@ def _truncate_relay(text: str) -> str:
             read_first_idx = i
             break
 
-    if None in (done_idx, next_step_idx, read_first_idx):
+    if done_idx is None or next_step_idx is None or read_first_idx is None:
         return text  # can't parse — print full rather than lose data
 
     done_bullets = [l for l in lines[done_idx + 1:next_step_idx] if l.strip().startswith("-")]
@@ -99,5 +99,29 @@ if os.path.isfile(RELAY):
     if text:
         print("\n=== relay.md (session resume — read before acting) ===\n")
         print(_truncate_relay(text))
+
+# Mid-week cadence nudge: suggest /usage-review when overdue (>7 days) or never run (enough data exists).
+_STAMP = os.path.join(".claude", ".last-usage-review")
+_LOG   = os.path.join(".claude", "usage-log.jsonl")
+
+try:
+    from datetime import datetime as _dt, timezone as _tz
+
+    if os.path.isfile(_STAMP):
+        _last_str = open(_STAMP, encoding="utf-8").read().strip()
+        _last = _dt.fromisoformat(_last_str)
+        if not _last.tzinfo:
+            _last = _last.replace(tzinfo=_tz.utc)
+        _days_ago = (_dt.now(_tz.utc) - _last).days
+        if _days_ago >= 7:
+            print(f"\n[USAGE-REVIEW] {_days_ago} days since last usage review — run `/usage-review` to optimise your harness.\n")
+    elif os.path.isfile(_LOG):
+        # Never reviewed yet; nudge once enough data has accumulated (3+ sessions)
+        with open(_LOG, encoding="utf-8") as _fh:
+            _lines = [l for l in _fh if l.strip()]
+        if len(_lines) >= 3:
+            print("\n[USAGE-REVIEW] You have usage data — run `/usage-review` to review patterns and right-size your harness.\n")
+except Exception:
+    pass
 
 sys.exit(0)
