@@ -1041,7 +1041,10 @@ function junai-push {
     # purged from the plugin bundle after copy.
     # Private skills purged from BOTH public plugin bundles. After skill flattening these
     # are flat dirs (skills/<name>/), not a skills/vmie/ category — so purge by skill name.
-    $PLUGIN_PRIVATE_SKILLS = @("golden-workflow", "windows-deployment")
+    # Empty: golden-workflow + windows-deployment were promoted to public categories
+    # (devops/, docs/) and now ship in the public bundles. Add a name here only to hold a
+    # skill back from publish while keeping it in the pool.
+    $PLUGIN_PRIVATE_SKILLS = @()
     $claudePython = Get-JunaiPythonCommand
     if ($claudePython) {
         Push-Location $ProjectRoot

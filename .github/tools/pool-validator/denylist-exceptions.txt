@@ -37,3 +37,9 @@ LOCAL-MODELS.md
 
 # --- Wallchart system documentation — vmie- refers to NSSM service naming convention, not a credential ---
 agent-docs/WORKFLOW-WALLCHART.md
+
+# --- Formerly-private vmie skills promoted to public categories (internal-only tool).
+# vmie- here is the NSSM service naming convention and VMIE template branding, not a credential. ---
+skills/devops/windows-deployment/
+skills/devops/golden-workflow/
+skills/docs/vm-ppt/
