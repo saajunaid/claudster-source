@@ -49,6 +49,33 @@ $PRIVATE_ROOT_FOLDERS = @("vmie")
 # Fully-managed folders: wiped before copy so renamed/moved/deleted files don't persist
 $CLEAN_FOLDERS = @("agents", "skills", "prompts", "instructions", "hooks", "tools", "recipes")
 
+function Remove-ItemRobust {
+    # Recursive delete that survives the Windows "directory is not empty" race:
+    # the indexer/AV/Defender briefly holds a handle on a file mid-delete, so a
+    # single Remove-Item -Recurse can fail even though nothing is wrong. Retry with
+    # a short backoff; the handle releases within a few hundred ms. Warns (never
+    # throws) if it still can't — callers immediately re-copy in place, so a stale
+    # leftover is overwritten rather than fatal.
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [int]$Retries = 5,
+        [int]$DelayMs = 200
+    )
+    if (-not (Test-Path $Path)) { return }
+    for ($i = 1; $i -le $Retries; $i++) {
+        try {
+            Remove-Item $Path -Recurse -Force -ErrorAction Stop
+            return
+        } catch {
+            if ($i -eq $Retries) {
+                Write-Host "  [WARN]  could not fully remove '$Path' after $Retries tries ($($_.Exception.Message)); re-copy will overwrite in place." -ForegroundColor Yellow
+                return
+            }
+            Start-Sleep -Milliseconds ($DelayMs * $i)
+        }
+    }
+}
+
 function Remove-JunaiCacheDirs {
     param(
         [Parameter(Mandatory)][string]$RootPath,
@@ -997,14 +1024,14 @@ function junai-push {
             # Clean destination first to prevent nested folder copies (e.g. diagrams/diagrams)
             # and to ensure moved/deleted files are mirrored correctly.
             if (Test-Path $dest) {
-                Remove-Item $dest -Recurse -Force
+                Remove-ItemRobust $dest
             }
             Copy-Item $src $JUNO_GITHUB -Recurse -Force
             Write-Host "  [OK]  $folder" -ForegroundColor Green
         } else {
             # Source no longer has this folder: remove stale mirror copy.
             if (Test-Path $dest) {
-                Remove-Item $dest -Recurse -Force
+                Remove-ItemRobust $dest
                 Write-Host "  [OK]  $folder - removed stale mirror folder" -ForegroundColor Green
             } else {
                 Write-Host "  [--]  $folder - not in project, skipped" -ForegroundColor DarkGray
@@ -1058,15 +1085,15 @@ function junai-push {
         if ($haveCore -and $haveExtras) {
             # marketplace.json (lists both plugins) ships from the core bundle root
             $destMarket = Join-Path $JUNO_POOL ".claude-plugin"
-            if (Test-Path $destMarket) { Remove-Item $destMarket -Recurse -Force }
+            if (Test-Path $destMarket) { Remove-ItemRobust $destMarket }
             Copy-Item (Join-Path $claudeBundle ".claude-plugin") $JUNO_POOL -Recurse -Force
 
             # core plugin → junai/plugin ; extras plugin → junai/plugin-extras
             $destPlugin = Join-Path $JUNO_POOL "plugin"
-            if (Test-Path $destPlugin) { Remove-Item $destPlugin -Recurse -Force }
+            if (Test-Path $destPlugin) { Remove-ItemRobust $destPlugin }
             Copy-Item (Join-Path $claudeBundle "plugin") $JUNO_POOL -Recurse -Force
             $destExtras = Join-Path $JUNO_POOL "plugin-extras"
-            if (Test-Path $destExtras) { Remove-Item $destExtras -Recurse -Force }
+            if (Test-Path $destExtras) { Remove-ItemRobust $destExtras }
             Copy-Item (Join-Path $extrasBundle "plugin-extras") $JUNO_POOL -Recurse -Force
 
             # Purge private skills from both public bundles
@@ -1227,9 +1254,7 @@ function Sync-JunaiProfileRepo {
         return $false
     }
 
-    if (Test-Path $targetGithub) {
-        Remove-Item $targetGithub -Recurse -Force
-    }
+    Remove-ItemRobust $targetGithub
     Copy-Item $sourceGithub $RepoPath -Recurse -Force
 
     Push-Location $RepoPath
@@ -2169,7 +2194,7 @@ function junai-export {
         $dest = Join-Path $OutputPath $folder
         if (Test-Path $src) {
             if (Test-Path $dest) {
-                Remove-Item $dest -Recurse -Force
+                Remove-ItemRobust $dest
             }
             Copy-Item $src $OutputPath -Recurse -Force
             Write-Host "  [OK]  $folder" -ForegroundColor Green
@@ -2255,14 +2280,14 @@ function junai-import {
         if (Test-Path $src) {
             # Clean destination first to prevent folder nesting and stale files.
             if (Test-Path $dest) {
-                Remove-Item $dest -Recurse -Force
+                Remove-ItemRobust $dest
             }
             Copy-Item $src $target -Recurse -Force
             Write-Host "  [OK]  $folder" -ForegroundColor Green
         } else {
             # Import source no longer has this folder: remove stale local copy.
             if (Test-Path $dest) {
-                Remove-Item $dest -Recurse -Force
+                Remove-ItemRobust $dest
                 Write-Host "  [OK]  $folder - removed stale local folder" -ForegroundColor Green
             } else {
                 Write-Host "  [--]  $folder - not in export, skipped" -ForegroundColor Yellow
