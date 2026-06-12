@@ -58,9 +58,9 @@ if [ -n "$cwd" ]; then
   [ -n "$n" ] && [ "$n" -gt 0 ] 2>/dev/null && dirty="$n"
 fi
 
-# relay.md present? (context will resume next session)
+# relay present? (context resumes next session) — prefer .claudster, keep legacy root relay.md
 relay=""
-[ -n "$cwd" ] && [ -f "$cwd/relay.md" ] && relay="relay"
+[ -n "$cwd" ] && { [ -f "$cwd/.claudster/relay.md" ] || [ -f "$cwd/relay.md" ]; } && relay="relay"
 
 # Directory basename
 dir=$(echo "$cwd" | sed 's|.*[/\\]||')
