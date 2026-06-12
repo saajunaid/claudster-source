@@ -2,13 +2,13 @@
 """claudster /usage-review: local usage analysis + harness self-tuning recommendations.
 
 Reads:
-  .claude/usage-log.jsonl         per-session digest (Stop hook)
+  .claudster/usage-log.jsonl      per-session digest (Stop hook); legacy .claude/usage-log.jsonl fallback
   ~/.claude/projects/<slug>/      session transcripts (agent dispatches, context size)
   claude-harness/agents/*.md      agent model tiers (frontmatter)
 
 Writes:
-  <output-dir>/usage-review.html  graph-first HTML dashboard (default: .claudster if plugin, else .claude)
-  .claude/.last-usage-review      timestamp for cadence nudge (updated on each run)
+  <output-dir>/usage-review.html  graph-first HTML dashboard (default: .claudster/reviews)
+  .claudster/.last-usage-review   timestamp for cadence nudge (updated on each run)
 
 Prints: markdown report to stdout.
 
@@ -69,7 +69,11 @@ def _transcript_dir(cwd: str) -> Path | None:
 
 def _load_log_window(cwd: str, start: datetime, end: datetime) -> list[dict]:
     """Return one record per session with ts = first entry, metrics = last entry."""
-    path = os.path.join(cwd, ".claude", "usage-log.jsonl")
+    path = os.path.join(cwd, ".claudster", "usage-log.jsonl")
+    if not os.path.isfile(path):
+        legacy = os.path.join(cwd, ".claude", "usage-log.jsonl")
+        if os.path.isfile(legacy):
+            path = legacy
     if not os.path.isfile(path):
         return []
     first_ts: dict[str, datetime] = {}
@@ -1096,7 +1100,7 @@ def render_html(metrics: dict, findings: list[dict], days: int,
   {action_section}
   {advisory_section}
 
-  <footer>Generated {generated} &middot; <code>.claude/usage-log.jsonl</code> + session transcripts &middot; Estimates only — all data stays local. &middot; <a href="https://github.com/saajunaid/junai" style="color:var(--ink-4)">claudster</a></footer>
+  <footer>Generated {generated} &middot; <code>.claudster/usage-log.jsonl</code> + session transcripts &middot; Estimates only — all data stays local. &middot; <a href="https://github.com/saajunaid/junai" style="color:var(--ink-4)">claudster</a></footer>
 </div>
 </body>
 </html>"""
@@ -1112,8 +1116,7 @@ def main() -> None:
     ap.add_argument("--no-html", action="store_true", help="Skip HTML dashboard generation")
     ap.add_argument(
         "--output-dir", default=None,
-        help="Directory for HTML output relative to cwd. "
-             "Defaults to .claudster when CLAUDE_PLUGIN_ROOT is set, else .claude.",
+        help="Directory for HTML output relative to cwd. Defaults to .claudster/reviews.",
     )
     args = ap.parse_args()
 
@@ -1123,11 +1126,11 @@ def main() -> None:
     ws   = (now - timedelta(days=days)).strftime("%Y-%m-%d")
     we   = now.strftime("%Y-%m-%d")
 
-    # Resolve output directory: plugin → .claudster, local checkout → .claude
+    # Resolve output directory: HTML dashboard lives under .claudster/reviews
     if args.output_dir is not None:
         out_subdir = args.output_dir
     else:
-        out_subdir = ".claudster" if os.environ.get("CLAUDE_PLUGIN_ROOT") else ".claude"
+        out_subdir = os.path.join(".claudster", "reviews")
 
     # Load data
     current_sessions, prev_sessions = load_usage_log(cwd, days)
@@ -1137,7 +1140,7 @@ def main() -> None:
             f"# /usage-review\n\n"
             f"No sessions found in the last {days} days.\n"
             f"Run a few sessions to build up data, then re-run `/usage-review`.\n\n"
-            f"(Data file: {os.path.join(cwd, '.claude', 'usage-log.jsonl')})"
+            f"(Data file: {os.path.join(cwd, '.claudster', 'usage-log.jsonl')})"
         )
         return
 
@@ -1162,10 +1165,10 @@ def main() -> None:
             fh.write(html)
         print(f"\n→ HTML dashboard: {html_path}")
 
-    # Update last-review timestamp — always in .claude so inject_relay.py finds it
-    claude_dir = os.path.join(cwd, ".claude")
-    os.makedirs(claude_dir, exist_ok=True)
-    stamp_path = os.path.join(claude_dir, ".last-usage-review")
+    # Update last-review timestamp — in .claudster so inject_relay.py finds it
+    claudster_dir = os.path.join(cwd, ".claudster")
+    os.makedirs(claudster_dir, exist_ok=True)
+    stamp_path = os.path.join(claudster_dir, ".last-usage-review")
     try:
         with open(stamp_path, "w", encoding="utf-8") as fh:
             fh.write(now.isoformat(timespec="seconds"))
