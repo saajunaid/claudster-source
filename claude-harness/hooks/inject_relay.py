@@ -33,12 +33,26 @@ except Exception:
 INJECT_MAX_LINES = 120
 
 
-def _resolve_relay() -> str:
-    """Prefer a per-branch relay file when present, else the root relay.md.
+def _first_existing(paths: list[str], default: str) -> str:
+    """Return the first path that exists on disk, else `default` (the new canonical path)."""
+    for p in paths:
+        if os.path.isfile(p):
+            return p
+    return default
 
-    Team mode: `.claude/relay/<branch>.md` keeps each branch's resume state in its own
-    file so parallel developers never merge-conflict on relay.md. Falls back to the
-    plain `relay.md` (solo/default). Branch lookup is best-effort; any failure → relay.md.
+
+def _resolve_relay() -> str:
+    """Prefer the new `.claudster` location; fall back to every legacy location.
+
+    Preference order (first existing wins):
+      1. .claudster/relay/<branch>.md   (new — per-branch team mode)
+      2. .claudster/relay.md            (new — solo/default)
+      3. .claude/relay/<branch>.md      (legacy per-branch)
+      4. relay.md                       (legacy repo root)
+    When none exist yet, return the new canonical default (`.claudster/relay.md`); the
+    isfile() guard at the call site then no-ops cleanly. Team mode keeps each branch's
+    resume state in its own file so parallel developers never merge-conflict on relay.md.
+    Branch lookup is best-effort; any failure → skip the per-branch candidates.
     """
     try:
         branch = subprocess.run(
@@ -47,12 +61,17 @@ def _resolve_relay() -> str:
         ).stdout.strip()
     except Exception:
         branch = ""
+    slug = ""
     if branch and branch != "HEAD":
         slug = "".join(c if (c.isalnum() or c in "-_.") else "-" for c in branch)
-        per_branch = os.path.join(".claude", "relay", f"{slug}.md")
-        if os.path.isfile(per_branch):
-            return per_branch
-    return "relay.md"
+    candidates: list[str] = []
+    if slug:
+        candidates.append(os.path.join(".claudster", "relay", f"{slug}.md"))
+    candidates.append(os.path.join(".claudster", "relay.md"))
+    if slug:
+        candidates.append(os.path.join(".claude", "relay", f"{slug}.md"))
+    candidates.append("relay.md")
+    return _first_existing(candidates, os.path.join(".claudster", "relay.md"))
 
 
 RELAY = _resolve_relay()
@@ -101,8 +120,15 @@ if os.path.isfile(RELAY):
         print(_truncate_relay(text))
 
 # Mid-week cadence nudge: suggest /usage-review when overdue (>7 days) or never run (enough data exists).
-_STAMP = os.path.join(".claude", ".last-usage-review")
-_LOG   = os.path.join(".claude", "usage-log.jsonl")
+# Prefer the new .claudster location; fall back to the legacy .claude path during transition.
+_STAMP = _first_existing(
+    [os.path.join(".claudster", ".last-usage-review"), os.path.join(".claude", ".last-usage-review")],
+    os.path.join(".claudster", ".last-usage-review"),
+)
+_LOG = _first_existing(
+    [os.path.join(".claudster", "usage-log.jsonl"), os.path.join(".claude", "usage-log.jsonl")],
+    os.path.join(".claudster", "usage-log.jsonl"),
+)
 
 try:
     from datetime import datetime as _dt, timezone as _tz

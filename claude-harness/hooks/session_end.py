@@ -122,7 +122,7 @@ if u:
         f"(estimate — edit rates in session_end.py)"
     )
     try:
-        os.makedirs(".claude", exist_ok=True)
+        os.makedirs(".claudster", exist_ok=True)
         rec = {
             "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "session": data.get("session_id", ""),
@@ -130,7 +130,7 @@ if u:
             "cache_write": u["cache_write"], "cache_read": u["cache_read"],
             "est_cost_usd": u["est_cost_usd"], "models": u["models"],
         }
-        with open(os.path.join(".claude", "usage-log.jsonl"), "a", encoding="utf-8") as fh:
+        with open(os.path.join(".claudster", "usage-log.jsonl"), "a", encoding="utf-8") as fh:
             fh.write(json.dumps(rec) + "\n")
     except Exception:
         pass
