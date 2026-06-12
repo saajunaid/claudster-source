@@ -112,3 +112,52 @@ def test_usage_review_html_in_reviews(tmp_path):
     _write_log(tmp_path / ".claudster" / "usage-log.jsonl")
     _run([str(USAGE), "--cwd", str(tmp_path)])
     assert (tmp_path / ".claudster" / "reviews" / "usage-review.html").is_file()
+
+
+# ── setup_project_ai: legacy relocation (Phase 4) ───────────────────────────
+
+def test_relocates_legacy_state(tmp_path):
+    _make_project(tmp_path)
+    (tmp_path / "relay.md").write_text("# legacy relay", encoding="utf-8")
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "usage-log.jsonl").write_text('{"ts":"x"}\n', encoding="utf-8")
+    (tmp_path / ".claude" / ".last-usage-review").write_text("2026-06-01T00:00:00+00:00", encoding="utf-8")
+    (tmp_path / ".claude" / "PROJECT-FACTS.md").write_text("# old facts", encoding="utf-8")
+    (tmp_path / ".claude" / "relay").mkdir()
+    (tmp_path / ".claude" / "relay" / "feat-x.md").write_text("# branch relay", encoding="utf-8")
+
+    _run_setup(tmp_path)
+
+    assert (tmp_path / ".claudster" / "relay.md").is_file()
+    assert (tmp_path / ".claudster" / "usage-log.jsonl").is_file()
+    assert (tmp_path / ".claudster" / ".last-usage-review").is_file()
+    assert (tmp_path / ".claudster" / "PROJECT-FACTS.md").is_file()
+    assert (tmp_path / ".claudster" / "relay" / "feat-x.md").is_file()
+    # legacy copies removed
+    assert not (tmp_path / "relay.md").exists()
+    assert not (tmp_path / ".claude" / "usage-log.jsonl").exists()
+    assert not (tmp_path / ".claude" / ".last-usage-review").exists()
+    assert not (tmp_path / ".claude" / "PROJECT-FACTS.md").exists()
+    assert not (tmp_path / ".claude" / "relay").exists()
+
+
+def test_relocation_idempotent(tmp_path):
+    _make_project(tmp_path)
+    (tmp_path / "relay.md").write_text("# legacy relay", encoding="utf-8")
+    _run_setup(tmp_path)
+    relay_new = tmp_path / ".claudster" / "relay.md"
+    assert relay_new.is_file()
+    content = relay_new.read_text(encoding="utf-8")
+    r2 = _run_setup(tmp_path)  # second run: legacy source gone → no-op, no error
+    assert r2.returncode == 0, r2.stdout + r2.stderr
+    assert relay_new.read_text(encoding="utf-8") == content
+
+
+def test_relocation_never_clobbers(tmp_path):
+    _make_project(tmp_path)
+    (tmp_path / ".claudster").mkdir()
+    (tmp_path / ".claudster" / "relay.md").write_text("KEEP", encoding="utf-8")
+    (tmp_path / "relay.md").write_text("OLD", encoding="utf-8")
+    _run_setup(tmp_path)
+    assert (tmp_path / ".claudster" / "relay.md").read_text(encoding="utf-8") == "KEEP"
+    assert (tmp_path / "relay.md").read_text(encoding="utf-8") == "OLD"  # legacy left in place

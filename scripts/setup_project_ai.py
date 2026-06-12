@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -505,6 +506,38 @@ def scaffold_claudster(target: Path, dry: bool) -> list[str]:
     return notes
 
 
+def relocate_legacy(target: Path, dry: bool) -> list[str]:
+    """One-way relocate of pre-.claudster harness files into .claudster/.
+
+    Moves each source only when it exists AND the destination does not — never
+    clobbers an already-migrated file (logs a skip instead). Idempotent: a second
+    run finds no sources and is a no-op. Excludes .github/plans/ on purpose — those
+    are pool-synced and the /handoff read shim covers legacy plans (migration decision 5).
+    """
+    moves = [
+        ("relay.md", ".claudster/relay.md"),
+        (".claude/usage-log.jsonl", ".claudster/usage-log.jsonl"),
+        (".claude/.last-usage-review", ".claudster/.last-usage-review"),
+        (".claude/PROJECT-FACTS.md", ".claudster/PROJECT-FACTS.md"),
+        (".claude/relay", ".claudster/relay"),
+    ]
+    notes: list[str] = []
+    for src_rel, dst_rel in moves:
+        src, dst = target / src_rel, target / dst_rel
+        if not src.exists():
+            continue
+        if dst.exists():
+            notes.append(f"migrate: skip (already at {dst_rel}) — left legacy {src_rel} in place")
+            continue
+        if not dry:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(src), str(dst))
+        notes.append(f"migrate: {src_rel} → {dst_rel}")
+    if not notes:
+        notes.append("migrate: no legacy files to relocate")
+    return notes
+
+
 # ── main ─────────────────────────────────────────────────────────────────────
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
@@ -581,6 +614,10 @@ def main() -> int:
 
     print("\n-- CLAUDE.md hierarchy")
     for line in compose_claude_md(target, stack, ident, args.force, args.dry_run):
+        print(f"   {line}")
+
+    print("-- migrate legacy state → .claudster")
+    for line in relocate_legacy(target, args.dry_run):
         print(f"   {line}")
 
     print("-- project facts (auto-extracted → seed for enrichment)")
