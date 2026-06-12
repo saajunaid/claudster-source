@@ -1464,7 +1464,7 @@ function junai-publish-mcp {
 
     # Clean old dist/
     $dist = Join-Path $JUNO_POOL "dist"
-    if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
+    if (Test-Path $dist) { Remove-ItemRobust $dist }
 
     Write-Host "  Building..." -ForegroundColor DarkGray
     $pythonCommand = Get-JunaiPythonCommand
@@ -1480,9 +1480,17 @@ function junai-publish-mcp {
     }
 
     Write-Host "  Uploading to PyPI..." -ForegroundColor DarkGray
-    twine upload dist\*
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [ERROR] MCP upload failed." -ForegroundColor Red
+    $uploadOk = $false
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        twine upload dist\* 2>&1 | Tee-Object -Variable twineOut | Write-Host
+        if ($LASTEXITCODE -eq 0) { $uploadOk = $true; break }
+        if ($attempt -lt 3) {
+            Write-Host "  [WARN]  Upload attempt $attempt failed, retrying in 5s…" -ForegroundColor Yellow
+            Start-Sleep -Seconds 5
+        }
+    }
+    if (-not $uploadOk) {
+        Write-Host "  [ERROR] MCP upload failed after 3 attempts." -ForegroundColor Red
         Pop-Location
         return $false
     }
