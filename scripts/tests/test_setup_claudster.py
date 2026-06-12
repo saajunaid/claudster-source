@@ -161,3 +161,25 @@ def test_relocation_never_clobbers(tmp_path):
     _run_setup(tmp_path)
     assert (tmp_path / ".claudster" / "relay.md").read_text(encoding="utf-8") == "KEEP"
     assert (tmp_path / "relay.md").read_text(encoding="utf-8") == "OLD"  # legacy left in place
+
+
+def test_relocates_github_plans_for_normal_project(tmp_path):
+    _make_project(tmp_path)
+    (tmp_path / ".github" / "plans").mkdir(parents=True)
+    (tmp_path / ".github" / "plans" / "a.md").write_text("# plan a", encoding="utf-8")
+    (tmp_path / ".github" / "plans" / "b.md").write_text("# plan b", encoding="utf-8")
+    _run_setup(tmp_path)
+    assert (tmp_path / ".claudster" / "plans" / "a.md").is_file()
+    assert (tmp_path / ".claudster" / "plans" / "b.md").is_file()
+    assert not (tmp_path / ".github" / "plans" / "a.md").exists()
+    assert not (tmp_path / ".github" / "plans" / "b.md").exists()
+
+
+def test_keeps_github_plans_for_authoring_source(tmp_path):
+    _make_project(tmp_path)
+    (tmp_path / "claude-harness").mkdir()  # sentinel: this target IS the claudster authoring repo
+    (tmp_path / ".github" / "plans").mkdir(parents=True)
+    (tmp_path / ".github" / "plans" / "a.md").write_text("# pool plan", encoding="utf-8")
+    _run_setup(tmp_path)
+    assert (tmp_path / ".github" / "plans" / "a.md").is_file()  # left in place (pool-synced)
+    assert not (tmp_path / ".claudster" / "plans" / "a.md").exists()

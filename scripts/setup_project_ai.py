@@ -511,8 +511,10 @@ def relocate_legacy(target: Path, dry: bool) -> list[str]:
 
     Moves each source only when it exists AND the destination does not — never
     clobbers an already-migrated file (logs a skip instead). Idempotent: a second
-    run finds no sources and is a no-op. Excludes .github/plans/ on purpose — those
-    are pool-synced and the /handoff read shim covers legacy plans (migration decision 5).
+    run finds no sources and is a no-op. Also migrates .github/plans/*.md into
+    .claudster/plans/ — EXCEPT on the claudster authoring source (agent-sandbox,
+    detected by a claude-harness/ dir), where .github/plans is pool-synced to the
+    public junai mirror and must stay put (migration decision 5).
     """
     moves = [
         ("relay.md", ".claudster/relay.md"),
@@ -533,6 +535,27 @@ def relocate_legacy(target: Path, dry: bool) -> list[str]:
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(src), str(dst))
         notes.append(f"migrate: {src_rel} → {dst_rel}")
+
+    # .github/plans/*.md → .claudster/plans/ — per-file (the dir may already exist from the
+    # scaffold step), clobber-safe. SKIPPED for the claudster authoring source (agent-sandbox),
+    # where .github/plans is pool-synced to the public junai mirror (migration decision 5).
+    # Detected by the presence of a claude-harness/ dir in the target.
+    gh_plans = target / ".github" / "plans"
+    if gh_plans.is_dir():
+        if (target / "claude-harness").is_dir():
+            notes.append("migrate: .github/plans/ kept (authoring source — pool-synced)")
+        else:
+            dest_dir = target / ".claudster" / "plans"
+            for src in sorted(gh_plans.glob("*.md")):
+                dst = dest_dir / src.name
+                if dst.exists():
+                    notes.append(f"migrate: skip (already at .claudster/plans/{src.name})")
+                    continue
+                if not dry:
+                    dest_dir.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(src), str(dst))
+                notes.append(f"migrate: .github/plans/{src.name} → .claudster/plans/{src.name}")
+
     if not notes:
         notes.append("migrate: no legacy files to relocate")
     return notes
