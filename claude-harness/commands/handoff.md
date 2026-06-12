@@ -4,8 +4,8 @@ description: End-of-session handoff — capture exact state so the next session 
 
 # /handoff — stop cleanly, write the resume doc
 
-You are ending a work session. Produce/refresh `relay.md` at the repo root so the next session (you, a
-future you, or another agent on any tool) can resume immediately. This is the anti-context-rot checkpoint.
+You are ending a work session. Produce/refresh the resume doc (`.claudster/relay.md`) so the next session
+(you, a future you, or another agent on any tool) can resume immediately. This is the anti-context-rot checkpoint.
 
 ## Step 1 — capture learnings FIRST (knowledge-transfer)
 **Before** gathering git signals or writing relay.md, decide on `knowledge-transfer` — and the default
@@ -26,13 +26,14 @@ git status --short
 git branch --show-current
 git log --oneline -5
 ```
-Then read the active plan in `.github/plans/` and its tracker.
+Then read the active plan in `.claudster/plans/` (falling back to legacy `.github/plans/` if present) and its tracker.
 
 ## Step 3 — write the resume doc (overwrite) with exactly these sections
-> **Where to write:** solo / single active branch → `relay.md` at the repo root (default).
-> **Team / parallel branches** → write `.claude/relay/<current-branch>.md` instead, so two
-> developers never merge-conflict on one shared relay.md. The SessionStart hook prefers the
-> per-branch file automatically when it exists, else falls back to `relay.md`.
+> **Where to write:** solo / single active branch → `.claudster/relay.md` (default).
+> **Team / parallel branches** → write `.claudster/relay/<current-branch>.md` instead, so two
+> developers never merge-conflict on one shared relay doc. The SessionStart hook prefers the
+> per-branch file automatically when it exists, then `.claudster/relay.md`, then the legacy
+> `.claude/relay/<branch>.md` and root `relay.md` (back-compat during the migration).
 
 ```markdown
 # Relay — <feature>
@@ -49,7 +50,7 @@ Then read the active plan in `.github/plans/` and its tracker.
 
 ## Read first on resume
 - `<path>` — why it matters
-- `.github/plans/<feature>.md` — the plan + tracker
+- `.claudster/plans/<feature>.md` — the plan + tracker
 
 ## Validation state
 <Commands run this session and their result: pass / fail / not-run. Be honest.>
