@@ -1482,7 +1482,7 @@ function junai-publish-mcp {
     Write-Host "  Uploading to PyPI..." -ForegroundColor DarkGray
     $uploadOk = $false
     for ($attempt = 1; $attempt -le 3; $attempt++) {
-        twine upload dist\* 2>&1 | Tee-Object -Variable twineOut | Write-Host
+        twine upload dist\*.whl dist\*.tar.gz 2>&1 | Tee-Object -Variable twineOut | Write-Host
         if ($LASTEXITCODE -eq 0) { $uploadOk = $true; break }
         if ($attempt -lt 3) {
             Write-Host "  [WARN]  Upload attempt $attempt failed, retrying in 5s…" -ForegroundColor Yellow
