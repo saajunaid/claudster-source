@@ -311,6 +311,64 @@ function Bump-PackageJsonPatchVersion {
     return $nextVersion
 }
 
+function Get-RuntimeTargetsPluginVersion {
+    # Read the version of a NAMED plugin block inside .github/runtime-targets.json (the export
+    # source of truth for plugin.json). Scoped by the plugin's "name" so "claudster" never matches
+    # "claudster-extras" — the closing quote after the name disambiguates the two.
+    param(
+        [Parameter(Mandatory)][string]$ManifestPath,
+        [Parameter(Mandatory)][string]$PluginName
+    )
+
+    if (-not (Test-Path $ManifestPath)) {
+        return ""
+    }
+
+    $content = Get-Content $ManifestPath -Raw
+    $pattern = '"name"\s*:\s*"' + [regex]::Escape($PluginName) + '"\s*,\s*"version"\s*:\s*"([^"]+)"'
+    $match = [regex]::Match($content, $pattern)
+    if (-not $match.Success) {
+        return ""
+    }
+
+    return $match.Groups[1].Value
+}
+
+function Set-RuntimeTargetsPluginVersion {
+    param(
+        [Parameter(Mandatory)][string]$ManifestPath,
+        [Parameter(Mandatory)][string]$PluginName,
+        [Parameter(Mandatory)][string]$VersionString
+    )
+
+    $content = Get-Content $ManifestPath -Raw
+    $pattern = '("name"\s*:\s*"' + [regex]::Escape($PluginName) + '"\s*,\s*"version"\s*:\s*")[^"]+(")'
+    $updated = [regex]::Replace($content, $pattern, ('${1}' + $VersionString + '${2}'), 1)
+    if ($updated -eq $content) {
+        throw "Could not update version for plugin '$PluginName' in $ManifestPath"
+    }
+
+    Set-Content $ManifestPath $updated -NoNewline
+}
+
+function Bump-RuntimeTargetsPluginVersion {
+    param(
+        [Parameter(Mandatory)][string]$ManifestPath,
+        [Parameter(Mandatory)][string]$PluginName
+    )
+
+    $currentVersion = Get-RuntimeTargetsPluginVersion -ManifestPath $ManifestPath -PluginName $PluginName
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        Write-Host "  [WARN]  Could not read version for plugin '$PluginName' in $ManifestPath" -ForegroundColor Yellow
+        return ""
+    }
+
+    $nextVersion = Get-NextPatchVersion -VersionString $currentVersion
+    Set-RuntimeTargetsPluginVersion -ManifestPath $ManifestPath -PluginName $PluginName -VersionString $nextVersion
+    Write-Host "  [OK]  $PluginName manifest version bumped $currentVersion --> $nextVersion" -ForegroundColor Green
+    return $nextVersion
+}
+
 function Get-PyprojectVersion {
     param([Parameter(Mandatory)][string]$PyprojectPath)
 
@@ -1143,6 +1201,36 @@ function junai-push {
     }
     # ──────────────────────────────────────────────────────────────────────────
 
+    # ── Auto-bump the claudster plugin version when its bundle content changed ──
+    # plugin.json is GENERATED from .github/runtime-targets.json by the export, so shipping
+    # plugin content without bumping that manifest pins clients to a stale cached version (the
+    # .claudster migration hit exactly this). When the mirror's plugin/ content changed beyond
+    # plugin.json itself (so a manual version edit is not double-bumped), bump the manifest,
+    # re-sync it, and re-export so the new version rides in THIS mirror commit. The source
+    # manifest is committed separately after the push (it is the export's source of truth).
+    $bumpedClaudster = ""
+    if ($claudePython) {
+        $pluginContentDiff = git status --porcelain -- plugin ":(exclude)plugin/.claude-plugin/plugin.json"
+        if (-not [string]::IsNullOrWhiteSpace(($pluginContentDiff | Out-String).Trim())) {
+            $manifestSrc = Join-Path $ProjectRoot ".github/runtime-targets.json"
+            $bumpedClaudster = Bump-RuntimeTargetsPluginVersion -ManifestPath $manifestSrc -PluginName "claudster"
+            if (-not [string]::IsNullOrWhiteSpace($bumpedClaudster)) {
+                Copy-Item $manifestSrc (Join-Path $JUNO_GITHUB "runtime-targets.json") -Force
+                Push-Location $ProjectRoot
+                & $claudePython.Path @($claudePython.PrefixArgs + @("export_runtime_resources.py", "--profile", "claude"))
+                $reExportOk = ($LASTEXITCODE -eq 0)
+                Pop-Location
+                $rebuiltPlugin = Join-Path $claudeBundle "plugin\.claude-plugin\plugin.json"
+                if ($reExportOk -and (Test-Path $rebuiltPlugin)) {
+                    Copy-Item $rebuiltPlugin (Join-Path $JUNO_POOL "plugin\.claude-plugin\plugin.json") -Force
+                    Write-Host "  [OK]  claudster bundle changed -> bumped manifest + plugin.json to $bumpedClaudster" -ForegroundColor Green
+                } else {
+                    Write-Host "  [WARN]  claude re-export failed; plugin.json may lag the $bumpedClaudster bump." -ForegroundColor Yellow
+                }
+            }
+        }
+    }
+
     # Stage all tracked/untracked/deleted files in junai so source deletions and
     # folder moves are guaranteed to propagate.
     git add -A | Out-Null
@@ -1163,6 +1251,18 @@ function junai-push {
     Write-Host ""
     Write-Host "  Committed and pushed to junai." -ForegroundColor Magenta
     Write-Host ""
+
+    # Persist the auto-bump in the SOURCE repo — runtime-targets.json is the export's source of
+    # truth, so it must be committed here or the next export would regenerate plugin.json at the
+    # old version and silently revert the bump. Path-scoped commit so unrelated source edits are
+    # not swept in.
+    if (-not [string]::IsNullOrWhiteSpace($bumpedClaudster)) {
+        Push-Location $ProjectRoot
+        git commit ".github/runtime-targets.json" -m "chore(claudster): auto-bump plugin version to $bumpedClaudster" | Out-Null
+        Pop-Location
+        Write-Host "  Source manifest committed at claudster v$bumpedClaudster." -ForegroundColor Magenta
+        Write-Host ""
+    }
 
     $selectedProfiles = @($Profiles | Where-Object { $_ -in @("ptarmigan", "liffey") } | Select-Object -Unique)
     $pushResult.SelectedProfiles = $selectedProfiles
