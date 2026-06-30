@@ -77,6 +77,32 @@ def test_inject_nudge_reads_legacy_stamp(tmp_path):
     assert "[USAGE-REVIEW]" in r.stdout
 
 
+# ── inject_relay: DOC-MAP reference-index pointer (Phase 4) ─────────────────
+
+def test_inject_emits_docmap_pointer_when_present(tmp_path):
+    (tmp_path / ".claudster" / "kb").mkdir(parents=True)
+    (tmp_path / ".claudster" / "kb" / "DOC-MAP.md").write_text("# Doc map", encoding="utf-8")
+    r = _run(INJECT, tmp_path, "{}")
+    assert "DOC-MAP" in r.stdout
+    assert ".claudster/kb/DOC-MAP.md" in r.stdout
+
+
+def test_inject_no_docmap_pointer_when_absent(tmp_path):
+    r = _run(INJECT, tmp_path, "{}")
+    assert "DOC-MAP" not in r.stdout
+
+
+def test_inject_docmap_pointer_anchors_to_repo_root_in_subdir(tmp_path):
+    """The pointer fires for a session launched from a subfolder (root-anchored)."""
+    _git_init(tmp_path)
+    (tmp_path / ".claudster" / "kb").mkdir(parents=True)
+    (tmp_path / ".claudster" / "kb" / "DOC-MAP.md").write_text("# Doc map", encoding="utf-8")
+    sub = tmp_path / "src"
+    sub.mkdir()
+    r = _run(INJECT, sub, "{}")
+    assert "DOC-MAP" in r.stdout
+
+
 # ── session_end: usage-log write → .claudster, never .claude ────────────────
 
 def test_session_end_writes_new_usage_log(tmp_path):

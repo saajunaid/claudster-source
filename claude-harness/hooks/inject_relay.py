@@ -142,6 +142,12 @@ if os.path.isfile(RELAY):
         print("\n=== relay.md (session resume — read before acting) ===\n")
         print(_truncate_relay(text))
 
+# Reference-doc index pointer: when the repo keeps a DOC-MAP (the meta-KB), make "read the KB
+# first" deterministic. One line only, so it never crowds the relay or the usage nudge.
+if os.path.isfile(os.path.join(ROOT, ".claudster", "kb", "DOC-MAP.md")):
+    print("\n[DOC-MAP] reference index available — read .claudster/kb/DOC-MAP.md first to find the "
+          "right doc, then read it on demand (dispatch a subagent for heavy reads).")
+
 # Mid-week cadence nudge: suggest /usage-review when overdue (>7 days) or never run (enough data exists).
 # Prefer the new .claudster location; fall back to the legacy .claude path during transition.
 _STAMP = _first_existing(
