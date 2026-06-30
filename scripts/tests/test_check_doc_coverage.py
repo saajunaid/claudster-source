@@ -205,15 +205,25 @@ class TestWarnTier:
     """The soft tier must WARN but never block — guards against a future edit that promotes a
     soft signal into hard_failures (which would silently turn the gate over-strict)."""
 
-    def test_orphan_warns_but_does_not_block(self, tmp_path, capsys):
-        """A governed doc the DOC-MAP fails to index warns, yet --check still returns 0."""
-        _write(tmp_path, "STACK.md", "# Stack\n")
+    def test_orphan_kb_note_warns_but_does_not_block(self, tmp_path, capsys):
+        """A KB note the DOC-MAP fails to index warns, yet --check still returns 0."""
+        _write(tmp_path, ".claudster/kb/domain-model.md", "# Domain model\n")
         _write(tmp_path, ".claudster/kb/DOC-MAP.md", "# Doc map\n\nNo links yet.\n")
         rc = cdc.run(tmp_path, check=True)
         out = capsys.readouterr().out
         assert rc == 0
-        assert "STACK.md" in out
+        assert "domain-model.md" in out
         assert "does not index" in out
+
+    def test_docs_folder_is_not_governed(self, tmp_path, capsys):
+        """The project's wider docs/ folder is NOT policed — an un-indexed docs/ file never warns."""
+        _write(tmp_path, "docs/reference/database.md", "# DB\n")
+        _write(tmp_path, "docs/architecture/overview.md", "# Arch\n")
+        _write(tmp_path, ".claudster/kb/DOC-MAP.md", "# Doc map\n\nNo links yet.\n")
+        rc = cdc.run(tmp_path, check=True)
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert out.strip() == ""  # no orphan warnings for docs/ files
 
     def test_phantom_route_warns_but_does_not_block(self, tmp_path, capsys):
         """A documented route not in code warns, yet --check still returns 0."""

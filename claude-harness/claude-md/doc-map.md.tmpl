@@ -1,67 +1,48 @@
-# DOC-MAP — {{PROJECT_NAME}} reference index (the meta-KB)
+# DOC-MAP — {{PROJECT_NAME}} code knowledge index (the KB)
 
-> **What this is:** a router, not a summary. One line per curated reference doc — *what it is* and
-> *when to read it* — so an agent (or a human) can find the right doc fast and read it **on demand**
-> instead of loading everything up front. Detail lives in the linked docs; this file never duplicates
-> their content.
+> **What this is:** the curated index of the docs that matter for understanding *this codebase* — one
+> line each: what it is and when to read it. A router, not a summary; detail lives in the linked docs.
+> The knowledge base itself lives beside this file in `.claudster/kb/`. You may also link any other
+> code-relevant doc from here (a key design doc, an API contract) — but this is for **code-relevant**
+> docs, not your whole `docs/` folder.
 >
-> **How to use it:** when a task touches an area, open the doc(s) for that area first. Heavy reference
-> docs should be read by a **dispatched subagent** that returns only the conclusion (see the root
-> `CLAUDE.md` harness) so the main thread's context stays lean.
+> **How to use it:** when a task touches an area, open the doc(s) for it first. Read heavy docs via a
+> dispatched subagent that returns only the conclusion, so the main thread's context stays lean.
 >
-> **Discipline:** this index and `UI_PAGE_GUIDE.md` are kept honest by
-> [`scripts/check_doc_coverage.py`](../../scripts/check_doc_coverage.py): every live route must appear
-> in the page guide, and every curated reference doc below should be indexed here (orphan = warning;
-> a link to a missing file = hard failure). It runs in the pre-push gate.
+> **Discipline:** kept honest by [`scripts/check_doc_coverage.py`](../../scripts/check_doc_coverage.py)
+> at the pre-push gate. Two simple rules: every link here must resolve (a link to a missing file is a
+> **hard failure**), and a KB note that isn't indexed here **warns**. It does NOT police your `docs/`
+> folder — the KB is the code-relevant set you curate.
 
-## Read first (orientation order)
-
-1. `CLAUDE.md` — project laws, the dev harness, project specifics. Always loaded.
-2. `UI_PAGE_GUIDE.md` — **every UI page → endpoints → DB objects** (frontend repos). The first stop for
-   any UI or full-stack task.
-3. Area `CLAUDE.md` files — load automatically when you work in that folder.
+## Read first
+1. `CLAUDE.md` — project laws + the dev harness. Always loaded.
+2. The entries below, by area.
 
 <!--
-HOW TO MAINTAIN THIS FILE
-- Add one row per curated reference doc, under the right heading, as you create it. Make the doc name a
-  MARKDOWN LINK whose target is RELATIVE TO THIS FILE, e.g.:
-      | [DATABASE_REFERENCE.md](../../docs/reference/DATABASE_REFERENCE.md) | Tables/views the app reads. |
-  Once it is a link, the checker verifies the target exists (a link to a missing file is a HARD failure).
-- Until a doc is a real link it shows as a backtick name below — that is intentionally NOT checked, so a
-  fresh scaffold never dangles. Convert it to a link when the doc actually exists.
-- "Governed" docs (what this map SHOULD index) are defined by GOVERNED_GLOBS in
-  scripts/check_doc_coverage.py — by default: UI_PAGE_GUIDE.md, STACK.md, README.md, CURRENT_STATE.md,
-  PROJECT_LANDSCAPE.md, docs/{reference,architecture,runbooks,guides}/*.md, and .claudster/kb/*.md.
-  A governed doc that exists but isn't linked here WARNS — add a row to clear it.
-- Remove rows for deleted docs (a link to a missing file is a HARD failure at the gate).
+MAINTAINING THIS FILE
+- Add a row per code-relevant doc as a MARKDOWN LINK whose target is relative to this file, e.g.:
+      | [domain-model.md](domain-model.md) | The core domain model. |
+  KB notes live beside this file in .claudster/kb/. You can also link a doc elsewhere in the repo
+  (e.g. ../../docs/architecture/overview.md) — the checker just verifies the link resolves.
+- Only .claudster/kb/*.md is "governed": a KB note not linked here warns (a nudge to index it). Your
+  wider docs/ folder is the project's own documentation and is NOT checked.
+- Remove a row when you delete its doc — a link to a missing file is a HARD failure at the gate.
+- The placeholder rows below carry no links on purpose, so a fresh repo passes the gate. Replace them.
 -->
-
-## Pages & UI
-
-| Doc | What / when to read |
-|---|---|
-| `UI_PAGE_GUIDE.md` | Page-by-page: screen → hooks/endpoints → DB. Read before touching any page or its backend. **Route coverage is gate-enforced.** |
-
-## Backend & data reference
-
-| Doc | What / when to read |
-|---|---|
-| `STACK.md` | Library / stack reference. Verify against code before relying on it. |
-| `README.md` | Quick start, dev topology, service names, common commands. |
-
-## Architecture, ops & change process
-
-| Doc | What / when to read |
-|---|---|
-| _(add docs/architecture/*, docs/runbooks/*, docs/reference/* rows as links once you create them)_ | |
 
 ## Knowledge base (`.claudster/kb/`)
 
 | Doc | What / when to read |
 |---|---|
-| `.claudster/kb/` | Durable domain notes that outlive a single feature — see this folder's README for what belongs here. |
+| _(add your KB notes here as links — see the comment above for the one-line format)_ | |
+
+## Other key code-relevant docs (optional)
+
+| Doc | What / when to read |
+|---|---|
+| _(optionally link a design doc, API contract, or deploy runbook — linked, never required)_ | |
 
 ---
 
-*Governed globs (what this map should index) live in `scripts/check_doc_coverage.py` (`GOVERNED_GLOBS`).
-Archives, `.github/`, and the plans/PRD/relay tree are intentionally **not** governed here.*
+*Governed = `.claudster/kb/*.md` only (must be indexed here). The wider `docs/` tree is the project's
+own documentation and is intentionally not policed.*

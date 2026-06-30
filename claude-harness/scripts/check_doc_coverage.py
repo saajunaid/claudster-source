@@ -9,9 +9,9 @@ Three checks (all relative to a passed-in repo root — no module-level ROOT):
 1. **Page-guide route coverage** — every live route in ``frontend/src/routeTree.gen.ts`` has an
    entry in ``UI_PAGE_GUIDE.md``. A missing entry is a hard failure. Absent route tree OR page
    guide → skip **silently** (a backend repo must not be nagged to "run npm run build").
-2. **Doc-map integrity** — every curated reference doc is indexed in ``.claudster/kb/DOC-MAP.md``
-   (orphan = warning), and every path the map links to exists (dangling = hard failure). Absent
-   doc-map → **skip** (NOT a hard failure: a repo without a KB is fine).
+2. **Doc-map integrity** — every link in ``.claudster/kb/DOC-MAP.md`` resolves (dangling = hard
+   failure), and every KB note (``.claudster/kb/*.md``) is indexed in it (orphan = warning). Only the
+   curated KB is governed — the wider ``docs/`` folder is NOT policed. Absent doc-map → **skip**.
 3. **CLAUDE.md budget** — always-loaded ``CLAUDE.md`` files stay lean (warning only).
 
 Usage::
@@ -44,18 +44,11 @@ IGNORE_ROUTES: frozenset[str] = frozenset()
 # Always-loaded context files; keep them lean. Warning only.
 CLAUDE_MD_BUDGET = 200
 
-# Curated reference docs the doc-map is expected to index. Conservative on purpose so orphan
-# warnings stay signal: archives and the plugin/skill corpus are not governed.
+# The doc-map governs ONLY the curated KB it indexes (.claudster/kb/). The wider docs/ folder is the
+# project's own documentation and is intentionally NOT policed — the KB is the code-relevant set the
+# team curates. Orphan = a KB note that isn't indexed in the doc-map (warning only). Scoping this to
+# the KB means zero assumptions about any project's docs/ layout, and no noise.
 GOVERNED_GLOBS: tuple[str, ...] = (
-    "UI_PAGE_GUIDE.md",
-    "STACK.md",
-    "README.md",
-    "CURRENT_STATE.md",
-    "PROJECT_LANDSCAPE.md",
-    "docs/reference/*.md",
-    "docs/architecture/*.md",
-    "docs/runbooks/*.md",
-    "docs/guides/*.md",
     ".claudster/kb/*.md",
 )
 
