@@ -13,12 +13,20 @@ The plan file is the **durable spine of the harness** — it must let any future
 agent, on any tool) resume with zero re-discovery. Optimize for that.
 
 ## Step 1 — Scope check
-Read the relevant code first (don't guess). If the work fits comfortably in one session, say so and
-offer to just do it instead of planning. Only produce a plan for genuinely multi-phase work.
+Read the relevant code first (don't guess). **Ground in the workspace scan:** if `.claudster/PROJECT-FACTS.md`
+exists (setup-project-ai extracts it — run/test/build commands, env-var names, CI/deploy workflows, entry
+points), read it first. It's a free, token-zero project fingerprint that anchors the plan in what actually
+exists instead of assumed. If the work fits comfortably in one session, say so and offer to just do it
+instead of planning. Only produce a plan for genuinely multi-phase work.
 
 ## Step 2 — Design phases
 Break the work into **independently completable** phases (~30–60 min each, clear exit gate). Each phase
 follows the harness loop: **RED → GREEN → REFACTOR → VERIFY → COMMIT**. Front-load risk.
+
+**Derive risks from the workspace scan** (PROJECT-FACTS + a quick look), not generic boilerplate: **no test
+setup** → every phase carries regression risk, build its tests first; **no CI/deploy workflow** → the only
+gate is local, say so; **auth / migration / secret-handling** in scope → flag security/structural risk on
+those phases. Put what the scan actually shows into the plan's `## Risks` table.
 
 Before writing the plan, consider dispatching the **preflight** subagent to validate your assumptions
 (paths, symbols, APIs, primitives) against the codebase — it routinely catches wrong assumptions early.

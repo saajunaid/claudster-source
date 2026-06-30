@@ -44,6 +44,10 @@ Pre-empt it before writing the relay (use Grep/Read — you don't run the checke
   `UI_PAGE_GUIDE.md`; add a row (route → endpoints → DB) for any page that's missing.
 - If `.claudster/kb/DOC-MAP.md` exists, confirm each reference doc you created/touched is indexed there as
   a markdown link, and that no indexed link points at a file you deleted/renamed.
+- **KB-note content freshness:** if this session changed code that an existing `.claudster/kb/*.md` note
+  *describes* (its subject — a module, contract, or behaviour you altered), refresh that note's content too.
+  The gate only catches structural drift (broken links); a note that still describes the old behaviour is
+  stale in a way no automated check detects — this targeted refresh is the one freshness pass that is yours.
 - Fix gaps directly — keeping these docs current is knowledge-doc work, squarely in your remit. Record the
   edits under `live_writes` in your return block.
 

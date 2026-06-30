@@ -28,6 +28,12 @@ git log --oneline -5
 ```
 Then read the active plan in `.claudster/plans/` (falling back to legacy `.github/plans/` if present) and its tracker.
 
+**Crash / interrupted-work check.** Cross-check the tracker against `git status` + `git log`: if a phase is
+marked in-progress but has **uncommitted changes** (work left mid-flight), or a phase is marked done with
+**no commit** to back it, the last session was interrupted. Say so explicitly in `## Next step` ("resume
+mid-phase N — `<files>` left uncommitted; re-run its tests first") so the next session doesn't assume a
+clean phase boundary and lose or double-do the work.
+
 ## Step 3 — write the resume doc (overwrite) with exactly these sections
 > **Where to write:** solo / single active branch → `.claudster/relay.md` (default).
 > **Team / parallel branches** → write `.claudster/relay/<current-branch>.md` instead, so two
@@ -68,6 +74,9 @@ Read relay.md, then the plan it points to. Continue from <phase/step>. Next acti
 ```
 
 ## Rules
+- **One next action, by priority ladder.** `## Next step` names exactly ONE action — not a menu. Pick it in
+  order: (1) interrupted mid-phase work → finish + commit it; else (2) the active plan's next not-started
+  phase; else (3) the top open question/decision. Everything else is context, not the next step.
 - Only verified facts and real paths. Mark anything unconfirmed as `Unknown`.
 - Update the plan's tracker rows too (status + last commit) — relay and tracker must agree.
 - Don't commit unless asked. Report where `relay.md` was written and the one next action.
