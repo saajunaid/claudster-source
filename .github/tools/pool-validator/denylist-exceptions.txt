@@ -38,12 +38,6 @@ LOCAL-MODELS.md
 # --- Wallchart system documentation — vmie- refers to NSSM service naming convention, not a credential ---
 agent-docs/WORKFLOW-WALLCHART.md
 
-# --- Formerly-private vmie skills promoted to public categories (internal-only tool).
-# vmie- here is the NSSM service naming convention and VMIE template branding, not a credential. ---
-skills/devops/windows-deployment/
-skills/devops/golden-workflow/
-skills/docs/vm-ppt/
-
 # --- Flattened plugin-bundle dist paths (flatten_skills drops the category dir, so
 # skills/<category>/<name>/ becomes skills/<name>/). The --include-dist scan walks the
 # exported bundles, so each allowlisted skill above also needs its category-less form here.
@@ -56,8 +50,6 @@ skills/aws-serverless-eda/references/security-best-practices.md
 skills/building-mcp-server-on-cloudflare/references/oauth-setup.md
 skills/brand-design/SKILL.md
 skills/jira-issues/SKILL.md
-skills/windows-deployment/
-skills/vm-ppt/
 
 # --- The allowlist file itself documents the vmie- substring in comments; exempt it so the
 # --include-dist scan of mirror copies doesn't flag its own documentation. ---
