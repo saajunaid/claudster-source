@@ -1231,6 +1231,34 @@ function junai-push {
         }
     }
 
+    # ── Same auto-bump for claudster-extras when ITS bundle content changed ──
+    # The extras plugin (plugin-extras/) versions independently. Without this, a content change
+    # to extras (e.g. a skill removed during re-privatization) ships without a version bump, so
+    # clients keep the stale cached copy and `/plugin update` reports "already up to date".
+    # Mirrors the core block above, scoped to plugin-extras/ and the claude-extras profile.
+    $bumpedExtras = ""
+    if ($claudePython) {
+        $extrasContentDiff = git status --porcelain -- plugin-extras ":(exclude)plugin-extras/.claude-plugin/plugin.json"
+        if (-not [string]::IsNullOrWhiteSpace(($extrasContentDiff | Out-String).Trim())) {
+            $manifestSrc = Join-Path $ProjectRoot ".github/runtime-targets.json"
+            $bumpedExtras = Bump-RuntimeTargetsPluginVersion -ManifestPath $manifestSrc -PluginName "claudster-extras"
+            if (-not [string]::IsNullOrWhiteSpace($bumpedExtras)) {
+                Copy-Item $manifestSrc (Join-Path $JUNO_GITHUB "runtime-targets.json") -Force
+                Push-Location $ProjectRoot
+                & $claudePython.Path @($claudePython.PrefixArgs + @("export_runtime_resources.py", "--profile", "claude-extras"))
+                $reExportExtrasOk = ($LASTEXITCODE -eq 0)
+                Pop-Location
+                $rebuiltExtras = Join-Path $extrasBundle "plugin-extras\.claude-plugin\plugin.json"
+                if ($reExportExtrasOk -and (Test-Path $rebuiltExtras)) {
+                    Copy-Item $rebuiltExtras (Join-Path $JUNO_POOL "plugin-extras\.claude-plugin\plugin.json") -Force
+                    Write-Host "  [OK]  claudster-extras bundle changed -> bumped manifest + plugin.json to $bumpedExtras" -ForegroundColor Green
+                } else {
+                    Write-Host "  [WARN]  claude-extras re-export failed; plugin.json may lag the $bumpedExtras bump." -ForegroundColor Yellow
+                }
+            }
+        }
+    }
+
     # Stage all tracked/untracked/deleted files in junai so source deletions and
     # folder moves are guaranteed to propagate.
     git add -A | Out-Null
@@ -1256,11 +1284,15 @@ function junai-push {
     # truth, so it must be committed here or the next export would regenerate plugin.json at the
     # old version and silently revert the bump. Path-scoped commit so unrelated source edits are
     # not swept in.
-    if (-not [string]::IsNullOrWhiteSpace($bumpedClaudster)) {
+    if ((-not [string]::IsNullOrWhiteSpace($bumpedClaudster)) -or (-not [string]::IsNullOrWhiteSpace($bumpedExtras))) {
+        $bumpParts = @()
+        if (-not [string]::IsNullOrWhiteSpace($bumpedClaudster)) { $bumpParts += "claudster v$bumpedClaudster" }
+        if (-not [string]::IsNullOrWhiteSpace($bumpedExtras))    { $bumpParts += "extras v$bumpedExtras" }
+        $bumpSummary = $bumpParts -join " + "
         Push-Location $ProjectRoot
-        git commit ".github/runtime-targets.json" -m "chore(claudster): auto-bump plugin version to $bumpedClaudster" | Out-Null
+        git commit ".github/runtime-targets.json" -m "chore(claudster): bump manifest version ($bumpSummary)" | Out-Null
         Pop-Location
-        Write-Host "  Source manifest committed at claudster v$bumpedClaudster." -ForegroundColor Magenta
+        Write-Host "  Source manifest committed: $bumpSummary." -ForegroundColor Magenta
         Write-Host ""
     }
 
