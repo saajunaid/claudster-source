@@ -1,6 +1,17 @@
 {
-  "description": "claudster harness loop, auto-activated on install: relay.md session-resume injection (SessionStart + PreCompact), a session-end nudge + token-usage digest (Stop), and post-edit lint (PostToolUse on Edit/Write). All handlers are pure-Python and cross-platform; they require `python` on PATH.",
+  "description": "claudster harness loop, auto-activated on install: relay.md session-resume injection (SessionStart + PreCompact), a session-end nudge + token-usage digest (Stop), post-edit lint (PostToolUse on Edit/Write), and a deterministic safety guard (PreToolUse on Bash/Edit/Write/MultiEdit) that blocks secret/catastrophic writes and asks before destructive shell/lockfile/CI changes (escape hatch: .claudster/config.toml [guard] allow). All handlers are pure-Python and cross-platform; they require `python` on PATH.",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.py\""
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
