@@ -319,8 +319,10 @@ if [ -f "package.json" ] && command -v npm >/dev/null 2>&1; then
 fi
 # Doc-coverage discipline (any stack). The checker exits non-zero ONLY on a hard invariant
 # (missing route / dangling doc-map link); soft signals warn without failing. Auto-skips when the
-# checker isn't present (older repos) or python is unavailable.
-[ -f "scripts/check_doc_coverage.py" ] && command -v python >/dev/null 2>&1 && { echo "[gate] doc coverage"; python scripts/check_doc_coverage.py --check || fail=1; }
+# checker isn't present (older repos) or no python is on PATH. Probe python then python3 so the gate
+# isn't silently disabled on python3-only systems (common on Linux/CI). `|| true` keeps it set -e-safe.
+DOC_PY=$(command -v python || command -v python3 || true)
+[ -n "$DOC_PY" ] && [ -f "scripts/check_doc_coverage.py" ] && { echo "[gate] doc coverage"; "$DOC_PY" scripts/check_doc_coverage.py --check || fail=1; }
 if [ "$fail" -ne 0 ]; then
   echo "[claudster] push BLOCKED — fix the above, or 'git push --no-verify' to override." >&2
   exit 1
@@ -390,7 +392,8 @@ def emit_doc_discipline(target: Path, ident: dict[str, str], force: bool, dry: b
             return
         if not dry:
             dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_text(render(src.read_text(encoding="utf-8"), mapping), encoding="utf-8")
+            dest.write_text(render(src.read_text(encoding="utf-8"), mapping),
+                            encoding="utf-8", newline="\n")
         notes.append(f"{label}: wrote {rel}")
 
     _emit(".claudster/kb/DOC-MAP.md", "doc-map.md.tmpl", "doc-map")

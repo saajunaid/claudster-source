@@ -55,6 +55,11 @@ class TestExtractDocumentedRoutes:
         md = "### Executive View — `/`"
         assert "/" in cdc.extract_documented_routes(md)
 
+    def test_ignores_routes_inside_html_comments(self):
+        # An example route in a maintenance comment must not count as documented (else phantom warn).
+        md = "<!-- e.g. write the path in backticks: `/exceptions` -->\nReal page `/dashboard`"
+        assert cdc.extract_documented_routes(md) == {"/dashboard"}
+
 
 class TestRouteCoverageGaps:
     def test_missing_route_is_flagged(self):

@@ -73,7 +73,12 @@ def extract_code_routes(route_tree_text: str) -> set[str]:
 
 
 def extract_documented_routes(guide_text: str) -> set[str]:
-    """Backtick-wrapped ``/route`` tokens in the page guide, excluding API endpoints."""
+    """Backtick-wrapped ``/route`` tokens in the page guide, excluding API endpoints.
+
+    HTML comments are stripped first (symmetry with ``extract_docmap_entries``) so an example route
+    in a maintenance comment is not mistaken for a documented route (which would warn as a phantom).
+    """
+    guide_text = re.sub(r"<!--.*?-->", "", guide_text, flags=re.DOTALL)
     found: set[str] = set()
     for token in re.findall(r"`(/[^`]*)`", guide_text):
         token = token.strip()
