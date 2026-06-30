@@ -12,6 +12,7 @@ Cross-platform (pure Python, stdlib only).
 """
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime, timezone
 
@@ -103,6 +104,26 @@ def _fmt(n: int) -> str:
     return str(n)
 
 
+def _repo_root(start: str) -> str:
+    """Git repo root for `start`, or `start` itself when not a git repo.
+
+    State anchors to the repo root so a session launched from a subfolder appends
+    to the one shared log instead of scattering a `.claudster/` into every cwd.
+    Best-effort: any git failure (not a repo / git missing) falls back to `start`.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", start, "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=3,
+        )
+        root = out.stdout.strip()
+        if out.returncode == 0 and root:
+            return root
+    except Exception:
+        pass
+    return start
+
+
 data = _read_input()
 
 print(
@@ -122,7 +143,8 @@ if u:
         f"(estimate — edit rates in session_end.py)"
     )
     try:
-        os.makedirs(".claudster", exist_ok=True)
+        claudster_dir = os.path.join(_repo_root(os.getcwd()), ".claudster")
+        os.makedirs(claudster_dir, exist_ok=True)
         rec = {
             "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "session": data.get("session_id", ""),
@@ -130,7 +152,7 @@ if u:
             "cache_write": u["cache_write"], "cache_read": u["cache_read"],
             "est_cost_usd": u["est_cost_usd"], "models": u["models"],
         }
-        with open(os.path.join(".claudster", "usage-log.jsonl"), "a", encoding="utf-8") as fh:
+        with open(os.path.join(claudster_dir, "usage-log.jsonl"), "a", encoding="utf-8") as fh:
             fh.write(json.dumps(rec) + "\n")
     except Exception:
         pass

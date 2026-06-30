@@ -33,6 +33,10 @@ def _iso_days_ago(days: int) -> str:
     return (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(timespec="seconds")
 
 
+def _git_init(path: Path) -> None:
+    subprocess.run(["git", "init", "-q", str(path)], check=True, capture_output=True)
+
+
 # ── inject_relay: relay resolution ──────────────────────────────────────────
 
 def test_inject_reads_new_relay(tmp_path):
@@ -90,3 +94,34 @@ def test_session_end_writes_new_usage_log(tmp_path):
     lines = [l for l in new_log.read_text(encoding="utf-8").splitlines() if l.strip()]
     assert len(lines) == 1
     assert not old_log.exists()
+
+
+# ── repo-root anchoring: state lands at the git root, never the launch subdir ──
+
+def test_session_end_anchors_log_to_repo_root(tmp_path):
+    """A session launched from a subfolder must append to the repo-root log,
+    not scatter a .claudster/ into the subfolder (the rev-sight bug)."""
+    _git_init(tmp_path)
+    sub = tmp_path / "frontend"
+    sub.mkdir()
+    transcript = tmp_path / "transcript.jsonl"
+    transcript.write_text(
+        json.dumps({"message": {"model": "claude-sonnet-4-6",
+                                "usage": {"input_tokens": 10, "output_tokens": 5}}}) + "\n",
+        encoding="utf-8",
+    )
+    payload = json.dumps({"transcript_path": str(transcript), "session_id": "t"})
+    _run(SESSION_END, sub, payload)  # launched from the subdir
+    assert (tmp_path / ".claudster" / "usage-log.jsonl").is_file(), "log must land at repo root"
+    assert not (sub / ".claudster").exists(), "must NOT scatter .claudster into the subdir"
+
+
+def test_inject_reads_relay_from_repo_root_in_subdir(tmp_path):
+    """relay.md at the repo root is found even when the session runs from a subfolder."""
+    _git_init(tmp_path)
+    (tmp_path / ".claudster").mkdir()
+    (tmp_path / ".claudster" / "relay.md").write_text("# Relay — ROOT-ANCHORED", encoding="utf-8")
+    sub = tmp_path / "src"
+    sub.mkdir()
+    r = _run(INJECT, sub, "{}")  # launched from the subdir
+    assert "# Relay — ROOT-ANCHORED" in r.stdout

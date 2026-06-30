@@ -41,6 +41,29 @@ def _first_existing(paths: list[str], default: str) -> str:
     return default
 
 
+def _repo_root(start: str) -> str:
+    """Git repo root for `start`, or `start` itself when not a git repo (best-effort).
+
+    Relay + usage state anchor to the repo root so a session launched from a
+    subfolder resolves the same files the root session does, instead of looking
+    for (or scattering) a `.claudster/` in every cwd.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", start, "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=3,
+        )
+        root = out.stdout.strip()
+        if out.returncode == 0 and root:
+            return root
+    except Exception:
+        pass
+    return start
+
+
+ROOT = _repo_root(os.getcwd())
+
+
 def _resolve_relay() -> str:
     """Prefer the new `.claudster` location; fall back to every legacy location.
 
@@ -66,12 +89,12 @@ def _resolve_relay() -> str:
         slug = "".join(c if (c.isalnum() or c in "-_.") else "-" for c in branch)
     candidates: list[str] = []
     if slug:
-        candidates.append(os.path.join(".claudster", "relay", f"{slug}.md"))
-    candidates.append(os.path.join(".claudster", "relay.md"))
+        candidates.append(os.path.join(ROOT, ".claudster", "relay", f"{slug}.md"))
+    candidates.append(os.path.join(ROOT, ".claudster", "relay.md"))
     if slug:
-        candidates.append(os.path.join(".claude", "relay", f"{slug}.md"))
-    candidates.append("relay.md")
-    return _first_existing(candidates, os.path.join(".claudster", "relay.md"))
+        candidates.append(os.path.join(ROOT, ".claude", "relay", f"{slug}.md"))
+    candidates.append(os.path.join(ROOT, "relay.md"))
+    return _first_existing(candidates, os.path.join(ROOT, ".claudster", "relay.md"))
 
 
 RELAY = _resolve_relay()
@@ -122,12 +145,12 @@ if os.path.isfile(RELAY):
 # Mid-week cadence nudge: suggest /usage-review when overdue (>7 days) or never run (enough data exists).
 # Prefer the new .claudster location; fall back to the legacy .claude path during transition.
 _STAMP = _first_existing(
-    [os.path.join(".claudster", ".last-usage-review"), os.path.join(".claude", ".last-usage-review")],
-    os.path.join(".claudster", ".last-usage-review"),
+    [os.path.join(ROOT, ".claudster", ".last-usage-review"), os.path.join(ROOT, ".claude", ".last-usage-review")],
+    os.path.join(ROOT, ".claudster", ".last-usage-review"),
 )
 _LOG = _first_existing(
-    [os.path.join(".claudster", "usage-log.jsonl"), os.path.join(".claude", "usage-log.jsonl")],
-    os.path.join(".claudster", "usage-log.jsonl"),
+    [os.path.join(ROOT, ".claudster", "usage-log.jsonl"), os.path.join(ROOT, ".claude", "usage-log.jsonl")],
+    os.path.join(ROOT, ".claudster", "usage-log.jsonl"),
 )
 
 try:

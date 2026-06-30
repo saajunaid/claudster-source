@@ -18,6 +18,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -29,6 +30,28 @@ if _reconfig:
         _reconfig(encoding="utf-8")
     except Exception:
         pass
+
+# ── repo root ────────────────────────────────────────────────────────────────
+
+def _repo_root(start: str) -> str:
+    """Git repo root for `start`, or `start` when not a git repo (best-effort).
+
+    The Stop hook writes the usage log to the repo root's `.claudster/`, so the
+    review anchors there too — otherwise running it from a subfolder reads an
+    empty/partial log. Non-git projects fall back to `start` unchanged.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", start, "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=3,
+        )
+        root = out.stdout.strip()
+        if out.returncode == 0 and root:
+            return root
+    except Exception:
+        pass
+    return start
+
 
 # ── model helpers ──────────────────────────────────────────────────────────────
 
@@ -1120,7 +1143,7 @@ def main() -> None:
     )
     args = ap.parse_args()
 
-    cwd  = os.path.abspath(args.cwd)
+    cwd  = _repo_root(os.path.abspath(args.cwd))
     days = args.days
     now  = datetime.now(timezone.utc)
     ws   = (now - timedelta(days=days)).strftime("%Y-%m-%d")
