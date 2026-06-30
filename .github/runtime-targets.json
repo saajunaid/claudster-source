@@ -478,7 +478,7 @@
     {
       "name": "claude",
       "_comment": "Claude Code bundle — the lean Phase 0-2 harness (subagents + commands + CLAUDE.md fragments) sourced from claude-harness/, plus the tiered dev skill set (core + frontend) from .github/skills. Flat layout (workspace_root='.') feeds Phase 4 plugin packaging. Skills tier table: .github/plans/phase-3-commands-skills-export.md §Step 1.",
-      "_comment_private": "No include_private here: the core bundle is public, so the private vmie/ category is excluded. windows-deployment, golden-workflow, and vm-ppt live in vmie/ (private, local-use only) and are NOT published in any public bundle.",
+      "_comment_private": "No include_private here: the core bundle is public, so the private vmie/ category is excluded. golden-workflow and vm-ppt (proprietary: internal hostnames/repos, third-party .pptx) live in vmie/ (private, local-use only) and are NOT published in any public bundle. windows-deployment is a generic Windows deploy skill (the vmie service-name prefix is just an example NSSM convention) and stays in the public core (devops).",
       "_comment_layout": "Two-level bundle: marketplace.json at the bundle root (= junai repo root after publish), the plugin under plugin/ (= junai/plugin/). The junai repo hosts other content (.github mirror, src/), so the plugin cannot sit at repo root with source '.'; it lives in plugin/ and the marketplace points there.",
       "workspace_root": "plugin",
       "extra_roots": { "harness": "claude-harness", "scriptsrc": "scripts" },
@@ -537,7 +537,7 @@
               "code-documentation", "technical-writing", "writing-plans"
             ],
             "devops": [
-              "ci-cd-pipeline", "gh-cli", "git-commit", "using-git-worktrees"
+              "ci-cd-pipeline", "gh-cli", "git-commit", "using-git-worktrees", "windows-deployment"
             ],
             "data": [
               "database-design"
@@ -556,7 +556,7 @@
     {
       "name": "claude-extras",
       "_comment": "EXTRAS tier — the full skill library MINUS the core (and minus the proprietary document-skills bundle). Ships as a second plugin (claudster-extras) under plugin-extras/, listed in the same marketplace. Disabled by default; users enable it on demand so the long tail costs zero always-on context. Skills-only: agents/commands/hooks live in the core plugin. Uses excluded_skills (denylist) rather than an allowlist so new pool skills join extras automatically.",
-      "_comment_private": "No include_private / no purge: the private vmie/ category (golden-workflow, windows-deployment, vm-ppt) is globally excluded, so none of these proprietary skills ship to extras. New non-vmie pool skills still join extras automatically via the everything-minus-core denylist.",
+      "_comment_private": "No include_private / no purge: the private vmie/ category (golden-workflow, vm-ppt) is globally excluded, so none of these proprietary skills ship to extras. New non-vmie pool skills still join extras automatically via the everything-minus-core denylist.",
       "workspace_root": "plugin-extras",
       "plugin": {
         "name": "claudster-extras",

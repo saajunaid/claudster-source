@@ -22,6 +22,9 @@ skills/frontend/brand-design/SKILL.md
 skills/productivity/jira-issues/SKILL.md
 skills/testing/playwright/lib/helpers.js
 
+# --- windows-deployment: generic Windows deploy skill; vmie- is the example NSSM service-naming convention (org prefix), not a secret ---
+skills/devops/windows-deployment/SKILL.md
+
 # --- Pool documentation referencing itself ---
 agent-docs/agent-workflow-design-reference.md
 agent-docs/PROJECT-ONBOARDING-RUNBOOK.md
@@ -50,6 +53,7 @@ skills/aws-serverless-eda/references/security-best-practices.md
 skills/building-mcp-server-on-cloudflare/references/oauth-setup.md
 skills/brand-design/SKILL.md
 skills/jira-issues/SKILL.md
+skills/windows-deployment/SKILL.md
 
 # --- The allowlist file itself documents the vmie- substring in comments; exempt it so the
 # --include-dist scan of mirror copies doesn't flag its own documentation. ---
