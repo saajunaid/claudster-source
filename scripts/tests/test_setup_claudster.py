@@ -237,3 +237,22 @@ def test_manifest_ships_checker():
     claude = next(t for t in manifest["targets"] if t["name"] == "claude")
     dests = [f["destination"] for f in claude.get("files", [])]
     assert "scripts/check_doc_coverage.py" in dests
+
+
+# ── setup_project_ai: pre-push gate wiring (Phase 3) ────────────────────────
+
+def _load_setup_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("spa_for_test", SETUP)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_pre_push_gate_runs_doc_coverage():
+    """The gate must invoke the checker in --check mode (blocks on hard invariants)."""
+    hook = _load_setup_module().PRE_PUSH_HOOK
+    assert "check_doc_coverage.py --check" in hook
+    # guarded so it auto-skips when the checker isn't present (older repos) or python is missing
+    assert 'scripts/check_doc_coverage.py' in hook
+    assert "command -v python" in hook

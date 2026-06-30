@@ -317,6 +317,10 @@ if [ -f "package.json" ] && command -v npm >/dev/null 2>&1; then
   npm run 2>/dev/null | grep -q " typecheck" && { echo "[gate] npm run typecheck"; npm run typecheck --silent || fail=1; }
   npm run 2>/dev/null | grep -q " test"       && { echo "[gate] npm test"; npm test --silent || fail=1; }
 fi
+# Doc-coverage discipline (any stack). The checker exits non-zero ONLY on a hard invariant
+# (missing route / dangling doc-map link); soft signals warn without failing. Auto-skips when the
+# checker isn't present (older repos) or python is unavailable.
+[ -f "scripts/check_doc_coverage.py" ] && command -v python >/dev/null 2>&1 && { echo "[gate] doc coverage"; python scripts/check_doc_coverage.py --check || fail=1; }
 if [ "$fail" -ne 0 ]; then
   echo "[claudster] push BLOCKED — fix the above, or 'git push --no-verify' to override." >&2
   exit 1
