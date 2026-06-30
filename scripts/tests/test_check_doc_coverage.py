@@ -241,3 +241,16 @@ class TestWarnTier:
         out = capsys.readouterr().out
         assert rc == 0
         assert "budget" in out
+
+    def test_claude_md_scan_prunes_vendor_dirs(self, tmp_path, capsys):
+        """CLAUDE.md inside node_modules/.venv is ignored — the scan prunes vendored trees and never
+        descends into them (a broken symlink there would otherwise crash the gate)."""
+        big = "\n".join(f"line {i}" for i in range(cdc.CLAUDE_MD_BUDGET + 50))
+        _write(tmp_path, "node_modules/pkg/CLAUDE.md", big)
+        _write(tmp_path, ".venv/lib/CLAUDE.md", big)
+        _write(tmp_path, "CLAUDE.md", "# tiny\n")
+        rc = cdc.run(tmp_path, check=True)
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert "node_modules" not in out  # pruned → no oversize warning from vendored files
+        assert ".venv" not in out

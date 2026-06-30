@@ -20,6 +20,16 @@ if [ -f "validate_pool.py" ]; then
   fi
 fi
 
+# Doc-coverage discipline — dogfood on the claudster repo itself. set -eu means a hard failure
+# (missing route / dangling doc-map link) aborts the commit. No-op if the checker is absent.
+if [ -f "claude-harness/scripts/check_doc_coverage.py" ]; then
+  DOC_PY=$(command -v python || command -v python3 || true)
+  if [ -n "$DOC_PY" ]; then
+    echo "[hook] doc coverage"
+    "$DOC_PY" claude-harness/scripts/check_doc_coverage.py --check
+  fi
+fi
+
 if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ]; then
   if command -v ruff >/dev/null 2>&1; then
     echo "[hook] ruff check ."

@@ -29,9 +29,15 @@ override is a deliberate fast-follow, not part of this version.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
+
+# Directories never worth scanning for CLAUDE.md — pruned DURING the walk so we never descend into a
+# huge/vendored tree (and never trip over a broken symlink inside node_modules, which crashes rglob).
+_SKIP_DIRS = {".venv", "venv", "node_modules", ".git", "__pycache__", ".mypy_cache",
+              ".ruff_cache", ".pytest_cache", ".tanstack", "dist", "build"}
 
 # Default locations, relative to the repo root passed into run(). Generic — no repo-specific names.
 DEFAULT_ROUTE_TREE = "frontend/src/routeTree.gen.ts"
@@ -157,13 +163,19 @@ def _governed_docs(root: Path, globs: tuple[str, ...]) -> set[str]:
 
 def _claude_md_lengths(root: Path) -> dict[str, int]:
     lengths: dict[str, int] = {}
-    for path in root.rglob("CLAUDE.md"):
-        if any(part in {".venv", "node_modules", ".git"} for part in path.parts):
+    # os.walk with in-place dir pruning: skip vendored/generated trees DURING traversal so we never
+    # descend into node_modules (slow, and a broken symlink there raises FileNotFoundError mid-rglob).
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
+        if "CLAUDE.md" not in filenames:
             continue
-        rel = path.relative_to(root).as_posix()
-        # errors="replace": this scans arbitrary repo files harness-wide; a non-UTF-8 CLAUDE.md
-        # must not crash the gate. We only count lines, so replacement chars are harmless.
-        lengths[rel] = len(path.read_text(encoding="utf-8", errors="replace").splitlines())
+        path = Path(dirpath) / "CLAUDE.md"
+        try:
+            rel = path.relative_to(root).as_posix()
+            # errors="replace": scans arbitrary repo files; a non-UTF-8 CLAUDE.md must not crash the gate.
+            lengths[rel] = len(path.read_text(encoding="utf-8", errors="replace").splitlines())
+        except OSError:
+            continue  # vanished/locked file mid-scan — skip, never crash the gate
     return lengths
 
 
