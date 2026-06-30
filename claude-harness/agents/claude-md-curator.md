@@ -87,6 +87,9 @@ A CLAUDE.md over 80 lines almost certainly contains bloat. Flag the file and cou
 - Lines that should be deleted
 - Lines that should be moved to a runbook
 
+> The pre-push doc-coverage checker (`scripts/check_doc_coverage.py`) also *warns* on an oversize
+> always-loaded `CLAUDE.md` — this agent is the deeper consolidation pass that actually fixes it.
+
 ## Step 4 — Return proposed changes (never write)
 
 Return this block for each file that needs changes:

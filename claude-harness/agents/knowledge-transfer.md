@@ -34,6 +34,19 @@ Prefer one precise nugget over several vague ones. If nothing durable emerged, s
 - Flag any nugget that is an architectural decision with lasting consequences as **ADR-worthy** — note
   it for the main thread; do not write the ADR yourself.
 
+## Keep the reference docs honest (page guide + doc-map)
+If this session added, renamed, or removed a **route**, a **router/endpoint**, or a **curated reference
+doc**, the project's `UI_PAGE_GUIDE.md` and `.claudster/kb/DOC-MAP.md` must be brought current in the same
+session. The pre-push gate runs `scripts/check_doc_coverage.py`, which **blocks** on a live route missing
+from the page guide or a doc-map link pointing at a deleted file — so a stale guide fails the next push.
+Pre-empt it before writing the relay (use Grep/Read — you don't run the checker):
+- If `frontend/src/routeTree.gen.ts` exists, Grep it for `path:` and confirm every route appears in
+  `UI_PAGE_GUIDE.md`; add a row (route → endpoints → DB) for any page that's missing.
+- If `.claudster/kb/DOC-MAP.md` exists, confirm each reference doc you created/touched is indexed there as
+  a markdown link, and that no indexed link points at a file you deleted/renamed.
+- Fix gaps directly — keeping these docs current is knowledge-doc work, squarely in your remit. Record the
+  edits under `live_writes` in your return block.
+
 ## Return format (always end with this)
 ```
 knowledge_transfer:
