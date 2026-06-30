@@ -46,6 +46,10 @@ $ROOT_PUSH_FILES = @("export_runtime_resources.py", "validate_agents.py", "valid
 # Top-level repo-root folders that must NEVER be synced to the public mirror.
 # vmie/ holds private, organisation-specific resources for local copy-paste only.
 $PRIVATE_ROOT_FOLDERS = @("vmie")
+# Skill categories (.github/skills/<cat>) that must NEVER reach the public mirror. The POOL_FOLDERS
+# copy mirrors skills/ wholesale, so these are purged from the mirror after copy (and excluded from
+# the public plugin bundles via runtime-targets exclusions). vmie = golden-workflow + vm-ppt (proprietary).
+$PRIVATE_SKILL_CATEGORIES = @("vmie")
 # Fully-managed folders: wiped before copy so renamed/moved/deleted files don't persist
 $CLEAN_FOLDERS = @("agents", "skills", "prompts", "instructions", "hooks", "tools", "recipes")
 
@@ -1094,6 +1098,25 @@ function junai-push {
             } else {
                 Write-Host "  [--]  $folder - not in project, skipped" -ForegroundColor DarkGray
             }
+        }
+    }
+
+    # Privacy gate: the public mirror must NEVER carry private skill categories or private root
+    # folders. The POOL_FOLDERS copy above mirrors skills/ wholesale, so strip private categories
+    # (vmie = vm-ppt + golden-workflow, proprietary) here, plus any private root folder that slipped
+    # in. This makes $PRIVATE_ROOT_FOLDERS actually enforced (it was declared but never applied).
+    foreach ($cat in $PRIVATE_SKILL_CATEGORIES) {
+        $privCat = Join-Path $JUNO_GITHUB "skills\$cat"
+        if (Test-Path $privCat) {
+            Remove-ItemRobust $privCat
+            Write-Host "  [OK]  privacy: purged skills/$cat from public mirror" -ForegroundColor Green
+        }
+    }
+    foreach ($rootFolder in $PRIVATE_ROOT_FOLDERS) {
+        $privRoot = Join-Path $JUNO_GITHUB $rootFolder
+        if (Test-Path $privRoot) {
+            Remove-ItemRobust $privRoot
+            Write-Host "  [OK]  privacy: purged $rootFolder/ from public mirror" -ForegroundColor Green
         }
     }
 
