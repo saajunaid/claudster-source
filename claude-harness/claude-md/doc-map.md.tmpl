@@ -1,0 +1,67 @@
+# DOC-MAP — {{PROJECT_NAME}} reference index (the meta-KB)
+
+> **What this is:** a router, not a summary. One line per curated reference doc — *what it is* and
+> *when to read it* — so an agent (or a human) can find the right doc fast and read it **on demand**
+> instead of loading everything up front. Detail lives in the linked docs; this file never duplicates
+> their content.
+>
+> **How to use it:** when a task touches an area, open the doc(s) for that area first. Heavy reference
+> docs should be read by a **dispatched subagent** that returns only the conclusion (see the root
+> `CLAUDE.md` harness) so the main thread's context stays lean.
+>
+> **Discipline:** this index and `UI_PAGE_GUIDE.md` are kept honest by
+> [`scripts/check_doc_coverage.py`](../../scripts/check_doc_coverage.py): every live route must appear
+> in the page guide, and every curated reference doc below should be indexed here (orphan = warning;
+> a link to a missing file = hard failure). It runs in the pre-push gate.
+
+## Read first (orientation order)
+
+1. `CLAUDE.md` — project laws, the dev harness, project specifics. Always loaded.
+2. `UI_PAGE_GUIDE.md` — **every UI page → endpoints → DB objects** (frontend repos). The first stop for
+   any UI or full-stack task.
+3. Area `CLAUDE.md` files — load automatically when you work in that folder.
+
+<!--
+HOW TO MAINTAIN THIS FILE
+- Add one row per curated reference doc, under the right heading, as you create it. Make the doc name a
+  MARKDOWN LINK whose target is RELATIVE TO THIS FILE, e.g.:
+      | [DATABASE_REFERENCE.md](../../docs/reference/DATABASE_REFERENCE.md) | Tables/views the app reads. |
+  Once it is a link, the checker verifies the target exists (a link to a missing file is a HARD failure).
+- Until a doc is a real link it shows as a backtick name below — that is intentionally NOT checked, so a
+  fresh scaffold never dangles. Convert it to a link when the doc actually exists.
+- "Governed" docs (what this map SHOULD index) are defined by GOVERNED_GLOBS in
+  scripts/check_doc_coverage.py — by default: UI_PAGE_GUIDE.md, STACK.md, README.md, CURRENT_STATE.md,
+  PROJECT_LANDSCAPE.md, docs/{reference,architecture,runbooks,guides}/*.md, and .claudster/kb/*.md.
+  A governed doc that exists but isn't linked here WARNS — add a row to clear it.
+- Remove rows for deleted docs (a link to a missing file is a HARD failure at the gate).
+-->
+
+## Pages & UI
+
+| Doc | What / when to read |
+|---|---|
+| `UI_PAGE_GUIDE.md` | Page-by-page: screen → hooks/endpoints → DB. Read before touching any page or its backend. **Route coverage is gate-enforced.** |
+
+## Backend & data reference
+
+| Doc | What / when to read |
+|---|---|
+| `STACK.md` | Library / stack reference. Verify against code before relying on it. |
+| `README.md` | Quick start, dev topology, service names, common commands. |
+
+## Architecture, ops & change process
+
+| Doc | What / when to read |
+|---|---|
+| _(add docs/architecture/*, docs/runbooks/*, docs/reference/* rows as links once you create them)_ | |
+
+## Knowledge base (`.claudster/kb/`)
+
+| Doc | What / when to read |
+|---|---|
+| `.claudster/kb/` | Durable domain notes that outlive a single feature — see this folder's README for what belongs here. |
+
+---
+
+*Governed globs (what this map should index) live in `scripts/check_doc_coverage.py` (`GOVERNED_GLOBS`).
+Archives, `.github/`, and the plans/PRD/relay tree are intentionally **not** governed here.*

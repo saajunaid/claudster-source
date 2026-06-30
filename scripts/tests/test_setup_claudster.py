@@ -183,3 +183,57 @@ def test_keeps_github_plans_for_authoring_source(tmp_path):
     _run_setup(tmp_path)
     assert (tmp_path / ".github" / "plans" / "a.md").is_file()  # left in place (pool-synced)
     assert not (tmp_path / ".claudster" / "plans" / "a.md").exists()
+
+
+# ── setup_project_ai: doc-coverage discipline (Phase 2) ─────────────────────
+
+def test_setup_emits_doc_map(tmp_path):
+    _make_project(tmp_path)
+    _run_setup(tmp_path)
+    dm = tmp_path / ".claudster" / "kb" / "DOC-MAP.md"
+    assert dm.is_file()
+    # the scaffold must point at the discipline checker so the link survives setup
+    assert "check_doc_coverage.py" in dm.read_text(encoding="utf-8")
+
+
+def test_setup_copies_checker(tmp_path):
+    _make_project(tmp_path)
+    _run_setup(tmp_path)
+    checker = tmp_path / "scripts" / "check_doc_coverage.py"
+    assert checker.is_file()
+    assert "def run(" in checker.read_text(encoding="utf-8")
+
+
+def test_setup_emits_page_guide_only_with_frontend(tmp_path):
+    _make_project(tmp_path)
+    _run_setup(tmp_path)
+    assert not (tmp_path / "UI_PAGE_GUIDE.md").exists()  # no frontend/ → no page guide
+    (tmp_path / "frontend").mkdir()
+    _run_setup(tmp_path)
+    assert (tmp_path / "UI_PAGE_GUIDE.md").is_file()  # frontend/ present → stub emitted
+
+
+def test_root_claude_md_points_to_doc_map(tmp_path):
+    _make_project(tmp_path)
+    _run_setup(tmp_path)
+    cm = (tmp_path / "CLAUDE.md").read_text(encoding="utf-8")
+    assert ".claudster/kb/DOC-MAP.md" in cm
+
+
+def test_doc_map_not_clobbered_on_resetup(tmp_path):
+    _make_project(tmp_path)
+    _run_setup(tmp_path)
+    dm = tmp_path / ".claudster" / "kb" / "DOC-MAP.md"
+    dm.write_text("# EDITED — keep me", encoding="utf-8")
+    _run_setup(tmp_path)  # no --force → idempotent, must not clobber
+    assert dm.read_text(encoding="utf-8") == "# EDITED — keep me"
+
+
+def test_manifest_ships_checker():
+    """The make-or-break: the bundled `claude` plugin must carry the checker at plugin/scripts/."""
+    manifest = json.loads(
+        (SCRIPTS.parent / ".github" / "runtime-targets.json").read_text(encoding="utf-8")
+    )
+    claude = next(t for t in manifest["targets"] if t["name"] == "claude")
+    dests = [f["destination"] for f in claude.get("files", [])]
+    assert "scripts/check_doc_coverage.py" in dests

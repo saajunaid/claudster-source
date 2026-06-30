@@ -106,7 +106,10 @@ def extract_docmap_entries(docmap_text: str) -> set[str]:
 
     Targets are returned verbatim except for a stripped leading ``./``; ``http(s)`` links are
     excluded. Resolving them against the doc-map's directory is the caller's job (see ``run``).
+    Links inside HTML comments are ignored — a doc-map's maintenance guide may show example links
+    that don't exist yet, and those must not register as real (dangling) entries.
     """
+    docmap_text = re.sub(r"<!--.*?-->", "", docmap_text, flags=re.DOTALL)
     entries: set[str] = set()
     for target in re.findall(r"\]\(([^)]+\.md)\)", docmap_text):
         target = target.strip()

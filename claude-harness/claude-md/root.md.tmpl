@@ -73,6 +73,8 @@ tracker. The conversation is disposable; these files are the truth.
 ## Where things live
 | Need | Location |
 |---|---|
+| Reference-doc index (the meta-KB) — **read first** | `.claudster/kb/DOC-MAP.md` |
+| Every UI page → endpoints → DB (frontend repos) | `UI_PAGE_GUIDE.md` |
 | Active plans | `.claudster/plans/<feature>.md` |
 | PRDs | `.claudster/prd/<feature-slug>.md` |
 | ADRs, design docs, runbooks | `docs/adr/`, `docs/design/`, `docs/runbooks/` (team-facing, not tool scratch) |
@@ -81,3 +83,9 @@ tracker. The conversation is disposable; these files are the truth.
 | Custom commands | `.claude/commands/` |
 | Subagents | `.claude/agents/` |
 | Reusable skills | claudster plugin (by name; not copied into the project) |
+
+### Doc discipline (the KB can't silently rot)
+Read `.claudster/kb/DOC-MAP.md` first to find the right reference doc, then read it on demand (dispatch a
+subagent for heavy reads). When you add/rename/remove a route or a curated reference doc, update
+`UI_PAGE_GUIDE.md` / `DOC-MAP.md` in the **same change** — `scripts/check_doc_coverage.py` runs at the
+pre-push gate and **blocks** on a missing route or a dangling doc-map link.

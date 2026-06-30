@@ -509,7 +509,8 @@
         {"root": "harness", "source": "statusline-command.sh", "destination": "statusline-command.sh"},
         {"root": "harness", "source": "README.md", "destination": "README.md"},
         {"root": "scriptsrc", "source": "setup_project_ai.py", "destination": "scripts/setup_project_ai.py"},
-        {"root": "scriptsrc", "source": "usage_review.py",     "destination": "scripts/usage_review.py"}
+        {"root": "scriptsrc", "source": "usage_review.py",     "destination": "scripts/usage_review.py"},
+        {"root": "harness",   "source": "scripts/check_doc_coverage.py", "destination": "scripts/check_doc_coverage.py"}
       ],
       "copies": [
         {"root": "harness", "source": "agents", "destination": "agents"},

@@ -122,6 +122,11 @@ class TestExtractDocmapEntries:
         md = "[site](https://example.com) [doc](docs/x.md)"
         assert cdc.extract_docmap_entries(md) == {"docs/x.md"}
 
+    def test_ignores_links_inside_html_comments(self):
+        # Example links in a maintenance comment must not register as real entries (would dangle).
+        md = "<!--\nexample: [DB](../../docs/reference/DB.md)\n-->\n- [Real](real.md)"
+        assert cdc.extract_docmap_entries(md) == {"real.md"}
+
 
 # --------------------------------------------------------------------------- #
 # Filesystem glue — generic `run(root, check)` with graceful auto-skip.
