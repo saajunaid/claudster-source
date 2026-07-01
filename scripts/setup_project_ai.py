@@ -531,12 +531,52 @@ memory.jsonl
 """
 
 
+CLAUDSTER_CONFIG_EXAMPLE = """\
+# claudster per-repo configuration — a documented template.
+#
+# Nothing here takes effect until you copy this file to `.claudster/config.toml` (same directory)
+# and uncomment the keys you want. The claudster hooks/scripts read `config.toml` (never this
+# `.example`) from the repo root's `.claudster/`. Unknown sections/keys are ignored, so a section
+# that a given claudster version doesn't yet honor is harmless to leave in place.
+#
+# Only [guard] is honored today. [doc_coverage] and [dream_memory] document the intended schema for
+# planned overrides and are IGNORED until those features wire them up.
+
+# ── [guard] — PreToolUse safety hook (hooks/guard.py) ── LIVE ──
+# The guard classifies each Bash/Edit/Write into deny | ask | allow. `allow` is an escape hatch that
+# may ONLY DOWNGRADE an `ask` to `allow` — it can never override a `deny` (a secret write, a
+# catastrophic shell command). Each entry is a case-insensitive SUBSTRING matched against the command
+# text (Bash) or the file path (Edit/Write). Keep entries specific: a broad substring like "git"
+# would silence every gated git operation.
+[guard]
+allow = [
+  # "git push --force origin scratch",   # allow force-push to one throwaway branch
+  # "yarn.lock",                         # stop confirming routine lockfile edits in this repo
+  # "npm publish --dry-run",             # a publish you run often and trust
+]
+
+# ── [doc_coverage] — reference-doc gate (scripts/check_doc_coverage.py) ── RESERVED (not read yet) ──
+# [doc_coverage]
+# route_tree = "frontend/src/routeTree.gen.ts"   # where the generated route tree lives
+# page_guide = "UI_PAGE_GUIDE.md"                # the guide that must cover every live route
+# claude_md_budget = 200                         # warn when an always-loaded CLAUDE.md exceeds N lines
+# ignore_routes = ["/health", "/__internal"]     # routes intentionally left out of the page guide
+
+# ── [dream_memory] — short-term fact store (scripts/dream_memory.py) ── RESERVED (not read yet) ──
+# [dream_memory]
+# prune_age_days = 14    # single-hit facts older than this decay out
+# max_facts = 200        # hard cap on the store
+# surface_limit = 5      # how many facts SessionStart prints
+"""
+
+
 def scaffold_claudster(target: Path, dry: bool) -> list[str]:
-    """Create the harness-owned .claudster/ artifact tree + a default .gitignore.
+    """Create the harness-owned .claudster/ artifact tree + a default .gitignore + a config example.
 
     Committed subdirs: plans, handoffs, agent-docs, prd. Transient state
-    (reviews/*.html, usage-log.jsonl, .last-usage-review, relay*, PROJECT-FACTS.md)
-    is gitignored. Idempotent; never clobbers an existing .gitignore.
+    (reviews/*.html, usage-log.jsonl, .last-usage-review, relay*, PROJECT-FACTS.md, memory.jsonl)
+    is gitignored. Also drops a documented `config.toml.example` (guard/doc_coverage/dream_memory).
+    Idempotent; never clobbers an existing .gitignore or config example.
     """
     notes: list[str] = []
     root = target / ".claudster"
@@ -555,6 +595,14 @@ def scaffold_claudster(target: Path, dry: bool) -> list[str]:
             root.mkdir(parents=True, exist_ok=True)
             gi.write_text(CLAUDSTER_GITIGNORE, encoding="utf-8")
         notes.append("scaffold: wrote .claudster/.gitignore")
+    cfg = root / "config.toml.example"
+    if cfg.exists():
+        notes.append("scaffold: .claudster/config.toml.example present — kept")
+    else:
+        if not dry:
+            root.mkdir(parents=True, exist_ok=True)
+            cfg.write_text(CLAUDSTER_CONFIG_EXAMPLE, encoding="utf-8")
+        notes.append("scaffold: wrote .claudster/config.toml.example")
     return notes
 
 

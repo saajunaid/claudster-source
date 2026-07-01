@@ -59,8 +59,29 @@ def test_scaffolds_claudster_tree(tmp_path):
     gi = tmp_path / ".claudster" / ".gitignore"
     assert gi.is_file()
     txt = gi.read_text(encoding="utf-8")
-    for pat in ("reviews/*.html", "usage-log.jsonl", ".last-usage-review", "relay.md"):
+    for pat in ("reviews/*.html", "usage-log.jsonl", ".last-usage-review", "relay.md", "memory.jsonl"):
         assert pat in txt, pat
+
+
+def test_scaffolds_config_toml_example(tmp_path):
+    _make_project(tmp_path)
+    _run_setup(tmp_path)
+    cfg = tmp_path / ".claudster" / "config.toml.example"
+    assert cfg.is_file()
+    txt = cfg.read_text(encoding="utf-8")
+    assert "[guard]" in txt and "allow" in txt          # the live section
+    assert "[doc_coverage]" in txt and "[dream_memory]" in txt  # reserved sections documented
+    # The real config.toml is NOT written — only the example (user opts in by copying).
+    assert not (tmp_path / ".claudster" / "config.toml").exists()
+
+
+def test_scaffold_keeps_existing_config_example(tmp_path):
+    _make_project(tmp_path)
+    cfg = tmp_path / ".claudster" / "config.toml.example"
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    cfg.write_text("# hand-edited — keep me\n", encoding="utf-8")
+    _run_setup(tmp_path)
+    assert cfg.read_text(encoding="utf-8") == "# hand-edited — keep me\n"  # never clobbered
 
 
 def test_project_facts_in_claudster(tmp_path):
