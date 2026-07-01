@@ -11,8 +11,23 @@ This file is the concrete **move-list** and the Phase-0 record.
   paths (`.github/skills/docs/vm-ppt/`, `.github/skills/skills/vmie/`, `.github/skills/devops/golden-workflow/`)
   that the current-location exclusion missed. Verified: zero private-skill paths/objects in all history;
   largest blobs are legit public assets; no tags pushed.
-- [ ] Phase 2 — Re-plumb the pipeline; delete the vmie purge (now structurally unnecessary).
-- [ ] Phase 3 — Repoint the extension mirrors' pool source.
+- [x] **Phase 2 — Build/validate standalone + privacy made structural (2026-07-01).**
+  - **Build parity proven**: `export --profile claude --profile claude-extras` from this repo is
+    content-identical to the golden baseline (all 521 files; the only delta is uniform CRLF vs
+    agent-sandbox's accidental mixed EOL — an improvement). ⇒ Phase 4's gate is *content*-identical
+    (EOL-agnostic), not literally byte-identical.
+  - **Private gating removed** (proven no-op via before/after export diff, 783 files identical):
+    dropped the `exclusions` block (`skills`/`private_roots`/`private_paths`) + codex
+    `include_private:["vmie"]` + codex's stale `vmie` skill category from `runtime-targets.json`;
+    neutralised the vmie purge in `sync.ps1` (`$PRIVATE_ROOT_FOLDERS`/`$PRIVATE_SKILL_CATEGORIES` → `@()`,
+    parses clean). Privacy is now structural — nothing private exists to gate.
+  - **validate_pool green** (`--include-dist`, 1215 files) after dropping the dead hardcoded mirror paths;
+    139 skills (= 141 − the 2 private vmie skills). Migrated **215-test** suite passes from this repo.
+  - Deferred to Phase 3 (mirror-push machinery, not runnable until mirrors are repointed): `sync.ps1`
+    path constants (`$REPO_ROOT`/`$EXT_REPOS_ROOT`/key files), the version-bump dance, `bundle-pool.js`.
+    Minor stale item: `pool.manifest.yml` still classifies `plans`/`pipeline-state.json` (dropped) as
+    owned — harmless (classification, not disk); clean up alongside the pipeline re-plumb.
+- [ ] Phase 3 — Repoint the extension mirrors' pool source + finish sync.ps1 re-plumb.
 - [ ] Phase 4 — Cutover publish; verify byte-identical to the golden baseline.
 - [ ] Phase 5 — Decommission agent-sandbox; stand up the private repo.
 

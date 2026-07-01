@@ -79,11 +79,11 @@ DOC_FRONTMATTER_REFERENCERS = [
     GITHUB_DIR / "prompts" / "project-setup.prompt.md",
 ]
 
-# External pool roots that are checked when present
+# External pool roots that are checked when present. Only this repo's own build output — the old
+# hardcoded mirror paths (E:\Projects\junai-vscode\pool, E:\Projects\junai\.github) were agent-sandbox
+# artefacts and are dropped in the extraction; Phase 3 re-adds mirror roots (configurable) if needed.
 EXTRA_POOL_ROOTS = [
     REPO_ROOT / "dist" / "runtime-resources",
-    Path(r"E:\Projects\junai-vscode\pool"),
-    Path(r"E:\Projects\junai\.github"),
 ]
 
 # Models allowed in prompt frontmatter (matches validate_agents.KNOWN_MODELS)

@@ -43,13 +43,14 @@ $LOCAL_ONLY_POOL_FILES = @(
 $POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "hooks", "diagrams", "tools", "recipes", "agent-docs", "handoffs")
 $POOL_FILES = @("runtime-targets.json")
 $ROOT_PUSH_FILES = @("export_runtime_resources.py", "validate_agents.py", "validate_pool.py", "sync.ps1", ".env.example")
-# Top-level repo-root folders that must NEVER be synced to the public mirror.
-# vmie/ holds private, organisation-specific resources for local copy-paste only.
-$PRIVATE_ROOT_FOLDERS = @("vmie")
-# Skill categories (.github/skills/<cat>) that must NEVER reach the public mirror. The POOL_FOLDERS
-# copy mirrors skills/ wholesale, so these are purged from the mirror after copy (and excluded from
-# the public plugin bundles via runtime-targets exclusions). vmie = golden-workflow + vm-ppt (proprietary).
-$PRIVATE_SKILL_CATEGORIES = @("vmie")
+# PRIVACY IS NOW STRUCTURAL. This repo (claudster-source) holds ONLY public, publishable source —
+# there is no private vmie/ root and no vmie skill category to purge (they live in the separate,
+# private agent-sandbox repo and never came across in the extraction). These arrays are therefore
+# EMPTY: the post-copy purge loops below iterate over nothing. Keeping the machinery (empty) rather
+# than ripping it out means a future accidental re-introduction of a private category can be
+# re-gated by simply naming it here — but the intent is that nothing private ever lives in this repo.
+$PRIVATE_ROOT_FOLDERS = @()
+$PRIVATE_SKILL_CATEGORIES = @()
 # Fully-managed folders: wiped before copy so renamed/moved/deleted files don't persist
 $CLEAN_FOLDERS = @("agents", "skills", "prompts", "instructions", "hooks", "tools", "recipes")
 
