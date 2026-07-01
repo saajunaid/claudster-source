@@ -103,6 +103,57 @@ def test_inject_docmap_pointer_anchors_to_repo_root_in_subdir(tmp_path):
     assert "DOC-MAP" in r.stdout
 
 
+# ── inject_relay: Dream Memory surfacing (Phase 5c) ─────────────────────────
+
+def _fact_line(kind: str, key: str, summary: str, hits: int = 1) -> str:
+    return json.dumps({
+        "kind": kind, "key": key, "summary": summary, "hitCount": hits,
+        "firstSeen": "2026-07-01T09:00:00Z", "lastSeen": _iso_days_ago(0), "source": "auto",
+    })
+
+
+def test_inject_surfaces_memory_facts_when_present(tmp_path):
+    (tmp_path / ".claudster").mkdir()
+    (tmp_path / ".claudster" / "memory.jsonl").write_text(
+        "\n".join([
+            _fact_line("failure-mode", "npm build", "`npm run build` fails cold — run vite first", hits=4),
+            _fact_line("rejected-approach", "poll api", "don't poll the API — use the SSE stream", hits=2),
+        ]) + "\n",
+        encoding="utf-8",
+    )
+    r = _run(INJECT, tmp_path, "{}")
+    assert "[memory] reinforced facts for this repo" in r.stdout
+    assert "npm run build" in r.stdout
+    assert "⚠" in r.stdout  # weighted kinds get the warning mark
+
+
+def test_inject_no_memory_block_when_store_absent(tmp_path):
+    r = _run(INJECT, tmp_path, "{}")
+    assert "[memory]" not in r.stdout
+
+
+def test_inject_memory_survives_malformed_store(tmp_path):
+    """A hand-broken store must not crash the hook (fail-open) — no [memory] block, clean exit."""
+    (tmp_path / ".claudster").mkdir()
+    (tmp_path / ".claudster" / "memory.jsonl").write_text("{not json\n\n{\"kind\":\"bad\"}\n", encoding="utf-8")
+    r = _run(INJECT, tmp_path, "{}")
+    assert r.returncode == 0
+    assert "[memory]" not in r.stdout  # nothing valid to surface
+
+
+def test_inject_memory_anchors_to_repo_root_in_subdir(tmp_path):
+    """Facts surface for a session launched from a subfolder (root-anchored, like relay)."""
+    _git_init(tmp_path)
+    (tmp_path / ".claudster").mkdir()
+    (tmp_path / ".claudster" / "memory.jsonl").write_text(
+        _fact_line("failure-mode", "k", "root-anchored fact", hits=3) + "\n", encoding="utf-8",
+    )
+    sub = tmp_path / "src"
+    sub.mkdir()
+    r = _run(INJECT, sub, "{}")
+    assert "root-anchored fact" in r.stdout
+
+
 # ── session_end: usage-log write → .claudster, never .claude ────────────────
 
 def test_session_end_writes_new_usage_log(tmp_path):
@@ -120,6 +171,93 @@ def test_session_end_writes_new_usage_log(tmp_path):
     lines = [l for l in new_log.read_text(encoding="utf-8").splitlines() if l.strip()]
     assert len(lines) == 1
     assert not old_log.exists()
+
+
+# ── session_end: Dream Memory capture (Phase 5b) ────────────────────────────
+
+def _transcript_with_failed_bash(path: Path, command: str, output: str) -> None:
+    """Write a minimal transcript: a usage record + a Bash tool_use and a failed tool_result."""
+    lines = [
+        json.dumps({"message": {"model": "claude-sonnet-4-6",
+                                "usage": {"input_tokens": 10, "output_tokens": 5}}}),
+        json.dumps({"type": "assistant", "message": {"role": "assistant", "content": [
+            {"type": "tool_use", "id": "tc1", "name": "Bash", "input": {"command": command}}]}}),
+        json.dumps({"type": "user", "message": {"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": "tc1", "content": output, "is_error": True}]}}),
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def test_session_end_captures_failure_to_memory_store(tmp_path):
+    transcript = tmp_path / "transcript.jsonl"
+    _transcript_with_failed_bash(transcript, "pytest tests/test_api.py", "ImportError: no module 'app'")
+    payload = json.dumps({"transcript_path": str(transcript), "session_id": "t"})
+    _run(SESSION_END, tmp_path, payload)
+    store = tmp_path / ".claudster" / "memory.jsonl"
+    assert store.is_file()
+    facts = [json.loads(l) for l in store.read_text(encoding="utf-8").splitlines() if l.strip()]
+    assert any(f["kind"] == "failure-mode" and "pytest" in f["summary"] for f in facts)
+
+
+def test_session_end_capture_redacts_secret_in_store(tmp_path):
+    """A token in a failing command must never land in the persisted store (privacy end-to-end)."""
+    transcript = tmp_path / "transcript.jsonl"
+    _transcript_with_failed_bash(transcript, "deploy --token ghp_0123456789abcdefABCDEF", "auth failed")
+    payload = json.dumps({"transcript_path": str(transcript), "session_id": "t"})
+    _run(SESSION_END, tmp_path, payload)
+    store = tmp_path / ".claudster" / "memory.jsonl"
+    assert store.is_file()
+    assert "ghp_" not in store.read_text(encoding="utf-8")
+
+
+def test_session_end_no_store_when_no_signals(tmp_path):
+    """A transcript with only a successful/usage record writes no memory store (no noise)."""
+    transcript = tmp_path / "transcript.jsonl"
+    transcript.write_text(
+        json.dumps({"message": {"model": "claude-sonnet-4-6",
+                                "usage": {"input_tokens": 10, "output_tokens": 5}}}) + "\n",
+        encoding="utf-8",
+    )
+    payload = json.dumps({"transcript_path": str(transcript), "session_id": "t"})
+    _run(SESSION_END, tmp_path, payload)
+    assert not (tmp_path / ".claudster" / "memory.jsonl").exists()
+
+
+def test_session_end_consolidates_existing_store_without_new_candidates(tmp_path):
+    """The knowledge-transfer path: facts appended out-of-band (duplicate fingerprint) are
+    consolidated on the next Stop even when the transcript yields no Bash candidates."""
+    store = tmp_path / ".claudster" / "memory.jsonl"
+    store.parent.mkdir(parents=True)
+    dup = json.dumps({
+        "kind": "rejected-approach", "key": "poll-api", "summary": "use SSE not polling",
+        "hitCount": 1, "firstSeen": "2026-07-01T09:00:00Z", "lastSeen": "2026-07-01T09:00:00Z",
+        "source": "knowledge-transfer",
+    })
+    store.write_text(dup + "\n" + dup + "\n", encoding="utf-8")  # two identical lines
+    transcript = tmp_path / "transcript.jsonl"
+    transcript.write_text(  # usage only, no Bash tool calls → no capture candidates
+        json.dumps({"message": {"model": "claude-sonnet-4-6",
+                                "usage": {"input_tokens": 10, "output_tokens": 5}}}) + "\n",
+        encoding="utf-8",
+    )
+    payload = json.dumps({"transcript_path": str(transcript), "session_id": "t"})
+    _run(SESSION_END, tmp_path, payload)
+    facts = [json.loads(l) for l in store.read_text(encoding="utf-8").splitlines() if l.strip()]
+    assert len(facts) == 1  # the two identical lines merged
+    assert facts[0]["hitCount"] == 2  # reinforced
+
+
+def test_session_end_capture_anchors_store_to_repo_root(tmp_path):
+    """Capture writes the store at the git root even when the Stop fires from a subfolder."""
+    _git_init(tmp_path)
+    sub = tmp_path / "backend"
+    sub.mkdir()
+    transcript = tmp_path / "transcript.jsonl"
+    _transcript_with_failed_bash(transcript, "npm run build", "build error")
+    payload = json.dumps({"transcript_path": str(transcript), "session_id": "t"})
+    _run(SESSION_END, sub, payload)
+    assert (tmp_path / ".claudster" / "memory.jsonl").is_file()
+    assert not (sub / ".claudster" / "memory.jsonl").exists()
 
 
 # ── repo-root anchoring: state lands at the git root, never the launch subdir ──

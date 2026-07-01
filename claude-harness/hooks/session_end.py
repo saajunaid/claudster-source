@@ -157,4 +157,41 @@ if u:
     except Exception:
         pass
 
+# ── Dream Memory capture (fann Phase 5b) ──────────────────────────────────────
+# Mine the transcript for deterministic, high-confidence facts (a Bash command that failed; a
+# build/test that went red→green) and consolidate them into the per-repo store. Privacy-first
+# (secret-touching commands skipped, inline secrets redacted) and fully fail-open — capture must
+# never slow or break a Stop, so the whole block is wrapped and silent on any error.
+try:
+    _scripts = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts")
+    if _scripts not in sys.path:
+        sys.path.insert(0, _scripts)
+    import dream_memory as _dm
+    import dream_capture as _dc
+
+    _now = datetime.now(timezone.utc).isoformat()
+    _candidates = []
+    _tp = data.get("transcript_path", "")
+    if _tp and os.path.isfile(_tp):
+        _records = []
+        with open(_tp, encoding="utf-8") as _fh:
+            for _line in _fh:
+                _line = _line.strip()
+                if not _line:
+                    continue
+                try:
+                    _records.append(json.loads(_line))
+                except Exception:
+                    continue
+        _candidates = _dc.extract_facts(_records, _now)
+    # Consolidate whenever there's something to do: new candidates, OR an existing store to
+    # self-compact (apply decay/cap, and dedup any facts the knowledge-transfer agent appended
+    # out-of-band). No store and no candidates → nothing written (no noise).
+    _store = os.path.join(_repo_root(os.getcwd()), *_dm.DEFAULT_STORE.split("/"))
+    _existing = _dm.load_facts(_store)
+    if _candidates or _existing:
+        _dm.save_facts(_store, _dm.consolidate(_existing + _candidates, _now))
+except Exception:
+    pass
+
 sys.exit(0)

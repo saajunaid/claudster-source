@@ -527,6 +527,7 @@ usage-log.jsonl
 relay.md
 relay/
 PROJECT-FACTS.md
+memory.jsonl
 """
 
 

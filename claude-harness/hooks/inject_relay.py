@@ -148,6 +148,28 @@ if os.path.isfile(os.path.join(ROOT, ".claudster", "kb", "DOC-MAP.md")):
     print("\n[DOC-MAP] reference index available — read .claudster/kb/DOC-MAP.md first to find the "
           "right doc, then read it on demand (dispatch a subagent for heavy reads).")
 
+# Dream Memory (fann Phase 5): surface the top reinforced facts for this repo — the
+# "don't step on the same rake twice" nudge. ≤5 lines, weighted/capped by the engine.
+# Fail-open & silent: a missing store, an unparseable file, or an import error must never
+# disrupt a session start (same bar as every other block here).
+try:
+    _scripts = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts")
+    if _scripts not in sys.path:
+        sys.path.insert(0, _scripts)
+    import dream_memory as _dm  # noqa: E402
+
+    _store = os.path.join(ROOT, *_dm.DEFAULT_STORE.split("/"))
+    _facts = _dm.load_facts(_store)
+    if _facts:
+        from datetime import datetime as _dtm, timezone as _tzm
+        _top = _dm.rank_for_surfacing(_facts, _dm.SURFACE_LIMIT, now=_dtm.now(_tzm.utc).isoformat())
+        if _top:
+            print("\n[memory] reinforced facts for this repo (auto; fades if not seen):")
+            for _line in _dm._format_surface(_top):
+                print(_line)
+except Exception:
+    pass
+
 # Mid-week cadence nudge: suggest /usage-review when overdue (>7 days) or never run (enough data exists).
 # Prefer the new .claudster location; fall back to the legacy .claude path during transition.
 _STAMP = _first_existing(
