@@ -242,6 +242,34 @@ class TestWarnTier:
         assert rc == 0
         assert "budget" in out
 
+    def test_config_overrides_claude_md_budget(self, tmp_path, capsys):
+        """A [doc_coverage] claude_md_budget override raises the threshold so a mid-size file passes."""
+        _write(tmp_path, "CLAUDE.md", "\n".join(f"line {i}" for i in range(cdc.CLAUDE_MD_BUDGET + 50)))
+        _write(tmp_path, ".claudster/config.toml", "[doc_coverage]\nclaude_md_budget = 10000\n")
+        rc = cdc.run(tmp_path, check=True)
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert "budget" not in out  # raised budget → no oversize warning
+
+    def test_config_overrides_ignore_routes(self, tmp_path, capsys):
+        """A route listed in [doc_coverage] ignore_routes no longer hard-fails when undocumented."""
+        _write(tmp_path, "frontend/src/routeTree.gen.ts", "const r = { path: '/internal' }")
+        _write(tmp_path, "UI_PAGE_GUIDE.md", "# Pages\n\n(none)\n")
+        _write(tmp_path, ".claudster/config.toml", '[doc_coverage]\nignore_routes = ["/internal"]\n')
+        rc = cdc.run(tmp_path, check=True)
+        assert rc == 0  # would be 1 (missing route) without the override
+
+    def test_config_overrides_route_tree_and_page_guide_paths(self, tmp_path, capsys):
+        """Custom route_tree / page_guide paths are honored."""
+        _write(tmp_path, "app/routes.gen.ts", "const r = { path: '/cost' }")
+        _write(tmp_path, "docs/PAGES.md", "# Pages\n")  # does NOT document /cost
+        _write(tmp_path, ".claudster/config.toml",
+               '[doc_coverage]\nroute_tree = "app/routes.gen.ts"\npage_guide = "docs/PAGES.md"\n')
+        rc = cdc.run(tmp_path, check=True)
+        out = capsys.readouterr().out
+        assert rc == 1  # the custom-path route tree IS read → missing route blocks
+        assert "/cost" in out
+
     def test_claude_md_scan_prunes_vendor_dirs(self, tmp_path, capsys):
         """CLAUDE.md inside node_modules/.venv is ignored — the scan prunes vendored trees and never
         descends into them (a broken symlink there would otherwise crash the gate)."""

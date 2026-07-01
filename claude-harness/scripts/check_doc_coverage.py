@@ -34,6 +34,23 @@ import re
 import sys
 from pathlib import Path
 
+# Shared per-repo config reader (fail-open). Fall back to no-op shims if it's ever absent, so the
+# gate degrades to baked-in defaults rather than crashing.
+try:
+    from claudster_config import get_int, get_str, get_str_list, load_config
+except Exception:  # pragma: no cover - defensive shim
+    def load_config(root, section):  # type: ignore
+        return {}
+
+    def get_int(cfg, key, default):  # type: ignore
+        return default
+
+    def get_str(cfg, key, default):  # type: ignore
+        return default
+
+    def get_str_list(cfg, key, default):  # type: ignore
+        return default
+
 # Directories never worth scanning for CLAUDE.md — pruned DURING the walk so we never descend into a
 # huge/vendored tree (and never trip over a broken symlink inside node_modules, which crashes rglob).
 _SKIP_DIRS = {".venv", "venv", "node_modules", ".git", "__pycache__", ".mypy_cache",
@@ -197,9 +214,13 @@ def _repo_root() -> Path:
 
 def run(root: Path, check: bool) -> int:
     root = Path(root)
-    route_tree = root / DEFAULT_ROUTE_TREE
-    page_guide = root / DEFAULT_PAGE_GUIDE
+    # Optional per-repo overrides ([doc_coverage] in .claudster/config.toml); baked-in defaults otherwise.
+    cfg = load_config(root, "doc_coverage")
+    route_tree = root / get_str(cfg, "route_tree", DEFAULT_ROUTE_TREE)
+    page_guide = root / get_str(cfg, "page_guide", DEFAULT_PAGE_GUIDE)
     doc_map = root / DEFAULT_DOC_MAP
+    budget = get_int(cfg, "claude_md_budget", CLAUDE_MD_BUDGET)
+    ignore = frozenset(get_str_list(cfg, "ignore_routes", list(IGNORE_ROUTES)))
 
     hard_failures: list[str] = []
     warnings: list[str] = []
@@ -210,7 +231,7 @@ def run(root: Path, check: bool) -> int:
         missing, extra = route_coverage_gaps(
             route_tree.read_text(encoding="utf-8"),
             page_guide.read_text(encoding="utf-8"),
-            ignore=IGNORE_ROUTES,
+            ignore=ignore,
         )
         if missing:
             hard_failures.append("UI_PAGE_GUIDE.md missing route(s): " + ", ".join(missing))
@@ -232,8 +253,8 @@ def run(root: Path, check: bool) -> int:
             warnings.append("DOC-MAP.md does not index governed doc(s): " + ", ".join(orphans))
 
     # 3. CLAUDE.md budget (warning only).
-    for name, n in oversize_files(_claude_md_lengths(root), CLAUDE_MD_BUDGET):
-        warnings.append(f"{name} is {n} lines (> {CLAUDE_MD_BUDGET} budget)")
+    for name, n in oversize_files(_claude_md_lengths(root), budget):
+        warnings.append(f"{name} is {n} lines (> {budget} budget)")
 
     for w in warnings:
         print(f"  warning: {w}")

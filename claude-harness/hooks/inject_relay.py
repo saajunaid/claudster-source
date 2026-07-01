@@ -162,7 +162,8 @@ try:
     _facts = _dm.load_facts(_store)
     if _facts:
         from datetime import datetime as _dtm, timezone as _tzm
-        _top = _dm.rank_for_surfacing(_facts, _dm.SURFACE_LIMIT, now=_dtm.now(_tzm.utc).isoformat())
+        _limit = _dm.load_tunables(ROOT)["surface_limit"]
+        _top = _dm.rank_for_surfacing(_facts, _limit, now=_dtm.now(_tzm.utc).isoformat())
         if _top:
             print("\n[memory] reinforced facts for this repo (auto; fades if not seen):")
             for _line in _dm._format_surface(_top):

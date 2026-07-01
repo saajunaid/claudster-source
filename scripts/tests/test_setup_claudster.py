@@ -69,8 +69,8 @@ def test_scaffolds_config_toml_example(tmp_path):
     cfg = tmp_path / ".claudster" / "config.toml.example"
     assert cfg.is_file()
     txt = cfg.read_text(encoding="utf-8")
-    assert "[guard]" in txt and "allow" in txt          # the live section
-    assert "[doc_coverage]" in txt and "[dream_memory]" in txt  # reserved sections documented
+    assert "[guard]" in txt and "allow" in txt          # guard escape hatch
+    assert "[doc_coverage]" in txt and "[dream_memory]" in txt  # all three live sections documented
     # The real config.toml is NOT written — only the example (user opts in by copying).
     assert not (tmp_path / ".claudster" / "config.toml").exists()
 
@@ -223,6 +223,8 @@ def test_setup_copies_checker(tmp_path):
     checker = tmp_path / "scripts" / "check_doc_coverage.py"
     assert checker.is_file()
     assert "def run(" in checker.read_text(encoding="utf-8")
+    # The shared config reader must ride along, or the checker's [doc_coverage] override is inert.
+    assert (tmp_path / "scripts" / "claudster_config.py").is_file()
 
 
 def test_setup_emits_page_guide_only_with_frontend(tmp_path):

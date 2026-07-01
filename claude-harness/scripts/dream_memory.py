@@ -323,6 +323,25 @@ def save_facts(path: Path, facts: list[dict]) -> bool:
         return False
 
 
+def load_tunables(root) -> dict:
+    """Read ``[dream_memory]`` overrides from ``<root>/.claudster/config.toml``; defaults otherwise.
+
+    Returns ``{"prune_age_days", "max_facts", "surface_limit"}``. Fail-open — a missing config, a
+    missing helper, or a bad value degrades to the baked-in default, never raising into a hook.
+    """
+    defaults = {"prune_age_days": PRUNE_AGE_DAYS, "max_facts": MAX_FACTS, "surface_limit": SURFACE_LIMIT}
+    try:
+        from claudster_config import get_int, load_config
+        cfg = load_config(root, "dream_memory")
+        return {
+            "prune_age_days": get_int(cfg, "prune_age_days", PRUNE_AGE_DAYS),
+            "max_facts": get_int(cfg, "max_facts", MAX_FACTS),
+            "surface_limit": get_int(cfg, "surface_limit", SURFACE_LIMIT),
+        }
+    except Exception:
+        return defaults
+
+
 def _repo_root() -> Path:
     """Git top-level if available, else cwd — location-independent (matches the claudster hooks)."""
     try:
@@ -368,7 +387,9 @@ def main() -> None:
     args = parser.parse_args()
 
     now = args.now or datetime.now(timezone.utc).isoformat()
-    store = _repo_root() / DEFAULT_STORE
+    root = _repo_root()
+    store = root / DEFAULT_STORE
+    tune = load_tunables(root)
     facts = load_facts(store)
 
     if not facts:
@@ -376,12 +397,12 @@ def main() -> None:
         return
 
     if args.consolidate:
-        consolidated = consolidate(facts, now)
+        consolidated = consolidate(facts, now, max_age_days=tune["prune_age_days"], cap=tune["max_facts"])
         save_facts(store, consolidated)
         print(f"[memory] consolidated: {len(facts)} → {len(consolidated)} facts.")
         facts = consolidated
 
-    top = rank_for_surfacing(facts, SURFACE_LIMIT, now=now)
+    top = rank_for_surfacing(facts, tune["surface_limit"], now=now)
     print("[memory] reinforced facts for this repo (auto; fades if not seen):")
     for line in _format_surface(top):
         print(line)

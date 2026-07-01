@@ -400,18 +400,24 @@ def emit_doc_discipline(target: Path, ident: dict[str, str], force: bool, dry: b
     if (target / "frontend").exists():
         _emit("UI_PAGE_GUIDE.md", "ui-page-guide.md.tmpl", "page guide")
 
-    # Copy the checker into the target's scripts/ (same pattern as deploy_statusline).
-    src = HARNESS_DIR / "scripts" / "check_doc_coverage.py"
-    dest = target / "scripts" / "check_doc_coverage.py"
-    if not src.is_file():
-        notes.append("doc-coverage checker: source missing — skipped")
-    elif dest.exists() and not force:
-        notes.append("doc-coverage checker: scripts/check_doc_coverage.py present — skipped")
-    else:
-        if not dry:
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
-        notes.append("doc-coverage checker: wrote scripts/check_doc_coverage.py")
+    # Copy the checker + its shared config reader into the target's scripts/ (same pattern as
+    # deploy_statusline). claudster_config.py must ride along or the checker's [doc_coverage]
+    # override can't be read (it falls back to defaults — safe, but the config would be inert).
+    for fname, label in (
+        ("check_doc_coverage.py", "doc-coverage checker"),
+        ("claudster_config.py", "config reader"),
+    ):
+        src = HARNESS_DIR / "scripts" / fname
+        dest = target / "scripts" / fname
+        if not src.is_file():
+            notes.append(f"{label}: source missing — skipped")
+        elif dest.exists() and not force:
+            notes.append(f"{label}: scripts/{fname} present — skipped")
+        else:
+            if not dry:
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+            notes.append(f"{label}: wrote scripts/{fname}")
     return notes
 
 
@@ -539,8 +545,8 @@ CLAUDSTER_CONFIG_EXAMPLE = """\
 # `.example`) from the repo root's `.claudster/`. Unknown sections/keys are ignored, so a section
 # that a given claudster version doesn't yet honor is harmless to leave in place.
 #
-# Only [guard] is honored today. [doc_coverage] and [dream_memory] document the intended schema for
-# planned overrides and are IGNORED until those features wire them up.
+# All three sections below are honored. Every key falls back to a baked-in default, so uncomment
+# only the ones you want to change.
 
 # ── [guard] — PreToolUse safety hook (hooks/guard.py) ── LIVE ──
 # The guard classifies each Bash/Edit/Write into deny | ask | allow. `allow` is an escape hatch that
@@ -555,14 +561,14 @@ allow = [
   # "npm publish --dry-run",             # a publish you run often and trust
 ]
 
-# ── [doc_coverage] — reference-doc gate (scripts/check_doc_coverage.py) ── RESERVED (not read yet) ──
+# ── [doc_coverage] — reference-doc gate (scripts/check_doc_coverage.py) ── LIVE ──
 # [doc_coverage]
 # route_tree = "frontend/src/routeTree.gen.ts"   # where the generated route tree lives
 # page_guide = "UI_PAGE_GUIDE.md"                # the guide that must cover every live route
 # claude_md_budget = 200                         # warn when an always-loaded CLAUDE.md exceeds N lines
 # ignore_routes = ["/health", "/__internal"]     # routes intentionally left out of the page guide
 
-# ── [dream_memory] — short-term fact store (scripts/dream_memory.py) ── RESERVED (not read yet) ──
+# ── [dream_memory] — short-term fact store (scripts/dream_memory.py) ── LIVE ──
 # [dream_memory]
 # prune_age_days = 14    # single-hit facts older than this decay out
 # max_facts = 200        # hard cap on the store

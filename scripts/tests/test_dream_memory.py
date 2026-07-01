@@ -353,6 +353,34 @@ class TestConsolidate:
 # --------------------------------------------------------------------------- #
 # Filesystem glue — fail-open & silent.
 # --------------------------------------------------------------------------- #
+class TestLoadTunables:
+    def test_defaults_when_no_config(self, tmp_path):
+        t = dm.load_tunables(tmp_path)
+        assert t == {"prune_age_days": dm.PRUNE_AGE_DAYS, "max_facts": dm.MAX_FACTS,
+                     "surface_limit": dm.SURFACE_LIMIT}
+
+    def test_reads_overrides(self, tmp_path):
+        (tmp_path / ".claudster").mkdir()
+        (tmp_path / ".claudster" / "config.toml").write_text(
+            "[dream_memory]\nprune_age_days = 30\nmax_facts = 50\nsurface_limit = 8\n", encoding="utf-8")
+        t = dm.load_tunables(tmp_path)
+        assert t == {"prune_age_days": 30, "max_facts": 50, "surface_limit": 8}
+
+    def test_partial_override_keeps_other_defaults(self, tmp_path):
+        (tmp_path / ".claudster").mkdir()
+        (tmp_path / ".claudster" / "config.toml").write_text(
+            "[dream_memory]\nsurface_limit = 3\n", encoding="utf-8")
+        t = dm.load_tunables(tmp_path)
+        assert t["surface_limit"] == 3
+        assert t["max_facts"] == dm.MAX_FACTS  # untouched key keeps its default
+
+    def test_bad_value_falls_back(self, tmp_path):
+        (tmp_path / ".claudster").mkdir()
+        (tmp_path / ".claudster" / "config.toml").write_text(
+            '[dream_memory]\nmax_facts = "lots"\n', encoding="utf-8")
+        assert dm.load_tunables(tmp_path)["max_facts"] == dm.MAX_FACTS
+
+
 class TestLoadSave:
     def test_missing_file_returns_empty(self, tmp_path):
         assert dm.load_facts(tmp_path / "nope.jsonl") == []

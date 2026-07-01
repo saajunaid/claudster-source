@@ -127,6 +127,20 @@ def test_inject_surfaces_memory_facts_when_present(tmp_path):
     assert "⚠" in r.stdout  # weighted kinds get the warning mark
 
 
+def test_inject_memory_respects_surface_limit_config(tmp_path):
+    """A [dream_memory] surface_limit override caps how many facts SessionStart prints."""
+    (tmp_path / ".claudster").mkdir()
+    (tmp_path / ".claudster" / "memory.jsonl").write_text(
+        "\n".join(_fact_line("repo-fact", f"k{i}", f"fact number {i}", hits=i + 1) for i in range(5)) + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".claudster" / "config.toml").write_text("[dream_memory]\nsurface_limit = 2\n", encoding="utf-8")
+    r = _run(INJECT, tmp_path, "{}")
+    # Count surfaced fact lines (the indented "  ... repo-fact:" bullets), not the header.
+    surfaced = [ln for ln in r.stdout.splitlines() if "repo-fact:" in ln]
+    assert len(surfaced) == 2
+
+
 def test_inject_no_memory_block_when_store_absent(tmp_path):
     r = _run(INJECT, tmp_path, "{}")
     assert "[memory]" not in r.stdout

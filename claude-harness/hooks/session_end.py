@@ -187,10 +187,13 @@ try:
     # Consolidate whenever there's something to do: new candidates, OR an existing store to
     # self-compact (apply decay/cap, and dedup any facts the knowledge-transfer agent appended
     # out-of-band). No store and no candidates → nothing written (no noise).
-    _store = os.path.join(_repo_root(os.getcwd()), *_dm.DEFAULT_STORE.split("/"))
+    _root = _repo_root(os.getcwd())
+    _store = os.path.join(_root, *_dm.DEFAULT_STORE.split("/"))
     _existing = _dm.load_facts(_store)
     if _candidates or _existing:
-        _dm.save_facts(_store, _dm.consolidate(_existing + _candidates, _now))
+        _t = _dm.load_tunables(_root)
+        _dm.save_facts(_store, _dm.consolidate(
+            _existing + _candidates, _now, max_age_days=_t["prune_age_days"], cap=_t["max_facts"]))
 except Exception:
     pass
 
