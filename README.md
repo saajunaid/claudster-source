@@ -3,21 +3,21 @@
 Public authoring home for **claudster** — the Claude Code plugin (`claudster` + `claudster-extras`),
 its MCP server (`junai-mcp`), the shared skill/agent pool, and the build machinery that publishes them.
 
-> **Status: Phase 0 skeleton (empty).** Source has not been migrated yet. This repo was created as the
-> target of a planned extraction from the `agent-sandbox` monorepo. Until Phase 1 runs, the live source
-> still lives in `agent-sandbox`; do not author here yet.
+## What's here
+- **`.github/`** — the pool: skills, agents, prompts, instructions, tools, recipes, and the build
+  manifest (`runtime-targets.json`).
+- **`claude-harness/`** — the claudster plugin's agents, commands, hooks, and CLAUDE.md fragments.
+- **`scripts/`** — `setup_project_ai.py`, `usage_review.py`, and the test suite.
+- Build/validate machinery: `export_runtime_resources.py`, `validate_pool.py`, `validate_agents.py`,
+  `sync.ps1`.
 
-## Why this repo exists
-`agent-sandbox` mixes **public publishable source** (pool + harness + build machinery) with **private
-content** (proprietary `vmie/` skills, internal plans, experiments). That co-location is why the publish
-pipeline needs a bolt-on "purge private content" step — the path where a proprietary file once leaked.
-This repo will hold **only public, publishable source**, making the public/private separation structural:
-nothing to purge, because nothing private is here.
+## Publishing
+`export_runtime_resources.py` generates the plugin bundles into `dist/runtime-resources/`;
+`sync.ps1`'s `junai-push` / `junai-release` sync the pool into the distribution mirrors and publish the
+plugin, the MCP (PyPI), and the VS Code extension (Marketplace). Run `validate_pool.py` and the test
+suite (`python -m pytest scripts/tests`) as the quality gates.
 
-## Migration
-The extraction is **Option A2**: public source → here; private content → a new private repo; `agent-sandbox`
-retired. Plan + phase tracker: `agent-sandbox/.claudster/plans/extract-claudster-to-own-repo.md`.
-Move-list and Phase-0 baseline: see [`MIGRATION.md`](./MIGRATION.md).
-
-Migration is staged so a full publish is verified working after every phase. A2 and the lighter A1 are
-identical through Phase 4; only the final decommission step differs.
+## Provenance
+This repo was extracted from a larger internal monorepo so that the publishable source lives on its own,
+cleanly separated from private/internal content. See [`MIGRATION.md`](./MIGRATION.md) for the extraction
+record.
