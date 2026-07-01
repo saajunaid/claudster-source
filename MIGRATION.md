@@ -5,7 +5,12 @@ This file is the concrete **move-list** and the Phase-0 record.
 
 ## Phase status
 - [x] **Phase 0 — Prep (this repo created; baseline captured).**
-- [ ] Phase 1 — Move public source WITH history (`git filter-repo`).
+- [x] **Phase 1 — Public source moved WITH history (2026-07-01).** 327→246 commits; 842 files. Fail-closed
+  keep-list (only named public paths). **Privacy: 3 filter-repo passes** — the third caught the proprietary
+  `[redacted proprietary file]` + old `vm-ppt`/`golden-workflow`/`vmie` skills surviving at *historical*
+  paths (`.github/skills/docs/vm-ppt/`, `.github/skills/skills/vmie/`, `.github/skills/devops/golden-workflow/`)
+  that the current-location exclusion missed. Verified: zero private-skill paths/objects in all history;
+  largest blobs are legit public assets; no tags pushed.
 - [ ] Phase 2 — Re-plumb the pipeline; delete the vmie purge (now structurally unnecessary).
 - [ ] Phase 3 — Repoint the extension mirrors' pool source.
 - [ ] Phase 4 — Cutover publish; verify byte-identical to the golden baseline.
@@ -41,6 +46,20 @@ From `agent-sandbox`, preserving history where practical:
 - All secrets/keys: `.env`, `*.pat`, `pypimcp.key`, `.mcpregistry_*`, `github-pat.md`
 - **Open item:** the `codex` lane in `runtime-targets.json` does `include_private: ["vmie"]` — it cannot
   come here with vmie; resolve in Phase 2 (keep with the private repo, or drop the lane).
+
+## DEFERRED (excluded by Phase 1's fail-closed keep-list — decide before Phase 4 / going public)
+Missing a public file is recoverable (add a commit); leaking a private one is not — so these were left out
+and need an explicit call:
+- `claudster/` handbook (`CLAUDSTER.md`, `NORTH-STAR.md`, `claude-structure.jpg`) — internal state-of-record;
+  review before publishing to a public repo.
+- `docs/` — content unreviewed for public exposure.
+- `.github/workflows/` — CI (claudster-source will likely define its own).
+- `.github/pipeline-state.json` + `pipeline-state.template.json`, `.github/diagrams.zip`,
+  `scripts/extract_nuggets.ps1`, root `project-config.md` — unclear if pool-required; add back if Phase 4
+  build needs them.
+- **MCP package skeleton** (`pyproject.toml`, `src/junai_mcp/`) currently lives in the `junai` mirror, not
+  agent-sandbox — Phase 2 decides whether claudster-source owns it (only the MCP *server logic*,
+  `.github/tools/mcp-server/server.py`, came across in Phase 1).
 
 ## Remote — CREATED (2026-07-01)
 - **`origin` → https://github.com/saajunaid/claudster-source** (GitHub, account `saajunaid`, matches the
