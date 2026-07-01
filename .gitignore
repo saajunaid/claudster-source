@@ -14,6 +14,11 @@ venv/
 # Node (build tooling for the extension bundlers)
 node_modules/
 
+# Extension mirror repos (junai / junai-vscode / ptarmigan / liffey) — separate GitHub repos placed
+# here as working copies at cutover (Phase 4). Never tracked by claudster-source. sync.ps1 resolves
+# them at $REPO_ROOT/vscode-extensions and drives their bundlers via JUNAI_SOURCE.
+vscode-extensions/
+
 # Secrets — MUST never be committed to the public repo
 *.key
 *.pat

@@ -27,7 +27,16 @@ This file is the concrete **move-list** and the Phase-0 record.
     path constants (`$REPO_ROOT`/`$EXT_REPOS_ROOT`/key files), the version-bump dance, `bundle-pool.js`.
     Minor stale item: `pool.manifest.yml` still classifies `plans`/`pipeline-state.json` (dropped) as
     owned — harmless (classification, not disk); clean up alongside the pipeline re-plumb.
-- [ ] Phase 3 — Repoint the extension mirrors' pool source + finish sync.ps1 re-plumb.
+- [x] **Phase 3 — Extension-mirror repoint verified (2026-07-01).** Key finding: **no mirror edits
+  needed.** `sync.ps1` sets `$env:JUNAI_SOURCE = $ProjectRoot` before running each extension's
+  `bundle-pool.js`, and all mirror paths derive from `$PSScriptRoot` — so running the pipeline *from*
+  claudster-source automatically sources the pool from claudster-source. Empirically proven: ran
+  junai-vscode's `bundle-pool.js` with `JUNAI_SOURCE=claudster-source` → bundled 732 files, **139 skills,
+  zero vmie/golden-workflow/vm-ppt**, bundled skill files match claudster-source. Added `vscode-extensions/`
+  to `.gitignore` (mirrors placed here at cutover, never tracked). The **physical relocation of the 4 mirror
+  working copies + their keys** (`pypimcp.key`, `vscode.pat`, `ptarmigan.pat`) under
+  `claudster-source/vscode-extensions/` is the Phase 4 cutover step.
+- [ ] Phase 4 — Cutover: place mirrors+keys under claudster-source; run junai-push; verify content-identical.
 - [ ] Phase 4 — Cutover publish; verify byte-identical to the golden baseline.
 - [ ] Phase 5 — Decommission agent-sandbox; stand up the private repo.
 
