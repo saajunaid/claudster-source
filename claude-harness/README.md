@@ -25,8 +25,9 @@ claude-harness/
 │   ├── frontend-react.md  → frontend/CLAUDE.md (when React/Vite detected)
 │   └── tests-pytest.md    → tests/CLAUDE.md  (when pytest detected)
 ├── settings.template.json base .claude/settings.json
-├── model-aliases.json     logical model tier → concrete model (portability seam — see below)
-└── stack-map.json         stack-detection signals → which fragments/commands/subagents apply
+├── stack-map.json         stack-detection signals → which fragments/commands/subagents apply
+├── LOCAL-MODELS.md        run on local models — tier→model table + hybrid/local profiles (see below)
+└── litellm.config.example.yaml  LiteLLM proxy config: maps opus/sonnet/haiku tiers → local/remote models
 ```
 
 ## Skills: two-plugin tiering (lean context)
@@ -51,16 +52,18 @@ shipped here — install Anthropic's document-skills (or keep them in `~/.claude
 ## Running on local / non-Anthropic models (portability seam)
 The harness is **model-portable by design** — it's markdown interpreted by a CLI, not code bound to a
 provider. The one Anthropic-specific detail is each subagent's `model: opus|sonnet|haiku` frontmatter.
-Treat that as a **logical tier**, resolved through `model-aliases.json`, not a hard model ID.
+Treat that as a **logical tier**, resolved at the **gateway** (your LiteLLM proxy), not by any file in
+this repo — so the tier is documentation of intent and the proxy config is what actually routes it.
 
 To run under a gateway (the local-LLM fallback path):
 1. Stand up a **LiteLLM** proxy in front of your models (local GPU via Ollama/vLLM, or any provider).
 2. Point Claude Code at it: `ANTHROPIC_BASE_URL=<proxy>`, `ANTHROPIC_AUTH_TOKEN=<gateway/virtual key>`,
    optionally `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` to populate the model picker. (Codex uses
    the equivalent OpenAI base-URL seam.)
-3. Override the tiers in `model-aliases.json` — e.g. keep `opus` remote for planning/verification, map
-   `sonnet`/`haiku` to a **local coder model** (`local_fallback_example` shows the planner=remote /
-   coder=local split). This is the intended future shape: Opus plans, a local model codes.
+3. Set the tier→model mapping in your **LiteLLM proxy** config — see `litellm.config.example.yaml` for a
+   ready-to-fill example and `LOCAL-MODELS.md` for the tier table + profiles. The recommended `hybrid`
+   profile keeps `opus` remote for planning/verification and maps `sonnet`/`haiku` to a local coder
+   (Opus plans, a local model codes); `local` runs every tier on-prem.
 
 Caveats (don't hide them): a gateway is a server someone must run — subscription users gain nothing from
 it and should leave it off (default). Claude Code sends `anthropic-beta` headers some non-Anthropic

@@ -6,7 +6,8 @@
 #   $env:ANTHROPIC_BASE_URL = "http://localhost:4000"
 #   $env:ANTHROPIC_AUTH_TOKEN = "<litellm master key>"
 #   $env:CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY = "1"   # surfaces these models in /model
-# The `model_name` values below are what model-aliases.json references.
+# The `model_name` values below are the tier/model names Claude Code requests; the gateway routes each
+# to the upstream `model:` in litellm_params (there is no model-aliases.json — LiteLLM owns the routing).
 # NOTE: vLLM serves an OpenAI-compatible API; LiteLLM reaches it via the hosted_vllm/ prefix.
 # Adjust the upstream `model:` strings to the exact names your vLLM deployment registers.
 
