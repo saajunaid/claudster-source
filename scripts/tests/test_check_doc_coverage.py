@@ -315,6 +315,22 @@ class TestDiscoverReferenceDocs:
         assert "docs/real.md" in docs
         assert not any("node_modules" in p for p in docs)
 
+    def test_broken_symlink_under_docs_is_excluded(self, tmp_path):
+        """Fix B: a broken symlink under docs/ is NOT linked (else the fresh map dangles its own gate).
+        Skips where the OS/host forbids symlink creation."""
+        import os as _os
+        import pytest
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "real.md").write_text("x", encoding="utf-8")
+        try:
+            _os.symlink(tmp_path / "no-such-target.md", docs / "broken.md")
+        except (OSError, NotImplementedError):
+            pytest.skip("symlink creation not permitted on this host")
+        found = [p for p, _ in cdc.discover_reference_docs(tmp_path)]
+        assert "docs/real.md" in found
+        assert "docs/broken.md" not in found
+
 
 class TestInsertTableRows:
     _MAP = (
@@ -354,6 +370,20 @@ class TestInsertTableRows:
         assert "[auth.md](auth.md)" in out   # real row NOT dropped as a placeholder
         assert "[new.md](new.md)" in out     # new row appended
 
+    def test_row_whose_label_merely_starts_with_underscore_paren_is_preserved(self):
+        """Fix C: only a LABEL cell that is *entirely* `_(…)_` is a placeholder. A real linked row
+        whose label just begins with `_(` (e.g. a '_(deprecated)_' tag) must survive."""
+        text = ("## Knowledge base (`.claudster/kb/`)\n\n| Doc | X |\n|---|---|\n"
+                "| _(deprecated)_ [old.md](old.md) | still a real linked doc |\n")
+        out = cdc.insert_table_rows(text, "Knowledge base", ["| [new.md](new.md) | n |"])
+        assert "[old.md](old.md)" in out     # NOT mistaken for a placeholder
+
+    def test_insert_preserves_trailing_newline(self):
+        """Fix D: a trailing newline survives an insert (git-clean; consistent with remove_rows)."""
+        text = "## Knowledge base (`.claudster/kb/`)\n\n| Doc | X |\n|---|---|\n| _(x)_ | |\n"
+        out = cdc.insert_table_rows(text, "Knowledge base", ["| [a.md](a.md) | y |"])
+        assert out.endswith("\n")
+
 
 class TestReindex:
     def test_creates_missing_docmap_with_discovered_docs(self, tmp_path):
@@ -391,11 +421,11 @@ class TestReindex:
         assert changed2 is False
 
     def test_write_is_atomic_no_tmp_left_behind(self, tmp_path):
-        """Fix #3: reindex writes via temp+replace and leaves no .tmp turd on success."""
+        """Fix #3/E: reindex writes via a PID-tagged temp+replace and leaves no *.tmp on success."""
         _write(tmp_path, "README.md", "# r")
         cdc.reindex(tmp_path, "proj")
         assert (tmp_path / ".claudster/kb/DOC-MAP.md").is_file()
-        assert not (tmp_path / ".claudster/kb/DOC-MAP.md.tmp").exists()
+        assert list((tmp_path / ".claudster/kb").glob("*.tmp")) == []
 
     def test_auto_indexed_row_survives_a_second_reindex(self, tmp_path):
         """The auto-indexed description must NOT be an _(…)_ placeholder, or the next reindex drops it."""
@@ -461,3 +491,24 @@ class TestReindexPrune:
         assert "[fresh.md](fresh.md)" in dm        # orphan indexed
         assert "docs/gone.md" not in dm            # dangling pruned
         assert cdc.run(tmp_path, check=True) == 0
+
+    def test_prune_of_prose_dangling_reports_remaining_not_success(self, tmp_path):
+        """Fix A: a dangling link in PROSE (not a table row) can't be pruned — reindex must NOT claim
+        it pruned it, must report it still remains, and must report changed=False."""
+        _write(tmp_path, ".claudster/kb/DOC-MAP.md",
+               "## Knowledge base (`.claudster/kb/`)\n\nSee [old](../../docs/old.md) for context.\n")
+        changed, summary = cdc.reindex(tmp_path, "proj", prune=True)
+        assert changed is False
+        assert not any(s.startswith("pruned") for s in summary)   # no false success
+        assert any("remain" in s for s in summary)                # honest: still broken
+        assert cdc.run(tmp_path, check=True) == 1                 # gate really is still red
+
+    def test_index_reports_failure_when_no_kb_table(self, tmp_path):
+        """Fix A: if the 'Knowledge base' table is missing, insert is a no-op — report that, not
+        a false 'indexed N'."""
+        _write(tmp_path, ".claudster/kb/DOC-MAP.md", "# Map with no Knowledge base heading\n")
+        _write(tmp_path, ".claudster/kb/orphan.md", "# o")
+        changed, summary = cdc.reindex(tmp_path, "proj")
+        assert changed is False
+        assert any("could not index" in s for s in summary)
+        assert not any(s.startswith("indexed") for s in summary)

@@ -281,17 +281,22 @@ def discover_reference_docs(root: Path) -> list[tuple[str, str]]:
             found.append((name, desc))
     docs_dir = root / "docs"
     if docs_dir.is_dir():
-        # os.walk (NOT rglob) + in-place dir pruning: never follows symlinks, so a broken symlink
-        # under docs/ can't crash the walk mid-stream — matches _claude_md_lengths' hard-won pattern.
+        # os.walk (not rglob) with in-place dir-pruning: skips vendored trees and does not follow
+        # symlinks (followlinks=False), so a symlinked directory loop can't send it spinning. The
+        # is_file() guard below then excludes broken file-symlinks — linking one would make the
+        # freshly-built map dangle against its own gate.
         rels: list[str] = []
         for dirpath, dirnames, filenames in os.walk(docs_dir):
             dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
             for fn in filenames:
-                if fn.endswith(".md"):
-                    try:
-                        rels.append((Path(dirpath) / fn).relative_to(root).as_posix())
-                    except (OSError, ValueError):
-                        continue
+                if not fn.endswith(".md"):
+                    continue
+                fp = Path(dirpath) / fn
+                try:
+                    if fp.is_file():   # follows symlinks → a broken link is False → excluded
+                        rels.append(fp.relative_to(root).as_posix())
+                except (OSError, ValueError):
+                    continue
         found.extend((rel, "Reference doc.") for rel in sorted(rels)[:_MAX_DISCOVERED_DOCS])
     return found
 
@@ -301,15 +306,21 @@ def _row(target: str, label: str, desc: str) -> str:
     return f"| [{label}]({target}) | {desc} |"
 
 
-def _is_placeholder_row(row: str) -> bool:
-    """True for a scaffold placeholder row — one whose *label* cell is an italic ``_(…)_`` stub.
+# A placeholder row's LABEL cell is *entirely* an italic ``_(…)_`` stub. Matching the whole cell (not
+# just a ``_(`` prefix) avoids dropping a real row whose label merely starts with ``_(`` — e.g.
+# ``| _(deprecated)_ [old.md](old.md) | … |`` is a real linked doc, not a placeholder.
+_PLACEHOLDER_LABEL = re.compile(r"^_\(.*\)_$")
 
-    Checks ONLY the first (label) cell: a real row's label is a ``[link](…)`` (starts with ``[``),
-    never ``_(``. A row's *description* cell may legitimately contain ``_(`` (e.g. "the `_(x)_` case")
-    and must NOT be mistaken for a placeholder — that would silently drop the row (data loss).
+
+def _is_placeholder_row(row: str) -> bool:
+    """True for a scaffold placeholder row — one whose *label* (first) cell is only an ``_(…)_`` stub.
+
+    Checks ONLY the label cell, and requires the WHOLE cell to be the italic stub. A real row's label
+    is a ``[link](…)``; its *description* cell may legitimately contain ``_(`` (e.g. "the `_(x)_` case")
+    — neither must be mistaken for a placeholder, or the row is silently dropped (data loss).
     """
     cells = [c.strip() for c in row.split("|")]
-    return len(cells) > 1 and cells[1].startswith("_(")
+    return len(cells) > 1 and bool(_PLACEHOLDER_LABEL.match(cells[1]))
 
 
 def reference_rows(root: Path) -> list[str]:
@@ -366,7 +377,8 @@ def insert_table_rows(text: str, heading_contains: str, rows: list[str]) -> str:
         return text
     head = lines[start:start + 2]                     # header row + |---| separator
     body = [b for b in lines[start + 2:end + 1] if not _is_placeholder_row(b)]  # keep real rows
-    return "\n".join(lines[:start] + head + body + rows + lines[end + 1:])
+    out = "\n".join(lines[:start] + head + body + rows + lines[end + 1:])
+    return out + "\n" if text.endswith("\n") else out   # preserve trailing newline (git-clean)
 
 
 def build_docmap(root: Path, project_name: str = "project") -> str:
@@ -389,6 +401,12 @@ def dangling_as_written(text: str, doc_map_file: Path, root: Path) -> list[str]:
     )
 
 
+def _dangling_rootrel(text: str, doc_map_file: Path, root: Path) -> list[str]:
+    """Repo-root-relative ``.md`` links in ``text`` whose file is missing on disk (sorted)."""
+    ents = {_to_root_relative(t, doc_map_file, root) for t in extract_docmap_entries(text)}
+    return sorted(e for e in ents if not (root / e).exists())
+
+
 def remove_rows_with_targets(text: str, targets: list[str]) -> str:
     """Drop markdown table rows whose link points at any of ``targets`` (as-written). Pure.
 
@@ -409,13 +427,26 @@ def remove_rows_with_targets(text: str, targets: list[str]) -> str:
     return out + "\n" if text.endswith("\n") else out
 
 
-def _atomic_write(path: Path, text: str) -> None:
-    """Write ``text`` via a same-dir temp file + atomic replace, so a crash mid-write can't leave a
-    truncated/corrupt DOC-MAP. Mirrors dream_memory.save_facts (same filesystem keeps replace atomic)."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(text, encoding="utf-8", newline="\n")
-    tmp.replace(path)
+def _atomic_write(path: Path, text: str) -> bool:
+    """Write ``text`` via a same-dir, per-process temp file + atomic replace. Returns True on success.
+
+    A crash mid-write can't leave a truncated DOC-MAP (mirrors dream_memory.save_facts). The temp name
+    is PID-tagged so two concurrent runs don't fight over one temp. Returns **False (never raises)** if
+    the target is locked — on Windows an open editor / AV can hold it — so a maintenance run degrades to
+    a clear message instead of a stack trace.
+    """
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(text, encoding="utf-8", newline="\n")
+        tmp.replace(path)
+        return True
+    except OSError:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+        return False
 
 
 def reindex(
@@ -424,15 +455,17 @@ def reindex(
     """Create a missing DOC-MAP, index un-indexed KB notes, and (with ``prune``) drop dangling rows.
 
     Returns ``(changed, summary_lines)``. Indexing is additive (never deletes). ``prune`` is the
-    explicit, destructive opt-in: it removes index rows that link to now-missing files. Without it,
-    dangling links are only *reported* (auto-removing human-written rows would be unsafe by default).
+    explicit, destructive opt-in that removes index ROWS linking to now-missing files. The summary
+    reports **only what actually landed** — a prose dangling link (not a table row) or a missing
+    Knowledge-base table is reported as still-broken, never as done. Without ``prune``, dangling links
+    are only *reported*.
     """
     root = Path(root)
     doc_map = root / DEFAULT_DOC_MAP
     if not doc_map.exists():
         text = build_docmap(root, project_name)
-        if write:
-            _atomic_write(doc_map, text)
+        if write and not _atomic_write(doc_map, text):
+            return False, [f"could not create {DEFAULT_DOC_MAP} (target locked?) — no changes made"]
         return True, [f"created {DEFAULT_DOC_MAP} ({text.count('](')} link(s) pre-indexed)"]
 
     original = doc_map.read_text(encoding="utf-8")
@@ -443,19 +476,37 @@ def reindex(
 
     summary: list[str] = []
     updated = original
+
+    # Index orphan KB notes (additive). Report success ONLY if the rows actually landed — insert is a
+    # no-op when the "Knowledge base" heading/table is absent, and we must not claim work we didn't do.
     if orphans:
-        updated = insert_table_rows(updated, "Knowledge base", kb_note_rows(root, entries))
-        summary.append(f"indexed {len(orphans)} KB note(s): " + ", ".join(orphans))
+        after = insert_table_rows(updated, "Knowledge base", kb_note_rows(root, entries))
+        if after != updated:
+            updated = after
+            summary.append(f"indexed {len(orphans)} KB note(s): " + ", ".join(orphans))
+        else:
+            summary.append(f"could not index {len(orphans)} note(s) — no 'Knowledge base' table found: "
+                           + ", ".join(orphans))
+
+    # Dangling links. --prune removes only table ROWS; a dangling link in prose survives, so report
+    # what was actually pruned vs. what remains — never claim the gate is clean when it isn't.
     if dangling:
         if prune:
             updated = remove_rows_with_targets(updated, dangling_as_written(updated, doc_map, root))
-            summary.append(f"pruned {len(dangling)} dangling link(s): " + ", ".join(dangling))
+            remaining = _dangling_rootrel(updated, doc_map, root)
+            pruned = [d for d in dangling if d not in remaining]
+            if pruned:
+                summary.append(f"pruned {len(pruned)} dangling link(s): " + ", ".join(pruned))
+            if remaining:
+                summary.append(f"{len(remaining)} dangling link(s) remain (in prose, not a table row) "
+                               "— fix by hand: " + ", ".join(remaining))
         else:
             summary.append(f"{len(dangling)} dangling link(s) to fix (run --prune to remove): "
                            + ", ".join(dangling))
+
     changed = updated != original
-    if changed and write:
-        _atomic_write(doc_map, updated)
+    if changed and write and not _atomic_write(doc_map, updated):
+        return False, summary + ["WARNING: could not write DOC-MAP (target locked?) — changes NOT saved"]
     if not summary:
         summary.append("DOC-MAP.md already in sync — nothing to do.")
     return changed, summary

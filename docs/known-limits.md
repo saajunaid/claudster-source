@@ -19,6 +19,18 @@ These are **intentional** or low-severity; documented so they aren't rediscovere
 - **`--prune` has no `--dry-run` at the script level.** It writes immediately, but only ever removes
   rows that link to *already-missing* files, and the `/kb` command shows the dangling list and
   confirms before running it. Direct CLI use is the explicit, destructive opt-in.
+- **A CRLF DOC-MAP is normalized to LF the first time a row is added/removed.** `insert_table_rows` /
+  `_atomic_write` write `\n`, so on Windows (`autocrlf`) the first mutation shows a whole-file diff.
+  A no-op run leaves the bytes untouched. Cosmetic; not data loss.
+- **`insert_table_rows` targets the first `##` heading that *contains* the search substring.** On a
+  hand-edited map with a colliding heading (e.g. `## Other keys and tokens` vs the scaffold's
+  `## Other key code-relevant docs`), rows can land in the wrong section. The generated scaffold's
+  headings are unambiguous; only relevant if you rename sections to near-duplicates.
+- **`emit_doc_discipline` prepends the harness `scripts/` to `sys.path` and doesn't pop it.** Benign
+  in the short-lived setup process; it could in theory bind a different `check_doc_coverage` if one
+  were already earlier on the path. The import is fail-open (a plain scaffold is still gate-clean).
+- **`--prune` matches rows by link target, so a *commented-out example* row linking the exact same
+  missing path is stripped too.** Rare, and it only removes an already-dead example — never real content.
 
 ## Dream Memory (`memory.jsonl`)
 
