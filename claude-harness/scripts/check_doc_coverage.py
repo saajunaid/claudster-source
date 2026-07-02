@@ -359,11 +359,46 @@ def build_docmap(root: Path, project_name: str = "project") -> str:
     return text
 
 
-def reindex(root: Path, project_name: str = "project", write: bool = True) -> tuple[bool, list[str]]:
-    """Create a missing DOC-MAP, or index un-indexed KB notes into an existing one. Additive only.
+def dangling_as_written(text: str, doc_map_file: Path, root: Path) -> list[str]:
+    """As-written ``.md`` link targets in ``text`` whose resolved file is missing on disk (sorted).
 
-    Returns ``(changed, summary_lines)``. Never deletes human-written rows; dangling links are
-    reported for a human to fix (auto-removing user content would be destructive).
+    Returned verbatim (not root-relative) so a row can be matched and removed as-written by
+    :func:`remove_rows_with_targets`.
+    """
+    return sorted(
+        t for t in extract_docmap_entries(text)
+        if not (root / _to_root_relative(t, doc_map_file, root)).exists()
+    )
+
+
+def remove_rows_with_targets(text: str, targets: list[str]) -> str:
+    """Drop markdown table rows whose link points at any of ``targets`` (as-written). Pure.
+
+    Only ``|``-delimited rows are removed (the index table itself) — prose links are left alone.
+    Tolerates a leading ``./`` in the written link, and preserves a trailing newline.
+    """
+    if not targets:
+        return text
+    tset = set(targets)
+
+    def _links_dangling(line: str) -> bool:
+        return line.lstrip().startswith("|") and any(
+            f"]({t})" in line or f"](./{t})" in line for t in tset
+        )
+
+    kept = [ln for ln in text.splitlines() if not _links_dangling(ln)]
+    out = "\n".join(kept)
+    return out + "\n" if text.endswith("\n") else out
+
+
+def reindex(
+    root: Path, project_name: str = "project", write: bool = True, prune: bool = False
+) -> tuple[bool, list[str]]:
+    """Create a missing DOC-MAP, index un-indexed KB notes, and (with ``prune``) drop dangling rows.
+
+    Returns ``(changed, summary_lines)``. Indexing is additive (never deletes). ``prune`` is the
+    explicit, destructive opt-in: it removes index rows that link to now-missing files. Without it,
+    dangling links are only *reported* (auto-removing human-written rows would be unsafe by default).
     """
     root = Path(root)
     doc_map = root / DEFAULT_DOC_MAP
@@ -385,12 +420,16 @@ def reindex(root: Path, project_name: str = "project", write: bool = True) -> tu
     if orphans:
         updated = insert_table_rows(updated, "Knowledge base", kb_note_rows(root, entries))
         summary.append(f"indexed {len(orphans)} KB note(s): " + ", ".join(orphans))
+    if dangling:
+        if prune:
+            updated = remove_rows_with_targets(updated, dangling_as_written(updated, doc_map, root))
+            summary.append(f"pruned {len(dangling)} dangling link(s): " + ", ".join(dangling))
+        else:
+            summary.append(f"{len(dangling)} dangling link(s) to fix (run --prune to remove): "
+                           + ", ".join(dangling))
     changed = updated != original
     if changed and write:
         doc_map.write_text(updated, encoding="utf-8", newline="\n")
-    if dangling:
-        summary.append(f"{len(dangling)} dangling link(s) to fix by hand (not auto-removed): "
-                       + ", ".join(dangling))
     if not summary:
         summary.append("DOC-MAP.md already in sync — nothing to do.")
     return changed, summary
@@ -472,11 +511,16 @@ def main() -> None:
         action="store_true",
         help="Create a missing DOC-MAP or index un-indexed KB notes (additive; writes the file).",
     )
+    parser.add_argument(
+        "--prune",
+        action="store_true",
+        help="With reindex: also REMOVE index rows that link to missing files (destructive; opt-in).",
+    )
     args = parser.parse_args()
     root = _repo_root()
-    # Reindex is a maintenance action (the `/kb` command drives it), not a gate — run and exit 0.
-    if args.reindex:
-        _changed, summary = reindex(root, root.name)
+    # Reindex/prune are maintenance actions (the `/kb` command drives them), not a gate — run, exit 0.
+    if args.reindex or args.prune:
+        _changed, summary = reindex(root, root.name, prune=args.prune)
         for line in summary:
             print(f"[kb] {line}")
         sys.exit(0)

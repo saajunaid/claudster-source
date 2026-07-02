@@ -382,3 +382,57 @@ class TestReindex:
         cdc.reindex(tmp_path, "proj")
         dm = (tmp_path / ".claudster/kb/DOC-MAP.md").read_text(encoding="utf-8")
         assert "[first.md](first.md)" in dm and "[second.md](second.md)" in dm
+
+
+class TestRemoveRowsWithTargets:
+    def test_removes_only_matching_table_rows(self):
+        text = ("| [a](../../a.md) | keep |\n"
+                "| [gone](../../docs/gone.md) | x |\n"
+                "a prose mention of ../../docs/gone.md is not a row\n")
+        out = cdc.remove_rows_with_targets(text, ["../../docs/gone.md"])
+        assert "| [gone]" not in out                     # dangling row removed
+        assert "[a](../../a.md)" in out                  # unrelated row kept
+        assert "prose mention of ../../docs/gone.md" in out  # non-row prose untouched
+
+    def test_tolerates_leading_dot_slash(self):
+        text = "| [g](./gone.md) | x |\n| [k](keep.md) | y |\n"
+        out = cdc.remove_rows_with_targets(text, ["gone.md"])
+        assert "gone.md" not in out and "[k](keep.md)" in out
+
+    def test_empty_targets_is_noop(self):
+        text = "| [a](a.md) | x |\n"
+        assert cdc.remove_rows_with_targets(text, []) == text
+
+
+class TestReindexPrune:
+    _MAP = ("## Knowledge base (`.claudster/kb/`)\n\n| Doc | X |\n|---|---|\n"
+            "| [live](live.md) | x |\n| [gone](../../docs/gone.md) | x |\n")
+
+    def test_prune_removes_dangling_keeps_valid_and_passes_gate(self, tmp_path):
+        _write(tmp_path, ".claudster/kb/DOC-MAP.md", self._MAP)
+        _write(tmp_path, ".claudster/kb/live.md", "# live")
+        changed, summary = cdc.reindex(tmp_path, "proj", prune=True)
+        dm = (tmp_path / ".claudster/kb/DOC-MAP.md").read_text(encoding="utf-8")
+        assert "docs/gone.md" not in dm            # dangling row pruned
+        assert "[live](live.md)" in dm             # valid row kept
+        assert changed and any("pruned" in s for s in summary)
+        assert cdc.run(tmp_path, check=True) == 0
+
+    def test_without_prune_keeps_dangling_and_hints(self, tmp_path):
+        _write(tmp_path, ".claudster/kb/DOC-MAP.md", self._MAP)
+        _write(tmp_path, ".claudster/kb/live.md", "# live")
+        _changed, summary = cdc.reindex(tmp_path, "proj")   # prune defaults False
+        dm = (tmp_path / ".claudster/kb/DOC-MAP.md").read_text(encoding="utf-8")
+        assert "docs/gone.md" in dm                # not removed without opt-in
+        assert any("--prune" in s for s in summary)
+
+    def test_prune_and_index_orphan_in_one_run(self, tmp_path):
+        _write(tmp_path, ".claudster/kb/DOC-MAP.md",
+               "## Knowledge base (`.claudster/kb/`)\n\n| Doc | X |\n|---|---|\n"
+               "| [gone](../../docs/gone.md) | x |\n")
+        _write(tmp_path, ".claudster/kb/fresh.md", "# f")   # orphan to index
+        cdc.reindex(tmp_path, "proj", prune=True)
+        dm = (tmp_path / ".claudster/kb/DOC-MAP.md").read_text(encoding="utf-8")
+        assert "[fresh.md](fresh.md)" in dm        # orphan indexed
+        assert "docs/gone.md" not in dm            # dangling pruned
+        assert cdc.run(tmp_path, check=True) == 0

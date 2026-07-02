@@ -20,13 +20,21 @@ It is **additive and safe** — never deletes your rows:
 - **Missing map** → creates `.claudster/kb/DOC-MAP.md` from a scaffold, pre-linking the repo's obvious
   reference docs (README, `docs/…`) and any existing `.claudster/kb/*.md` notes.
 - **Existing map** → indexes any KB note that isn't yet linked (adds a row with a placeholder description).
-- **Dangling links** (a linked file that's gone) → **reported, not removed** — those are yours to fix.
+- **Dangling links** (a linked file that's gone) → **reported, not removed** — handle them in Step 3.
 
 ## Step 3 — finish by hand
 Read the `[kb]` summary it printed, then:
 - For each **newly auto-indexed** note, open it and replace the placeholder description with a real
   one-line "what / when to read".
-- For each **dangling** link reported, fix or delete that row (the note was moved/removed).
+- If it reported **dangling** links (a linked file that's gone), decide per link:
+  - The note was **moved/renamed** → fix the link target by hand.
+  - The note is **gone for good** → remove its row. To clear all dangling rows at once, use the
+    destructive opt-in — but **show the dangling list and confirm with the user first**:
+    ```
+    python <path>/check_doc_coverage.py --prune
+    ```
+    `--prune` removes *only* index rows that link to missing files (never valid rows, never prose),
+    and still indexes any orphan notes in the same run.
 
 ## Step 4 — verify clean
 ```
