@@ -45,7 +45,13 @@ The store auto-creates on the first qualifying event — nothing to seed.
 
 `claude-harness/scripts/check_doc_coverage.py` (pre-push): every DOC-MAP link must resolve
 (dangling = **hard failure**); a KB note not indexed in DOC-MAP **warns** (orphan). Only
-`.claudster/kb/*.md` is governed — the wider repo docs are not policed.
+`.claudster/kb/*.md` is governed — the wider repo docs are not policed. Maintain the index with
+`/kb` (`--reindex` to add/scaffold, `--prune` to remove dangling rows).
+
+## Known limits
+
+Accepted trade-offs (prune scope, discovery-on-create, concurrent-session races) live in
+[`docs/known-limits.md`](../../docs/known-limits.md) — read it before "fixing" one as a bug.
 
 ## Fact schema (memory.jsonl)
 

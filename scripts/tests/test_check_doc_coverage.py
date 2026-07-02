@@ -307,6 +307,14 @@ class TestDiscoverReferenceDocs:
         assert not any(p.startswith(".claudster")
                        for p, _ in cdc.discover_reference_docs(tmp_path))
 
+    def test_prunes_vendored_dirs_under_docs(self, tmp_path):
+        """os.walk pruning (fix #2): a vendored subdir under docs/ is skipped, real docs still found."""
+        _write(tmp_path, "docs/real.md", "x")
+        _write(tmp_path, "docs/node_modules/pkg/readme.md", "x")
+        docs = [p for p, _ in cdc.discover_reference_docs(tmp_path)]
+        assert "docs/real.md" in docs
+        assert not any("node_modules" in p for p in docs)
+
 
 class TestInsertTableRows:
     _MAP = (
@@ -335,6 +343,16 @@ class TestInsertTableRows:
 
     def test_missing_heading_is_noop(self):
         assert cdc.insert_table_rows(self._MAP, "Nonexistent", ["| x | y |"]) == self._MAP
+
+    def test_real_row_with_underscore_paren_in_description_is_preserved(self):
+        """DATA-LOSS REGRESSION: a real note whose DESCRIPTION contains '_(' must survive an insert.
+        Only the *label* cell (`_(…)_`) marks a scaffold placeholder — descriptions are user prose."""
+        text = ("## Knowledge base (`.claudster/kb/`)\n\n"
+                "| Doc | What / when to read |\n|---|---|\n"
+                "| [auth.md](auth.md) | covers the `_(login)_` edge case |\n")
+        out = cdc.insert_table_rows(text, "Knowledge base", ["| [new.md](new.md) | n |"])
+        assert "[auth.md](auth.md)" in out   # real row NOT dropped as a placeholder
+        assert "[new.md](new.md)" in out     # new row appended
 
 
 class TestReindex:
@@ -371,6 +389,13 @@ class TestReindex:
         cdc.reindex(tmp_path, "proj")
         changed2, _ = cdc.reindex(tmp_path, "proj")
         assert changed2 is False
+
+    def test_write_is_atomic_no_tmp_left_behind(self, tmp_path):
+        """Fix #3: reindex writes via temp+replace and leaves no .tmp turd on success."""
+        _write(tmp_path, "README.md", "# r")
+        cdc.reindex(tmp_path, "proj")
+        assert (tmp_path / ".claudster/kb/DOC-MAP.md").is_file()
+        assert not (tmp_path / ".claudster/kb/DOC-MAP.md.tmp").exists()
 
     def test_auto_indexed_row_survives_a_second_reindex(self, tmp_path):
         """The auto-indexed description must NOT be an _(…)_ placeholder, or the next reindex drops it."""

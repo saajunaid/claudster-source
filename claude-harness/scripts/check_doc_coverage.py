@@ -281,17 +281,35 @@ def discover_reference_docs(root: Path) -> list[tuple[str, str]]:
             found.append((name, desc))
     docs_dir = root / "docs"
     if docs_dir.is_dir():
+        # os.walk (NOT rglob) + in-place dir pruning: never follows symlinks, so a broken symlink
+        # under docs/ can't crash the walk mid-stream — matches _claude_md_lengths' hard-won pattern.
         rels: list[str] = []
-        for p in sorted(docs_dir.rglob("*.md")):
-            if p.is_file() and not any(part in _SKIP_DIRS for part in p.parts):
-                rels.append(p.relative_to(root).as_posix())
-        found.extend((rel, "Reference doc.") for rel in rels[:_MAX_DISCOVERED_DOCS])
+        for dirpath, dirnames, filenames in os.walk(docs_dir):
+            dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
+            for fn in filenames:
+                if fn.endswith(".md"):
+                    try:
+                        rels.append((Path(dirpath) / fn).relative_to(root).as_posix())
+                    except (OSError, ValueError):
+                        continue
+        found.extend((rel, "Reference doc.") for rel in sorted(rels)[:_MAX_DISCOVERED_DOCS])
     return found
 
 
 def _row(target: str, label: str, desc: str) -> str:
     """One markdown table row: ``| [label](target) | desc |``."""
     return f"| [{label}]({target}) | {desc} |"
+
+
+def _is_placeholder_row(row: str) -> bool:
+    """True for a scaffold placeholder row — one whose *label* cell is an italic ``_(…)_`` stub.
+
+    Checks ONLY the first (label) cell: a real row's label is a ``[link](…)`` (starts with ``[``),
+    never ``_(``. A row's *description* cell may legitimately contain ``_(`` (e.g. "the `_(x)_` case")
+    and must NOT be mistaken for a placeholder — that would silently drop the row (data loss).
+    """
+    cells = [c.strip() for c in row.split("|")]
+    return len(cells) > 1 and cells[1].startswith("_(")
 
 
 def reference_rows(root: Path) -> list[str]:
@@ -347,7 +365,7 @@ def insert_table_rows(text: str, heading_contains: str, rows: list[str]) -> str:
     if start is None:
         return text
     head = lines[start:start + 2]                     # header row + |---| separator
-    body = [b for b in lines[start + 2:end + 1] if "_(" not in b]  # existing rows minus placeholders
+    body = [b for b in lines[start + 2:end + 1] if not _is_placeholder_row(b)]  # keep real rows
     return "\n".join(lines[:start] + head + body + rows + lines[end + 1:])
 
 
@@ -391,6 +409,15 @@ def remove_rows_with_targets(text: str, targets: list[str]) -> str:
     return out + "\n" if text.endswith("\n") else out
 
 
+def _atomic_write(path: Path, text: str) -> None:
+    """Write ``text`` via a same-dir temp file + atomic replace, so a crash mid-write can't leave a
+    truncated/corrupt DOC-MAP. Mirrors dream_memory.save_facts (same filesystem keeps replace atomic)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8", newline="\n")
+    tmp.replace(path)
+
+
 def reindex(
     root: Path, project_name: str = "project", write: bool = True, prune: bool = False
 ) -> tuple[bool, list[str]]:
@@ -405,8 +432,7 @@ def reindex(
     if not doc_map.exists():
         text = build_docmap(root, project_name)
         if write:
-            doc_map.parent.mkdir(parents=True, exist_ok=True)
-            doc_map.write_text(text, encoding="utf-8", newline="\n")
+            _atomic_write(doc_map, text)
         return True, [f"created {DEFAULT_DOC_MAP} ({text.count('](')} link(s) pre-indexed)"]
 
     original = doc_map.read_text(encoding="utf-8")
@@ -429,7 +455,7 @@ def reindex(
                            + ", ".join(dangling))
     changed = updated != original
     if changed and write:
-        doc_map.write_text(updated, encoding="utf-8", newline="\n")
+        _atomic_write(doc_map, updated)
     if not summary:
         summary.append("DOC-MAP.md already in sync — nothing to do.")
     return changed, summary
