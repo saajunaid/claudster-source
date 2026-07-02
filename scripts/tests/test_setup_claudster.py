@@ -252,6 +252,22 @@ def test_doc_map_not_clobbered_on_resetup(tmp_path):
     assert dm.read_text(encoding="utf-8") == "# EDITED — keep me"
 
 
+def test_doc_map_prelinks_discovered_docs(tmp_path):
+    """A fresh scaffold pre-links the repo's real docs (README, docs/…) instead of an empty placeholder."""
+    _make_project(tmp_path)
+    (tmp_path / "README.md").write_text("# T\n", encoding="utf-8")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "arch.md").write_text("# Arch\n", encoding="utf-8")
+    _run_setup(tmp_path)
+    dm = (tmp_path / ".claudster" / "kb" / "DOC-MAP.md").read_text(encoding="utf-8")
+    assert "(../../README.md)" in dm       # link written relative to .claudster/kb/
+    assert "(../../docs/arch.md)" in dm
+    # every pre-linked target exists on disk, so the checker stays gate-clean
+    checker = tmp_path / "scripts" / "check_doc_coverage.py"
+    r = _run([str(checker), "--check"], cwd=tmp_path)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
 def test_manifest_ships_checker():
     """The make-or-break: the bundled `claude` plugin must carry the checker at plugin/scripts/."""
     manifest = json.loads(

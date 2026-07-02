@@ -42,8 +42,11 @@ from the page guide or a doc-map link pointing at a deleted file — so a stale 
 Pre-empt it before writing the relay (use Grep/Read — you don't run the checker):
 - If `frontend/src/routeTree.gen.ts` exists, Grep it for `path:` and confirm every route appears in
   `UI_PAGE_GUIDE.md`; add a row (route → endpoints → DB) for any page that's missing.
-- If `.claudster/kb/DOC-MAP.md` exists, confirm each reference doc you created/touched is indexed there as
-  a markdown link, and that no indexed link points at a file you deleted/renamed.
+- `.claudster/kb/DOC-MAP.md` is the KB index. If it's **absent** but this repo has (or you just wrote) a
+  `.claudster/kb/*.md` note, create it — a minimal map indexing that note — so the KB layer lights up
+  (the main thread can also run `check_doc_coverage.py --reindex` to scaffold it). If it exists, confirm each
+  reference doc you created/touched is indexed there as a markdown link, and that no indexed link points at a
+  file you deleted/renamed.
 - **KB-note content freshness:** if this session changed code that an existing `.claudster/kb/*.md` note
   *describes* (its subject — a module, contract, or behaviour you altered), refresh that note's content too.
   The gate only catches structural drift (broken links); a note that still describes the old behaviour is

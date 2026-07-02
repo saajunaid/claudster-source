@@ -396,7 +396,34 @@ def emit_doc_discipline(target: Path, ident: dict[str, str], force: bool, dry: b
                             encoding="utf-8", newline="\n")
         notes.append(f"{label}: wrote {rel}")
 
-    _emit(".claudster/kb/DOC-MAP.md", "doc-map.md.tmpl", "doc-map")
+    # DOC-MAP: render the template, then pre-link the repo's discovered reference docs (README,
+    # docs/…) and any existing KB notes, so a fresh repo starts with a *useful* index instead of an
+    # empty placeholder. Reuses check_doc_coverage's helpers (one implementation of the link logic).
+    # Idempotent: an existing (possibly edited) map is kept untouched unless --force.
+    dm_rel = ".claudster/kb/DOC-MAP.md"
+    dm_dest = target / dm_rel
+    if not (cm / "doc-map.md.tmpl").is_file():
+        notes.append("doc-map: template missing — skipped")
+    elif dm_dest.exists() and not force:
+        notes.append(f"doc-map: {dm_rel} present — kept")
+    else:
+        text = render((cm / "doc-map.md.tmpl").read_text(encoding="utf-8"), mapping)
+        n_links = None
+        try:
+            _cs = str(HARNESS_DIR / "scripts")
+            if _cs not in sys.path:
+                sys.path.insert(0, _cs)
+            import check_doc_coverage as _cdc
+            text = _cdc.insert_table_rows(text, "Knowledge base", _cdc.kb_note_rows(target))
+            text = _cdc.insert_table_rows(text, "Other key", _cdc.reference_rows(target))
+            n_links = text.count("](")
+        except Exception:
+            pass  # discovery is a nicety — a plain template scaffold is still valid & gate-clean
+        if not dry:
+            dm_dest.parent.mkdir(parents=True, exist_ok=True)
+            dm_dest.write_text(text, encoding="utf-8", newline="\n")
+        notes.append(f"doc-map: wrote {dm_rel}" + (f" ({n_links} link(s) pre-indexed)" if n_links else ""))
+
     if (target / "frontend").exists():
         _emit("UI_PAGE_GUIDE.md", "ui-page-guide.md.tmpl", "page guide")
 

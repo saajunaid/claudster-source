@@ -282,3 +282,103 @@ class TestWarnTier:
         assert rc == 0
         assert "node_modules" not in out  # pruned → no oversize warning from vendored files
         assert ".venv" not in out
+
+
+# --------------------------------------------------------------------------- #
+# Doc-map generation & reindex (KB backfill) — deterministic scaffolding.
+# --------------------------------------------------------------------------- #
+class TestDiscoverReferenceDocs:
+    def test_finds_known_root_docs_that_exist(self, tmp_path):
+        _write(tmp_path, "README.md", "# r")
+        _write(tmp_path, "MIGRATION.md", "# m")
+        found = dict(cdc.discover_reference_docs(tmp_path))
+        assert "README.md" in found and "MIGRATION.md" in found
+        assert "CHANGELOG.md" not in found  # absent on disk → never linked (would dangle)
+
+    def test_docs_folder_capped_and_sorted(self, tmp_path):
+        for i in range(cdc._MAX_DISCOVERED_DOCS + 4):
+            _write(tmp_path, f"docs/n{i:02d}.md", "x")
+        docs = [p for p, _ in cdc.discover_reference_docs(tmp_path) if p.startswith("docs/")]
+        assert len(docs) == cdc._MAX_DISCOVERED_DOCS
+        assert docs == sorted(docs)
+
+    def test_excludes_the_kb_itself(self, tmp_path):
+        _write(tmp_path, ".claudster/kb/note.md", "x")
+        assert not any(p.startswith(".claudster")
+                       for p, _ in cdc.discover_reference_docs(tmp_path))
+
+
+class TestInsertTableRows:
+    _MAP = (
+        "## Knowledge base (`.claudster/kb/`)\n\n"
+        "| Doc | What / when to read |\n|---|---|\n"
+        "| _(placeholder)_ | |\n\n"
+        "## Other key code-relevant docs\n\n"
+        "| Doc | What / when to read |\n|---|---|\n"
+        "| _(placeholder)_ | |\n"
+    )
+
+    def test_appends_row_and_drops_placeholder(self):
+        out = cdc.insert_table_rows(self._MAP, "Knowledge base", ["| [a.md](a.md) | note |"])
+        kb = out.split("## Other")[0]
+        assert "[a.md](a.md)" in kb
+        assert "_(placeholder)_" not in kb  # placeholder in the KB table removed
+
+    def test_targets_only_the_named_heading(self):
+        out = cdc.insert_table_rows(self._MAP, "Other key", ["| [b.md](../../b.md) | ref |"])
+        assert "[b.md](../../b.md)" in out.split("## Other")[1]
+        assert "b.md" not in out.split("## Other")[0]      # KB section untouched
+        assert "_(placeholder)_" in out.split("## Other")[0]
+
+    def test_empty_rows_is_noop(self):
+        assert cdc.insert_table_rows(self._MAP, "Knowledge base", []) == self._MAP
+
+    def test_missing_heading_is_noop(self):
+        assert cdc.insert_table_rows(self._MAP, "Nonexistent", ["| x | y |"]) == self._MAP
+
+
+class TestReindex:
+    def test_creates_missing_docmap_with_discovered_docs(self, tmp_path):
+        _write(tmp_path, "README.md", "# r")
+        changed, summary = cdc.reindex(tmp_path, "proj")
+        dm = tmp_path / ".claudster" / "kb" / "DOC-MAP.md"
+        assert changed and dm.is_file()
+        assert "(../../README.md)" in dm.read_text(encoding="utf-8")
+        assert cdc.run(tmp_path, check=True) == 0  # fresh map is gate-clean
+
+    def test_indexes_orphan_kb_note_and_passes_gate(self, tmp_path):
+        _write(tmp_path, ".claudster/kb/DOC-MAP.md",
+               "## Knowledge base (`.claudster/kb/`)\n\n| Doc | X |\n|---|---|\n| _(none)_ | |\n")
+        _write(tmp_path, ".claudster/kb/domain.md", "# d")
+        changed, summary = cdc.reindex(tmp_path, "proj")
+        dm = (tmp_path / ".claudster/kb/DOC-MAP.md").read_text(encoding="utf-8")
+        assert changed
+        assert "[domain.md](domain.md)" in dm
+        assert cdc.run(tmp_path, check=True) == 0        # orphan warning is gone
+        assert any("domain.md" in s for s in summary)
+
+    def test_reports_dangling_without_deleting(self, tmp_path):
+        _write(tmp_path, ".claudster/kb/DOC-MAP.md",
+               "## Knowledge base (`.claudster/kb/`)\n\n| Doc | X |\n|---|---|\n"
+               "| [gone](../../docs/gone.md) | x |\n")
+        changed, summary = cdc.reindex(tmp_path, "proj")
+        dm = (tmp_path / ".claudster/kb/DOC-MAP.md").read_text(encoding="utf-8")
+        assert "docs/gone.md" in dm                        # human-written row preserved
+        assert any("dangling" in s for s in summary)
+
+    def test_idempotent_when_in_sync(self, tmp_path):
+        _write(tmp_path, "README.md", "# r")
+        cdc.reindex(tmp_path, "proj")
+        changed2, _ = cdc.reindex(tmp_path, "proj")
+        assert changed2 is False
+
+    def test_auto_indexed_row_survives_a_second_reindex(self, tmp_path):
+        """The auto-indexed description must NOT be an _(…)_ placeholder, or the next reindex drops it."""
+        _write(tmp_path, ".claudster/kb/DOC-MAP.md",
+               "## Knowledge base (`.claudster/kb/`)\n\n| Doc | X |\n|---|---|\n")
+        _write(tmp_path, ".claudster/kb/first.md", "# 1")
+        cdc.reindex(tmp_path, "proj")
+        _write(tmp_path, ".claudster/kb/second.md", "# 2")
+        cdc.reindex(tmp_path, "proj")
+        dm = (tmp_path / ".claudster/kb/DOC-MAP.md").read_text(encoding="utf-8")
+        assert "[first.md](first.md)" in dm and "[second.md](second.md)" in dm

@@ -212,6 +212,190 @@ def _repo_root() -> Path:
     return Path.cwd()
 
 
+# --------------------------------------------------------------------------- #
+# Doc-map generation & reindex — deterministic scaffolding / backfill for repos
+# that have the harness but no KB yet (the KB was introduced late). ADDITIVE: it
+# creates a missing map and indexes un-indexed KB notes, but never deletes a
+# human-written row (mirrors knowledge-transfer's "append, don't delete"); a
+# dangling link is *reported*, not removed. Reused by setup_project_ai for the
+# fresh-scaffold path so both share one implementation.
+# --------------------------------------------------------------------------- #
+
+# Root-level docs worth linking from a fresh map, each with a canned one-liner. Only the
+# ones that actually exist get linked (a dangling link is a hard gate failure).
+_KNOWN_ROOT_DOCS: tuple[tuple[str, str], ...] = (
+    ("README.md", "Repo overview — what it is, how to run it."),
+    ("ARCHITECTURE.md", "System architecture."),
+    ("DESIGN.md", "Design notes / decisions."),
+    ("MIGRATION.md", "Migration / cutover notes."),
+    ("CONTRIBUTING.md", "How to contribute / dev setup."),
+    ("CHANGELOG.md", "Release history."),
+    ("ROADMAP.md", "Roadmap."),
+)
+_MAX_DISCOVERED_DOCS = 8   # cap docs/ links so a large docs tree can't bloat the map
+
+_DOCMAP_SCAFFOLD = """\
+# DOC-MAP — {name} code knowledge index (the KB)
+
+> **What this is:** the curated index of the docs that matter for understanding *this codebase* —
+> one line each: what it is and when to read it. A router, not a summary; detail lives in the linked
+> docs. KB notes live beside this file in `.claudster/kb/`.
+>
+> **Discipline:** kept honest by [`check_doc_coverage.py`](../../scripts/check_doc_coverage.py) —
+> every link here must resolve (a link to a missing file is a **hard failure**), and a KB note
+> (`.claudster/kb/*.md`) not indexed here **warns**. Only `.claudster/kb/*.md` is governed.
+
+## Read first
+1. `CLAUDE.md` — project laws + the dev harness (if the repo has one).
+2. The entries below, by area.
+
+## Knowledge base (`.claudster/kb/`)
+
+| Doc | What / when to read |
+|---|---|
+| _(no KB notes yet — add them here as links)_ | |
+
+## Other key code-relevant docs
+
+| Doc | What / when to read |
+|---|---|
+| _(optionally link a README, design doc, or runbook)_ | |
+
+---
+
+*Governed = `.claudster/kb/*.md` only (must be indexed here). The wider repo docs are not policed.*
+"""
+
+
+def discover_reference_docs(root: Path) -> list[tuple[str, str]]:
+    """Deterministically find code-relevant docs worth linking from a fresh map.
+
+    Returns ``(repo-root-relative posix path, one-line description)`` pairs. Only **existing** files
+    are returned (a dangling link would hard-fail the gate). Scans the known root docs, then
+    ``docs/**/*.md`` (sorted, capped); never the KB itself or vendored trees.
+    """
+    root = Path(root)
+    found: list[tuple[str, str]] = []
+    for name, desc in _KNOWN_ROOT_DOCS:
+        if (root / name).is_file():
+            found.append((name, desc))
+    docs_dir = root / "docs"
+    if docs_dir.is_dir():
+        rels: list[str] = []
+        for p in sorted(docs_dir.rglob("*.md")):
+            if p.is_file() and not any(part in _SKIP_DIRS for part in p.parts):
+                rels.append(p.relative_to(root).as_posix())
+        found.extend((rel, "Reference doc.") for rel in rels[:_MAX_DISCOVERED_DOCS])
+    return found
+
+
+def _row(target: str, label: str, desc: str) -> str:
+    """One markdown table row: ``| [label](target) | desc |``."""
+    return f"| [{label}]({target}) | {desc} |"
+
+
+def reference_rows(root: Path) -> list[str]:
+    """Table rows for every discovered reference doc, its link written relative to the doc-map dir.
+
+    The doc-map lives two levels deep (`.claudster/kb/`), so a repo-root path is reached via `../../`.
+    """
+    return [_row("../../" + rel, rel, desc) for rel, desc in discover_reference_docs(root)]
+
+
+def kb_note_rows(root: Path, indexed: set[str] = frozenset()) -> list[str]:
+    """Rows for `.claudster/kb/*.md` notes (excluding DOC-MAP), skipping already-indexed ones.
+
+    ``indexed`` holds repo-root-relative paths already linked in the map. The description is a plain
+    nudge (NOT an ``_(…)_`` placeholder, so a later reindex won't drop it) for the agent/human to fill.
+    """
+    root = Path(root)
+    rows: list[str] = []
+    for p in sorted((root / ".claudster" / "kb").glob("*.md")):
+        rel = p.relative_to(root).as_posix()
+        if p.name == "DOC-MAP.md" or rel in indexed:
+            continue
+        rows.append(_row(p.name, p.name, "auto-indexed — add a one-line 'when to read'."))
+    return rows
+
+
+def insert_table_rows(text: str, heading_contains: str, rows: list[str]) -> str:
+    """Append ``rows`` to the markdown table under the first ``## …heading_contains…`` heading. Pure.
+
+    Drops italic placeholder rows (a first cell containing ``_(``) when adding real rows. If the
+    heading or its table can't be located, returns ``text`` unchanged — fail-safe, never corrupts.
+    """
+    if not rows:
+        return text
+    lines = text.splitlines()
+    heading = next(
+        (i for i, ln in enumerate(lines)
+         if ln.strip().startswith("## ") and heading_contains.lower() in ln.strip().lower()),
+        None,
+    )
+    if heading is None:
+        return text
+    start = end = None
+    for i in range(heading + 1, len(lines)):
+        s = lines[i].strip()
+        if s.startswith("## "):
+            break
+        if s.startswith("|"):
+            start = i if start is None else start
+            end = i
+        elif start is not None and not s:
+            break
+    if start is None:
+        return text
+    head = lines[start:start + 2]                     # header row + |---| separator
+    body = [b for b in lines[start + 2:end + 1] if "_(" not in b]  # existing rows minus placeholders
+    return "\n".join(lines[:start] + head + body + rows + lines[end + 1:])
+
+
+def build_docmap(root: Path, project_name: str = "project") -> str:
+    """Full DOC-MAP text for a fresh repo: scaffold + discovered reference docs + existing KB notes."""
+    text = _DOCMAP_SCAFFOLD.replace("{name}", project_name)
+    text = insert_table_rows(text, "Knowledge base", kb_note_rows(root))
+    text = insert_table_rows(text, "Other key", reference_rows(root))
+    return text
+
+
+def reindex(root: Path, project_name: str = "project", write: bool = True) -> tuple[bool, list[str]]:
+    """Create a missing DOC-MAP, or index un-indexed KB notes into an existing one. Additive only.
+
+    Returns ``(changed, summary_lines)``. Never deletes human-written rows; dangling links are
+    reported for a human to fix (auto-removing user content would be destructive).
+    """
+    root = Path(root)
+    doc_map = root / DEFAULT_DOC_MAP
+    if not doc_map.exists():
+        text = build_docmap(root, project_name)
+        if write:
+            doc_map.parent.mkdir(parents=True, exist_ok=True)
+            doc_map.write_text(text, encoding="utf-8", newline="\n")
+        return True, [f"created {DEFAULT_DOC_MAP} ({text.count('](')} link(s) pre-indexed)"]
+
+    original = doc_map.read_text(encoding="utf-8")
+    entries = {_to_root_relative(t, doc_map, root) for t in extract_docmap_entries(original)}
+    governed = _governed_docs(root, GOVERNED_GLOBS) - {doc_map.relative_to(root).as_posix()}
+    existing = {e for e in entries if (root / e).exists()}
+    orphans, dangling = docmap_issues(entries, governed, existing)
+
+    summary: list[str] = []
+    updated = original
+    if orphans:
+        updated = insert_table_rows(updated, "Knowledge base", kb_note_rows(root, entries))
+        summary.append(f"indexed {len(orphans)} KB note(s): " + ", ".join(orphans))
+    changed = updated != original
+    if changed and write:
+        doc_map.write_text(updated, encoding="utf-8", newline="\n")
+    if dangling:
+        summary.append(f"{len(dangling)} dangling link(s) to fix by hand (not auto-removed): "
+                       + ", ".join(dangling))
+    if not summary:
+        summary.append("DOC-MAP.md already in sync — nothing to do.")
+    return changed, summary
+
+
 def run(root: Path, check: bool) -> int:
     root = Path(root)
     # Optional per-repo overrides ([doc_coverage] in .claudster/config.toml); baked-in defaults otherwise.
@@ -283,10 +467,22 @@ def main() -> None:
         action="store_true",
         help="Gate mode: exit non-zero on a hard failure (missing route / dangling link).",
     )
+    parser.add_argument(
+        "--reindex",
+        action="store_true",
+        help="Create a missing DOC-MAP or index un-indexed KB notes (additive; writes the file).",
+    )
     args = parser.parse_args()
+    root = _repo_root()
+    # Reindex is a maintenance action (the `/kb` command drives it), not a gate — run and exit 0.
+    if args.reindex:
+        _changed, summary = reindex(root, root.name)
+        for line in summary:
+            print(f"[kb] {line}")
+        sys.exit(0)
     # Resolve the repo root from git (cwd fallback) — the pre-push gate runs from the repo root,
     # so this is correct wherever the checker is copied. Tests call run() with an explicit root.
-    sys.exit(run(_repo_root(), args.check))
+    sys.exit(run(root, args.check))
 
 
 if __name__ == "__main__":
