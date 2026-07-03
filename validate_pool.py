@@ -895,6 +895,258 @@ def check_liffey_content_restrictions(profile_root: Path) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# Check 9 — Claude Code plugin-bundle validation (profiles: claude, claude-extras)
+# ---------------------------------------------------------------------------
+#
+# The shipped plugin bundle previously had ZERO validation (DECISIONS.md fix-regardless
+# item). These checks guard the packaged bundle under dist/runtime-resources/<profile>/
+# so a broken plugin (version drift, missing hook script, leaked secret) cannot publish.
+#
+#   claude        -> dist/runtime-resources/claude/plugin
+#   claude-extras -> dist/runtime-resources/claude-extras/plugin-extras
+#
+# Checks:
+#   (a) plugin.json shape + name/version match runtime-targets.json
+#   (b) flattened SKILL.md frontmatter + roster count
+#   (c) commands/agents/hooks present            (core plugin only)
+#   (d) hooks.json command references resolve     (core plugin only)
+#   (e) leak scan over the bundle                 (shared privacy scan)
+#   (f) scripts/ contains every module the hooks import  (core plugin only;
+#       catches the Dream Memory packaging bug — hooks importing scripts that
+#       were never copied into the bundle, silently disabling the layer)
+
+CLAUDE_PLUGIN_ROOTS = {
+    "claude": DIST_RUNTIME_ROOT / "claude" / "plugin",
+    "claude-extras": DIST_RUNTIME_ROOT / "claude-extras" / "plugin-extras",
+}
+
+
+def _claude_plugin_root(profile: str) -> Path:
+    return CLAUDE_PLUGIN_ROOTS[profile]
+
+
+def check_claude_plugin_manifest(profile: str, plugin_root: Path) -> CheckResult:
+    """(a) plugin.json exists, is well-formed, and its name/version match the
+    runtime-targets.json declaration for this profile."""
+    r = CheckResult(name=f"Plugin manifest — {profile} (.claude-plugin/plugin.json)")
+    plugin_json = plugin_root / ".claude-plugin" / "plugin.json"
+    if not plugin_json.is_file():
+        r.passed = False
+        r.failures.append(f"Missing plugin.json: {plugin_json}")
+        return r
+
+    try:
+        data = json.loads(plugin_json.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        r.passed = False
+        r.failures.append(f"Invalid plugin.json JSON: {exc}")
+        return r
+
+    for key in ("name", "version", "description"):
+        if not str(data.get(key, "")).strip():
+            r.failures.append(f"plugin.json missing required key: {key!r}")
+
+    version = str(data.get("version", "")).strip()
+    if version and not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        r.failures.append(f"plugin.json version not semver X.Y.Z: {version!r}")
+
+    target = _load_manifest_target(profile)
+    if target is None:
+        r.failures.append(f"Profile {profile!r} not found in runtime-targets.json")
+    else:
+        declared = target.get("plugin", {}) or {}
+        declared_version = str(declared.get("version", "")).strip()
+        declared_name = str(declared.get("name", "")).strip()
+        if declared_version and version and declared_version != version:
+            r.failures.append(
+                f"Version drift: plugin.json={version!r} but runtime-targets.json={declared_version!r}"
+            )
+        if declared_name and str(data.get("name", "")).strip() != declared_name:
+            r.failures.append(
+                f"Name drift: plugin.json={data.get('name')!r} but runtime-targets.json={declared_name!r}"
+            )
+
+    r.info.append(f"name={data.get('name')!r} version={version!r}")
+    r.passed = not r.failures
+    return r
+
+
+def check_claude_skills_bundle(profile: str, plugin_root: Path) -> CheckResult:
+    """(b) skills are flattened (skills/<name>/SKILL.md), every SKILL.md carries
+    name+description frontmatter, and the roster is non-empty with no orphan dirs."""
+    r = CheckResult(name=f"Skill bundle — {profile} (flattened frontmatter + roster)")
+    skills_dir = plugin_root / "skills"
+    if not skills_dir.is_dir():
+        r.passed = False
+        r.failures.append(f"Missing skills/ directory: {skills_dir}")
+        return r
+
+    skill_mds = sorted(skills_dir.rglob("SKILL.md"))
+    if not skill_mds:
+        r.passed = False
+        r.failures.append("No SKILL.md files found in bundle")
+        return r
+
+    for skill_md in skill_mds:
+        rel_parts = skill_md.relative_to(skills_dir).parts
+        # Flattened contract: exactly skills/<name>/SKILL.md (one dir segment).
+        if len(rel_parts) != 2:
+            r.failures.append(
+                f"Skill not flattened (expected skills/<name>/SKILL.md): skills/{'/'.join(rel_parts)}"
+            )
+        text = _read_text_safe(skill_md)
+        if text is None:
+            r.failures.append(f"skills/{'/'.join(rel_parts)}: cannot read")
+            continue
+        parsed = _split_frontmatter(text)
+        if parsed is None:
+            r.failures.append(f"skills/{'/'.join(rel_parts)}: missing or invalid frontmatter")
+            continue
+        meta, _ = parsed
+        for field_name in ("name", "description"):
+            if not str(meta.get(field_name, "")).strip():
+                r.failures.append(f"skills/{'/'.join(rel_parts)}: missing '{field_name}'")
+
+    # Roster count: every immediate child dir of skills/ must contain a SKILL.md (no orphans).
+    skill_dirs = [d for d in skills_dir.iterdir() if d.is_dir()]
+    orphans = [d.name for d in skill_dirs if not (d / "SKILL.md").is_file()]
+    for name in sorted(orphans):
+        r.failures.append(f"Skill dir without SKILL.md (orphan in roster): skills/{name}")
+
+    r.info.append(f"roster: {len(skill_mds)} skill(s), {len(skill_dirs)} dir(s)")
+    r.passed = not r.failures
+    return r
+
+
+def check_claude_components_present(profile: str, plugin_root: Path) -> CheckResult:
+    """(c) the core plugin ships commands/, agents/, and hooks/hooks.json — each non-empty."""
+    r = CheckResult(name=f"Plugin components — {profile} (commands/agents/hooks)")
+    commands = sorted((plugin_root / "commands").glob("*.md")) if (plugin_root / "commands").is_dir() else []
+    agents = (
+        sorted((plugin_root / "agents").glob("*.md")) if (plugin_root / "agents").is_dir() else []
+    )
+    hooks_json = plugin_root / "hooks" / "hooks.json"
+
+    if not commands:
+        r.failures.append("No command files under commands/*.md")
+    if not agents:
+        r.failures.append("No agent files under agents/*.md")
+    if not hooks_json.is_file():
+        r.failures.append("Missing hooks/hooks.json")
+
+    r.info.append(f"commands={len(commands)} agents={len(agents)} hooks.json={hooks_json.is_file()}")
+    r.passed = not r.failures
+    return r
+
+
+def check_claude_hooks_references(profile: str, plugin_root: Path) -> CheckResult:
+    """(d) every command referenced in hooks.json resolves to a file in the bundle."""
+    r = CheckResult(name=f"Hook references — {profile} (hooks.json commands resolve)")
+    hooks_json = plugin_root / "hooks" / "hooks.json"
+    if not hooks_json.is_file():
+        r.passed = False
+        r.failures.append(f"Missing hooks.json: {hooks_json}")
+        return r
+    try:
+        data = json.loads(hooks_json.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        r.passed = False
+        r.failures.append(f"Invalid hooks.json JSON: {exc}")
+        return r
+
+    # Extract ${CLAUDE_PLUGIN_ROOT}/<rel> references from every hook command string.
+    ref_re = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\"'\s]+)")
+    refs: set[str] = set()
+    for event_hooks in (data.get("hooks") or {}).values():
+        for matcher_block in event_hooks:
+            for hook in matcher_block.get("hooks", []):
+                cmd = str(hook.get("command", ""))
+                refs.update(ref_re.findall(cmd))
+
+    for rel in sorted(refs):
+        target = plugin_root / rel
+        if not target.is_file():
+            r.failures.append(f"hooks.json references missing file: {rel}")
+
+    r.info.append(f"resolved {len(refs)} hook command reference(s)")
+    r.passed = not r.failures
+    return r
+
+
+def _stdlib_module_names() -> set[str]:
+    names = set(getattr(sys, "stdlib_module_names", set()))
+    names |= set(sys.builtin_module_names)
+    return names
+
+
+def check_claude_hook_imports(profile: str, plugin_root: Path) -> CheckResult:
+    """(f) every non-stdlib module the hooks import must be shipped in scripts/ (or be
+    a sibling hook). Catches the Dream Memory bug: hooks importing dream_memory/
+    dream_capture that were never packaged, silently disabling the memory layer."""
+    import ast
+
+    r = CheckResult(name=f"Hook imports — {profile} (scripts/ ships every imported module)")
+    hooks_dir = plugin_root / "hooks"
+    scripts_dir = plugin_root / "scripts"
+    if not hooks_dir.is_dir():
+        r.passed = False
+        r.failures.append(f"Missing hooks/ directory: {hooks_dir}")
+        return r
+
+    stdlib = _stdlib_module_names()
+    hook_module_names = {p.stem for p in hooks_dir.glob("*.py")}
+    imported: dict[str, str] = {}  # module -> first hook that imports it
+    for py in sorted(hooks_dir.glob("*.py")):
+        text = _read_text_safe(py)
+        if text is None:
+            continue
+        try:
+            tree = ast.parse(text)
+        except SyntaxError as exc:
+            r.failures.append(f"hooks/{py.name}: syntax error, cannot analyse imports ({exc})")
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    imported.setdefault(alias.name.split(".")[0], py.name)
+            elif isinstance(node, ast.ImportFrom):
+                if node.level == 0 and node.module:
+                    imported.setdefault(node.module.split(".")[0], py.name)
+
+    def _shipped_in_scripts(mod: str) -> bool:
+        return (scripts_dir / f"{mod}.py").is_file() or (scripts_dir / mod / "__init__.py").is_file()
+
+    checked = 0
+    for mod, source_hook in sorted(imported.items()):
+        if mod in stdlib or mod in hook_module_names:
+            continue
+        checked += 1
+        if not _shipped_in_scripts(mod):
+            r.failures.append(
+                f"hooks/{source_hook} imports '{mod}' but scripts/{mod}.py is not in the bundle"
+            )
+
+    r.info.append(f"non-stdlib hook imports checked: {checked}")
+    r.passed = not r.failures
+    return r
+
+
+def run_claude_profile_checks(profile: str, plugin_root: Path, roots: list[Path]) -> list[CheckResult]:
+    results = [
+        check_claude_plugin_manifest(profile, plugin_root),
+        check_claude_skills_bundle(profile, plugin_root),
+        check_privacy_scan(roots),  # (e) leak scan
+    ]
+    # (c)/(d)/(f) apply to the core plugin (commands/agents/hooks); the extras bundle
+    # is skills-only, so run the component/hook checks only when a hooks/ dir exists.
+    if (plugin_root / "hooks").is_dir():
+        results.insert(2, check_claude_components_present(profile, plugin_root))
+        results.insert(3, check_claude_hooks_references(profile, plugin_root))
+        results.append(check_claude_hook_imports(profile, plugin_root))
+    return results
+
+
+# ---------------------------------------------------------------------------
 # Check 8 — Golden-plan quality
 # ---------------------------------------------------------------------------
 
@@ -1066,17 +1318,22 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--profile",
-        choices=["ptarmigan", "liffey"],
-        help="Validate a specific exported profile under dist/runtime-resources/<profile>/.github.",
+        choices=["ptarmigan", "liffey", "claude", "claude-extras"],
+        help="Validate a specific exported profile under dist/runtime-resources/<profile>/.",
     )
     args = parser.parse_args(argv)
 
+    claude_profile = args.profile in ("claude", "claude-extras")
+
     roots = _resolve_scan_roots(args)
     profile_root: Path | None = None
-    if args.profile:
+    if args.profile and not claude_profile:
         profile_root = DIST_RUNTIME_ROOT / args.profile / ".github"
         profile_root_path: Path = cast(Path, profile_root)
         roots = [profile_root_path]
+    elif claude_profile:
+        profile_root = _claude_plugin_root(args.profile)
+        roots = [cast(Path, profile_root)]
 
     print("=" * 70)
     print("  validate_pool.py — junai pool validator")
@@ -1084,7 +1341,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  scope: {[str(p) for p in roots]}")
     print("-" * 70)
 
-    if args.profile:
+    if claude_profile:
+        if profile_root is None or not profile_root.exists():
+            print(f"[FAIL] Plugin bundle not found: {profile_root}")
+            print("       Run export_runtime_resources.py first.")
+            return 1
+        results = run_claude_profile_checks(args.profile, cast(Path, profile_root), roots)
+    elif args.profile:
         if profile_root is None or not profile_root.exists():
             print(f"[FAIL] Profile export not found: {profile_root}")
             print("       Run export_runtime_resources.py for this profile first.")

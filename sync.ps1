@@ -10,8 +10,9 @@
 #
 # Usage from any project root:
 #   junai-pull                    pull latest pool from junai --> current project
-#   junai-push                    push pool from current project --> junai + commit + push (+ auto-publish when keys exist)
-#   junai-push -NoPublish         push only (skip publish)
+#   junai-push                    push pool from current project --> junai + commit + push (mirror sync only; publish is opt-in)
+#   junai-push -Publish           also release MCP (PyPI) + VS Code extension (content-diff gated; PyPI is PERMANENT)
+#   junai-push -NoPublish         DEPRECATED no-op (publish is now off by default; flag kept for back-compat)
 #   junai-smoke-release           run fresh-shell smoke checks for release automation
 #   junai-ship                    commit source, cascade mirrors/profiles, optionally publish selected lanes
 #   junai-release                 publish MCP + VS Code extension using keyfiles
@@ -1357,21 +1358,31 @@ function junai-push {
         }
     }
 
-    # ── Auto-publish when key files exist ─────────────────────────────────
+    # ── Publish gating (INVERTED default: release is opt-in via -Publish) ──────
+    # SAFETY (Track 0, 2026-07): historically junai-push auto-published whenever a
+    # PyPI/VS Code key was merely present in .env — one keystroke from a PERMANENT,
+    # un-undoable PyPI upload, even for a plugin-only session. The default is now
+    # inverted: a release fires ONLY when -Publish is explicitly passed. -NoPublish is
+    # retained as a DEPRECATED silent no-op (its behaviour is now the default). The
+    # mirror sync above still runs unconditionally; only the MCP/VS Code release is gated.
     $pypiToken = Get-JunaiSecretValue -EnvName "JUNAI_PYPI_TOKEN" -LegacyFilePath $PYPI_KEY_FILE
     $vscePat = Get-JunaiSecretValue -EnvName "JUNAI_VSCE_PAT" -LegacyFilePath $VSCE_PAT_FILE
     $hasPypiKey = -not [string]::IsNullOrWhiteSpace($pypiToken)
     $hasVscePat = -not [string]::IsNullOrWhiteSpace($vscePat)
-    $hasAnyKey = $hasPypiKey -or $hasVscePat
-    $shouldPublish = $Publish -or (-not $NoPublish -and $hasAnyKey)
+    $shouldPublish = [bool]$Publish
 
     if ($NoPublish) {
-        Write-Host "  [--]  Publish skipped (-NoPublish)." -ForegroundColor DarkGray
-        return [pscustomobject]$pushResult
+        Write-Host "  [--]  -NoPublish is deprecated: publish is now opt-in and skipped by default." -ForegroundColor DarkGray
     }
 
     if (-not $shouldPublish) {
-        Write-Host "  [--]  No publish keys found. Skipping release." -ForegroundColor DarkGray
+        Write-Host "  [--]  Mirror synced; release NOT triggered (publish is opt-in)." -ForegroundColor DarkGray
+        Write-Host "       Re-run 'junai-push -Publish' to release the MCP (PyPI) / VS Code extension." -ForegroundColor DarkGray
+        return [pscustomobject]$pushResult
+    }
+
+    if (-not ($hasPypiKey -or $hasVscePat)) {
+        Write-Host "  [--]  -Publish set but no keys found; nothing to release." -ForegroundColor DarkGray
         Write-Host "       Set JUNAI_PYPI_TOKEN and/or JUNAI_VSCE_PAT in $JUNAI_ENV_FILE (legacy key files still work)." -ForegroundColor DarkGray
         return [pscustomobject]$pushResult
     }
@@ -1677,21 +1688,97 @@ function junai-publish-mcp {
     return $true
 }
 
+function Get-JunaiSourceHash {
+    # Deterministic SHA256 over a package's SOURCE files (code only). Backs the
+    # publish content-diff gate: an unchanged package is never re-uploaded to a
+    # permanent registry (PyPI) / marketplace. Version-bearing files (pyproject.toml,
+    # package.json) are intentionally EXCLUDED by the caller's extension filter so an
+    # auto version bump alone does not look like a content change.
+    param(
+        [Parameter(Mandatory)][string]$RootPath,
+        [string[]]$IncludeExt = @(".py"),
+        [string[]]$ExcludeDirs = @("dist", "build", "out", "node_modules", "__pycache__", ".git", ".venv", ".egg-info")
+    )
+    if (-not (Test-Path $RootPath)) { return "" }
+    $rootFull = (Resolve-Path $RootPath).Path
+    $files = Get-ChildItem -Path $RootPath -Recurse -File -ErrorAction SilentlyContinue |
+        Where-Object {
+            $IncludeExt -contains $_.Extension.ToLowerInvariant()
+        } |
+        Where-Object {
+            $rel = $_.FullName.Substring($rootFull.Length).TrimStart('\', '/')
+            $parts = $rel -split '[\\/]'
+            -not ($parts | Where-Object { $ExcludeDirs -contains $_ -or $_ -like "*.egg-info" })
+        } |
+        Sort-Object { $_.FullName.Substring($rootFull.Length).TrimStart('\', '/').ToLowerInvariant() }
+    if (-not $files) { return "" }
+    $sb = New-Object System.Text.StringBuilder
+    foreach ($f in $files) {
+        $rel = $f.FullName.Substring($rootFull.Length).TrimStart('\', '/').Replace('\', '/').ToLowerInvariant()
+        $fileHash = (Get-FileHash -Path $f.FullName -Algorithm SHA256).Hash
+        [void]$sb.AppendLine("$rel  $fileHash")
+    }
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($sb.ToString())
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $hashBytes = $sha.ComputeHash($bytes)
+    } finally {
+        $sha.Dispose()
+    }
+    return (([System.BitConverter]::ToString($hashBytes)) -replace '-', '').ToLowerInvariant()
+}
+
+function Test-JunaiPublishNeeded {
+    # Returns @{ Needed = <bool>; Hash = <string> }. Needed=$true when the source
+    # hash differs from the marker written by the last successful publish. FAILS OPEN:
+    # if the source can't be hashed (missing dir), Needed=$true so a real publish is
+    # never silently skipped. -Force always publishes.
+    param(
+        [Parameter(Mandatory)][string]$SourceRoot,
+        [Parameter(Mandatory)][string]$MarkerPath,
+        [string[]]$IncludeExt = @(".py"),
+        [switch]$Force
+    )
+    $current = Get-JunaiSourceHash -RootPath $SourceRoot -IncludeExt $IncludeExt
+    if ($Force -or [string]::IsNullOrWhiteSpace($current)) {
+        return @{ Needed = $true; Hash = $current }
+    }
+    $previous = ""
+    if (Test-Path $MarkerPath) { $previous = (Get-Content $MarkerPath -Raw).Trim() }
+    return @{ Needed = ($current -ne $previous); Hash = $current }
+}
+
+function Save-JunaiPublishMarker {
+    param(
+        [Parameter(Mandatory)][string]$MarkerPath,
+        [Parameter(Mandatory)][string]$Hash
+    )
+    if ([string]::IsNullOrWhiteSpace($Hash)) { return }
+    Set-Content -Path $MarkerPath -Value $Hash -Encoding UTF8
+}
+
 function junai-release {
     # Publishes MCP package and VS Code extension using .env secrets first,
     # with legacy key files as fallback.
     #
+    # A SHA256 content-diff gate skips any target whose SOURCE is unchanged since the
+    # last successful publish (markers: .last-published-mcp.sha256 / -ext.sha256),
+    # so a plugin-only session never re-uploads an identical MCP/extension. -Force
+    # bypasses the gate.
+    #
     # Usage:
-    #   junai-release                        # publish both MCP + extension
+    #   junai-release                        # publish both MCP + extension (content-diff gated)
     #   junai-release -SkipMcp               # extension only
     #   junai-release -SkipExtension         # MCP only
     #   junai-release -McpVersion "0.2.2"    # bump MCP version before publish
     #   junai-release -ExtensionVersion "1.2.3"
+    #   junai-release -Force                 # ignore the content-diff gate
     param(
         [string]$McpVersion = "",
         [string]$ExtensionVersion = "",
         [switch]$SkipMcp,
-        [switch]$SkipExtension
+        [switch]$SkipExtension,
+        [switch]$Force
     )
 
     Write-Host ""
@@ -1724,24 +1811,47 @@ function junai-release {
     }
 
     if (-not $SkipMcp) {
-        $pypiToken = Get-JunaiSecretValue -EnvName "JUNAI_PYPI_TOKEN" -LegacyFilePath $PYPI_KEY_FILE
-        if ([string]::IsNullOrWhiteSpace($pypiToken)) {
-            Write-Host "  [ERROR] Missing PyPI token. Set JUNAI_PYPI_TOKEN in $JUNAI_ENV_FILE or keep $PYPI_KEY_FILE." -ForegroundColor Red
-            return $false
-        }
-
-        $prevTwineUser = $env:TWINE_USERNAME
-        $prevTwinePass = $env:TWINE_PASSWORD
-        try {
-            $env:TWINE_USERNAME = "__token__"
-            $env:TWINE_PASSWORD = $pypiToken
-            $mcpPublished = [bool](junai-publish-mcp -Version $McpVersion | Get-LastOutputValue)
-            if (-not $mcpPublished) {
+        # Content-diff gate: SHA256 of the MCP source (src\ *.py — excludes the
+        # version-bearing pyproject.toml) vs the last-published marker. PyPI is
+        # permanent, so skip the upload entirely when the code is byte-identical.
+        $mcpSourceRoot = Join-Path $JUNO_POOL "src"
+        $mcpMarker = Join-Path $JUNO_POOL ".last-published-mcp.sha256"
+        $mcpGate = Test-JunaiPublishNeeded -SourceRoot $mcpSourceRoot -MarkerPath $mcpMarker -IncludeExt @(".py") -Force:$Force
+        if (-not $mcpGate.Needed) {
+            Write-Host "  [--]  MCP source unchanged since last publish (SHA256 match); skipping PyPI upload." -ForegroundColor DarkGray
+        } else {
+            $pypiToken = Get-JunaiSecretValue -EnvName "JUNAI_PYPI_TOKEN" -LegacyFilePath $PYPI_KEY_FILE
+            if ([string]::IsNullOrWhiteSpace($pypiToken)) {
+                Write-Host "  [ERROR] Missing PyPI token. Set JUNAI_PYPI_TOKEN in $JUNAI_ENV_FILE or keep $PYPI_KEY_FILE." -ForegroundColor Red
                 return $false
             }
-        } finally {
-            $env:TWINE_USERNAME = $prevTwineUser
-            $env:TWINE_PASSWORD = $prevTwinePass
+
+            $prevTwineUser = $env:TWINE_USERNAME
+            $prevTwinePass = $env:TWINE_PASSWORD
+            try {
+                $env:TWINE_USERNAME = "__token__"
+                $env:TWINE_PASSWORD = $pypiToken
+                $mcpPublished = [bool](junai-publish-mcp -Version $McpVersion | Get-LastOutputValue)
+                if (-not $mcpPublished) {
+                    return $false
+                }
+            } finally {
+                $env:TWINE_USERNAME = $prevTwineUser
+                $env:TWINE_PASSWORD = $prevTwinePass
+            }
+            Save-JunaiPublishMarker -MarkerPath $mcpMarker -Hash $mcpGate.Hash
+        }
+    }
+
+    # Content-diff gate for the extension: SHA256 of the source (src\ *.ts/*.js +
+    # esbuild.mjs — excludes version-bearing package.json) vs the last-published marker.
+    $extMarker = Join-Path $JUNAI_VSCODE ".last-published-ext.sha256"
+    $extGate = $null
+    if (-not $SkipExtension) {
+        $extGate = Test-JunaiPublishNeeded -SourceRoot $JUNAI_VSCODE -MarkerPath $extMarker -IncludeExt @(".ts", ".js", ".mjs") -Force:$Force
+        if (-not $extGate.Needed) {
+            Write-Host "  [--]  Extension source unchanged since last publish (SHA256 match); skipping Marketplace publish." -ForegroundColor DarkGray
+            $SkipExtension = $true
         }
     }
 
@@ -1798,6 +1908,7 @@ function junai-release {
             }
 
             Confirm-VscePublishedVersion -ExtensionId "junai-labs.junai" -ExpectedVersion $ExtensionVersion | Out-Null
+            if ($extGate) { Save-JunaiPublishMarker -MarkerPath $extMarker -Hash $extGate.Hash }
         } finally {
             Pop-Location
             $env:VSCE_PAT = $prevVscePat

@@ -495,7 +495,10 @@
         {"root": "harness", "source": "README.md", "destination": "README.md"},
         {"root": "scriptsrc", "source": "setup_project_ai.py", "destination": "scripts/setup_project_ai.py"},
         {"root": "scriptsrc", "source": "usage_review.py",     "destination": "scripts/usage_review.py"},
-        {"root": "harness",   "source": "scripts/check_doc_coverage.py", "destination": "scripts/check_doc_coverage.py"}
+        {"root": "harness",   "source": "scripts/check_doc_coverage.py", "destination": "scripts/check_doc_coverage.py"},
+        {"root": "harness",   "source": "scripts/dream_memory.py",     "destination": "scripts/dream_memory.py"},
+        {"root": "harness",   "source": "scripts/dream_capture.py",    "destination": "scripts/dream_capture.py"},
+        {"root": "harness",   "source": "scripts/claudster_config.py", "destination": "scripts/claudster_config.py"}
       ],
       "copies": [
         {"root": "harness", "source": "agents", "destination": "agents"},
