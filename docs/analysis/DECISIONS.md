@@ -52,8 +52,16 @@ spawned headlessly) — Antigravity's scriptability is an open research item.
   2-month sunset test via `/usage-review`.
 - **OKF-lite** KB frontmatter; onboarding 9→3 steps with a `[harness]` config section.
 
+## Lane names (locked 2026-07-04) — plain + concept-forward hybrid
+**Triage → Ideas → PRD → Plan → Implement → Validate → Ship → Done.** Four agent lanes:
+PRD·Plan·Implement·Ship (Validate = human). **Two-stage intake (decided):** Triage = raw unsorted
+capture (docket auto-injects at index 0, `config.py:87`); Ideas = promoted OLIDs ready for a PRD;
+`oli.index.md` indexes the Ideas lane. Lanes are config strings — any user renames. "OLID" stays the
+term for a one-line idea card. Note: `/implement` does NOT exist — Implement lane driven by
+`pipeline_runner.run_plan`/`fast_track_from_plan` or a `/tdd` loop (resolved in A8's mini-PRD).
+
 ## Full pipeline scope (confirmed — this is the destination, not OLI→PRD)
-Lanes: **Inbox/OLI → PRD → IPD → IID → IVD → ISD → Done**. Five agent lanes (PRD·IPD·IID·IVD·ISD).
+Lanes: **Ideas → PRD → Plan → Implement → Validate → Ship → Done**. Four agent lanes.
 - First idea posted → generate read-only `.docket/oli.index.md` (human-readable index of all OLIDs;
   board.json remains the machine source of truth).
 - PRD lane: headless skill runs `/prd` **with lavish interview** → `.claudster/prd/<slug>.md` → rendered

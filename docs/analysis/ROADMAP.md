@@ -33,16 +33,26 @@ Codex differ in argv and envelope, but "did the `.md` appear?" is identical for 
 
 | Lane | Stage | Skill (headless) | Artifact | Auto-advance | Confirm |
 |---|---|---|---|---|---|
-| Inbox / OLI | intake | — (card + `oli.index.md`) | `.docket/oli.index.md` | — | — |
+| Triage | — | — (raw capture, unsorted) | — | — | — |
+| Ideas | intake | — (promoted OLID; card + `oli.index.md`) | `.docket/oli.index.md` | — | — |
 | **PRD** | prd | `/prd` + lavish | `.claudster/prd/<slug>.md` | no (human review) | no |
-| **IPD** | plan | `/feature-plan` + lavish | `.claudster/plans/<slug>.md` | no (human review) | no |
-| **IID** | implement (+tests) | implement-from-plan | code + tests + `.claudster/reviews/` | **→ IVD on complete** | no |
-| **IVD** | validate | — (human) | — | no | no |
-| **ISD** | ship | `/ship` | deploy | no | **YES (typed)** |
+| **Plan** | plan | `/feature-plan` + lavish | `.claudster/plans/<slug>.md` | no (human review) | no |
+| **Implement** | implement (+tests) | `run_plan`/`fast_track_from_plan` or `/tdd` loop (**TBD — A8**) | code + tests + `.claudster/reviews/` | **→ Validate on complete** | no |
+| **Validate** | validate | — (human) | — | no | no |
+| **Ship** | ship | `/ship` | deploy | no | **YES (typed)** |
 | Done | closed | — | — | — | — |
 
-Tests are built into the plan (claudster TDD) — **no separate test lane**. IID does implement+test; IVD
-is human validation.
+Tests are built into the plan (claudster TDD) — **no separate test lane**. Implement does implement+test;
+Validate is human validation.
+
+> **Lane naming (validated + locked 2026-07-04):** full `config.lanes` =
+> **`["Triage", "Ideas", "PRD", "Plan", "Implement", "Validate", "Ship", "Done"]`** (config strings —
+> any user renames). **Two-stage intake (decided):** `Triage` = raw unsorted capture (docket
+> force-injects it at index 0, `docket:src/docket/config.py:87 _ensure_triage_lane`); `Ideas` = promoted
+> OLIDs ready for a PRD. `oli.index.md` indexes the `Ideas` lane. `done_lane` = `Done` (matches).
+> **`/implement` does not exist** in claudster — the Implement lane is driven by
+> `pipeline_runner.run_plan` (`:1102`) / `fast_track_from_plan` (`:844`) or a headless `/tdd` loop,
+> resolved in A8's mini-PRD. Do not configure `command: "/implement"`.
 
 ---
 
@@ -107,13 +117,17 @@ frontmatter parses (`type:`+`feature:`). Artifact-missing after a clean exit = *
   "permission_mode": "acceptEdits",
   "model": null,
   "lanes": {
-    "PRD": {"command": "/prd",          "artifact_dir": ".claudster/prd",   "auto_advance_to": null,  "requires_confirmation": false},
-    "IPD": {"command": "/feature-plan", "artifact_dir": ".claudster/plans", "auto_advance_to": null,  "requires_confirmation": false},
-    "IID": {"command": "/implement",    "artifact_dir": null,               "auto_advance_to": "IVD", "requires_confirmation": false},
-    "ISD": {"command": "/ship",         "artifact_dir": null,               "auto_advance_to": null,  "requires_confirmation": true}
+    "PRD":       {"command": "/prd",          "artifact_dir": ".claudster/prd",   "auto_advance_to": null,       "requires_confirmation": false},
+    "Plan":      {"command": "/feature-plan", "artifact_dir": ".claudster/plans", "auto_advance_to": null,       "requires_confirmation": false},
+    "Implement": {"command": "__TBD_A8__",    "artifact_dir": null,               "auto_advance_to": "Validate", "requires_confirmation": false},
+    "Ship":      {"command": "/ship",         "artifact_dir": null,               "auto_advance_to": null,       "requires_confirmation": true}
   }
 }
 ```
+> **`Implement.command` is a placeholder** — `/implement` does NOT exist in claudster. A8 decides the
+> real driver: `pipeline_runner.run_plan`/`fast_track_from_plan` (invoked via the `junai` CLI, not a
+> slash command) or a headless `/tdd` loop over the plan's phases. Do not ship `"__TBD_A8__"`.
+
 `harness` ∈ {claude-code, gemini, codex}; only `claude-code` implemented until Track B. `enabled:false`
 ships disabled — every diff must be behaviorally invisible when off (regression test, §Q). WIP cap =
 `max_concurrent_runs: 1` (enforced in UI + engine; see Milestone M1 for the graduation to per-feature).
@@ -372,22 +386,24 @@ with `interview:false`, behaves as A3/A4. **Evidence:** recording of the annotat
 **Gate:** `npm run build`+vitest green; `pytest tests/ -q` green; MCP `run_agent` enqueues == API path.
 **Evidence:** dark command view + light board screenshots; MCP tool-call transcript.
 
-### A7 — IPD lane: `/feature-plan` headless + lavish [Pass 2 P6 part]
+### A7 — Plan lane: `/feature-plan` headless + lavish [Pass 2 P6 part]
 
 **Goal:** second agent lane proves generalization; plan rendered + highlights.
 **Files:** `claudster:claude-harness/commands/feature-plan.md` (+`## Headless mode` + lavish branch) →
-plugin **1.3.16**; docket config example adds IPD lane (§C2 already lists it); reuse A2 runner + A4/A5 UI
-unchanged.
-**Gate:** IPD drag → `.claudster/plans/<slug>.md` with highlights in drawer; both suites green.
-**Evidence:** recording PRD→IPD.
+plugin **1.3.16**; docket config example adds the Plan lane (§C2 already lists it); reuse A2 runner + A4/A5
+UI unchanged.
+**Gate:** Plan-lane drag → `.claudster/plans/<slug>.md` with highlights in drawer; both suites green.
+**Evidence:** recording PRD→Plan.
 
-### A8 — IID lane: headless implementation execution (both) [the big one — highest risk]
+### A8 — Implement lane: headless implementation execution (both) [the big one — highest risk]
 
-**Goal:** IID drag executes the plan headlessly (implement + tests baked into the plan), producing code +
-review artifact.
-**Design:** the IID run invokes an implement flow that reads `.claudster/plans/<slug>.md` and executes
-its phases. claudster already has `run_plan`/`fast_track_from_plan` in `pipeline_runner.py` — evaluate
-driving via a headless `/implement`-style command vs the pipeline-runner's plan executor. Long-running:
+**Goal:** an Implement-lane drag executes the plan headlessly (implement + tests baked into the plan),
+producing code + review artifact.
+**Design:** ⚠️ **`/implement` does NOT exist** (validated). The Implement run must drive one of:
+`pipeline_runner.run_plan` (`pipeline_runner.py:1102`) / `fast_track_from_plan` (`:844`) via the `junai`
+CLI, OR a headless loop over `/tdd` (`claude-harness/commands/tdd.md`) per plan phase. Reads
+`.claudster/plans/<slug>.md` and executes its phases. Deciding the driver is the FIRST task of this
+phase's mini-PRD. Long-running:
 raise `max_turns`/`run_timeout_seconds` per-lane; success signal = tests green + a `.claudster/reviews/
 <slug>.md` (or the plan's `## Tracker` all-checked) rather than a single artifact file. **This phase
 likely decomposes** — treat as its own mini-PRD when reached; flagged sub-decisions: per-phase
@@ -398,17 +414,18 @@ run record.
 **Gate:** a small real plan executes end-to-end, tests pass, review artifact written, run → succeeded.
 **Evidence:** recording of IID execution on a toy plan. **Do not start before A7 is proven in daily use.**
 
-### A9 — Auto-advance IID→IVD + IVD validation
+### A9 — Auto-advance Implement→Validate + Validate step
 
-**Goal:** on IID completion the runner moves the card to IVD (via `auto_advance_to`, one `engine.move_task`
-call); IVD is human validation (no agent).
+**Goal:** on Implement completion the runner moves the card to Validate (via `auto_advance_to`, one
+`engine.move_task` call); Validate is human validation (no agent).
 **Files:** `docket:src/docket/runner.py` (fire `auto_advance_to` on `complete_agent_run`, single-fire,
 never into an agent lane that would re-trigger); UI shows "awaiting your validation".
-**Gate:** IID success moves card to IVD exactly once; no run triggered in IVD. **Evidence:** recording.
+**Gate:** Implement success moves card to Validate exactly once; no run triggered in Validate.
+**Evidence:** recording.
 
-### A10 — ISD deploy hard-gate (both) [Pass 2 P6 deploy part]
+### A10 — Ship deploy hard-gate (both) [Pass 2 P6 deploy part]
 
-**Goal:** IVD→ISD runs `/ship` to deploy, gated by three independent layers.
+**Goal:** Validate→Ship runs `/ship` to deploy, gated by three independent layers.
 **Design:** (1) `requires_confirmation:true` ⇒ `queue_agent_run` writes `awaiting_confirmation`; UI queue
 shows a confirm box requiring the **task id typed exactly** (`POST /api/runs/{id}/confirm` → `agent.run.
 confirmed`); (2) the worker refuses to spawn any confirmation-required run without `confirmed_at`
