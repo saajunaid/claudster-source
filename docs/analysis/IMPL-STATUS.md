@@ -277,6 +277,15 @@ to **"visual-in-docket + opt-in decoupled refine"**:
 window (NOT an iframe in docket) — accept that; the docket UI just shows "Lavish is open — annotate
 there" while the run polls. Resolve `npx`/`lavish-axi` via `shutil.which` (same `.CMD` shim issue).
 
+**A5 Task 1 (visual-in-docket) — BUILT + VERIFIED (reviewer, inline, docket `feat/agentic-pipeline`).**
+Runner detects the sibling `<slug>.html` → `run.visual_path` (best-effort, nullable, old-log safe);
+events/reducer carry it; `/api/artifacts` serves `.html` under the same §C5 guards returning
+`{path, html}`; CardDrawer gains an **"Open visual"** button → `VisualView` renders the agent HTML in a
+**sandboxed iframe** (`sandbox=""`, no script exec). Tests: runner visual_path, reducer copy + old-log
+default, api `.html`-under-guards, client `getVisual` → **371 pytest + 66 vitest + clean build**. **Real
+E2E verified:** runner + real `/claudster:prd` (1.3.17) → `visual_path=.claudster/prd/<slug>.html`
+(8 KB) on the run record. **Task 2 (opt-in Refine-in-Lavish) remains** — decoupled, per the design note.
+
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
 both pass when `max_concurrent_runs=1`. Effect: transient "2 ran when cap said 1"; no crash/corruption;
