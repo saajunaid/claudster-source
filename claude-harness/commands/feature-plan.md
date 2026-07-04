@@ -12,6 +12,33 @@ If `$ARGUMENTS` is empty, ask what to plan and stop.
 The plan file is the **durable spine of the harness** — it must let any future session (or another
 agent, on any tool) resume with zero re-discovery. Optimize for that.
 
+## Headless mode
+When the invocation contains the marker **`HEADLESS RUN RULES`** (a docket runner / non-interactive
+caller spawned this session — no human is present), the scope-check questions and any interview are
+**suspended and forbidden**. This mode exists for one-line ideas: the card may be a short title with **no
+description**, and there may be **no codebase, PROJECT-FACTS, or prior PRD** to read. That is expected —
+write a complete best-effort plan anyway.
+
+Absolute rules in this mode (they override everything below):
+- **NEVER ask a question, request clarification, or end your turn with questions.** Replying with a list
+  of scoping questions is a hard failure. Never use AskUserQuestion, never pause, never wait for input.
+- **A bare title (or PRD path) is sufficient input.** Where information is missing, invent a reasonable,
+  conventional interpretation, state it explicitly as an assumption in `## Constraints & decisions`, and
+  proceed. Making an explicit assumption is ALWAYS correct; asking is ALWAYS wrong here. If you feel you
+  lack information, **write an assumption and continue** — never ask.
+- **Every unresolved decision becomes an `[TECH-DECISION OPEN]` note** (inline in the relevant phase) or
+  a bullet under `## Constraints & decisions` — never a question to the user.
+- **Honor the caller's output path and slug** (falling back to `.claudster/plans/<feature-slug>.md`);
+  set `feature: <slug>` in the frontmatter to that slug.
+- **Always write the plan file, then end with exactly one fenced `json` highlights block** — nothing
+  after it:
+  ```json
+  {"artifact":"<artifact_dir>/<slug>.md","summary":"<=280 chars>","open_questions":<int>}
+  ```
+
+The only acceptable final output in this mode is the written plan plus its highlights block — never
+questions. Everything below applies in both modes; only the interview/scope questions are skipped.
+
 ## Step 1 — Scope check
 Read the relevant code first (don't guess). **Ground in the workspace scan:** if `.claudster/PROJECT-FACTS.md`
 exists (setup-project-ai extracts it — run/test/build commands, env-var names, CI/deploy workflows, entry
