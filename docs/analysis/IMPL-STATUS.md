@@ -210,6 +210,24 @@ Note: the runner's failure-handling is CONFIRMED — the first (unresolved-exe) 
 `queued→started→failed` and a captured error, no stuck run. Minor follow-up: `cost_usd` came back null
 via the runner (B2 direct showed it populated) — nullable by design; low priority.
 
+**LIVE UI DEMO (reviewer, 2026-07-04) — the A4 slice works on screen.** Ran `docket serve` + the Vite
+SPA against an agent-track board; moved a card Ideas→PRD via the API (= the drag lane-trigger); the UI
+rendered the ⚡ AGENT lane pill, the per-card run-status dot, and live-polled the run to completion. A
+described card (DKT-2) → **run succeeded (88s), PRD written, `docket_id: DKT-2` merged, `oli.index.md`
+generated, green status dot**. Screenshots: S1 idle, S3 completed (DKT-1 red / DKT-2 green). A4 UI
+CONFIRMED live.
+
+**CRITICAL FINDING (highest priority for the OLID vision) — headless `/prd` interviews on terse input.**
+The FIRST demo card (DKT-1: 3-word title, **no description**) FAILED: `claude -p` returned questions
+("A few questions to scope this before I write the PRD…") instead of writing the artifact — the A3
+headless convention did NOT suppress the interview. B2/E2E passed only because their cards had a
+description. **This is the core OLID use case** ("post a one-line idea"), so the current prd.md headless
+section is not yet robust enough. **Fix (claudster-side, before the OLID flow ships): strengthen the
+`## Headless mode` section in `claude-harness/commands/prd.md` (and `feature-plan.md`) to NEVER ask under
+the marker — even with a bare one-line title, write a best-effort PRD deriving sensible defaults and put
+ALL unknowns under `## Open questions`.** Add a regression: a title-only headless run must produce an
+artifact with zero questions. This is the interview-vs-derive robustness the OLID pipeline depends on.
+
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
 both pass when `max_concurrent_runs=1`. Effect: transient "2 ran when cap said 1"; no crash/corruption;
