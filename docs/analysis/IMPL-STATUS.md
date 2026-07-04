@@ -169,3 +169,29 @@ $ git -C E:\Projects\docket status --short
   `d088823`). Working tree has **only pre-existing** dirty/untracked files (4 modified docs +
   2 untracked `.claudster/*.jsonl`), all present at session start and **not touched by this run**.
 - Both branches were created in this run; no remote was pushed; no PR opened; nothing merged.
+
+---
+
+## Reviewer validation + updates (2026-07-04, separate session)
+
+**Independent verification:** both suites re-run from scratch — docket **357 passed**, claudster **242
+passed** (system Python `C:\Python`; the `.venv` lacks pytest), `validate_pool.py` default + `--profile
+claude` OK. Code-reviewed the high-risk A2 files: adapter seam clean (Claude not hardcoded; Gemini/Codex
+stubs raise loudly), runner double-wrapped so a run never sticks in `running`, `_maybe_enqueue_agent_run`
+swallows trigger errors so a move never breaks, opt-in test asserts BOTH zero events AND trigger-never-
+fired. **Verdict: PASS.**
+
+**B1 smoke PASSED (run by the reviewer, this machine, logged-in session — no API key):**
+`env -u CLAUDECODE claude -p "…" --output-format json --max-turns 1` → clean envelope
+`{is_error:false, result:"OK", num_turns:1, session_id:…, total_cost_usd:…}`. Confirms auth + headless +
+CLAUDECODE-strip work, AND that the real envelope carries exactly the fields `ClaudeCodeAdapter.
+parse_result` reads (`is_error`/`total_cost_usd`/`num_turns`/`session_id`/`result`). Adapter mapping
+verified against live output. **B2 (headless `/prd`) still deferred** — needs `junai-push -NoPublish`
+→ 1.3.15 first, then re-test.
+
+**Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
+reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
+both pass when `max_concurrent_runs=1`. Effect: transient "2 ran when cap said 1"; no crash/corruption;
+negligible for solo WIP=1 but real at Milestone M1. **Fix (decided): move cap enforcement INTO the
+serialized `queue_agent_run` engine op** so check+append are atomic under the lock. Bundled into the A4
+session (see `.claudster/prompts/agentic-pipeline-a4.md`).
