@@ -228,6 +228,17 @@ the marker — even with a bare one-line title, write a best-effort PRD deriving
 ALL unknowns under `## Open questions`.** Add a regression: a title-only headless run must produce an
 artifact with zero questions. This is the interview-vs-derive robustness the OLID pipeline depends on.
 
+**RESOLVED (reviewer, 2026-07-04) — shipped in plugin 1.3.16.** Strengthened the `## Headless mode`
+section in `claude-harness/commands/prd.md` (and ADDED one to `feature-plan.md`, which had none): never
+ask under any circumstances, a bare title is sufficient input, invent reasonable defaults as explicit
+assumptions, route ALL gaps to `## Open questions` / `## Constraints & decisions`, always write the
+artifact + highlights block. Added `scripts/tests/test_headless_convention.py` (content-lint guarding the
+never-ask guarantees; suite now 244). **Proven live** via `claude -p --plugin-dir` (a renamed test plugin
+to avoid collision): the exact failing terse case (3-word title, no description, empty repo) now writes
+`.claudster/prd/url-shortener-cli.md` with `## Open questions` and **zero interview** (`is_error:false`,
+4 turns). Published: `junai-push` → plugin **1.3.16** (mirror synced, no MCP/VSCE release). To use it in
+the runner, update the installed plugin to 1.3.16 (`/plugin`).
+
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
 both pass when `max_concurrent_runs=1`. Effect: transient "2 ran when cap said 1"; no crash/corruption;
