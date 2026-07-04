@@ -20,6 +20,28 @@ Interview the user to fill gaps. Ask only what you can't infer from the codebase
 
 Ask in small batches; stop interviewing once the spec is testable.
 
+## Headless mode
+When the invocation contains the marker **`HEADLESS RUN RULES`** (a docket runner / non-interactive
+caller spawned this session — no human is present), the Discovery interview above is **suspended**.
+Instead:
+- **Do not interview and do not ask questions.** Never use AskUserQuestion, never pause for approval,
+  never wait for input. Derive every answer from `$ARGUMENTS`, the card context supplied in the prompt,
+  `STACK.md`, and the codebase.
+- **Unresolved items are not blockers** — record each one as a bullet under the PRD's `## Open questions`
+  section and keep going. A headless run always produces the artifact.
+- **Honor the caller's output path and slug.** Write to the `artifact_dir`/`feature` slug the caller
+  specifies (falling back to `.claudster/prd/<feature-slug>.md`); set `feature: <slug>` in the
+  frontmatter to that same slug. The frontmatter shape is unchanged from the interactive flow.
+- **End with exactly one fenced `json` highlights block** as the final output — nothing after it — so the
+  runner can parse the result. Keep `summary` ≤ 280 chars; `open_questions` is the count of bullets you
+  wrote under `## Open questions`:
+  ```json
+  {"artifact":"<artifact_dir>/<slug>.md","summary":"<=280 chars>","open_questions":<int>}
+  ```
+
+Everything else — the PRD template, frontmatter, and section structure below — is identical in both
+modes; only the interview is skipped.
+
 ## Write to `.claudster/prd/<feature-slug>.md`
 ```markdown
 ---
