@@ -41,6 +41,11 @@ Absolute rules in this mode (they override everything above):
 - **Honor the caller's output path and slug.** Write to the `artifact_dir`/`feature` slug the caller
   specifies (falling back to `.claudster/prd/<feature-slug>.md`); set `feature: <slug>` in the
   frontmatter to that same slug. The frontmatter shape is unchanged from the interactive flow.
+- **Also emit a visual companion** — a self-contained, scannable HTML page at `<artifact_dir>/<slug>.html`
+  presenting the PRD visually (a goal/success card, an FR/NFR table, edge cases, and open questions as
+  distinct sections). Use inline `<style>` or the Tailwind CSS browser CDN; keep it fully portable — no
+  local asset files, no `/`-rooted paths. This is the visual the human reviews in docket alongside the
+  markdown. Write it after the `.md`; the runner finds it by the matching `<slug>.html` name.
 - **Always write the artifact file, then end with exactly one fenced `json` highlights block** as the
   final output — nothing after it. Keep `summary` ≤ 280 chars; `open_questions` = the count of bullets
   under `## Open questions`:

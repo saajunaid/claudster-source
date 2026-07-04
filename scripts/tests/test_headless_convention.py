@@ -39,3 +39,6 @@ def test_headless_section_forbids_interview(filename: str, gaps_section: str) ->
     # Gaps go to a section, not to the user; and a highlights block always terminates the run.
     assert gaps_section.lower() in lower, f"{filename}: must route unknowns into '## {gaps_section}'"
     assert "highlights block" in lower, f"{filename}: must require the final json highlights block"
+    # A5: headless runs also emit a visual companion HTML for the docket drawer.
+    assert "visual companion" in lower, f"{filename}: must emit a visual companion HTML (<slug>.html)"
+    assert "<slug>.html" in text, f"{filename}: must name the visual companion <slug>.html"
