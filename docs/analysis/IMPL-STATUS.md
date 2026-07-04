@@ -284,7 +284,24 @@ events/reducer carry it; `/api/artifacts` serves `.html` under the same §C5 gua
 **sandboxed iframe** (`sandbox=""`, no script exec). Tests: runner visual_path, reducer copy + old-log
 default, api `.html`-under-guards, client `getVisual` → **371 pytest + 66 vitest + clean build**. **Real
 E2E verified:** runner + real `/claudster:prd` (1.3.17) → `visual_path=.claudster/prd/<slug>.html`
-(8 KB) on the run record. **Task 2 (opt-in Refine-in-Lavish) remains** — decoupled, per the design note.
+(8 KB) on the run record. **Playwright-demoed live** (card → "Open visual" → visual PRD renders in the
+sandboxed drawer iframe).
+
+**A5 Task 2 (opt-in Refine-in-Lavish) — BUILT + demoed (reviewer, inline, docket `feat/agentic-pipeline`).**
+Opt-in `agent_track.refine_enabled`. "Refine in Lavish" button (when a run has a visual) → `start_refine`
+opens lavish on the `<slug>.html` (its OWN window; not embedded), records the session URL
+(`agent.refine.started` → `task.refine`), then a BACKGROUND thread polls for annotations and spawns a
+harness revise of the `.md` + `.html` (`agent.refine.completed/failed`) — a long human-paced poll never
+blocks the run worker. Lavish via `npx` (`shutil.which`-resolved). 3 events + reducer task-state, engine
+ops, `POST /api/tasks/{id}/refine`, board `refine_enabled`, CardDrawer button + status. Tests: refine
+lifecycle (`fake_lavish` + `fake_claude`), disabled/no-visual guards, client `refineTask` → **374 pytest
++ 67 vitest green**. **Playwright-demoed live with REAL lavish:** click Refine → docket shows "⚡ Lavish
+is open — annotate…", and the Lavish Editor opens with the actual visual PRD loaded + a "Send to Agent"
+annotate panel.
+**Known follow-up (small):** the refine status doesn't auto-refresh in the UI — `useBoard` only polls
+while a *run* is active, not a *refine*. It shows on the click (mutation invalidates the board) but the
+`running→succeeded` transition needs a board refetch (focus/reload). Extend the poll to also fire while
+`task.refine.status === "running"`. Non-blocking; noted for a later pass.
 
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
