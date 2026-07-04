@@ -256,6 +256,27 @@ and serves the artifact; `lavish-axi poll` long-polls and **returned real feedba
 Windows" caveat applies ONLY to stale-port recovery (`lsof`/`ps`), not the happy path. **A5 (lavish) is
 de-risked and viable** — build it into PRD/Plan lanes when ready.
 
+---
+
+## A5 — RE-DESIGNED + claudster half shipped (reviewer, 2026-07-04)
+
+**§C8 design was wrong — corrected.** Investigation found lavish does NOT embed in docket (it opens its
+OWN browser; no server-only mode; `poll` blocks — fights the one-shot runner). A5 re-shaped (user-chosen)
+to **"visual-in-docket + opt-in decoupled refine"**:
+- **Visual companion — DONE, shipped in plugin 1.3.17.** Headless `/prd` + `/feature-plan` now also write
+  a self-contained `<slug>.html` next to the `<slug>.md`. **Proven live**: a headless `/prd` produced a
+  professional, scannable visual PRD (Problem/Success cards, FR/NFR + Data-Model tables) with inline
+  `assumed` / `TECH-DECISION OPEN` tags — the OLID-headless assumptions made visible. Lint test extended
+  (still 244). No lavish dependency for this part (pure agent-written HTML).
+- **Docket side — NEXT session** (`.claudster/prompts/agentic-pipeline-a5-docket.md`): Task 1 renders the
+  visual in the drawer (runner detects the sibling `.html` → `visual_path`; API serves `.html`; web
+  "Open visual" in a SANDBOXED iframe). Task 2 = opt-in "Refine in Lavish" (decoupled; lavish opens its
+  own window; runner orchestrates start→poll→revise; harder — can defer).
+
+**Design note for A5 v2:** lavish is a standalone surface. The refine loop opens lavish's own browser
+window (NOT an iframe in docket) — accept that; the docket UI just shows "Lavish is open — annotate
+there" while the run polls. Resolve `npx`/`lavish-axi` via `shutil.which` (same `.CMD` shim issue).
+
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
 both pass when `max_concurrent_runs=1`. Effect: transient "2 ran when cap said 1"; no crash/corruption;
