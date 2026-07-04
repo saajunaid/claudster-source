@@ -117,13 +117,18 @@ frontmatter parses (`type:`+`feature:`). Artifact-missing after a clean exit = *
   "permission_mode": "acceptEdits",
   "model": null,
   "lanes": {
-    "PRD":       {"command": "/prd",          "artifact_dir": ".claudster/prd",   "auto_advance_to": null,       "requires_confirmation": false},
-    "Plan":      {"command": "/feature-plan", "artifact_dir": ".claudster/plans", "auto_advance_to": null,       "requires_confirmation": false},
-    "Implement": {"command": "__TBD_A8__",    "artifact_dir": null,               "auto_advance_to": "Validate", "requires_confirmation": false},
-    "Ship":      {"command": "/ship",         "artifact_dir": null,               "auto_advance_to": null,       "requires_confirmation": true}
+    "PRD":       {"command": "/claudster:prd",          "artifact_dir": ".claudster/prd",   "auto_advance_to": null,       "requires_confirmation": false},
+    "Plan":      {"command": "/claudster:feature-plan", "artifact_dir": ".claudster/plans", "auto_advance_to": null,       "requires_confirmation": false},
+    "Implement": {"command": "__TBD_A8__",              "artifact_dir": null,               "auto_advance_to": "Validate", "requires_confirmation": false},
+    "Ship":      {"command": "/claudster:ship",         "artifact_dir": null,               "auto_advance_to": null,       "requires_confirmation": true}
   }
 }
 ```
+> **Commands MUST be plugin-namespaced `/claudster:<cmd>` (validated live 2026-07-04, B2 smoke).** Bare
+> `/prd` does NOT resolve in `claude -p` — it errors "Unknown command: /prd. Did you mean /pdf?" (collides
+> with a built-in). Only `/claudster:prd` / `/claudster:feature-plan` / `/claudster:ship` resolve. The
+> runner passes `command` straight into the prompt, so the config MUST carry the namespaced form for the
+> claude-code harness. (Other harnesses will use their own command syntax via the adapter/config.)
 > **`Implement.command` is a placeholder** — `/implement` does NOT exist in claudster. A8 decides the
 > real driver: `pipeline_runner.run_plan`/`fast_track_from_plan` (invoked via the `junai` CLI, not a
 > slash command) or a headless `/tdd` loop over the plan's phases. Do not ship `"__TBD_A8__"`.
@@ -164,6 +169,12 @@ envelope), `stderr.txt`. Event payloads carry only refs/derived fields (blobs ou
 `cwd` = `run.project` (task's `project` or the board repo). `slug = engine._slugify(task["title"])`.
 Timeout → Windows `CTRL_BREAK_EVENT` + 5s grace + kill (copy `claudster:.github/tools/mcp-server/
 server.py:833-861`).
+
+**Executable resolution (Windows — validated live 2026-07-04):** resolve the command via
+`shutil.which(cmd) or cmd` BEFORE building argv. Bare `claude` is a `.CMD` shim (`…\npm\claude.CMD`) and
+`subprocess.Popen` does NO PATHEXT resolution → `FileNotFoundError [WinError 2]`. Applies to every
+harness's executable (`gemini`/`codex` too). Verified: once resolved + the command namespaced
+(`/claudster:prd`), the full E2E goes queued→started→completed with artifact + `docket_id` merge.
 
 ````
 {command} {title}

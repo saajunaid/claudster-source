@@ -186,8 +186,29 @@ fired. **Verdict: PASS.**
 `{is_error:false, result:"OK", num_turns:1, session_id:…, total_cost_usd:…}`. Confirms auth + headless +
 CLAUDECODE-strip work, AND that the real envelope carries exactly the fields `ClaudeCodeAdapter.
 parse_result` reads (`is_error`/`total_cost_usd`/`num_turns`/`session_id`/`result`). Adapter mapping
-verified against live output. **B2 (headless `/prd`) still deferred** — needs `junai-push -NoPublish`
-→ 1.3.15 first, then re-test.
+verified against live output. **B2 (headless `/prd`) PASSED (run by reviewer, 2026-07-04, after 1.3.15 shipped + installed):**
+`claude -p "/claudster:prd smoke-echo-cli … HEADLESS RUN RULES …"` → `is_error:false`, `num_turns:4`,
+wrote `.claudster/prd/smoke-echo-cli.md` with correct frontmatter (`type:prd`, `feature:smoke-echo-cli`),
+emitted the highlights json block, **zero interview** (3 items under `## Open questions`). The headless
+convention (A3) + plugin-loading in `-p` + adapter field mapping are all proven end-to-end.
+
+**Real docket-run E2E PASSED (reviewer, 2026-07-04):** `runner.run_now` → real `claude -p /claudster:prd`
+→ **status succeeded**, artifact `.claudster/prd/e2e-echo-cli.md` written, events `queued→started→
+completed`, `docket_id: DKT-1` merged into frontmatter by the runner, highlights parsed. The full runner
+loop is proven against real claude on Windows.
+
+**TWO production bugs caught by live testing (runner fails 100% on Windows without both). Fake_claude
+missed both. Both proven-fixed in the E2E; folded into A4 Task 0:**
+1. **Command namespacing** — bare `/prd` does NOT resolve in `claude -p` ("Unknown command: /prd. Did you
+   mean /pdf?"); only `/claudster:prd` works. Fix docket `config.py` DEFAULT_CONFIG →
+   `/claudster:{prd,feature-plan,ship}`. ROADMAP §C2 updated.
+2. **Windows exe resolution** — `subprocess.Popen(["claude", …])` → `FileNotFoundError [WinError 2]`
+   because `claude` is a `.CMD` shim; Popen does no PATHEXT resolution. Fix `runner.py`: resolve via
+   `shutil.which(cmd) or cmd` before spawn. ROADMAP §C4 updated.
+
+Note: the runner's failure-handling is CONFIRMED — the first (unresolved-exe) E2E failed cleanly with
+`queued→started→failed` and a captured error, no stuck run. Minor follow-up: `cost_usd` came back null
+via the runner (B2 direct showed it populated) — nullable by design; low priority.
 
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could

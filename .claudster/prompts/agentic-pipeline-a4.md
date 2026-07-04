@@ -33,6 +33,25 @@ touch claudster). Confirm you are on it before editing. Commit per task below.
 ### Baseline (confirm green before starting)
 `E:\Projects\docket\.venv\Scripts\python -m pytest tests/ -q` → expect 357 passed. If red, STOP.
 
+### Task 0 — two live-caught production fixes (REQUIRED; the runner fails 100% on Windows without these)
+Both were found by real `claude -p` smoke + docket-run E2E on 2026-07-04 (see IMPL-STATUS). fake_claude
+could not catch either.
+
+**0a — namespace agent-lane commands.** Bare `/prd` does NOT resolve in `claude -p` ("Unknown command:
+/prd. Did you mean /pdf?"). In `src/docket/config.py` `DEFAULT_CONFIG.agent_track.lanes`, set:
+`PRD → "/claudster:prd"`, `Plan → "/claudster:feature-plan"`, `Ship → "/claudster:ship"` (Implement stays
+`__TBD_A8__`). Update any test asserting the old bare command.
+
+**0b — resolve the executable for Windows.** `subprocess.Popen(["claude", …])` fails with
+`FileNotFoundError [WinError 2]` because `claude` is a `.CMD` shim (`shutil.which("claude")` →
+`…\npm\claude.CMD`) and Popen does no PATHEXT resolution. Fix in `src/docket/runner.py`: resolve the
+command via `shutil.which(cmd) or cmd` before building argv (where `cmd = agent.get(_CMD_KEY…)` in
+`_execute`). Add a test: with `claude_cmd` a bare name, the runner resolves it via a monkeypatched
+`shutil.which` before spawn. (Verified live: once resolved + namespaced, the full E2E goes
+queued→started→completed with the artifact written and `docket_id` merged.)
+
+Commit: `fix(docket): namespace agent commands + resolve exe via shutil.which (Windows) — live-caught`.
+
 ### Task 1 — cap-race fix (engine hardening)
 Move `max_concurrent_runs` enforcement from `runner._create_run` INTO the serialized engine op
 `queue_agent_run` (in `src/docket/engine.py`), so the active-run count check and the `agent.run.queued`
