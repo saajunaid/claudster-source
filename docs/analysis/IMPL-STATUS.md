@@ -239,6 +239,23 @@ to avoid collision): the exact failing terse case (3-word title, no description,
 4 turns). Published: `junai-push` → plugin **1.3.16** (mirror synced, no MCP/VSCE release). To use it in
 the runner, update the installed plugin to 1.3.16 (`/plugin`).
 
+---
+
+## Plan lane + S0 lavish spike (reviewer, 2026-07-04)
+
+**Plan lane (A7) VERIFIED.** `/feature-plan` headless on a terse title (no description, empty repo) via
+`--plugin-dir` → wrote `.claudster/plans/url-shortener-cli.md` (`type: plan`, `feature:` slug, 4 phases)
+with **zero interview**. The runner + render-back UI are generic (proven by the PRD E2E), so the **Plan
+lane works end-to-end** once 1.3.16 is installed. Pipeline is now **idea → PRD → Plan** capable with no
+new code — just the Plan lane in `agent_track.lanes` (already in §C2).
+
+**S0 lavish Windows spike PASSED.** `npx -y lavish-axi` (v0.1.36) installs + runs on Windows; the open
+command spawns the Express server on :4387, creates a session, opens a browser (ESTABLISHED connection),
+and serves the artifact; `lavish-axi poll` long-polls and **returned real feedback** (`status: feedback`
++ a DOM snapshot + a captured annotation). The full annotate loop works. Pass 1's "not shipped for
+Windows" caveat applies ONLY to stale-port recovery (`lsof`/`ps`), not the happy path. **A5 (lavish) is
+de-risked and viable** — build it into PRD/Plan lanes when ready.
+
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
 both pass when `max_concurrent_runs=1`. Effect: transient "2 ran when cap said 1"; no crash/corruption;
