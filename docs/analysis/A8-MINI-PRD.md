@@ -5,6 +5,33 @@ into shipped code. It was deliberately deferred from the main roadmap because it
 PRD/Plan lanes didn't. This resolves them against what claudster actually provides, then proposes the
 smallest slice.
 
+## DECISIONS LOCKED — quality/correctness/robustness first (2026-07-04)
+Per the directive to prioritise quality over cost/simplicity, the defaults are locked as follows — two
+are UPGRADED from the original defaults for robustness:
+- **D1 driver:** single-session v1 **with commit-per-phase checkpoints** (full-plan context → coherent
+  code); per-phase loop is v2, triggered when a plan exceeds ~6 phases (warn + switch).
+- **D2 success:** the runner **re-runs the project test suite itself** as the gate, and **FAILS the run
+  if no test command can be determined** — never mark an untested implement "succeeded".
+- **★ NEW quality gates around implement (the biggest correctness lever) — MANDATORY:** the Implement
+  lane is a mini-pipeline, not one spawn:
+  **preflight → implement → test → code-review → advance.**
+  - **PRE:** run claudster's **preflight** (validate the plan against the real codebase). Must PASS
+    before any code is written. (This also satisfies `fast_track`'s preflight requirement.)
+  - **POST:** run claudster's **code-reviewer** agent (fresh-context, adversarial) on the diff. Blocking
+    findings ⇒ the run does NOT auto-advance to Validate; it surfaces them for the human. (This is the
+    "No Mistakes"-style verify pass we discussed early on.)
+- **D5 isolation:** **HARD guard — refuse to implement on the default branch.** Always a feature branch
+  `agent/<slug>` (git worktree is the v2 upgrade for parallel safety).
+- **Approval (D5):** the Plan→Implement drag = the human's approval, **but gated on the preflight PASS** —
+  a plan that fails preflight is NOT implemented; the preflight report is surfaced instead.
+- **Model:** **opus** for implement (correctness over cost).
+- **Test source:** `.claudster/PROJECT-FACTS.md` → `agent_track.test_command` fallback → **fail loudly**
+  if neither yields a command (don't guess-and-pass).
+
+Net effect: an autonomous implement can only reach "Validate" if the plan preflighted clean, the code
+was written on an isolated branch, the real test suite passes when the runner runs it, AND a fresh
+code-review found nothing blocking. Correctness is enforced by machinery, not trust.
+
 ## The problem A8 solves
 Card dragged **Plan → Implement** ⇒ a headless agent executes the plan (`.claudster/plans/<slug>.md`):
 writes code + tests, phase by phase, until the plan is done and the suite is green — then auto-advances
