@@ -24,15 +24,24 @@ You are building the Implement lane (A8) for the docket×claudster pipeline, qua
 `docs/analysis/A8-MINI-PRD.md` (DECISIONS LOCKED). Continue the existing `feat/agentic-pipeline` branches.
 Do NOT publish/push. Do NOT run a live autonomous implement in any automated test — use fakes.
 
-### Non-negotiable safety invariants (assert them in tests)
-1. **Never write on the default branch.** The runner refuses to implement unless the project repo is on a
-   non-default branch it created/uses (`agent/<slug>`). A test proves a default-branch repo is refused.
-2. **Independent test verification is the success gate.** The runner runs the project's test command
-   ITSELF after implement; green ⇒ pass. It NEVER trusts the session's self-report.
-3. **Fail if untested.** If no test command is determinable (`.claudster/PROJECT-FACTS.md` →
-   `agent_track.test_command`), the run FAILS — it never marks an untested implement succeeded.
-4. **Mandatory gates:** preflight (before) must PASS; code-review (after) must be non-blocking — else the
-   run does NOT auto-advance to Validate (it surfaces the report).
+### Non-negotiable safety invariants (assert them in tests) — includes the Fable audit-hardening
+1. **Never write on the default branch — enforced at COMMIT, not just spawn.** Refuse to implement unless
+   on `agent/<slug>`; install a pre-commit hook that refuses the default branch for the run's duration AND
+   post-run verify every new commit landed on the feature branch. Tests prove a default-branch repo is
+   refused and a mid-run `checkout main` commit is caught.
+2. **Independent test verification is the success gate — with a tamper guard.** The runner runs the test
+   command ITSELF after implement (never trusts the session). **Snapshot the test command BEFORE spawning**
+   and run that snapshot; **fail the run if the diff touches `.claudster/PROJECT-FACTS.md` or the
+   `agent_track.test_command`** (a session must not edit its own success criteria).
+3. **Fail if untested.** No determinable test command ⇒ the run FAILS; never mark an untested implement
+   succeeded.
+4. **Mandatory gates:** preflight (before) MUST PASS before any code; code-review (after) must be
+   non-blocking. A review-blocked run gets a distinct **`needs_review`** terminal state — it does NOT
+   auto-advance to Validate and must NOT read as a clean success.
+5. **Force the guard ON for the implement child.** claudster's PreToolUse guard is the backstop against
+   catastrophic actions branch-isolation can't catch. Even though the user runs `CLAUDSTER_GUARD_DISABLED=1`
+   globally, the runner MUST delete that var from the spawned implement child's env so the guard runs for
+   every autonomous implement. Never run an implement guard-bypassed. A test asserts the child env omits it.
 
 ### A8.1 — config (docket)
 Extend `agent_track` in `config.py`: `test_command` (str|null), `implement_branch_prefix` ("agent/"),

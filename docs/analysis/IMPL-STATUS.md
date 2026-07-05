@@ -303,6 +303,42 @@ while a *run* is active, not a *refine*. It shows on the click (mutation invalid
 `running→succeeded` transition needs a board refetch (focus/reload). Extend the poll to also fire while
 `task.refine.status === "running"`. Non-blocking; noted for a later pass.
 
+---
+
+## Independent Fable audit + fixes (2026-07-05)
+Ran an independent zero-quota Fable 5 audit (`docs/analysis/VALIDATION-REPORT-fable.md`). It confirmed the
+load-bearing correctness/security and found real edge gaps + two overstated claims. Every finding verified
+against ground truth; fixes applied and tested (docket **376 passed**, web build + vitest green; claudster
+**251 passed**).
+
+**Fixed (all verified):**
+- **#1 Orphaned-run wedge (Med):** a process kill mid-run left a run `running` forever, wedging the cap.
+  Added `Runner.reconcile_orphans(repo)` (fails stuck queued/running runs), called in the serve lifespan
+  before draining. Test: orphan → cap exhausted → reconcile → freed. My earlier "never stuck in running"
+  held only for in-process exceptions — now true for process death too.
+- **#3 CLI opt-in bypass (Low-Med):** `docket run`/`run_now` didn't honor `agent_track.enabled`. Gated
+  `_create_run` on `enabled` (matches the API). Test added.
+- **#4 Tailwind-CDN vs sandbox (Med):** `prd.md`/`feature-plan.md` offered a Tailwind browser-CDN option
+  the `sandbox=""` iframe silently breaks (unstyled). Changed both to **inline `<style>` ONLY**.
+- **#5 Refine loop end-detection (Low):** ended on substring `"ended"` in human text. Now keys off the
+  structured feedback signal — a note containing "ended" no longer truncates the loop.
+- **#6 No CSP on the visual iframe (Low):** added a `csp` attribute (defence-in-depth vs passive beacons).
+
+**Honesty corrections (earlier claims were optimistic):**
+- **Test numbers were env/state-dependent, not absolute.** Fable saw 3 guard-test failures with
+  `CLAUDSTER_GUARD_DISABLED=1` (set globally in this user's `~/.claude/settings.json`); I reproduced it
+  once then could NOT reproduce it (guard file 45/45 ×3; full suite 251/251 ×2). Diagnosis: a **transient
+  flake in PRE-EXISTING guard *subprocess* tests** (not our code; `pytest-randomly` absent, so not
+  ordering) — NOT the missing-`delenv` Fable guessed (the mitigations are present). Flagged to watch; no
+  code change for an unreproducible failure.
+
+**A8 design holes CLOSED before build** (in `A8-MINI-PRD.md` + the A8 prompt): test-command tampering
+(snapshot before + fail if the diff edits PROJECT-FACTS/test_command); **guard force-enabled for the
+implement child** (deletes `CLAUDSTER_GUARD_DISABLED` from the child env — user keeps interactive quiet,
+autonomous implement keeps the guard); branch guard enforced at COMMIT (pre-commit hook + post-run check);
+a `needs_review` terminal state so a review-blocked run can't read as success; preflight contradiction
+reconciled (mandatory).
+
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
 both pass when `max_concurrent_runs=1`. Effect: transient "2 ran when cap said 1"; no crash/corruption;

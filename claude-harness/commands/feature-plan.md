@@ -32,9 +32,11 @@ Absolute rules in this mode (they override everything below):
   set `feature: <slug>` in the frontmatter to that slug.
 - **Also emit a visual companion** — a self-contained, scannable HTML page at `<artifact_dir>/<slug>.html`
   presenting the plan visually (a goal card, phases as cards with their steps, an affected-files table,
-  and a risks/decisions section). Use inline `<style>` or the Tailwind CSS browser CDN; keep it fully
-  portable — no local asset files, no `/`-rooted paths. This is the visual the human reviews in docket
-  alongside the markdown. Write it after the `.md`; the runner finds it by the matching `<slug>.html` name.
+  and a risks/decisions section). **Use inline `<style>` ONLY** — the visual is rendered in a *sandboxed*
+  iframe with no script execution, so a `<script>`/CDN (e.g. the Tailwind browser CDN) would NOT run and
+  the page would appear unstyled. Keep it fully portable — no external `<script>`/`<link>`, no local
+  asset files, no `/`-rooted paths. This is the visual the human reviews in docket alongside the markdown.
+  Write it after the `.md`; the runner finds it by the matching `<slug>.html` name.
 - **Always write the plan file, then end with exactly one fenced `json` highlights block** — nothing
   after it:
   ```json

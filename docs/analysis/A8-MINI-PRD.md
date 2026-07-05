@@ -32,6 +32,31 @@ Net effect: an autonomous implement can only reach "Validate" if the plan prefli
 was written on an isolated branch, the real test suite passes when the runner runs it, AND a fresh
 code-review found nothing blocking. Correctness is enforced by machinery, not trust.
 
+### Audit-hardening (Fable independent review, 2026-07-05) — closes real holes in the above
+The locked invariants had gaps an autonomous implement could slip through. These are now REQUIRED:
+- **Test-command tampering (was a real hole).** PROJECT-FACTS lives in the repo the session edits, so a
+  session could rewrite the test command to `exit 0` and the "independent" gate would run the neutered
+  command → false green. **Fix (required):** snapshot the test command *before* spawning the implement
+  session; run THAT snapshot; and **fail the run if the diff touches `.claudster/PROJECT-FACTS.md` or the
+  `agent_track.test_command` config** (a session must not edit its own success criteria).
+- **Guard kill-switch resolution.** claudster's PreToolUse guard is the backstop against catastrophic
+  actions (rm -rf, force-push, secret writes) that branch-isolation does NOT catch — and it matters MOST
+  when unsupervised. This user runs with `CLAUDSTER_GUARD_DISABLED=1` globally for interactive quiet.
+  **Fix (required, and it costs the user nothing):** the runner **force-enables the guard for the spawned
+  implement child** — it deletes `CLAUDSTER_GUARD_DISABLED` from the child's env only. Interactive
+  sessions stay quiet; every autonomous implement gets the guard. Do NOT run an implement guard-bypassed.
+- **Branch guard timing.** Checking "not on the default branch" only at spawn is not a guarantee — a
+  session with git + acceptEdits could `git checkout main` mid-run. **Fix (required):** enforce at commit
+  time — install a pre-commit hook in the project that refuses the default branch for the duration, AND
+  post-run verify every new commit landed on `agent/<slug>`; fail the run otherwise.
+- **`needs_review` terminal state.** A review-blocked run must NOT read as "succeeded". Give it a distinct
+  terminal state `needs_review` (code stays on the branch; human decides) — never auto-advance it to
+  Validate, and never surface it as a clean success.
+- **Doc contradiction resolved:** preflight is **MANDATORY / must-PASS-before-any-code** (this LOCKED
+  section wins). Delete the older "Risks/guards" bullet that called preflight an optional v1 pre-step.
+- **Reminder — the reviewer is itself a model,** not a hard guarantee; it's one layer, not the whole
+  safety story. The machinery layers (branch isolation + independent tests + guard-on) are the hard ones.
+
 ## The problem A8 solves
 Card dragged **Plan → Implement** ⇒ a headless agent executes the plan (`.claudster/plans/<slug>.md`):
 writes code + tests, phase by phase, until the plan is done and the suite is green — then auto-advances
@@ -121,8 +146,9 @@ red/timeout ⇒ failed, branch left for inspection. Human reviews the diff in Va
 - **False "done":** the runner **independently runs the tests** — never trusts the session's own claim.
 - **Context blowout on big plans:** single-session (v1) is fine for small plans; the per-phase loop (v2)
   is the answer for large ones — surface a warning when a plan has > N phases.
-- **Preflight requirement:** `fast_track` wants a PASS preflight; v1 can bypass `fast_track` and drive
-  the coding session directly (preflight becomes an optional pre-step), so we don't block on it.
+- **Preflight requirement:** preflight is **MANDATORY** (see Audit-hardening above) — it must PASS before
+  any code is written. v1 may drive the coding session directly rather than via `fast_track`, but the
+  preflight step itself is not optional.
 
 ## Proposed phases (once D1–D5 are decided)
 - **A8.1** — config (per-lane Implement overrides: timeout/max_turns/test_command/model; branch policy)
