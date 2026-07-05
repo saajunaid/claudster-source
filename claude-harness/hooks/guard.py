@@ -17,6 +17,12 @@ Tiers:
 
 Escape hatch: `.claudster/config.toml [guard] allow = ["substr", ...]` may only DOWNGRADE an `ask`
 to `allow` (it can never override a `deny`); it matches the command/path value. Use specific strings.
+
+Kill switch: for users who run Claude Code with `bypassPermissions` and want zero additional
+gating from claudster, the guard can be turned off entirely (bypasses ALL tiers, deny included) via:
+  * env var `CLAUDSTER_GUARD_DISABLED=1` (also 1/true/yes/on) — global, survives plugin updates.
+  * `.claudster/config.toml [guard] enabled = false`  (or `mode = "off"`) — per-repo or user-level.
+When disabled, the hook exits 0 immediately and every call falls through to normal permission handling.
 """
 from __future__ import annotations
 
@@ -158,18 +164,42 @@ def decide(tool_name: str, tool_input, allow_patterns: list[str]) -> tuple[str, 
 
 
 # ── hook I/O glue ────────────────────────────────────────────────────────────
-def _load_allow(root: str) -> list[str]:
+_TRUTHY = {"1", "true", "yes", "on"}
+
+
+def _load_guard_config(root: str) -> dict:
+    """Parse the ``[guard]`` table from ``<root>/.claudster/config.toml``; {} on any problem."""
     cfg = os.path.join(root, ".claudster", "config.toml")
     if not os.path.isfile(cfg):
-        return []
+        return {}
     try:
         import tomllib
         with open(cfg, "rb") as fh:
             data = tomllib.load(fh)
-        allow = data.get("guard", {}).get("allow", [])
-        return [str(x) for x in allow] if isinstance(allow, list) else []
+        section = data.get("guard", {})
+        return section if isinstance(section, dict) else {}
     except Exception:
-        return []
+        return {}
+
+
+def _load_allow(root: str) -> list[str]:
+    allow = _load_guard_config(root).get("allow", [])
+    return [str(x) for x in allow] if isinstance(allow, list) else []
+
+
+def guard_disabled(root: str) -> bool:
+    """True when the guard is turned off entirely (all tiers bypassed).
+
+    Precedence: the env var wins (global, survives plugin auto-updates); otherwise the per-repo
+    `[guard]` table — `enabled = false` or `mode = "off"`. Any parse problem → not disabled (fail safe)."""
+    if os.environ.get("CLAUDSTER_GUARD_DISABLED", "").strip().lower() in _TRUTHY:
+        return True
+    section = _load_guard_config(root)
+    if section.get("enabled") is False:
+        return True
+    if str(section.get("mode", "")).strip().lower() == "off":
+        return True
+    return False
 
 
 def main() -> None:
@@ -188,6 +218,8 @@ def main() -> None:
         tool_name = data.get("tool_name", "")
         tool_input = data.get("tool_input", {})
         root = data.get("cwd") or os.getcwd()
+        if guard_disabled(root):
+            sys.exit(0)  # kill switch: bypass every tier, defer to normal permission handling
         tier, reason = decide(tool_name, tool_input, _load_allow(root))
     except Exception:
         sys.exit(0)  # any unexpected shape → fail open, never crash the tool call

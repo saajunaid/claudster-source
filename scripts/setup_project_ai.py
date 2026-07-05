@@ -581,7 +581,14 @@ CLAUDSTER_CONFIG_EXAMPLE = """\
 # catastrophic shell command). Each entry is a case-insensitive SUBSTRING matched against the command
 # text (Bash) or the file path (Edit/Write). Keep entries specific: a broad substring like "git"
 # would silence every gated git operation.
+#
+# KILL SWITCH — turn the guard OFF entirely (bypasses ALL tiers, deny included). For users who run
+# Claude Code with `bypassPermissions` and want no second enforcement layer. Either:
+#   enabled = false            # (or mode = "off") — disables the guard for THIS repo.
+#   env CLAUDSTER_GUARD_DISABLED=1   — global, applies everywhere, survives plugin auto-updates.
+# The env var is the recommended global switch; add it under `"env"` in ~/.claude/settings.json.
 [guard]
+# enabled = false
 allow = [
   # "git push --force origin scratch",   # allow force-push to one throwaway branch
   # "yarn.lock",                         # stop confirming routine lockfile edits in this repo

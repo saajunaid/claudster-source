@@ -3,6 +3,7 @@
 The classifier (classify_write / classify_bash / decide) is importable; the hook I/O wrapper
 runs under main() and is tested separately via subprocess.
 """
+import os
 import sys
 from pathlib import Path
 
@@ -225,3 +226,50 @@ class TestHookIO:
         r = _run_hook({"tool_name": "Bash", "tool_input": {"command": "rm -rf build"},
                        "cwd": str(tmp_path)})
         assert r.stdout.strip() == ""  # downgraded to allow by the config escape hatch
+
+
+class TestKillSwitch:
+    """The global disable toggle bypasses ALL tiers — even a deny — and emits nothing."""
+
+    def test_env_var_disables_deny(self):
+        env = {**os.environ, "CLAUDSTER_GUARD_DISABLED": "1"}
+        r = subprocess.run(
+            [sys.executable, str(GUARD)],
+            input=json.dumps({"tool_name": "Bash", "tool_input": {"command": "rm -rf /"}}),
+            capture_output=True, text=True, encoding="utf-8", timeout=20, env=env)
+        assert r.returncode == 0
+        assert r.stdout.strip() == ""
+
+    def test_env_var_falsey_still_guards(self):
+        env = {**os.environ, "CLAUDSTER_GUARD_DISABLED": "0"}
+        r = subprocess.run(
+            [sys.executable, str(GUARD)],
+            input=json.dumps({"tool_name": "Bash", "tool_input": {"command": "rm -rf /"}}),
+            capture_output=True, text=True, encoding="utf-8", timeout=20, env=env)
+        assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+    def test_config_enabled_false_disables(self, tmp_path):
+        (tmp_path / ".claudster").mkdir()
+        (tmp_path / ".claudster" / "config.toml").write_text(
+            "[guard]\nenabled = false\n", encoding="utf-8")
+        r = _run_hook({"tool_name": "Write", "tool_input": {"file_path": "/r/.env"},
+                       "cwd": str(tmp_path)})
+        assert r.stdout.strip() == ""
+
+    def test_config_mode_off_disables(self, tmp_path):
+        (tmp_path / ".claudster").mkdir()
+        (tmp_path / ".claudster" / "config.toml").write_text(
+            '[guard]\nmode = "off"\n', encoding="utf-8")
+        r = _run_hook({"tool_name": "Bash", "tool_input": {"command": "git push --force"},
+                       "cwd": str(tmp_path)})
+        assert r.stdout.strip() == ""
+
+    def test_guard_disabled_helper(self, tmp_path):
+        assert guard.guard_disabled(str(tmp_path)) is False
+        (tmp_path / ".claudster").mkdir()
+        (tmp_path / ".claudster" / "config.toml").write_text(
+            "[guard]\nenabled = true\n", encoding="utf-8")
+        assert guard.guard_disabled(str(tmp_path)) is False
+        (tmp_path / ".claudster" / "config.toml").write_text(
+            "[guard]\nenabled = false\n", encoding="utf-8")
+        assert guard.guard_disabled(str(tmp_path)) is True
