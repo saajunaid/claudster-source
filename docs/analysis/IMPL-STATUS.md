@@ -339,6 +339,28 @@ autonomous implement keeps the guard); branch guard enforced at COMMIT (pre-comm
 a `needs_review` terminal state so a review-blocked run can't read as success; preflight contradiction
 reconciled (mandatory).
 
+---
+
+## A8.1 + A8.2 built + VALIDATED (reviewer, 2026-07-06) — docket `feat/agentic-pipeline`
+Config (`kind:"implement"` dispatch, per-lane implement/preflight/review overrides) + the runner
+`_execute_implement` mini-pipeline: branch → preflight → implement → tamper-check → branch-backstop →
+test → review → gate; new `agent.run.needs_review` terminal state. **Independent audit: PASS** — 391
+pytest + build + vitest green; read the orchestration (correct ordering: snapshot-before-spawn,
+branch-backstop-before-tests; `_guarded_env` really strips `CLAUDSTER_GUARD_DISABLED`; fail-closed gate
+parsing). The tests are **genuinely adversarial** — `fake_implement.escape_noverify` commits on main with
+`--no-verify` (bypassing the pre-commit hook) and the **post-run SHA backstop catches it**; `tamper` edits
+PROJECT-FACTS and is caught. All 5 invariants proven.
+- **Fixed during validation:** `agent.run.needs_review` was a live event type MISSING from the
+  `EVENT_TYPES` closed set (reducer dispatches on `_HANDLERS`, so it worked + replayed fine, but the
+  authoritative set was incomplete). Registered it; count test 26→27.
+- **FLAG for A8.3/A8.6 (must live-verify):** the preflight/review defaults `/claudster:preflight` and
+  `/claudster:code-review` are **SKILLS, not commands** — they may not resolve as slash commands in
+  `claude -p` (the exact `/prd`→`/claudster:prd` namespacing-bug class we caught live). The A8.2 fakes
+  emit the `PREFLIGHT: PASS`/`REVIEW: CLEAN` markers, so real command resolution is UNVERIFIED. A8.6's
+  live test MUST confirm both resolve + emit the markers; if not, add thin `commands/preflight.md` +
+  `commands/code-review.md` wrappers (or invoke the skills/agents directly). The prompts already instruct
+  the markers inline, which softens but does not remove the risk.
+
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
 both pass when `max_concurrent_runs=1`. Effect: transient "2 ran when cap said 1"; no crash/corruption;
