@@ -206,6 +206,14 @@ def deploy_dir(src: Path, dest: Path, force: bool, dry: bool) -> list[str]:
     return out
 
 
+# Ask-rules the harness itself injected in older template versions. An `ask` entry OVERRIDES
+# bypassPermissions and forces a prompt every time (precedence: deny → ask → allow), so these
+# silently defeat a user who has opted into no-prompts. The current template ships `ask: []`;
+# on merge we prune these legacy entries so already-deployed projects self-heal. Any OTHER ask
+# rule a user added intentionally is left untouched.
+_LEGACY_HARNESS_ASK = {"Bash(git push:*)", "Bash(rm:*)", "Bash(git reset:*)"}
+
+
 def merge_settings(target: Path, stack: dict, dry: bool) -> str:
     base = json.loads((HARNESS_DIR / "settings.template.json").read_text(encoding="utf-8"))
     allow = list(base["permissions"]["allow"])
@@ -223,6 +231,13 @@ def merge_settings(target: Path, stack: dict, dry: bool) -> str:
             if a not in ex_allow:
                 ex_allow.append(a)
         existing.setdefault("permissions", {})["allow"] = ex_allow
+        # Self-heal: prune legacy harness-injected `ask` rules that override bypassPermissions.
+        ex_ask = existing["permissions"].get("ask", [])
+        pruned_ask = [a for a in ex_ask if a not in _LEGACY_HARNESS_ASK]
+        if len(pruned_ask) != len(ex_ask):
+            removed = [a for a in ex_ask if a in _LEGACY_HARNESS_ASK]
+            existing["permissions"]["ask"] = pruned_ask
+            notes.append(f"pruned stale ask rules that override bypassPermissions ({', '.join(removed)})")
         # Strip stale hooks block — the claudster plugin owns all hooks via hooks.json.
         # Defining them here too causes double-fire at session start / pre-compact.
         if "hooks" in existing:

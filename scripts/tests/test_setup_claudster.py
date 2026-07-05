@@ -114,6 +114,32 @@ def test_settings_and_statusline_still_native(tmp_path):
     assert (tmp_path / ".claude" / "statusline-command.sh").is_file()
 
 
+def test_fresh_settings_have_empty_ask(tmp_path):
+    # New projects must never get an `ask` rule (it would override bypassPermissions).
+    _make_project(tmp_path)
+    _run_setup(tmp_path)
+    perms = json.loads((tmp_path / ".claude" / "settings.json").read_text(encoding="utf-8"))["permissions"]
+    assert perms.get("ask", []) == []
+
+
+def test_setup_self_heals_stale_ask(tmp_path):
+    # A project scaffolded by an older template carries `ask: [git push, rm, ...]` which overrides
+    # bypassPermissions. Re-running setup must prune those legacy harness entries in place.
+    _make_project(tmp_path)
+    settings = tmp_path / ".claude" / "settings.json"
+    settings.parent.mkdir(parents=True, exist_ok=True)
+    settings.write_text(json.dumps({
+        "permissions": {
+            "allow": ["Read", "Bash(git status)"],
+            "ask": ["Bash(git push:*)", "Bash(rm:*)", "Bash(git reset:*)", "Bash(deploy:*)"],
+        }
+    }), encoding="utf-8")
+    _run_setup(tmp_path)
+    perms = json.loads(settings.read_text(encoding="utf-8"))["permissions"]
+    # legacy harness entries pruned; a genuinely custom ask rule is preserved
+    assert perms["ask"] == ["Bash(deploy:*)"]
+
+
 # ── usage_review: .claudster output + legacy fallback ───────────────────────
 
 def test_usage_review_stamp_in_claudster(tmp_path):

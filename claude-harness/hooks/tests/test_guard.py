@@ -187,10 +187,19 @@ import subprocess  # noqa: E402
 GUARD = HOOKS / "guard.py"
 
 
+def _clean_env() -> dict:
+    # Strip the kill switch so the guard's default (enabled) behaviour is deterministic regardless
+    # of the ambient environment — the caller's shell may have CLAUDSTER_GUARD_DISABLED set.
+    e = dict(os.environ)
+    e.pop("CLAUDSTER_GUARD_DISABLED", None)
+    return e
+
+
 def _run_hook(payload: dict) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(GUARD)],
         input=json.dumps(payload), capture_output=True, text=True, encoding="utf-8", timeout=20,
+        env=_clean_env(),
     )
 
 
@@ -215,7 +224,8 @@ class TestHookIO:
 
     def test_malformed_payload_never_blocks(self):
         r = subprocess.run([sys.executable, str(GUARD)], input="not json",
-                           capture_output=True, text=True, encoding="utf-8", timeout=20)
+                           capture_output=True, text=True, encoding="utf-8", timeout=20,
+                           env=_clean_env())
         assert r.returncode == 0
         assert r.stdout.strip() == ""
 
@@ -264,7 +274,8 @@ class TestKillSwitch:
                        "cwd": str(tmp_path)})
         assert r.stdout.strip() == ""
 
-    def test_guard_disabled_helper(self, tmp_path):
+    def test_guard_disabled_helper(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("CLAUDSTER_GUARD_DISABLED", raising=False)  # isolate from ambient env
         assert guard.guard_disabled(str(tmp_path)) is False
         (tmp_path / ".claudster").mkdir()
         (tmp_path / ".claudster" / "config.toml").write_text(
