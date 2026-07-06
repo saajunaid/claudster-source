@@ -361,6 +361,70 @@ PROJECT-FACTS and is caught. All 5 invariants proven.
   `commands/code-review.md` wrappers (or invoke the skills/agents directly). The prompts already instruct
   the markers inline, which softens but does not remove the risk.
 
+---
+
+## A8.3 + A8.4 built (2026-07-06) — `/claudster:implement` driver + Implement UI
+
+### A8.3 — the real `/claudster:implement` driver + guard retired
+- **Driver shipped:** `claude-harness/commands/implement.md` — the headless plan executor. Contract:
+  read `.claudster/plans/<slug>.md`; work **ONLY** on the current feature branch (never `git checkout`/
+  `switch`/`branch`, never touch remotes, never `--no-verify`); implement each remaining phase TDD-first;
+  **commit per phase**; update the plan's `## Tracker` (status + short SHA + note); run the tests itself;
+  write a concise `.claudster/reviews/<slug>.md`; end with exactly one
+  `{"implemented":…,"phases_done":N,"tests":"passed|failed","review":"…"}` block. It also forbids editing
+  its own success criteria (`.claudster/PROJECT-FACTS.md` / the test command) — the same tamper surface the
+  runner independently guards. Every safety rule in the command mirrors a runner-enforced invariant, so the
+  driver text can never quietly instruct the model to do what the runner would then fail the run for.
+- **Content-lint:** `scripts/tests/test_implement_command.py` (8 checks) guards the driver's safety clauses
+  (never-ask, branch-only, no-remotes/`--no-verify`, PROJECT-FACTS off-limits, commit-per-phase + Tracker,
+  writes the review + runs tests itself, ends with the JSON block) — like `test_headless_convention.py`, a
+  content lint (behaviour is proven by the human A8.6 smoke), not a behavioural test.
+- **`__TBD_A8__` guard retired:** docket `config.py` Implement lane now defaults to `/claudster:implement`
+  (namespaced — a bare `/implement` does NOT resolve in `claude -p`). The runner's literal-`__TBD_A8__`
+  refusal is **kept as a defensive backstop** (and still covered by `test_placeholder_command_is_refused`,
+  which now explicitly sets the placeholder to prove the backstop fires). `test_config` asserts the new
+  default.
+- **RESOLVED — preflight/review live-resolution flag (from A8.1/A8.2) is CLEARED.** Ran three
+  `claude -p` probes with `--max-turns 1` (haiku): a bogus `/claudster:doesnotexist` prints
+  `Unknown command:` and never reaches the model (baseline); `/claudster:preflight` returned `RESOLVED yes`
+  (skill instructions expanded into context); `/claudster:code-review` resolved and the model responded as
+  a reviewer. **Both skills resolve as slash invocations in headless `claude -p`** — the `/prd` namespacing
+  bug does NOT recur here. **No thin command wrappers were added** (and deliberately not: a same-named
+  `commands/preflight.md` would collide with the skill that already owns `/claudster:preflight`). The
+  runner's `_preflight_prompt`/`_review_prompt` already append the `HEADLESS RUN RULES` + required
+  `PREFLIGHT: PASS`/`REVIEW: CLEAN` end-markers inline, covering the interview-default risk. The A8.6 live
+  smoke still exercises the full spawn end-to-end.
+- **Published:** `junai-push` bumped the claudster plugin (1.3.20 → next) so `/claudster:implement` is
+  installable for the A8.6 human live test.
+
+### A8.4 — Implement-lane UI (docket web)
+- **Sub-report rendered:** a new `ImplementReport` component renders `run.implement`
+  ({branch, preflight, tests, review, phases_done}) inside each run row — preflight/tests/review as tone-
+  coded gate badges (ok/bad/neutral, pending until the pipeline reaches each gate) and the phase-progress
+  count (from the plan Tracker, via `phases_done`).
+- **`needs_review` first-class in the UI:** `RunStatus` + `runChip` gained the amber, non-pulsing
+  `needs review` chip so a review-blocked implement never reads as a clean success (Card status-dot too,
+  since both share `runChip`).
+- **Branch/diff affordance:** the sub-report shows the branch as a `<code>` chip with a `git diff main..<branch>`
+  hint; the **Validate lane** shows a dedicated "Review the branch" callout naming the branch to inspect
+  before Ship.
+- **Types + tests:** `ImplementReport` interface + `implement?` on `Run`; pure `implementGates()` mapper in
+  `runStatus.ts` with 6 new vitest cases (happy path, failing→bad, skipped/pending→neutral, singular phase,
+  null report). `npm run build` clean; **73 vitest green**.
+
+### Fake-test matrix (A8.2) proving the invariants — unchanged, still green
+391 docket pytest + 259 claudster pytest + `validate_pool.py` OK + web build + 73 vitest. The adversarial
+implement fakes (`escape_noverify` commits on main with `--no-verify` → post-run SHA backstop catches it;
+`tamper` edits PROJECT-FACTS → caught) still pass.
+
+### A8.6 — GUARDED live test (HUMAN-run; NOT run in this session)
+On a **throwaway** git repo with the next plugin installed, a tiny 2-phase **approved** plan, and a real
+`test_command`, drag Plan→Implement and confirm: (a) code lands on `agent/<slug>`, **not** main; (b) forcing
+onto main is refused (pre-commit hook + post-run SHA backstop); (c) removing the test command **fails** the
+run (never untested-succeeded); (d) it only auto-advances to Validate on **green tests + clean review**, and
+a blocking review yields `needs_review` (amber), not a clean pass; (e) `/claudster:preflight` and
+`/claudster:code-review` resolve live and emit their markers. Record results here.
+
 **Open finding #5 — cap-check TOCTOU race (minor; being fixed next session).** `runner._create_run`
 reads `_active_count` then calls `queue_agent_run` — not atomic, so two near-simultaneous enqueues could
 both pass when `max_concurrent_runs=1`. Effect: transient "2 ran when cap said 1"; no crash/corruption;
