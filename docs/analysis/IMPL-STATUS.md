@@ -553,3 +553,25 @@ $ git -C E:\Projects\docket status --short
   `0d06aed`, `f7af299`) on top of A1/A2. Working tree has only pre-existing dirty/untracked files
   (4 modified docs + 2 untracked `.claudster/*.jsonl`) — none touched by this run. No remote pushed, no
   PR, nothing merged.
+
+---
+
+## A8.3 + A8.4 validated + PUBLISHED (reviewer, 2026-07-06)
+A8.3 `/claudster:implement` driver (`claude-harness/commands/implement.md`) + content-lint
+(`test_implement_command.py`, 8 checks); config Implement lane now defaults to `/claudster:implement`
+(`__TBD_A8__` retired; runner keeps the literal-placeholder refusal as a backstop). A8.4 Implement-lane UI
+(`ImplementReport` + `implementGates()` mapper + amber `needs_review` chip + branch/diff affordance +
+"Review the branch" callout).
+- **Independent audit: PASS.** docket **391** · claudster **259** · lint 8 · web build clean · vitest.
+  Read the driver: every safety clause mirrors a runner-enforced invariant (branch-only, no `--no-verify`,
+  no PROJECT-FACTS/test-command edit, commit-per-phase, honest reporting) — it can't instruct a violation.
+- **CRITICAL flag CLEARED (the `/prd`-class risk):** independently probed live — `/claudster:preflight`
+  → `RESOLVED` (no Unknown-command error); `/claudster:code-review` → resolved AND performed a real review
+  of the working diff. Both skills resolve as headless slash invocations, so NO wrapper commands are
+  needed and the preflight/review gates will resolve live.
+- **PUBLISHED:** `junai-push` → plugin **1.3.21** (mirror synced, no MCP/VSCE — Track 0 held). The
+  `/claudster:implement` driver is now installable for the A8.6 human live test. Update the installed
+  plugin to 1.3.21.
+- **A8.6 remains human-run** — the throwaway-repo live test (branch isolation, main-refusal, no-test-command
+  failure, green-tests+clean-review advance, live preflight/review marker check) is documented and is the
+  only thing left before the Implement lane is proven end-to-end.
