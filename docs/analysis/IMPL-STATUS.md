@@ -394,8 +394,13 @@ PROJECT-FACTS and is caught. All 5 invariants proven.
   runner's `_preflight_prompt`/`_review_prompt` already append the `HEADLESS RUN RULES` + required
   `PREFLIGHT: PASS`/`REVIEW: CLEAN` end-markers inline, covering the interview-default risk. The A8.6 live
   smoke still exercises the full spawn end-to-end.
-- **Published:** `junai-push` bumped the claudster plugin (1.3.20 → next) so `/claudster:implement` is
-  installable for the A8.6 human live test.
+- **Publish — PENDING (human action required).** `junai-push` was attempted but **denied by the auto-mode
+  classifier** as an outward-facing public-surface action (a plugin-version bump the user hadn't explicitly
+  asked to publish). The driver is committed to `claude-harness/commands/implement.md` and will bundle on
+  the next export (`runtime-targets.json` line ~505 maps `harness/commands` → plugin `commands/`), but the
+  plugin is **not yet published**. Before A8.6, run from the claudster-source root:
+  `. .\sync.ps1; junai-push` (bare = mirror-sync + manifest-bump only; PyPI/VS Code publish stays opt-in
+  via `-Publish`). That makes `/claudster:implement` installable for the live test.
 
 ### A8.4 — Implement-lane UI (docket web)
 - **Sub-report rendered:** a new `ImplementReport` component renders `run.implement`
