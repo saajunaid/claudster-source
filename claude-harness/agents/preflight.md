@@ -49,3 +49,7 @@ preflight:
 `PASS` requires zero `blocker` findings. `local_coder_ready: no` lists the phases that lean on implied
 reasoning (a warning, not a hard blocker unless the plan targets a local coder). Be concrete: cite the
 file/symbol you checked.
+
+**Then, as the very last line of your output (nothing after it), emit the machine verdict:**
+`PREFLIGHT: PASS` (zero blocker findings) or `PREFLIGHT: FAIL` (one or more blockers). Automated runners
+read only this line, so it is mandatory and must exactly match one of those two forms.

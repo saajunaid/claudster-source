@@ -43,3 +43,7 @@ review:
   good: <one line on what's done well, if anything>
 ```
 `verdict: approved` requires an empty `blocking` list. Be specific with `file:line`. Do not fix; report.
+
+**Then, as the very last line of your output (nothing after it), emit the machine verdict:**
+`REVIEW: CLEAN` (empty `blocking` list) or `REVIEW: BLOCKING` (one or more blocking items). Automated
+runners read only this line, so it is mandatory and must exactly match one of those two forms.
