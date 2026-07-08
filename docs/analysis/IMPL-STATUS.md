@@ -575,3 +575,35 @@ A8.3 `/claudster:implement` driver (`claude-harness/commands/implement.md`) + co
 - **A8.6 remains human-run** — the throwaway-repo live test (branch isolation, main-refusal, no-test-command
   failure, green-tests+clean-review advance, live preflight/review marker check) is documented and is the
   only thing left before the Implement lane is proven end-to-end.
+
+---
+
+## A8.6 — LIVE Implement-lane test: PASS ✅ (reviewer, 2026-07-08)
+Ran a real autonomous `/claudster:implement` end-to-end on a throwaway git repo (real Opus, subscription
+quota) — a 2-phase TDD plan (`string_tools.py`: `reverse` + `is_palindrome`). **Final verdict: ALL_PASS.**
+Every safety invariant proved live, not with fakes:
+- isolated feature branch (`agent/string-tools`, 4 real commits) — **`main` never moved** (base SHA identical
+  before/after); preflight passed on the real plan; real TDD code written; the **runner's own independent
+  pytest** ran green (the real success gate); code-review clean → **auto-advanced Plan→Validate**;
+  `needs_review` fires (proven in the intermediate runs) when a verdict isn't clearly clean.
+
+**Five real integration bugs the live run surfaced (fakes could not — they emit perfect markers):**
+1. **Gate parser too strict** — `_parse_gate` wanted the literal `PREFLIGHT: PASS`; the live preflight emits
+   its own prose verdict (`Result: PASS`, `Preflight Validation: PASS`). Parser now recognises the real
+   wording, fail-closed. (docket `406b27b`)
+2. **Markerless prose** — the live agents don't honour an injected "end with MARKER" instruction. Added a
+   **fail-closed verdict classifier**: on no explicit verdict, a tiny plain `-p` call reads the report and
+   answers one word. Tri-state parsers (`_preflight_verdict`/`_review_verdict` → True/False/None). (`5859599`)
+3. **Skills don't reliably activate headless** — `/claudster:preflight` and `/claudster:code-review` are
+   model-invoked `context: fork` SKILLS; one run the model didn't fire code-review at all. Preflight/review
+   prompts are now **self-contained** (task + criteria inline; skill is an optional nudge). (`d04d7fa`)
+4. **`Verdict: approve` vs `approved`** — reviewer drops the trailing "d"; parser now matches `APPROVE`.
+5. **should-fix ≠ blocking** — the classifier wrongly treated a should-fix finding as a merge-blocker; only
+   CRITICAL/must-fix/blocking issues block now (matches the reviewer's blocking/should-fix/nit taxonomy).
+
+Docket suite **412 passed** (parser/classifier/tri-state unit tests added, incl. the real review prose).
+Note: the gates no longer depend on claudster skill/agent output format — self-contained prompt + classifier
+carry it — so the 1.3.22 agent-marker edits are belt-and-suspenders, not load-bearing.
+
+**A8 is DONE.** The autonomous idea→ship pipeline (Ideas→PRD→Plan→Implement→Validate→Ship) is proven live
+end-to-end, including guarded autonomous code-writing. No docket branch merged/pushed yet — pending decision.
