@@ -607,3 +607,29 @@ carry it — so the 1.3.22 agent-marker edits are belt-and-suspenders, not load-
 
 **A8 is DONE.** The autonomous idea→ship pipeline (Ideas→PRD→Plan→Implement→Validate→Ship) is proven live
 end-to-end, including guarded autonomous code-writing. No docket branch merged/pushed yet — pending decision.
+
+---
+
+## Track B — Gemini + Antigravity adapters (built for text lanes, reviewer 2026-07-08)
+The non-Claude harness requirement. The runner already swaps the coding agent through the
+`docket.harness` adapter seam (selected by `agent_track.harness`); Track B fills in two real
+siblings to `ClaudeCodeAdapter`:
+- **GeminiCLIAdapter** (`harness: gemini`) — `gemini --prompt <p> --output-format json --yolo
+  [--model M]`; parses Gemini's `{response, stats, error}` envelope (token stats, not USD cost →
+  cost/turns None, which §C1 allows; success is artifact-gated, not envelope-gated).
+- **AntigravityAdapter** (`harness: antigravity`, the `agy` CLI) — `agy --prompt <p> --headless
+  --approve all --no-color [--model M]`; `agy`'s non-TTY stdout is unreliable so the verdict is
+  exit-code + artifact only.
+- `_extract_agent_text` is now harness-neutral (Claude `result` OR Gemini `response`); config gains
+  `antigravity_cmd`; Codex stays a stub.
+- **Proven for PRD/Plan end-to-end** via a fake `gemini` CLI through the full runner (artifact
+  written, highlights parsed from `response`, session id captured, cost/turns null). **418 tests
+  pass.** On docket branch `feat/gemini-adapter` (NOT merged — no prod deploy; land deliberately).
+
+### PENDING (explicit, per user)
+1. **LIVE Gemini / Antigravity PRD-Plan run** — needs the real CLI installed + authenticated on the
+   box (neither `gemini` nor `agy` ships here; a live run also needs Google auth). The adapters are
+   built + unit-tested and ready to go live the moment the CLI is present.
+2. **Live Implement-lane run on a non-Claude harness** — the A8 Implement guards are harness-neutral
+   but have only been proven live on Claude (A8.6). Re-run the A8.6-style live test with
+   `harness: gemini` once (1) is unblocked, incl. checking gate verdicts parse from Gemini output.
