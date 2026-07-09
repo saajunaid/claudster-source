@@ -633,3 +633,30 @@ siblings to `ClaudeCodeAdapter`:
 2. **Live Implement-lane run on a non-Claude harness** — the A8 Implement guards are harness-neutral
    but have only been proven live on Claude (A8.6). Re-run the A8.6-style live test with
    `harness: gemini` once (1) is unblocked, incl. checking gate verdicts parse from Gemini output.
+
+---
+
+## A6 — Command Center (mission control for agent runs) — BUILT ✅ (reviewer, 2026-07-08)
+A single view showing **every** agent run across the board, instead of inspecting them one card at a
+time. On docket branch `feat/command-center` (off `main`; NOT merged — no prod deploy yet).
+- **Six stat tiles** (active / needs review / succeeded / failed / total runs / total cost) — the
+  actionable ones filter the list on click; **filter pills** (All / Active / Needs review / Failed).
+- **Run list**: status chip, task title, lane, command, cost, duration, timestamp, artifact path.
+  Implement runs reuse the existing `<ImplementReport>` (preflight→tests→review→phases gates + the
+  "review the diff before Ship" branch affordance) rather than duplicating badges.
+- `summarizeRuns()` — pure + unit-tested. Cost sums only runs that report one, so an **all-Gemini
+  board** (no USD cost) hides the tile instead of showing `$0.00`.
+- `useAllRuns()` polls `/api/runs` every 2.5s **only while a run is queued/running** (same no-idle-churn
+  rule as `useBoard`); the sidebar carries a live active-run badge.
+- **Nav item only appears when `agent_track.enabled`** → a board with agents off looks exactly as it did
+  before the pipeline shipped. Prod is visually unchanged until you turn agents on.
+
+**Verified live, not just unit-tested:** seeded a real board through the engine's own ops with a run in
+every status, served it, and drove the SPA with Playwright — all five statuses render, gate badges and
+branches show for implement runs, the nav badge reads the active count, and the Needs-review filter
+narrows to exactly that run. Web: **76 tests pass**, clean `tsc --noEmit` + vite build. (Bonus: the
+seeded in-flight runs came back `failed` on serve — `reconcile_orphans` working as designed.)
+
+### Remaining in Step 3
+- **M1** — per-feature pipeline state (WIP=1 → many features flowing through Ideas→…→Ship at once).
+  The Command Center is already shaped to display it (it lists runs, not a single pipeline).
