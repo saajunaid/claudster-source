@@ -705,3 +705,38 @@ built, tested and UNMERGED**, deliberately (each is new work, not yet live-prove
 1. **Live Gemini / Antigravity PRD-Plan run** — needs the real `gemini` / `agy` CLI installed +
    authenticated (neither ships on this box).
 2. **Live Implement run on a non-Claude harness** — guards are harness-neutral, only proven on Claude.
+
+---
+
+## LANDED — all three branches merged to docket `main` + deployed (reviewer, 2026-07-10)
+`feat/gemini-adapter` → `feat/m1-concurrency` → `feat/command-center`, merged **one at a time with the
+full suite run after each** (Gemini and M1 both touch `_CMD_KEY` + `AGENT_TRACK_DEFAULT`).
+
+Git auto-merged with **zero conflicts**, which is exactly when to be suspicious — so the merged result
+was verified *semantically*, not just textually: `_CMD_KEY` carries `antigravity`, `_extract_agent_text`
+still reads Gemini's `response`, `_worktree_lock` + the `Runner(workers=…)` pool are present, the
+implement path still takes the tree lock, config holds **both** `antigravity_cmd` and
+`max_concurrent_runs: 3`, all four adapters register, and `create_app` sizes the pool.
+
+**Final on merged main: 427 python + 76 web tests, clean tsc/vite build.** docket `main` = `df15433`.
+
+**Ships dormant** (verified on three axes before pushing): `agent_track.enabled = False`,
+`create_app(start_runner=False)`, and the Command Center nav is gated on `agent_track.enabled` — so the
+live board is byte-for-byte the same experience until agents are switched on.
+
+### To try it live (human)
+1. In the target repo's `.docket/config.json`, set `agent_track.enabled: true` (and a real
+   `agent_track.test_command` if you want the Implement lane).
+2. The **Command Center** nav item appears; move a card into **PRD** to kick off a run.
+3. `max_concurrent_runs` (default 3) is the WIP limit AND sizes the worker pool. Text lanes run in
+   parallel; Implement runs serialise per repo by design (they share one git working tree).
+
+### Still pending (needs a human/CLI)
+1. **Live Gemini / Antigravity run** — install + authenticate `gemini` / `agy`, then set
+   `agent_track.harness: "gemini"`.
+2. **Live Implement on a non-Claude harness** — guards are harness-neutral, proven live only on Claude.
+
+### Known local nit (not a code issue)
+`E:\Projects\docket\.git` has a permissions problem — `git fetch` and remote-ref updates fail with
+`Permission denied` on `.git/FETCH_HEAD` / `.git/logs/refs/remotes/origin/main`. Pushes still succeed
+(the remote is authoritative and correct); only local ref bookkeeping is affected.
