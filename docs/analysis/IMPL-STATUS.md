@@ -660,3 +660,48 @@ seeded in-flight runs came back `failed` on serve — `reconcile_orphans` workin
 ### Remaining in Step 3
 - **M1** — per-feature pipeline state (WIP=1 → many features flowing through Ideas→…→Ship at once).
   The Command Center is already shaped to display it (it lists runs, not a single pipeline).
+
+---
+
+## M1 — many features through the pipeline at once — BUILT ✅ (reviewer, 2026-07-08)
+On docket branch `feat/m1-concurrency` (off `main`; NOT merged). **421 tests pass.**
+
+**Two problems, not one.**
+1. *No real parallelism.* The runner had a SINGLE daemon worker, so raising `max_concurrent_runs`
+   only made runs **queue** — never execute concurrently. Now `Runner(workers=N)` spawns a pool;
+   `N=1` (the default ctor arg) reproduces the old serial behaviour exactly. `api._runner_workers`
+   sizes the pool from the served repo's `max_concurrent_runs`, clamped to `[1, 8]` (a typo can't
+   spawn a thread storm; an unreadable config falls back to 1 and never blocks startup).
+2. *The working tree is shared.* Implement runs mutate it — `_ensure_feature_branch` runs
+   `git checkout -B`, `_install_precommit_guard` writes a **repo-global** hook, and the runner's own
+   test run reads whatever is checked out. Two concurrent implements in one repo would land commits
+   on each other's branch, clobber each other's guard, and test mixed code. So an Implement run now
+   takes an **exclusive `_worktree_lock` on its project** across the whole git-touching section
+   (released before the board-only auto-advance). **Text lanes (PRD/Plan) touch no git at all** and
+   never take the lock → they stay fully parallel. That is what makes M1 safe: many features in
+   flight, at most one rewriting any given working tree.
+
+The event log needed **no** new protection — every engine write op is already `@_serialized` under a
+per-repo lock. The `reduce(events) == board.json` invariant is now asserted *under real concurrency*.
+
+`max_concurrent_runs` default **1 → 3** (it is the per-repo WIP limit). Behaviourally invisible:
+`agent_track.enabled` is still `False`. `test_run_endpoint_409_over_cap` now pins its own cap rather
+than leaning on the default.
+
+**Tests (new `test_runner_concurrency.py`):** pool parallelises text lanes (peak≥2); `workers=1` stays
+serial (peak==1); **two Implement runs never overlap (peak==1)** yet each lands on its own
+`agent/<slug>` branch; event-log invariant under 4 workers; cap still enforced; start/stop spawn+join
+N workers; pool sizing clamps. **Mutation-checked:** neutering `_worktree_lock` makes the runs overlap,
+proving the serialization test can actually detect the bug. Stable over 3 consecutive runs.
+
+---
+
+## STATE OF PLAY (2026-07-08)
+`main` (both repos) is landed + deployed (docket prod `v2026.07.08.1`). **Three docket branches are
+built, tested and UNMERGED**, deliberately (each is new work, not yet live-proven):
+`feat/gemini-adapter` · `feat/command-center` · `feat/m1-concurrency`.
+
+### Pending live items
+1. **Live Gemini / Antigravity PRD-Plan run** — needs the real `gemini` / `agy` CLI installed +
+   authenticated (neither ships on this box).
+2. **Live Implement run on a non-Claude harness** — guards are harness-neutral, only proven on Claude.
