@@ -61,6 +61,90 @@ def test_inject_prefers_new_over_legacy(tmp_path):
     assert "RELAY-OLD-CONTENT" not in r.stdout
 
 
+# ── inject_relay: workstream stack (digression tracker, Phase 1) ────────────
+_PARKED = "⛏ Parked workstream:"
+
+
+def _write_workstreams(tmp_path, stack, version=1) -> None:
+    (tmp_path / ".claudster").mkdir(exist_ok=True)
+    (tmp_path / ".claudster" / "workstreams.json").write_text(
+        json.dumps({"version": version, "stack": stack}), encoding="utf-8"
+    )
+
+
+def _frame(plan, phase="Phase 1", reason="blocked", repo=None,
+           pushed="2026-07-10T14:00:00Z", pointer="do the next thing"):
+    return {"plan": plan, "phase": phase, "resumePointer": pointer,
+            "reason": reason, "repo": repo, "pushedAt": pushed}
+
+
+def test_injects_parked_frame_line(tmp_path):
+    _write_workstreams(tmp_path, [_frame(".claudster/plans/ucip.md", phase="Phase 2 — ingestion",
+                                         reason="blocked on the Windows-auth sidecar")])
+    r = _run(INJECT, tmp_path, "{}")
+    assert _PARKED in r.stdout
+    assert ".claudster/plans/ucip.md" in r.stdout
+    assert "Phase 2 — ingestion" in r.stdout
+    assert "blocked on the Windows-auth sidecar" in r.stdout
+    assert "2026-07-10" in r.stdout            # date part of pushedAt
+    assert "/resume" in r.stdout
+
+
+def test_parked_line_precedes_relay(tmp_path):
+    """Improvement #3: the parked line is emitted BEFORE the relay marker (surface-it-first)."""
+    _write_workstreams(tmp_path, [_frame(".claudster/plans/ucip.md")])
+    (tmp_path / ".claudster" / "relay.md").write_text("# Relay — CURRENT", encoding="utf-8")
+    r = _run(INJECT, tmp_path, "{}")
+    assert _PARKED in r.stdout
+    assert "=== relay.md" in r.stdout
+    assert r.stdout.index(_PARKED) < r.stdout.index("=== relay.md")
+
+
+def test_multiple_frames_listed_lifo(tmp_path):
+    """Top-of-stack (most recently parked) first; a total count line when N > 1."""
+    _write_workstreams(tmp_path, [
+        _frame(".claudster/plans/older.md"),   # pushed first → deepest
+        _frame(".claudster/plans/newer.md"),   # pushed last → top of stack
+    ])
+    r = _run(INJECT, tmp_path, "{}")
+    assert r.stdout.index("newer.md") < r.stdout.index("older.md")
+    assert "(2 parked total)" in r.stdout
+
+
+def test_absent_file_injects_nothing(tmp_path):
+    r = _run(INJECT, tmp_path, "{}")
+    assert _PARKED not in r.stdout
+
+
+def test_malformed_json_is_silently_ignored(tmp_path):
+    (tmp_path / ".claudster").mkdir()
+    (tmp_path / ".claudster" / "workstreams.json").write_text("{oops", encoding="utf-8")
+    r = _run(INJECT, tmp_path, "{}")
+    assert r.returncode == 0
+    assert _PARKED not in r.stdout
+
+
+def test_empty_stack_injects_nothing(tmp_path):
+    _write_workstreams(tmp_path, [])
+    r = _run(INJECT, tmp_path, "{}")
+    assert _PARKED not in r.stdout
+
+
+def test_wrong_version_injects_nothing(tmp_path):
+    _write_workstreams(tmp_path, [_frame(".claudster/plans/ucip.md")], version=99)
+    r = _run(INJECT, tmp_path, "{}")
+    assert _PARKED not in r.stdout
+
+
+def test_cross_repo_frame_shows_repo_path(tmp_path):
+    _write_workstreams(tmp_path, [
+        _frame("plans/serve-sight.md", repo="E:/Projects/serve-sight"),
+    ])
+    r = _run(INJECT, tmp_path, "{}")
+    assert _PARKED in r.stdout
+    assert "E:/Projects/serve-sight" in r.stdout
+
+
 # ── inject_relay: usage-review nudge stamp (new + legacy fallback) ───────────
 
 def test_inject_nudge_reads_new_stamp(tmp_path):

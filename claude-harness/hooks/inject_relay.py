@@ -133,6 +133,34 @@ def _truncate_relay(text: str) -> str:
     return "\n".join(truncated)
 
 
+# Workstream stack (digression tracker): surface any PARKED workstreams BEFORE the relay, so a session
+# that digressed from its original task never silently loses it. State lives at .claudster/workstreams.json
+# (root-anchored, like relay). Fail-open & silent: a missing / unparseable / wrong-version / empty stack
+# injects nothing and NEVER raises — a partially-written stack must not break session start.
+try:
+    _ws = os.path.join(ROOT, ".claudster", "workstreams.json")
+    if os.path.isfile(_ws):
+        _data = json.load(open(_ws, encoding="utf-8"))
+        _stack = _data.get("stack") if isinstance(_data, dict) and _data.get("version") == 1 else None
+        if isinstance(_stack, list) and _stack:
+            _wlines = []
+            for _f in reversed(_stack):  # top-of-stack (most recently parked) first
+                _plan = _f.get("plan", "?")
+                _repo = _f.get("repo")
+                _loc = f"{_repo} :: {_plan}" if _repo else _plan
+                _phase = _f.get("phase", "?")
+                _reason = _f.get("reason", "")
+                _since = str(_f.get("pushedAt", ""))[:10]  # date part only
+                _wlines.append(
+                    f'⛏ Parked workstream: {_loc} @ {_phase} — "{_reason}" '
+                    f"(since {_since}). Run /resume to pop."
+                )
+            if len(_stack) > 1:
+                _wlines.append(f"({len(_stack)} parked total)")
+            print("\n".join(_wlines))
+except Exception:
+    pass
+
 if os.path.isfile(RELAY):
     try:
         text = open(RELAY, encoding="utf-8").read().strip()
