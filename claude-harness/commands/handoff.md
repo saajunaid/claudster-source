@@ -34,6 +34,10 @@ marked in-progress but has **uncommitted changes** (work left mid-flight), or a 
 mid-phase N — `<files>` left uncommitted; re-run its tests first") so the next session doesn't assume a
 clean phase boundary and lose or double-do the work.
 
+**Digression check.** If this session abandoned a mid-flight plan for a *different* one (relay.md or the
+tracker shows plan A in progress, but the work moved to plan B), suggest the user run `/digress` to park
+plan A on the workstream stack — so its exact resume point survives and `/resume` can pop it back later.
+
 ## Step 3 — write the resume doc (overwrite) with exactly these sections
 > **Where to write:** solo / single active branch → `.claudster/relay.md` (default).
 > **Team / parallel branches** → write `.claudster/relay/<current-branch>.md` instead, so two
