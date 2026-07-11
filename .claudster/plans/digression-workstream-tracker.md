@@ -1,6 +1,6 @@
 ---
 type: plan
-status: ready
+status: shipped
 feature: digression-workstream-tracker
 creation-agent: claudster
 Original Author: Claude Code
@@ -80,12 +80,25 @@ Rules: `stack` is LIFO (last element = most recently parked). `repo: null` means
 absolute path to the repo whose plan is referenced (cross-repo case). All fields strings except `repo`
 (string|null). Unknown fields are preserved on rewrite (forward compatibility).
 
+## Improvements (added 2026-07-11, during execution)
+1. **Per-frame fail-open access.** The hook reads every frame field with `.get(...)` + a default, so a
+   frame missing `phase`/`reason`/`repo` degrades to `?`/empty rather than raising — a partially-written
+   stack must never break SessionStart (same bar as the Dream-Memory block right below it in the hook).
+2. **`/digress` idempotency guard.** If the top-of-stack frame is already the plan being parked, `/digress`
+   UPDATES that frame in place (refresh `phase`/`resumePointer`/`reason`/`pushedAt`) instead of pushing a
+   duplicate. Prevents a stack of identical frames when a session digresses twice from the same plan.
+3. **Deterministic ordering test.** Phase 1 asserts the parked line is emitted BEFORE the `=== relay.md ===`
+   marker (index comparison), not merely that both strings are present — the "surface it first" guarantee.
+
 ## Phases
 
-### Phase 1 — Hook injection (TDD)
-**Touches:** `claude-harness/hooks/inject_relay.py`, `claude-harness/hooks/tests/test_inject_relay.py`
-(extend the existing test file for this hook — find it with `Glob claude-harness/hooks/tests/*relay*`;
-follow its existing fixture style exactly).
+### Phase 1 — Hook injection (TDD) ✅ 10296d9
+**Touches:** `claude-harness/hooks/inject_relay.py`, `claude-harness/hooks/tests/test_hook_paths.py`
+(CORRECTED 2026-07-11: there is NO `*relay*` test file — the inject_relay hook is tested in
+`test_hook_paths.py`. The hooks run top-level code and `sys.exit()` on import, so they CANNOT be imported:
+every test invokes the hook as a subprocess via the module's `_run(script, cwd, stdin)` helper with a
+tmp_path cwd, then asserts on stdout. Follow that exact fixture style — add the new tests under a
+`# ── inject_relay: workstream stack ──` banner alongside the existing `inject_*` tests.)
 **Implement:** in the hook, after locating the repo's `.claudster/` (reuse however it finds `relay.md`):
 read `workstreams.json`; if absent, unparseable, `version != 1`, or `stack` empty → inject nothing extra
 (and NEVER raise — wrap in try/except; a broken stack file must not break session start). Else prepend,
@@ -99,7 +112,7 @@ Multiple frames: list all, deepest last, and add a final line `(<N> parked total
 **Exit gate:** `python -m pytest claude-harness/hooks/tests -q` all pass; full suite green.
 **Commit:** `feat(hooks): inject parked-workstream stack at SessionStart`
 
-### Phase 2 — `/digress` and `/resume` commands
+### Phase 2 — `/digress` and `/resume` commands ✅ dbeb79a
 **Touches:** `claude-harness/commands/digress.md` (new), `claude-harness/commands/resume.md` (new).
 Frontmatter style: copy `claude-harness/commands/handoff.md` (description + argument-hint).
 **`digress.md`** (`argument-hint: [reason for the detour]`) instructs the agent to:
@@ -107,9 +120,10 @@ Frontmatter style: copy `claude-harness/commands/handoff.md` (description + argu
    executing (else the plan named in relay.md's Next-step; else ask the user which plan to park — the ONLY
    permitted question). Read its `## Tracker` (or phase headings) for the current phase.
 2. Write a one-line `resumePointer`: the next concrete action (from the Tracker/relay Next-step).
-3. Read `.claudster/workstreams.json` (create `{"version":1,"stack":[]}` if absent), APPEND the frame
-   (schema above; `pushedAt` = now, ISO-8601; `reason` = `$ARGUMENTS` or a self-derived one-liner),
-   write the whole file back.
+3. Read `.claudster/workstreams.json` (create `{"version":1,"stack":[]}` if absent). If the top-of-stack
+   frame's `plan` already equals the plan being parked → UPDATE it in place (refresh phase/resumePointer/
+   reason/pushedAt) rather than pushing a duplicate (improvement #2); else APPEND the frame (schema above;
+   `pushedAt` = now, ISO-8601; `reason` = `$ARGUMENTS` or a self-derived one-liner). Write the whole file back.
 4. Confirm to the user: "Parked: <plan> @ <phase>. Now switching to: <the new task>." Then continue with
    whatever the user asked.
 **`resume.md`** (no args) instructs the agent to:
@@ -121,7 +135,7 @@ Frontmatter style: copy `claude-harness/commands/handoff.md` (description + argu
 registered (mirror commit `b9461d5`'s registry edit if one exists — check `git show b9461d5 --stat`).
 **Commit:** `feat(commands): /claudster:digress + /claudster:resume — the workstream stack`
 
-### Phase 3 — Guidance + convention test
+### Phase 3 — Guidance + convention test ✅ 0677817
 **Touches:** `claude-harness/commands/handoff.md` (one sentence: if the session is abandoning a mid-flight
 plan for another, suggest `/digress` first), `scripts/tests/test_headless_convention.py` OR a new
 `scripts/tests/test_workstream_commands.py`: assert `digress.md` mentions the schema fields
@@ -130,9 +144,11 @@ parked"), and both files never instruct a destructive git action (grep: no `git 
 **Exit gate:** suite green.
 **Commit:** `test+docs: digression guidance in handoff; convention tests for the stack commands`
 
-### Phase 4 — Ship
+### Phase 4 — Ship ✅ (this commit)
 `validate_pool.py` + full suite + bare `junai-push` (never `-Publish`); append a dated section to
-`docs/analysis/IMPL-STATUS.md`.
+`docs/analysis/IMPL-STATUS.md`. NOTE (2026-07-11): local work committed; the `junai-push` publish step is
+held for explicit user confirmation (plugin-only change → prefer `-NoPublish` to avoid an unnecessary
+MCP/VS Code republish).
 **Commit:** `docs: digression workstream tracker shipped`
 
 ## Prompt

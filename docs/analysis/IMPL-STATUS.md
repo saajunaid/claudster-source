@@ -740,3 +740,34 @@ live board is byte-for-byte the same experience until agents are switched on.
 `E:\Projects\docket\.git` has a permissions problem — `git fetch` and remote-ref updates fail with
 `Permission denied` on `.git/FETCH_HEAD` / `.git/logs/refs/remotes/origin/main`. Pushes still succeed
 (the remote is authoritative and correct); only local ref bookkeeping is affected.
+
+---
+
+## 2026-07-11 — Digression workstream tracker (built; publish held)
+
+Never lose the original task after a detour. Implements the plan
+`.claudster/plans/digression-workstream-tracker.md` (status: shipped).
+
+- **Phase 1 (10296d9)** — `inject_relay.py` reads `.claudster/workstreams.json` at SessionStart and prints
+  one `⛏ Parked workstream: <plan> @ <phase> — "<reason>" (since <date>). Run /resume to pop.` line per
+  parked frame, top-of-stack first, BEFORE the relay content, with a `(<N> parked total)` line when N > 1.
+  Fail-open on missing/malformed/`version != 1`/empty (never raises). 8 subprocess tests in
+  `test_hook_paths.py` (the real home of the inject_relay tests — the plan's `*relay*` glob was corrected).
+- **Phase 2 (dbeb79a)** — `/claudster:digress [reason]` pushes the current workstream (active plan + phase +
+  one-line resumePointer) onto the stack, with an idempotency guard (same plan on top → update in place).
+  `/claudster:resume` pops the LIFO top, restates it, realigns relay.md's `## Next step`, and continues.
+  Both are metadata-only — no destructive git.
+- **Phase 3 (0677817)** — `handoff.md` now suggests `/digress` when a session abandons a mid-flight plan;
+  `scripts/tests/test_workstream_commands.py` locks the schema fields, the empty-stack handling
+  ("Nothing is parked"), and the no-destructive-git rule into the command text.
+
+**Validation:** `python -m pytest scripts/tests/ claude-harness/hooks/tests/` → **273 passed, 1 skipped**;
+`validate_pool.py` → OK.
+
+**State file:** `.claudster/workstreams.json` = `{"version":1,"stack":[<frame>…]}`; frame =
+`{plan, phase, resumePointer, reason, repo(null|abs-path), pushedAt}`; `stack` is LIFO; unknown fields
+preserved on rewrite.
+
+**Publish held (human decision):** all local work is committed, but `junai-push` is NOT run. This is a
+plugin-only change, so a bare `junai-push` would also republish MCP (PyPI) + VS Code unnecessarily — prefer
+`junai-push -NoPublish`. Awaiting user confirmation on which to run.
