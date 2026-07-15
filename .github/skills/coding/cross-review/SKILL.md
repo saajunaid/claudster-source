@@ -15,14 +15,17 @@ issue. This skill runs that second reviewer over the current changes and acts on
 - NOT a replacement for the in-repo `/claudster:code-review` — this is the *cross-vendor* complement.
 
 ## Prerequisites (one-time)
-Set three env vars (the tool defaults to DeepSeek, the cheapest + most architecturally distinct-from-Claude
-option; a review costs well under a cent):
+Only the key is mandatory — the tool ships **provider presets** (default `deepseek`, the cheapest + most
+architecturally distinct-from-Claude option; a review costs well under a cent):
 ```
-REVIEW_API_KEY   = <your provider key>              # REQUIRED
-REVIEW_BASE_URL  = https://api.deepseek.com         # default; or GLM/OpenRouter/OpenAI-compatible
-REVIEW_MODEL     = deepseek-chat                     # default; e.g. glm-4.6, or an OpenRouter id
+REVIEW_API_KEY   = <your provider key>     # REQUIRED (exit 3 without it)
+REVIEW_PROVIDER  = deepseek                 # optional: deepseek | glm | openrouter (default deepseek)
+REVIEW_BASE_URL  = ...                      # optional: overrides the preset's URL
+REVIEW_MODEL     = ...                      # optional: overrides the preset's model id
 ```
-To point at GLM instead: `REVIEW_BASE_URL=https://api.z.ai/api/coding/paas/v4`, `REVIEW_MODEL=glm-4.6`.
+Switch provider with one flag: `--provider glm` (or `REVIEW_PROVIDER=glm`). **Future-proofing:** model ids
+churn — the preset table in `oss_review.py` is the one place to edit a rename, and `REVIEW_MODEL` /
+`REVIEW_BASE_URL` always win, so you can point at any new id without touching code.
 
 ## How to run
 From the repo root (the tool ships at `.github/tools/oss_review.py`):

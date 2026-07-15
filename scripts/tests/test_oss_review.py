@@ -19,7 +19,7 @@ import oss_review  # noqa: E402
 
 
 def _args(**over) -> argparse.Namespace:
-    base = {"range": None, "cwd": ".", "base_url": None, "model": None}
+    base = {"range": None, "cwd": ".", "provider": None, "base_url": None, "model": None}
     base.update(over)
     return argparse.Namespace(**base)
 
@@ -29,7 +29,7 @@ def _args(**over) -> argparse.Namespace:
 def test_resolve_config_defaults_to_deepseek():
     base, key, model = oss_review.resolve_config(_args(), {"REVIEW_API_KEY": "k"})
     assert base == "https://api.deepseek.com"
-    assert model == "deepseek-chat"
+    assert model == "deepseek-v4-flash"  # future-proofed default (deepseek-chat deprecated 2026-07-24)
     assert key == "k"
 
 
@@ -48,6 +48,36 @@ def test_resolve_config_flags_override_env():
 def test_resolve_config_strips_trailing_slash():
     base, _k, _m = oss_review.resolve_config(_args(base_url="https://x/"), {"REVIEW_API_KEY": "k"})
     assert base == "https://x"
+
+
+def test_resolve_config_provider_preset_selects_glm():
+    base, _k, model = oss_review.resolve_config(_args(provider="glm"), {"REVIEW_API_KEY": "k"})
+    assert base == "https://api.z.ai/api/coding/paas/v4"
+    assert model == "glm-4.7"
+
+
+def test_resolve_config_env_provider_selected():
+    base, _k, _m = oss_review.resolve_config(_args(), {"REVIEW_API_KEY": "k", "REVIEW_PROVIDER": "openrouter"})
+    assert base == "https://openrouter.ai/api/v1"
+
+
+def test_resolve_config_env_model_overrides_preset():
+    """The future-proofing contract: REVIEW_MODEL wins over a preset even after a rename."""
+    _b, _k, model = oss_review.resolve_config(
+        _args(provider="deepseek"), {"REVIEW_API_KEY": "k", "REVIEW_MODEL": "deepseek-v5-turbo"})
+    assert model == "deepseek-v5-turbo"
+
+
+def test_resolve_config_unknown_provider_without_overrides_raises():
+    with pytest.raises(oss_review.ConfigError):
+        oss_review.resolve_config(_args(provider="does-not-exist"), {"REVIEW_API_KEY": "k"})
+
+
+def test_resolve_config_unknown_provider_ok_with_explicit_overrides():
+    # An unknown provider is fine as long as base_url + model are supplied directly.
+    base, _k, model = oss_review.resolve_config(
+        _args(provider="future-vendor", base_url="https://x", model="m"), {"REVIEW_API_KEY": "k"})
+    assert base == "https://x" and model == "m"
 
 
 # ── build_review_prompt ─────────────────────────────────────────────────────

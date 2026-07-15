@@ -6,13 +6,18 @@ catches bugs a same-vendor reviewer misses. This tool is provider-agnostic: poin
 DeepSeek (default — cheapest + most architecturally distinct from Claude), GLM, OpenRouter,
 or any OpenAI-compatible `/chat/completions` endpoint via three env vars.
 
-Config (CLI flag overrides env; env is the norm):
-  REVIEW_BASE_URL   base URL, no trailing /chat/completions   (default https://api.deepseek.com)
-  REVIEW_API_KEY    bearer token                              (REQUIRED — no key ⇒ exit 3)
-  REVIEW_MODEL      model id                                  (default deepseek-chat)
+Config precedence (highest wins): explicit CLI flag  >  env var  >  provider preset.
+  REVIEW_PROVIDER   preset name: deepseek | glm | openrouter   (default deepseek)
+  REVIEW_BASE_URL   base URL, no trailing /chat/completions    (overrides the preset's URL)
+  REVIEW_MODEL      model id                                   (overrides the preset's model)
+  REVIEW_API_KEY    bearer token                               (REQUIRED — no key ⇒ exit 3)
+
+Future-proofing: model ids and endpoints churn. Two layers protect against that — (1) the PROVIDERS
+table below is the ONE place a renamed model/URL is edited; (2) REVIEW_MODEL / REVIEW_BASE_URL env
+vars always win, so you can point at any new id without touching code. Nothing here is hard-wired.
 
 Usage:
-  python oss_review.py [--range <git range>] [--cwd <repo>] [--base-url U] [--model M]
+  python oss_review.py [--range <git range>] [--cwd <repo>] [--provider P] [--base-url U] [--model M]
     --range   e.g. origin/main..HEAD   (default: the working tree, i.e. staged+unstaged)
 
 Exit codes (fail-closed):
@@ -38,18 +43,36 @@ EXIT_BLOCKING = 1
 EXIT_ERROR = 2
 EXIT_CONFIG = 3
 
-DEFAULT_BASE_URL = "https://api.deepseek.com"
-DEFAULT_MODEL = "deepseek-chat"
+# Provider presets — the SINGLE place a renamed model id or moved endpoint is edited. Adding a new
+# provider (Qwen, a local vLLM, …) is one new row. Callers can always bypass this via env/flags.
+PROVIDERS: dict[str, dict[str, str]] = {
+    "deepseek":   {"base_url": "https://api.deepseek.com",            "model": "deepseek-v4-flash"},
+    "glm":        {"base_url": "https://api.z.ai/api/coding/paas/v4", "model": "glm-4.7"},
+    "openrouter": {"base_url": "https://openrouter.ai/api/v1",        "model": "deepseek/deepseek-v4-flash"},
+}
+DEFAULT_PROVIDER = "deepseek"
 
 
 class ConfigError(Exception):
-    """Raised when required configuration (an API key) is absent."""
+    """Raised when configuration can't be resolved (unknown provider, or missing API key)."""
 
 
 def resolve_config(args: argparse.Namespace, env: dict[str, str]) -> tuple[str, str, str]:
-    """(base_url, api_key, model) from flags-over-env. Raises ConfigError if no key."""
-    base_url = (args.base_url or env.get("REVIEW_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
-    model = args.model or env.get("REVIEW_MODEL") or DEFAULT_MODEL
+    """(base_url, api_key, model). Precedence: explicit flag > env var > provider preset.
+
+    Never hard-fails on a model rename: a known --provider supplies sane defaults, and
+    REVIEW_MODEL / REVIEW_BASE_URL override them without any code change.
+    """
+    provider = (args.provider or env.get("REVIEW_PROVIDER") or DEFAULT_PROVIDER).strip().lower()
+    preset = PROVIDERS.get(provider, {})
+    base_url = (args.base_url or env.get("REVIEW_BASE_URL") or preset.get("base_url") or "").rstrip("/")
+    model = args.model or env.get("REVIEW_MODEL") or preset.get("model") or ""
+    if not base_url or not model:
+        known = ", ".join(sorted(PROVIDERS))
+        raise ConfigError(
+            f"could not resolve an endpoint for provider {provider!r}. Use a known --provider "
+            f"({known}) or set REVIEW_BASE_URL and REVIEW_MODEL explicitly."
+        )
     api_key = (env.get("REVIEW_API_KEY") or "").strip()
     if not api_key:
         raise ConfigError(
@@ -148,8 +171,10 @@ def main(argv: list[str] | None = None, env: dict[str, str] | None = None) -> in
     parser.add_argument("--range", dest="range", default=None,
                         help="git range to review (e.g. origin/main..HEAD); default = working tree")
     parser.add_argument("--cwd", default=".", help="repo directory (default: cwd)")
-    parser.add_argument("--base-url", dest="base_url", default=None, help="override REVIEW_BASE_URL")
-    parser.add_argument("--model", default=None, help="override REVIEW_MODEL")
+    parser.add_argument("--provider", default=None,
+                        help=f"preset: {', '.join(sorted(PROVIDERS))} (default {DEFAULT_PROVIDER}); env REVIEW_PROVIDER")
+    parser.add_argument("--base-url", dest="base_url", default=None, help="override REVIEW_BASE_URL / the preset")
+    parser.add_argument("--model", default=None, help="override REVIEW_MODEL / the preset")
     args = parser.parse_args(argv)
 
     try:
@@ -175,7 +200,10 @@ def main(argv: list[str] | None = None, env: dict[str, str] | None = None) -> in
     try:
         review = call_llm(base_url, api_key, model, prompt)
     except (urllib.error.URLError, urllib.error.HTTPError, RuntimeError, ValueError, TimeoutError) as exc:
-        sys.stderr.write(f"review request failed ({model} @ {base_url}): {exc}\n")
+        sys.stderr.write(
+            f"review request failed ({model} @ {base_url}): {exc}\n"
+            "  If the model id was renamed, set REVIEW_MODEL to the current id (env overrides the preset).\n"
+        )
         return EXIT_ERROR
 
     print(review)
