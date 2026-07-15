@@ -15,15 +15,16 @@ Both are written for **Fable** (`claude-fable-5`) but work with any capable mode
 ```bash
 # claudster
 cd E:\Projects\claudster-source
-claude --model claude-fable-5 -p "$(cat prompts/fable-inspect-claudster.md)"
+claude --model claude-fable-5 -p "$(cat .claudster/prompts/fable-inspect-claudster.md)"
 
 # docket (run from the docket repo so file paths resolve)
 cd E:\Projects\docket
-claude --model claude-fable-5 -p "$(cat E:\Projects\claudster-source\prompts\fable-inspect-docket.md)"
+claude --model claude-fable-5 -p "$(cat E:\Projects\claudster-source\.claudster\prompts\fable-inspect-docket.md)"
 ```
 
 **B. As a subagent from a claudster session:** ask the agent to "run the Fable inspection in
-`prompts/fable-inspect-claudster.md` as a Fable subagent." (It will dispatch an Agent with `model: fable`.)
+`.claudster/prompts/fable-inspect-claudster.md` as a Fable subagent." (It dispatches an Agent with
+`model: fable` — no manual model selection needed.)
 
 ## Notes
 - These are **read-only audits** — the prompts forbid changing code. Fixes are a separate, human-triaged step.

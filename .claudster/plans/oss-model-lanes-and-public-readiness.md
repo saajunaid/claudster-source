@@ -88,7 +88,14 @@ restores env, passes args through, and NEVER writes a key to stdout.
 path with the `CLAUDSTER_KEYS_FILE` story) + mirror to `E:\Projects\docket\web\src\help\providers-and-keys.md`.
 **Implement:** `/claudster:use-model` documents the lanes, the launchers, the key resolution, and exit behavior.
 `setup-project-ai` installs (or prints) the profile function so `claude-glm` works from anywhere.
-**Exit gate:** `validate_pool.py` OK (new command discovered); suite green.
+**ALSO in A3 — the `.claudster/` artifacts convention (user request 2026-07-15):** make `.claudster/` the
+default home so nobody re-specifies it. `setup-project-ai` scaffolds `.claudster/{plans,prd,kb,prompts,reviews}`
+and writes a CLAUDE.md convention block: *"Working artifacts default to `.claudster/`: a plan →
+`.claudster/plans/`, a PRD → `.claudster/prd/`, the KB → `.claudster/kb/`, a prompt → `.claudster/prompts/`,
+a review → `.claudster/reviews/`. Interpret unqualified references accordingly; never scatter these to the
+repo root or `.github/`."* This makes the rule part of every project's CLAUDE.md that agents read each session.
+**Exit gate:** `validate_pool.py` OK (new command discovered); the CLAUDE.md convention block is present in the
+setup template; suite green.
 **Commit:** `feat(commands): /claudster:use-model + setup install; genericize the key path in the guide`
 
 ### Phase A4 — Ship Track A
