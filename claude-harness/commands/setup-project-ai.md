@@ -15,7 +15,7 @@ Context / args: **$ARGUMENTS**
 Load and follow the `setup-project-ai` skill. Do not hand-roll the steps — the deterministic parts
 must go through the bundled generator so they don't vary. Resolve its path per the skill's Step 1:
 - Plugin install: `${CLAUDE_PLUGIN_ROOT}/scripts/setup_project_ai.py`
-- agent-sandbox checkout: `scripts/setup_project_ai.py`
+- harness (claudster-source) checkout: `scripts/setup_project_ai.py`
 
 ## After the deterministic step — deploy vmie skills (optional, personal)
 

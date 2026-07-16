@@ -14,7 +14,7 @@ Optional message: **$ARGUMENTS** (if empty, derive a conventional commit message
 ## Step 0 — Detect the pipeline (do this before anything else)
 Inspect the repo and pick exactly one lane:
 - **Gitea lane** — `.gitea/workflows/` exists. Monitor via the Gitea API; follow the `deploy-local`
-  skill (CalVer/NSSM prod deploy). This is the agent-sandbox/VMIE local setup.
+  skill (CalVer/NSSM prod deploy). This is the harness's local deploy setup.
 - **GitHub lane** — `.github/workflows/` exists (and no `.gitea/`). Monitor via the `gh` CLI.
 - **Local-only lane** — neither exists, or there is no push remote. Commit (and push if a remote
   exists); there is no CI to monitor — say so explicitly and stop after the push + local validation.

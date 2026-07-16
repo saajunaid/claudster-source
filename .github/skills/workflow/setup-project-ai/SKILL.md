@@ -33,7 +33,7 @@ AGENTS.md                 Codex/agent-agnostic mirror of root
 - **Installed as the claudster plugin (the common case):** `<harness-root>` = `${CLAUDE_PLUGIN_ROOT}`,
   so the script is `${CLAUDE_PLUGIN_ROOT}/scripts/setup_project_ai.py`. Templates (`claude-md/`,
   `settings.template.json`, `stack-map.json`) sit at the plugin root and are auto-located.
-- **agent-sandbox dev checkout:** `<harness-root>` = the agent-sandbox repo root; the script is
+- **harness dev checkout:** `<harness-root>` = the claudster-source repo root; the script is
   `scripts/setup_project_ai.py` with templates in the sibling `claude-harness/`.
 
 Run a dry-run first to see stack detection and unresolved placeholders:
@@ -110,5 +110,5 @@ If this is a multi-session effort, run `/handoff` to write `relay.md`.
   markdown Codex can also read. The same harness serves Claude Code and Codex CLI.
 - **Packaging:** the generator ships **inside the claudster plugin** (`scripts/setup_project_ai.py`
   with the templates at the plugin root), so `/setup-project-ai` runs from a plain plugin install with
-  no agent-sandbox checkout. The same script also runs from agent-sandbox for harness development.
+  no harness checkout. The same script also runs from the harness repo for harness development.
   Resolve its path via `<harness-root>` as described in Step 1.
