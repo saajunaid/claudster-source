@@ -72,7 +72,12 @@ def normalize_key(value: str) -> str:
 
 
 def fingerprint(fact: dict) -> str:
-    """``kind:normalize(key)`` — the dedup identity. Falls back to summary if key is empty."""
+    """The dedup identity. Prefers an explicit ``fp`` (a hash of the FULL command, set at capture) so two
+    distinct commands that share a truncated 80-char head don't collapse into one inflated ``hitCount``;
+    falls back to ``kind:normalize(key)`` for facts written before ``fp`` existed (and for non-command facts)."""
+    fp = fact.get("fp")
+    if isinstance(fp, str) and fp:
+        return f"{fact.get('kind', '')}:{fp}"
     basis = fact.get("key") or fact.get("summary") or ""
     return f"{fact.get('kind', '')}:{normalize_key(basis)}"
 
@@ -105,8 +110,12 @@ def make_fact(
     *,
     source: str = "auto",
     evidence: str | None = None,
+    fp: str | None = None,
 ) -> dict:
-    """Construct a well-formed single-hit fact (``hitCount=1``, first==last==observed)."""
+    """Construct a well-formed single-hit fact (``hitCount=1``, first==last==observed).
+
+    ``fp`` (optional) is the full-command dedup fingerprint; when set it overrides the key-based
+    fingerprint so distinct commands sharing a truncated display key don't merge."""
     fact = {
         "kind": kind,
         "key": key,
@@ -118,6 +127,8 @@ def make_fact(
     }
     if evidence:
         fact["evidence"] = evidence
+    if fp:
+        fact["fp"] = fp
     return fact
 
 

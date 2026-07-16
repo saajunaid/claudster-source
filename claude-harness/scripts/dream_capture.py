@@ -22,6 +22,7 @@ dedup key derives from the *redacted* command, so a token can never leak into th
 
 from __future__ import annotations
 
+import hashlib
 import re
 
 from dream_memory import make_fact, normalize_key  # sibling module in scripts/
@@ -100,6 +101,14 @@ def command_head(command: str, max_len: int = _HEAD_LEN) -> str:
     """Whitespace-collapsed, length-capped command head — we store heads, not full arg lists."""
     c = " ".join((command or "").split())
     return c[:max_len].rstrip()
+
+
+def command_fp(command: str) -> str:
+    """Stable dedup fingerprint of the FULL command (whitespace-collapsed, lowercased), hashed so two
+    distinct commands that share a truncated 80-char head don't merge into one inflated fact. Kept
+    separate from the display head on purpose. Pass the ALREADY-REDACTED command so no secret is hashed."""
+    norm = " ".join((command or "").split()).lower()
+    return hashlib.sha1(norm.encode("utf-8")).hexdigest()[:16]
 
 
 def first_error_line(output: str, max_len: int = _ERR_LEN) -> str:
@@ -186,28 +195,30 @@ def extract_facts(records: list[dict], observed_at: str) -> list[dict]:
             if not cmd or touches_secret(cmd):
                 continue  # unknown tool, or a secret-touching command we refuse to record
 
-            head = command_head(redact(cmd))
+            red = redact(cmd)
+            head = command_head(red)
             key = normalize_key(head)
             if not key:
                 continue
+            fp = command_fp(red)  # full-command dedup identity (the display key stays the 80-char head)
 
             if bool(b.get("is_error")):
                 if _is_noise_failure(cmd):
                     continue
-                failed_keys.add(key)
-                if key in emitted:
+                failed_keys.add(fp)
+                if fp in emitted:
                     continue  # one failure candidate per distinct command per session
-                emitted.add(key)
+                emitted.add(fp)
                 errline = redact(first_error_line(_result_text(b)))
                 summary = (f"`{head}` failed: {errline}" if errline else f"`{head}` failed")[:_SUMMARY_LEN]
-                facts.append(make_fact("failure-mode", key, summary, observed_at, source="auto"))
+                facts.append(make_fact("failure-mode", key, summary, observed_at, source="auto", fp=fp))
             else:
                 # Success → only a fact if a build/test command recovered from an earlier failure.
-                ok_key = "ok:" + key
-                if _BUILD_TEST.search(cmd) and key in failed_keys and ok_key not in emitted:
+                ok_key = "ok:" + fp
+                if _BUILD_TEST.search(cmd) and fp in failed_keys and ok_key not in emitted:
                     emitted.add(ok_key)
                     summary = (f"`{head}` passes now — was failing earlier this session")[:_SUMMARY_LEN]
-                    facts.append(make_fact("workflow-success", key, summary, observed_at, source="auto"))
+                    facts.append(make_fact("workflow-success", key, summary, observed_at, source="auto", fp=fp))
 
             if len(facts) >= MAX_FACTS_PER_RUN:
                 return facts

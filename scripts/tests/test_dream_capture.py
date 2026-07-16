@@ -254,8 +254,22 @@ class TestExtractRobustness:
             _tool_result("t1", "build failed", is_error=True),
         ]
         cands = dc.extract_facts(recs, NOW)
+        # A pre-existing store entry for the SAME command — a new-format store carries the full-command fp.
         existing = [dm.make_fact("failure-mode", dm.normalize_key(dc.command_head("npm run build --prod")),
-                                 "old summary", "2026-07-19T09:00:00Z", source="auto")]
+                                 "old summary", "2026-07-19T09:00:00Z", source="auto",
+                                 fp=dc.command_fp("npm run build --prod"))]
         out = dm.consolidate(existing + cands, NOW)
         assert len(out) == 1
         assert out[0]["hitCount"] == 2  # reinforced across "sessions"
+
+    def test_shared_head_distinct_commands_stay_separate(self):
+        # The hitCount-inflation fix: two DIFFERENT commands sharing an 80-char head must NOT collapse
+        # into one inflated "lesson" (they dedup on the full-command fp, not the truncated head).
+        prefix = "sleep 60; tail -4 " + "x" * 70  # > 80 chars → identical heads, differing tails
+        recs = [
+            _tool_use("t1", prefix + " AAA"), _tool_result("t1", "boom", is_error=True),
+            _tool_use("t2", prefix + " BBB"), _tool_result("t2", "boom", is_error=True),
+        ]
+        facts = dc.extract_facts(recs, NOW)
+        assert len({f["fp"] for f in facts}) == 2       # distinct fingerprints (old code collapsed to 1)
+        assert len(dm.consolidate(facts, NOW)) == 2      # not merged into one inflated fact
