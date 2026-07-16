@@ -41,6 +41,51 @@ do not start the next until the prior track's Ship phase is green.
 
 ---
 
+## Track 0 — security & privacy hardening (from the Fable audits) — RUNS FIRST
+
+Added 2026-07-16 after the two Fable audits ([`docs/analysis/fable-audit-claudster-2026-07-15.md`],
+[`docs/analysis/fable-audit-docket-2026-07-15.md`]). These precede Track A because several are live-ish
+exposures and they turn Track B's vague "privacy sweep" into concrete, done work.
+
+**P0 — claudster (main thread can do; do first):**
+1. **Confirmed internal-infra leak in the public `claude-extras` bundle** — `deploy-local/SKILL.md` (+ the
+   generated `_registry.md`) carry `iegbcoppoc02` / `gitea.internal` / `VMIE_BOT_TOKEN`. Genericize the
+   internal identifiers to placeholders (or classify private + exclude), regenerate the registry, re-export,
+   and **grep the built bundle to prove it's clean**.
+2. **Privacy gate can't catch it** — `validate_pool.py` denylists only `vmie-`. Broaden to org identifiers /
+   hosts / usernames (`iegbcoppoc`, `gitea.internal`, `VMIE_BOT_TOKEN`, `jshaik`) so the class can't regress.
+3. **Personal paths + credential-incident handoff in public files** — genericize `docs/guide/*`,
+   `claude-harness/README.md`, `copilot-instructions.md`, tracked plans; remove the `2026-02-26` handoff from
+   the public tree.
+
+**P0 — docket (feature-branch `feat/run-safety`; before wider team use):** the autonomous-run safety trio.
+- **F1 ✅ (docket 06b7cdc)** — `requires_confirmation` now enforced: a run needing confirmation is skipped
+  by `claim_agent_run` + the runner's `_execute` until a lead confirms it (new `agent.run.confirmed` event +
+  lead-only `POST /api/tasks/{id}/runs/{rid}/confirm`). A Ship-lane drag can no longer auto-deploy prod.
+- **F17 ✅ (docket a76a5e9)** — the lane-drag auto-trigger is gated to leads (`move_task(trigger_agents=...)`,
+  the `/move` endpoint passes `is_lead`). A contributor staging a card in an agent lane no longer auto-runs.
+- **F12 ⏳ DEFERRED** — isolate Implement in a `git worktree` (today it `git checkout -B`s the human's shared
+  tree). Approach when picked up: replace `_ensure_feature_branch`'s `checkout -B` with `git worktree add
+  <path> -b agent/<slug>`, thread that cwd through `_execute_implement`, keep the pre-commit guard (worktrees
+  share `.git/hooks`), and `git worktree remove --force` in `finally` + at startup reconcile. Needs a LIVE
+  Implement run to verify — too large/risky to rush; its own focused session. Least-accessible of the trio
+  (needs local runner + Implement run + uncommitted work/crash).
+
+**P1 — claudster:** guard.py Windows-delete + force-push-refspec gaps; `sync.ps1` `$LASTEXITCODE` checks
+(push-fail-as-success); make `/claudster:cross-review` actually resolve; Dream Memory full-command
+fingerprint (kill hitCount inflation); exporter fail-closed on phantom/missing skills + no implicit `Bash`.
+**P1 — docket:** stuck-run runtime reconcile, corrupt-log handling, accessibility (keyboard DnD + real
+dialogs), stakeholder bug-upload.
+
+**HUMAN actions (not code):** rotate the three tokens (`pypimcp.key` + 2 PATs) and relocate to a secret
+store; decide whether the `claudster`/`claudster-extras` marketplace is public (sets whether #1 is a live
+leak needing republish, or a pre-public cleanup).
+
+Corrected from the audit: the `junai-mcp` shell tool is **stdio/local** (footgun to gate, not remote RCE);
+the credential files are **gitignored/untracked** (rotate anyway, but not an active git leak).
+
+---
+
 ## Track A (#2) — Model-switching as a real claudster feature
 
 **Goal:** any user (not just the author) switches their Claude Code session to GLM/DeepSeek/etc. with **one
