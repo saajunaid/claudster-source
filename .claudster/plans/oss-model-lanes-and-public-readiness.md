@@ -87,8 +87,11 @@ exposures and they turn Track B's vague "privacy sweep" into concrete, done work
 **P1 — claudster:** guard.py Windows-delete + force-push-refspec gaps; `sync.ps1` `$LASTEXITCODE` checks
 (push-fail-as-success); make `/claudster:cross-review` actually resolve; Dream Memory full-command
 fingerprint (kill hitCount inflation); exporter fail-closed on phantom/missing skills + no implicit `Bash`.
-**P1 — docket:** stuck-run runtime reconcile, corrupt-log handling, accessibility (keyboard DnD + real
-dialogs), stakeholder bug-upload.
+**P1 — docket:** stuck-run runtime reconcile, corrupt-log handling, ~~accessibility (keyboard DnD + real
+dialogs)~~ **✅ shipped 2026-07-17** (docket branch `feat/a11y`, 7 commits `710f89d…4f21dfa`, F30–F34 per
+`.claudster/prompts/docket-accessibility-implement.md`; verification note in docket
+`docs/analysis/a11y-implementation-2026-07-17.md` — web suite 138 green, keyboard walkthrough ALL PASS;
+NOT merged to docket main), stakeholder bug-upload.
 
 **HUMAN actions (not code):** rotate the three tokens (`pypimcp.key` + 2 PATs) and relocate to a secret
 store; decide whether the `claudster`/`claudster-extras` marketplace is public (sets whether #1 is a live
