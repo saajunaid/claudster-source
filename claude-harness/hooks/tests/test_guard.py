@@ -146,6 +146,35 @@ class TestClassifyBash:
         # "--force" after a && in an unrelated command must not trip the force-push rule
         assert guard.classify_bash("git push origin main && echo --force")[0] == "allow"
 
+    # ── Windows-native destructive commands (this is a Windows-primary environment) ──
+    def test_windows_recursive_delete_root_denied(self):
+        assert guard.classify_bash("Remove-Item -Recurse -Force C:\\")[0] == "deny"
+        assert guard.classify_bash("rd /s /q C:\\")[0] == "deny"
+        assert guard.classify_bash("del /s /q C:\\")[0] == "deny"
+
+    def test_windows_recursive_delete_subpath_ask(self):
+        assert guard.classify_bash(r"Remove-Item -Recurse -Force E:\proj\dist")[0] == "ask"
+        assert guard.classify_bash(r"rmdir /s /q C:\Users\me\build")[0] == "ask"
+
+    def test_windows_recursive_delete_relative_ask(self):
+        assert guard.classify_bash("Remove-Item -Recurse -Force build")[0] == "ask"
+
+    def test_windows_delete_non_recursive_allowed(self):
+        assert guard.classify_bash("Remove-Item file.txt")[0] == "allow"
+        assert guard.classify_bash("del temp.log")[0] == "allow"
+
+    def test_python_rmtree_root_denied(self):
+        assert guard.classify_bash("python -c \"import shutil; shutil.rmtree('/')\"")[0] == "deny"
+        assert guard.classify_bash("python -c \"shutil.rmtree('~')\"")[0] == "deny"
+
+    def test_rmtree_specific_path_not_denied(self):
+        # rmtree of a project subpath must not hard-deny (only root/home does)
+        assert guard.classify_bash("python -c \"shutil.rmtree('build')\"")[0] == "allow"
+
+    def test_force_push_via_refspec_ask(self):
+        assert guard.classify_bash("git push origin +main")[0] == "ask"
+        assert guard.classify_bash("git push origin +HEAD:main")[0] == "ask"
+
 
 class TestDecide:
     def test_write_routes_to_path_classifier(self):

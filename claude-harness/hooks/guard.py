@@ -95,6 +95,19 @@ def _is_rm_recursive_force(cmd: str) -> bool:
     return _has_flag(cmd, "r", "--recursive") and _has_flag(cmd, "f", "--force")
 
 
+def _is_win_recursive_delete(cmd: str) -> bool:
+    """Native Windows recursive delete — the POSIX ``rm`` path is handled by _is_rm_recursive_force.
+
+    Catches PowerShell ``Remove-Item -Recurse -Force`` (and the Remove-Item aliases ri/rmdir/rd/del/
+    erase) plus cmd.exe ``rmdir``/``rd``/``del``/``erase`` with the ``/s`` recurse-subdirectories switch.
+    This is a Windows-primary environment, so these are the real footguns the POSIX rules miss."""
+    if not re.search(r"(?:^|[\s;&|(])(?:remove-item|ri|rmdir|rd|del|erase)\b", cmd, re.I):
+        return False
+    ps_recurse_force = bool(re.search(r"(?:^|\s)-rec\w*", cmd, re.I)) and bool(re.search(r"(?:^|\s)-for\w*", cmd, re.I))
+    cmd_slash_s = bool(re.search(r"(?:^|\s)/s\b", cmd, re.I))
+    return ps_recurse_force or cmd_slash_s
+
+
 def classify_bash(command: str) -> tuple[str, str]:
     """Risk tier (deny|ask|allow) + reason for a shell command."""
     c = command.strip()
@@ -104,12 +117,17 @@ def classify_bash(command: str) -> tuple[str, str]:
     rm_rf = _is_rm_recursive_force(n)
     catastrophic = bool(_CATASTROPHIC_TARGET.search(n))
     find_delete = bool(re.search(r"\bfind\b.*?(?:-delete\b|-exec\s+rm\b)", nl))
+    win_del = _is_win_recursive_delete(n)
 
     # ── deny: catastrophic ──
     if rm_rf and catastrophic:
         return "deny", "recursive force-delete of a root/home path (rm -rf)"
     if find_delete and catastrophic:
         return "deny", "find -delete from a root/home path"
+    if win_del and catastrophic:
+        return "deny", "recursive force-delete of a root/home path (Windows Remove-Item/rmdir)"
+    if re.search(r"\brmtree\s*\(\s*['\"]?(?:/|~|[A-Za-z]:\\?)['\"]?\s*\)", c, re.I):
+        return "deny", "recursive tree delete of a root/home path (rmtree)"
     if _FORK_BOMB.search(c):
         return "deny", "fork bomb"
     if re.search(r"\bdd\b.*\bof=/dev/", nl) or re.search(r"\bmkfs", nl) or re.search(r">\s*/dev/sd[a-z]", nl):
@@ -123,9 +141,12 @@ def classify_bash(command: str) -> tuple[str, str]:
         return "ask", "recursive force-delete (rm -rf)"
     if find_delete:
         return "ask", "find with -delete / -exec rm"
+    if win_del:
+        return "ask", "recursive delete (Windows Remove-Item -Recurse / rmdir /s)"
     # git rules tolerate intervening options (e.g. `git -c k=v push --force`) but stay within one
-    # command segment (the [^;&|]* won't cross a ; && || into an unrelated command).
-    if re.search(r"\bgit\b[^;&|]*\bpush\b[^;&|]*(--force\b|--force-with-lease\b|(?:^|\s)-f\b)", c):
+    # command segment (the [^;&|]* won't cross a ; && || into an unrelated command). The trailing
+    # `+\S` catches a force-push via refspec (`git push origin +main`), not just the --force flags.
+    if re.search(r"\bgit\b[^;&|]*\bpush\b[^;&|]*(--force\b|--force-with-lease\b|(?:^|\s)-f\b|(?:^|\s)\+\S)", c):
         return "ask", "git force-push"
     if re.search(r"\bgit\b[^;&|]*\breset\s+--hard\b", c):
         return "ask", "git reset --hard"
