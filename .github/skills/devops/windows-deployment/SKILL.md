@@ -42,7 +42,7 @@ Browser → IIS (:80/:443)
                                                  └─ /*     → FastAPI serves dist/ static files
 
 NSSM manages:
-  - vmie-{app}-api-prod (one per app)
+  - <org>-{app}-api-prod (one per app)
 ```
 
 **Key characteristics:**
@@ -58,8 +58,8 @@ Browser → nginx (:51xx) → serves static dist/ files
                          → proxies /api/* → uvicorn (:81xx)
 
 NSSM manages:
-  - vmie-nginx-prod (single instance, all apps)
-  - vmie-{app}-api-prod (one per app)
+  - <org>-nginx-prod (single instance, all apps)
+  - <org>-{app}-api-prod (one per app)
 ```
 
 **Key characteristics:**
@@ -114,7 +114,7 @@ Where `x` is the app number. Prod API ports increment per app on the shared serv
 2. Prod: git pull
 3. pip install -e . (if Python deps changed)
 4. cd frontend && npm ci && npm run build:prod (if FE changed)
-5. nssm restart vmie-{app}-api-prod
+5. nssm restart <org>-{app}-api-prod
 6. Verify
 ```
 
@@ -202,7 +202,7 @@ APP_PORT=81x3
 ```powershell
 $projectRoot = "G:\Projects\{app-name}"
 $pythonExe = "$projectRoot\.venv\Scripts\python.exe"
-$svcName = "vmie-{short}-api-prod"
+$svcName = "<org>-{short}-api-prod"
 $port = 81x3  # Use actual port
 
 nssm install $svcName $pythonExe "-m uvicorn src.api.main:app --host 0.0.0.0 --port $port"
@@ -343,16 +343,16 @@ nginx runs as a **single NSSM service** serving all apps. Each app gets its own 
 
 ```powershell
 # First-time nginx setup
-nssm install vmie-nginx-prod "C:\nginx\nginx.exe"
-nssm set vmie-nginx-prod AppDirectory "C:\nginx"
-nssm set vmie-nginx-prod DisplayName "nginx Reverse Proxy (PROD)"
-nssm set vmie-nginx-prod AppStdout "G:\Projects\logs\vmie-nginx-prod-stdout.log"
-nssm set vmie-nginx-prod AppStderr "G:\Projects\logs\vmie-nginx-prod-stderr.log"
-nssm set vmie-nginx-prod AppRotateFiles 1
-nssm set vmie-nginx-prod AppRotateBytes 10485760
-nssm set vmie-nginx-prod AppRestartDelay 5000
+nssm install <org>-nginx-prod "C:\nginx\nginx.exe"
+nssm set <org>-nginx-prod AppDirectory "C:\nginx"
+nssm set <org>-nginx-prod DisplayName "nginx Reverse Proxy (PROD)"
+nssm set <org>-nginx-prod AppStdout "G:\Projects\logs\<org>-nginx-prod-stdout.log"
+nssm set <org>-nginx-prod AppStderr "G:\Projects\logs\<org>-nginx-prod-stderr.log"
+nssm set <org>-nginx-prod AppRotateFiles 1
+nssm set <org>-nginx-prod AppRotateBytes 10485760
+nssm set <org>-nginx-prod AppRestartDelay 5000
 
-nssm start vmie-nginx-prod
+nssm start <org>-nginx-prod
 ```
 
 ### 6.2 nginx Server Block Template
@@ -391,7 +391,7 @@ server {
 Test and reload:
 ```powershell
 C:\nginx\nginx.exe -t -c C:\nginx\conf\nginx.conf
-nssm restart vmie-nginx-prod
+nssm restart <org>-nginx-prod
 ```
 
 ### 6.3 Firewall (nginx)
@@ -619,7 +619,7 @@ param(
     [string]$ProjectRoot = (Get-Location).Path
 )
 
-$svcName = "vmie-$ProjectShort-api-prod"
+$svcName = "<org>-$ProjectShort-api-prod"
 $pythonExe = "$ProjectRoot\.venv\Scripts\python.exe"
 
 nssm install $svcName $pythonExe "-m uvicorn src.api.main:app --host 0.0.0.0 --port $Port"
@@ -644,13 +644,13 @@ nssm start $svcName
 | Assets load but API calls fail on subpath | `vite.config.ts` not setting `base` for prod | Use `defineConfig(({ mode }) => ...)` pattern (§7.1) |
 | Site works on prod but breaks after `git pull` | Sysadmin made manual edits — overwritten by pull | Make code environment-aware (§7), never hand-edit on prod |
 | Next `npm run build` breaks prod | Build uses wrong mode (no subpath prefix) | Use `npm run build:prod` with `--mode production` (§7.3) |
-| 502 Bad Gateway (IIS or nginx) | uvicorn not running | `Get-Service vmie-{short}-api-prod` → restart |
+| 502 Bad Gateway (IIS or nginx) | uvicorn not running | `Get-Service <org>-{short}-api-prod` → restart |
 | IIS returns 401 Unauthorized | Windows Auth blocking — user not in AD | Check IIS auth settings, verify user is in allowed AD group |
 | IIS returns 404 on subpath routes | URL Rewrite rules missing or wrong order | API rule must come before frontend catch-all (§5.2) |
 | `bind() failed` on nginx start | Port already in use | `netstat -ano \| findstr {port}` → stop conflicting process |
 | Stale frontend after `git pull` | `dist/` not rebuilt | `cd frontend && npm ci && npm run build:prod` |
 | `ENOTEMPTY: rmdir dist/assets` | Process has `dist/` files locked | Stop service → build → restart |
-| Service starts then stops immediately | Bad path or missing dependency | Check NSSM stderr log: `Get-Content logs\vmie-{short}-api-prod-stderr.log -Tail 50` |
+| Service starts then stops immediately | Bad path or missing dependency | Check NSSM stderr log: `Get-Content logs\<org>-{short}-api-prod-stderr.log -Tail 50` |
 | `git pull` fails with auth error | Credentials expired or GCM_PROVIDER not set | `git config credential.helper store` + `GCM_PROVIDER=generic` as user env var |
 | Unclear whether remote control works | Assumed lack of access without probing | Run Remote Capability Handshake (§3.1) before deciding |
 | Frontend shows blank page | SPA routing broken (no catch-all) | IIS: check FastAPI SPA catch-all (§5.4). nginx: check `try_files` (§6.2) |
@@ -708,7 +708,7 @@ nssm start $svcName
 - [ ] pip install -e . (if deps changed)
 - [ ] cd frontend && npm ci && npm run build:prod (if FE changed, IIS strategy)
       OR npm run build (nginx strategy)
-- [ ] nssm restart vmie-{short}-api-prod
+- [ ] nssm restart <org>-{short}-api-prod
 - [ ] Verify app loads and API responds
 ```
 
@@ -736,7 +736,7 @@ Hard-won lessons from real deployments:
 
 9. **`withCredentials: true` in axios is needed for IIS Windows Auth.** Without it, the browser won't send Negotiate/NTLM credentials in the API requests. It's harmless when no auth is used.
 
-10. **Check the NSSM stderr log first** when a service won't start: `Get-Content logs\vmie-{short}-api-prod-stderr.log -Tail 50`.
+10. **Check the NSSM stderr log first** when a service won't start: `Get-Content logs\<org>-{short}-api-prod-stderr.log -Tail 50`.
 
 11. **`GCM_PROVIDER=generic` is required** on Windows Server for git credential storage to work with self-hosted git servers. Set as a persistent user env var.
 

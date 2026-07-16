@@ -106,6 +106,12 @@ PRIVACY_SUBSTRINGS = [
     "***REDACTED-HASH***",
     "@vmie.local",
     r"\\vmie",
+    # Internal hosts / bot-token names / usernames — added 2026-07-16 after the Fable privacy audit
+    # found these shipping in the public bundle. The class must fail-closed, not be allowlisted (real infra).
+    "iegbcoppoc",
+    "ievxcoppoc",
+    "gitea.internal",
+    "VMIE_BOT_TOKEN",
 ]
 
 # Privacy denylist — regex matches

@@ -213,11 +213,11 @@ Before handing off to implementation:
 
 ## Cross-Cutting: Observability Integration
 
-Every enterprise-dashboard product MUST integrate the VMIE Observability SDK before the VERIFY phase.
+Every enterprise-dashboard product MUST integrate your organization's observability SDK before the VERIFY phase.
 
 ### Backend Integration (FastAPI Middleware)
 
-1. Add `vmie-observability-fastapi` to `pyproject.toml` dependencies
+1. Add your org's observability FastAPI package (e.g. `<org>-observability-fastapi`) to `pyproject.toml` dependencies
 2. Import and add the observability middleware in `src/api/main.py`
 3. Configure environment variables in `config/.env.api.dev` and `config/.env.api.prod`:
    - `OBS_INGESTION_URL` — URL of the central ingestion service
@@ -229,7 +229,7 @@ Every enterprise-dashboard product MUST integrate the VMIE Observability SDK bef
 
 ### Frontend Integration (TypeScript SDK)
 
-1. Install `@vmie/observability-web` in `frontend/package.json`
+1. Install your org's observability web SDK (e.g. `@<org>/observability-web`) in `frontend/package.json`
 2. Initialize the SDK in `frontend/src/main.tsx`:
    - Set `appId`, `environment`, `ingestionUrl`, `apiKey`
 3. Add route tracking hook to the root layout component
