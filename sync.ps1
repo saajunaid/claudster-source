@@ -1295,7 +1295,15 @@ function junai-push {
     }
 
     git commit -m $Message | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Pop-Location
+        throw "junai mirror: git commit failed (exit $LASTEXITCODE) — mirror NOT updated."
+    }
     git push | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Pop-Location
+        throw "junai mirror: git push failed (exit $LASTEXITCODE) — the commit is local only and was NOT pushed. Fix the remote/auth and re-run."
+    }
 
     $pushResult.MirrorChanged = $true
 
@@ -1316,9 +1324,14 @@ function junai-push {
         $bumpSummary = $bumpParts -join " + "
         Push-Location $ProjectRoot
         git commit ".github/runtime-targets.json" -m "chore(claudster): bump manifest version ($bumpSummary)" | Out-Null
+        $bumpExit = $LASTEXITCODE
         Pop-Location
-        Write-Host "  Source manifest committed: $bumpSummary." -ForegroundColor Magenta
-        Write-Host ""
+        if ($bumpExit -ne 0) {
+            Write-Warning "  Source manifest bump commit failed (exit $bumpExit) — the version bump may silently revert on the next export. Commit .github/runtime-targets.json by hand."
+        } else {
+            Write-Host "  Source manifest committed: $bumpSummary." -ForegroundColor Magenta
+            Write-Host ""
+        }
     }
 
     $selectedProfiles = @($Profiles | Where-Object { $_ -in @("ptarmigan", "liffey") } | Select-Object -Unique)
