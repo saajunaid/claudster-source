@@ -27,7 +27,7 @@ This page explains the **three model lanes**, the two paid providers behind them
 
 ## Where keys live
 
-Both tools read keys from a single file — **`C:\Users\jshaik\Documents\api-keys.txt`** — and never print them:
+Both tools read keys from a single file — **`~\.claudster\keys.env`** — and never print them:
 
 ```
 #deepseek api keys
@@ -51,7 +51,7 @@ claude
 # Coding fallback — same Claude Code, running on GLM (subscription)
 claude-glm                 # interactive
 claude-glm -p "refactor X" # headless
-# (wrapper: C:\Users\jshaik\Documents\claude-glm.ps1 — reads the GLM key, sets the endpoint,
+# (wrapper: your claude-glm launcher — reads the GLM key, sets the endpoint,
 #  restores your env on exit, so your normal `claude` stays on Anthropic)
 
 # Reviewer — a second-vendor review of the current diff (DeepSeek by default)

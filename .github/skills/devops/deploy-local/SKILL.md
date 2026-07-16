@@ -1,11 +1,11 @@
 ---
 name: deploy-local
-description: End-to-end local deployment loop for VMIE Gitea projects. Use when the user wants to commit on dev, push to remote, monitor the golden CI/build/deploy workflow, validate prod on iegbcoppoc02, and fix lint/test/pipeline failures until deployment is healthy.
+description: End-to-end local deployment loop for Gitea-hosted projects. Use when the user wants to commit on dev, push to remote, monitor the golden CI/build/deploy workflow, validate prod on the configured prod host, and fix lint/test/pipeline failures until deployment is healthy.
 ---
 
 # Deploy Local Skill
 
-Run reliable local-to-prod delivery for VMIE repositories hosted on local Gitea.
+Run reliable local-to-prod delivery for repositories hosted on a self-hosted Gitea.
 
 ## When To Use
 
@@ -21,9 +21,9 @@ Use this skill when requests include any of:
 
 ## Required Companion Skills
 
-Load these first when they exist:
-- `.github/skills/vmie/golden-workflow/SKILL.md`
-- `.github/skills/vmie/windows-deployment/SKILL.md`
+Load these first when they exist (your org may ship private deploy skills):
+- your org's `golden-workflow` skill (CI/CD workflow contract)
+- your org's `windows-deployment` skill (NSSM + reverse proxy)
 - `.github/skills/devops/ci-cd-pipeline/SKILL.md`
 - `.github/skills/devops/git-commit/SKILL.md`
 
@@ -31,14 +31,15 @@ Optional:
 - `.github/skills/devops/gh-cli/SKILL.md` for issue/PR linking
 - `.github/skills/workflow/verification-loop/SKILL.md` for stricter local validation loops
 
-## VMIE Local Platform Defaults
+## Local Platform Defaults (configure per project)
 
-- Gitea UI: `http://gitea.internal:8090`
-- Gitea API: `http://gitea.internal:8090/api/v1`
+Resolve these from your project config (e.g. a repo-local `config/.env.gitea`) — do not hardcode:
+- Gitea UI / API base: `$env:GITEA_BASE_URL` (e.g. `http://gitea.example:8090`, API at `.../api/v1`)
+- Repo org/owner: `<org>`
 - Expected non-prod runner label: `dev`
 - Expected prod runner label: `prod`
-- Prod host: `iegbcoppoc02`
-- Prod checkout root: repo-specific `G:\Projects\<repo>`
+- Prod host: `$env:PROD_HOST`
+- Prod checkout root: `<prod-checkout-root>\<repo>`
 
 ## Golden Deploy Model
 
@@ -97,14 +98,12 @@ if (Test-Path $envFile) {
     $line = $_.Trim()
     if (-not $line -or $line.StartsWith("#") -or $line -notmatch "=") { return }
     $key, $value = $line -split "=", 2
-    if ($key -in @("VMIE_BOT_TOKEN", "GITEA_TOKEN", "REPO_API", "GITEA_BASE_URL")) {
+    if ($key -in @("GITEA_TOKEN", "REPO_API", "GITEA_BASE_URL")) {
       Set-Item -Path "Env:$($key.Trim())" -Value $value.Trim().Trim('"').Trim("'")
     }
   }
-  if (-not $env:VMIE_BOT_TOKEN -and $env:GITEA_TOKEN) {
-    $env:VMIE_BOT_TOKEN = $env:GITEA_TOKEN
-  }
 }
+```
 
 Monitor the run lifecycle in Gitea:
 1. Find the latest `ci.yml@refs/heads/main` run for the pushed SHA.
@@ -123,12 +122,12 @@ Monitor the run lifecycle in Gitea:
 Gitea API shape:
 
 ```powershell
-$headers = @{ Authorization = "token $env:VMIE_BOT_TOKEN" }
-$runs = Invoke-RestMethod -Uri "http://gitea.internal:8090/api/v1/repos/vmie/<repo>/actions/runs?limit=10" -Headers $headers
+$headers = @{ Authorization = "token $env:GITEA_TOKEN" }
+$runs = Invoke-RestMethod -Uri "$env:GITEA_BASE_URL/api/v1/repos/<org>/<repo>/actions/runs?limit=10" -Headers $headers
 $run = $runs.workflow_runs |
   Where-Object { $_.head_sha -eq "<expected-sha>" -and $_.path -like "ci.yml@refs/heads/main" } |
   Select-Object -First 1
-$jobs = Invoke-RestMethod -Uri "http://gitea.internal:8090/api/v1/repos/vmie/<repo>/actions/runs/$($run.id)/jobs" -Headers $headers
+$jobs = Invoke-RestMethod -Uri "$env:GITEA_BASE_URL/api/v1/repos/<org>/<repo>/actions/runs/$($run.id)/jobs" -Headers $headers
 $jobs.jobs | Select-Object name,status,conclusion,started_at,completed_at
 ```
 
@@ -145,8 +144,8 @@ For Windows prod flow, validate:
 Example:
 
 ```powershell
-Invoke-Command -ComputerName iegbcoppoc02 -ScriptBlock {
-  $root = "G:\Projects\<repo>"
+Invoke-Command -ComputerName $env:PROD_HOST -ScriptBlock {
+  $root = "<prod-checkout-root>\<repo>"
   Set-Location $root
   [pscustomobject]@{
     Head = (git rev-parse HEAD)

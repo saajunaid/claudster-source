@@ -61,7 +61,7 @@
 | Skill | Path | When to Use |
 |-------|------|-------------|
 | Changelog Generator | `devops/changelog-generator/` | Automatically creates user-facing changelogs from git commits by analyzing commit history, categorizing changes, and transforming technical commits into clear, customer-friendly release notes. Turns hours of manual changelog writing into minutes of automated generation. |
-| Deploy Local | `devops/deploy-local/` | End-to-end local deployment loop for VMIE Gitea projects. Use when the user wants to commit on dev, push to remote, monitor the golden CI/build/deploy workflow, validate prod on iegbcoppoc02, and fix lint/test/pipeline failures until deployment is healthy. |
+| Deploy Local | `devops/deploy-local/` | End-to-end local deployment loop for Gitea-hosted projects. Use when the user wants to commit on dev, push to remote, monitor the golden CI/build/deploy workflow, validate prod on the configured prod host, and fix lint/test/pipeline failures until deployment is healthy. |
 | Gh CLI | `devops/gh-cli/` | GitHub CLI operations — issues, PRs, releases, and repo management |
 | Git Commit | `devops/git-commit/` | Create well-structured conventional commit messages following Conventional Commits standard. Use when committing changes, preparing PRs, or generating changelogs. |
 | Monorepo | `devops/monorepo/` | Monorepo management with Turborepo and pnpm workspaces. Use for Turborepo setup, turbo.json task dependencies, remote caching, pnpm workspace protocol, shared packages (ui-library, config, types), affected-only CI/CD builds, or monorepo structure (apps/ vs packages/). Covers pitfalls like circular deps, version drift, and hoisting issues. |
