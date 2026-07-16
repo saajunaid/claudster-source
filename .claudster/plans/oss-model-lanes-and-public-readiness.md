@@ -64,12 +64,25 @@ exposures and they turn Track B's vague "privacy sweep" into concrete, done work
   lead-only `POST /api/tasks/{id}/runs/{rid}/confirm`). A Ship-lane drag can no longer auto-deploy prod.
 - **F17 ✅ (docket a76a5e9)** — the lane-drag auto-trigger is gated to leads (`move_task(trigger_agents=...)`,
   the `/move` endpoint passes `is_lead`). A contributor staging a card in an agent lane no longer auto-runs.
-- **F12 ⏳ DEFERRED** — isolate Implement in a `git worktree` (today it `git checkout -B`s the human's shared
-  tree). Approach when picked up: replace `_ensure_feature_branch`'s `checkout -B` with `git worktree add
-  <path> -b agent/<slug>`, thread that cwd through `_execute_implement`, keep the pre-commit guard (worktrees
-  share `.git/hooks`), and `git worktree remove --force` in `finally` + at startup reconcile. Needs a LIVE
-  Implement run to verify — too large/risky to rush; its own focused session. Least-accessible of the trio
-  (needs local runner + Implement run + uncommitted work/crash).
+- **F12 — PARTIAL shipped, full isolation DEFERRED.**
+  - **Shipped (docket e8a369b):** `_sweep_stale_guard` self-heals a crash-leftover pre-commit guard — a died
+    Implement run no longer (a) blocks the human's own commits via the orphaned guard, nor (b) buries their
+    real hook when the next run backs the stale guard up as if it were theirs. Called before each guard
+    install; tested.
+  - **Still DEFERRED — full worktree isolation** (so a run never switches the human's branch / entangles WIP):
+    replace `_ensure_feature_branch`'s `checkout -B` (`runner.py:1202`) with `git worktree add <path> -b
+    agent/<slug>`, thread that cwd through EVERY `project` use in `_execute_implement` (preflight/implement/
+    review spawns, test run, branch+protected checks), `git worktree remove --force` in `finally` + a startup
+    reconcile, and keep the guard (worktrees share `.git/hooks`).
+  - **⚠ Correctness subtleties found (2026-07-16) — the reason a blind refactor is unsafe:**
+    1. **Uncommitted plan artifacts.** The pipeline reads `.claudster/plans/<slug>.md` from the working tree
+       (`runner.py:1182`); if the Plan lane leaves it uncommitted, a fresh worktree branched from HEAD won't
+       contain it → "plan not found". The worktree impl MUST copy `.claudster/` artifacts into the worktree
+       (or ensure they're committed first). Same for `PROJECT-FACTS.md` / the resolved test command.
+    2. **A dirty-tree refusal is NOT a clean substitute** — `git status --porcelain` is non-empty precisely
+       because docket writes those `.claudster/` artifacts, so a naive "refuse if dirty" blocks every run;
+       it would have to scope to changes OUTSIDE `.claudster/`.
+    Verify with a LIVE Implement run (stand up a test repo + a real/fake harness), not unit tests alone.
 
 **P1 — claudster:** guard.py Windows-delete + force-push-refspec gaps; `sync.ps1` `$LASTEXITCODE` checks
 (push-fail-as-success); make `/claudster:cross-review` actually resolve; Dream Memory full-command
