@@ -28,9 +28,14 @@ Updated 2026-07-17.
 | — | Rebrand half-applied (`agent-sandbox` in deep docs) | **PARTIAL** | front-door + commands done (274bc16); `agent-workflow-design-reference.md` (63 refs), diagrams, test fixtures remain — cosmetic |
 
 ## docket
-> **Merged to docket `main` + deploying (2026-07-17, `096cbb3`):** F1, F17, F12-partial, and the full
-> F30–F34 accessibility set were integrated (clean auto-merge; web build + 143 web tests + 496 py tests
-> green) and pushed to `main` — the Gitea pipeline re-gates on tests, then deploys prod.
+> **Deployed to prod (2026-07-17, `096cbb3`):** F1, F17, F12-partial + the full F30–F34 accessibility set
+> — clean auto-merge, web build + 143 web + 496 py green; Gitea `deploy` **success**.
+>
+> **Deployed to prod (2026-07-17, `855d41c`):** F6, F11, F13 — independently re-verified before merge
+> (512 py + 146 web + tsc/vite clean); Gitea `python_tests` → `web_checks` → `deploy` all **success**.
+> Review follow-up: two stale lock-path comments corrected (`0a81586`) — the F11 file lock lives at
+> `DOCKET_HOME/runtime/locks/<sha256>.lock`, deliberately NOT inside `.docket/` (attach-repo renames it
+> on Windows).
 
 | # | Finding | Status | Where |
 |---|---------|--------|-------|
