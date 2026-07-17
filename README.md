@@ -37,6 +37,12 @@ trip an accidental release.
 - **`claudster-source` (this repo, the authoring home) and the marketplace mirror (`saajunaid/junai`)
   are separate git remotes.** `junai-push` commits and pushes the mirror repo only — it does not push
   `claudster-source` itself; commit and `git push` this repo separately.
+- **`dist/` ACL landmine (Windows).** If an earlier run happened under an elevated shell, files under
+  `dist/runtime-resources/claude/.claude-plugin/` can end up owned by `BUILTIN\Administrators`. A later
+  *non-elevated* `export_runtime_resources.py` (invoked by `junai-push`) then fails with a
+  `PermissionError` inside `ensure_clean_dir`, **and** the mirror sync reports "no changes to commit" using
+  the stale pre-failure content — a failure that looks like success. Fix: from an elevated shell run
+  `Remove-Item -Recurse -Force dist`, then re-run `junai-push` non-elevated.
 
 ## Provenance
 This repo was extracted from a larger internal monorepo so that the publishable source lives on its own,
