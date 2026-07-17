@@ -38,9 +38,9 @@ Updated 2026-07-17.
 | F17 | Contributor lane-drag auto-triggers runs (bypasses lead gate) | **DONE** | a76a5e9 |
 | F30–F34 | Accessibility (no keyboard DnD, non-dialog drawers, focus, contrast, no live region) | **DONE** | `feat/a11y` 710f89d…4f21dfa; 138 web tests + keyboard Playwright walkthrough |
 | F12 | Implement hijacks the human's working tree | **PARTIAL** | crash-leftover guard self-heal shipped (e8a369b); **full worktree isolation OPEN** (needs live Implement run — design + subtleties in the plan) |
-| F11 | Cross-process ID race on `.docket/` (in-memory locks only) | **OPEN** | on-disk lock around commit+allocate |
-| F6 | Gate verdicts substring-matched over the whole transcript (spoofable via task text) | **OPEN** | anchor to the final line; treat marker-anywhere as None |
-| F13 | Stuck runs wedge the WIP cap (reconcile only at startup) | **OPEN** | periodic reconcile + a lead cancel/fail endpoint |
+| F11 | Cross-process ID race on `.docket/` (in-memory locks only) | **DONE** | `feat/reliability` — reentrant `_RepoLock` (in-memory RLock + msvcrt/fcntl file lock under `DOCKET_HOME/runtime/locks/`) around `@_serialized`; deterministic cross-process mutex + 4-process id-race tests (7d1b66d) |
+| F6 | Gate verdicts substring-matched over the whole transcript (spoofable via task text) | **DONE** | `feat/reliability` — positive verdict anchored to the final non-empty line (`_final_line`); blocking still matches anywhere (fail-closed); RED-first injection tests (9347583) |
+| F13 | Stuck runs wedge the WIP cap (reconcile only at startup) | **DONE** | `feat/reliability` — periodic reconcile task in the FastAPI lifespan (liveness-aware: heartbeat for remote, `_active` set for local) + lead-only `POST …/runs/{rid}/cancel` + two-step Command Center "Cancel run" button (139d2db) |
 | F5 | Corrupt `events.jsonl` → bare 500, no escape | **OPEN** | catch decode error, name the file/offset |
 | F4 | Archived tasks unreachable + no unarchive; dead toggle | **OPEN** | add `task.unarchived` + endpoint |
 | F2 | Pipeline-preset seeds a card into a lane that doesn't exist yet | **OPEN** | create in save `onSuccess` |
