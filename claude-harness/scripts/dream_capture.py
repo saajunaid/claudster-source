@@ -50,6 +50,26 @@ _SENSITIVE_FLAG = re.compile(
     r"(--?(?:password|passwd|pwd|token|secret|api[-_]?key|access[-_]?key|auth)\b)(\s+|=)(\"[^\"]*\"|'[^']*'|\S+)",
     re.I,
 )
+# MySQL/MariaDB attached-password flag: `-pVALUE` glued to the flag (no separator).
+# Scoped to mysql-family commands so `cp -pr`, `mkdir -p`, `docker -p 8080:80`,
+# `ssh -p22` are never touched. Value may be quoted (`-p"my pass"`).
+_MYSQL_PW = re.compile(
+    r"(\b(?:mysql|mysqldump|mariadb|mysqladmin)\b[^\n]*?\s-p)(\"[^\"]*\"|'[^']*'|\S+)",
+    re.I,
+)
+# curl basic-auth: `-u user:pass` / `--user user:pass` (value may be glued to -u).
+# Scoped to curl so `python -u`, `sort -u`, `docker run -u 1000:1000` survive.
+_CURL_USERPASS = re.compile(
+    r"(\bcurl\b[^\n]*?\s(?:--user|-u)\s*)(\"[^\"]*\"|'[^']*'|\S+)",
+    re.I,
+)
+# AWS credential keys given WHITESPACE-separated (e.g. `aws configure set
+# aws_secret_access_key <k>`); the `=`/`:` form is already caught by _SENSITIVE_KEY.
+_AWS_CRED = re.compile(
+    r"\b(aws_secret_access_key|aws_access_key_id|aws_session_token)\b"
+    r"(\s+|\s*[=:]\s*)(\"[^\"]*\"|'[^']*'|\S+)",
+    re.I,
+)
 _AUTH_HEADER = re.compile(r"\b(authorization|x-api-key)\b(\s*:\s*|\s+)(?:bearer\s+)?\S+", re.I)
 _BEARER = re.compile(r"\bbearer\s+[A-Za-z0-9._\-]+", re.I)
 _TOKEN_PREFIX = re.compile(
@@ -83,7 +103,10 @@ def redact(text: str) -> str:
     t = _AUTH_HEADER.sub(r"\1: ***", t)
     t = _BEARER.sub("bearer ***", t)
     t = _SENSITIVE_KEY.sub(r"\1=***", t)
+    t = _AWS_CRED.sub(r"\1 ***", t)
     t = _SENSITIVE_FLAG.sub(r"\1 ***", t)
+    t = _CURL_USERPASS.sub(r"\1***", t)
+    t = _MYSQL_PW.sub(r"\1***", t)
     t = _TOKEN_PREFIX.sub("***", t)
     t = _LONG_TOKEN.sub("***", t)
     return t

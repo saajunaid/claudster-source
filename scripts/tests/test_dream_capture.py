@@ -64,6 +64,39 @@ class TestRedact:
         blob = "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2"  # 44 chars, letters+digits
         assert blob not in dc.redact(f"deploy --sig {blob}")
 
+    def test_mysql_attached_password_flag_redacted(self):
+        # `-pVALUE` glued (MySQL/MariaDB) — no space/= separator.
+        out = dc.redact("mysql -uroot -pSecretPass123 mydb")
+        assert "SecretPass123" not in out
+        assert "-p***" in out
+        assert "Hunter2" not in dc.redact("mysqldump -pHunter2 db")  # value gone, cmd survives
+        assert "S3cr3t" not in dc.redact('mariadb -p"S3cr3t pass" db')  # quoted value
+
+    def test_attached_p_flag_not_over_redacted(self):
+        # `-p` in non-mysql contexts must survive untouched.
+        for cmd in ("cp -pr src dst", "mkdir -p a/b/c", "docker run -p 8080:80 img", "ssh -p22 host"):
+            assert dc.redact(cmd) == cmd
+
+    def test_aws_secret_access_key_space_separated_redacted(self):
+        key = "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY"
+        out = dc.redact(f"aws configure set aws_secret_access_key {key}")
+        assert key not in out
+        assert "aws_secret_access_key ***" in out
+        # existing = form still redacts
+        assert "abc" not in dc.redact("aws_secret_access_key=abcdefghij")
+
+    def test_curl_basic_auth_redacted(self):
+        out = dc.redact("curl -u admin:hunter2 https://api.example.com")
+        assert "hunter2" not in out
+        assert "admin:hunter2" not in out
+        assert "-u ***" in out
+        assert "s3cr3t" not in dc.redact("curl --user bob:s3cr3t https://x")
+
+    def test_dash_u_flag_not_over_redacted(self):
+        # `-u` outside curl (python, sort, docker uid) must survive.
+        for cmd in ("python -u script.py", "sort -u file.txt", "docker run -u 1000:1000 img"):
+            assert dc.redact(cmd) == cmd
+
     def test_plain_prose_and_paths_untouched(self):
         # No secret → unchanged; file paths must survive (the blob rule excludes '/').
         msg = "ModuleNotFoundError: No module named 'app' in src/app/main.py"
