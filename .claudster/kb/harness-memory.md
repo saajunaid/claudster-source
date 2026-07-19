@@ -1,3 +1,11 @@
+---
+type: note
+title: Harness memory model
+description: The four-layer memory model (relay · dream · KB · cross-repo), how the hooks wire it, and what's automatic vs curated.
+tags: [memory, hooks]
+timestamp: 2026-07-02
+---
+
 # Harness memory model — how claudster remembers across turns, sessions, and repos
 
 claudster layers **four** memory stores, ephemeral → durable. Each has a distinct lifespan, owner,

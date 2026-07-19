@@ -103,3 +103,18 @@ knowledge_transfer:
 ```
 If at least one durable nugget existed, `live_writes` must not be empty. The session log is never the
 primary write.
+
+## KB note format (OKF-lite — mandatory for every new note)
+
+Every new `.claudster/kb/*.md` note starts with this frontmatter block (`type` is required;
+the rest recommended). `DOC-MAP.md` is the index, not a note — it stays frontmatter-free:
+
+```yaml
+---
+type: note                 # note | runbook | design | reference
+title: <human title>
+description: <one line — keep it identical to the note's DOC-MAP row description>
+tags: [topic, topic]
+timestamp: 2026-01-01      # ISO date of last substantive update
+---
+```

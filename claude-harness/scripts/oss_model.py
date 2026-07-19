@@ -24,6 +24,7 @@ the diff small.)
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 # Provider presets — the SINGLE place a renamed model id / moved endpoint is edited.
@@ -100,3 +101,26 @@ def resolve(provider: str | None, env: dict[str, str]) -> dict[str, str]:
     key_env = preset.get("key_env") or f"{provider.upper()}_API_KEY"
     api_key = _resolve_key(provider, key_env, env)
     return {"base_url": base_url, "model": model, "api_key": api_key}
+
+
+def main(argv: list[str], env: dict[str, str] | None = None) -> int:
+    """CLI bridge for the launchers: ``oss_model.py <provider>`` prints the resolved
+    base_url, model, and api_key on three lines (in that order) to stdout — the caller
+    (claude-oss.sh / .ps1) CAPTURES this output into variables and sets ANTHROPIC_*; it
+    is never displayed. A ConfigError prints its message to stderr and exits 3.
+    """
+    env = os.environ if env is None else env
+    provider = argv[0] if argv else None
+    try:
+        cfg = resolve(provider, env)
+    except ConfigError as exc:
+        print(str(exc), file=sys.stderr)
+        return 3
+    print(cfg["base_url"])
+    print(cfg["model"])
+    print(cfg["api_key"])
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
