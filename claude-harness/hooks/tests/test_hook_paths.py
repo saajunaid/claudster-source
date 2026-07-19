@@ -271,6 +271,45 @@ def test_session_end_writes_new_usage_log(tmp_path):
     assert not old_log.exists()
 
 
+def _cost_for_model(tmp_path: Path, model: str) -> float:
+    """Run session_end over a 1M-input / 0-output transcript for `model`; return est cost.
+
+    With output=0 and no cache, est_cost_usd == the model's per-Mtok INPUT rate, so
+    the value directly exposes which pricing tier the model resolved to.
+    """
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    transcript = tmp_path / "transcript.jsonl"
+    transcript.write_text(
+        json.dumps({"message": {"model": model,
+                                "usage": {"input_tokens": 1_000_000, "output_tokens": 0}}}) + "\n",
+        encoding="utf-8",
+    )
+    payload = json.dumps({"transcript_path": str(transcript), "session_id": "t"})
+    _run(SESSION_END, tmp_path, payload)
+    log = tmp_path / ".claudster" / "usage-log.jsonl"
+    rec = json.loads([l for l in log.read_text(encoding="utf-8").splitlines() if l.strip()][-1])
+    return rec["est_cost_usd"]
+
+
+def test_oss_models_do_not_bill_as_sonnet(tmp_path):
+    sonnet_rate = _cost_for_model(tmp_path / "s", "claude-sonnet-4-6")
+    assert sonnet_rate == 3.0  # baseline: Anthropic sonnet input rate
+
+    # GLM / DeepSeek / Qwen must resolve to their own (cheaper) tiers, not sonnet.
+    glm = _cost_for_model(tmp_path / "glm", "glm-4.6")
+    deepseek = _cost_for_model(tmp_path / "ds", "deepseek-chat")
+    qwen = _cost_for_model(tmp_path / "qw", "qwen2.5-coder-32b")
+    for label, cost in (("glm", glm), ("deepseek", deepseek), ("qwen", qwen)):
+        assert cost < sonnet_rate, f"{label} billed at sonnet rate ({cost})"
+        assert cost > 0, f"{label} should have a non-zero API rate"
+
+
+def test_local_models_bill_zero(tmp_path):
+    # Self-hosted / ollama models have no per-token API cost.
+    assert _cost_for_model(tmp_path / "l1", "llama3.1:8b") == 0.0
+    assert _cost_for_model(tmp_path / "l2", "ollama/mistral") == 0.0
+
+
 # ── session_end: Dream Memory capture (Phase 5b) ────────────────────────────
 
 def _transcript_with_failed_bash(path: Path, command: str, output: str) -> None:

@@ -25,10 +25,17 @@ if _reconfig:
 
 # ── editable: approximate USD per 1M tokens (input, output). Cache read ≈ 0.1× input,
 #    cache write ≈ 1.25× input. These are estimates — set them to your real rates. ──
+#    Non-Anthropic tiers matter because model-lane work runs GLM/DeepSeek/Qwen and
+#    self-hosted models; without them those sessions would misbill as Sonnet. ──
 PRICING_PER_MTOK = {
-    "opus":   (15.0, 75.0),
-    "sonnet": (3.0, 15.0),
-    "haiku":  (1.0, 5.0),
+    "opus":     (15.0, 75.0),
+    "sonnet":   (3.0, 15.0),
+    "haiku":    (1.0, 5.0),
+    "glm":      (0.60, 2.20),   # Zhipu GLM-4.6 (Z.ai)
+    "deepseek": (0.27, 1.10),   # DeepSeek V3 chat (cache-miss)
+    "qwen":     (0.40, 1.20),   # Alibaba Qwen (DashScope)
+    "kimi":     (0.60, 2.50),   # Moonshot Kimi K2
+    "local":    (0.0, 0.0),     # self-hosted / ollama / lm-studio — no per-token API cost
 }
 
 
@@ -40,7 +47,18 @@ def _tier(model: str) -> str:
         return "sonnet"
     if "haiku" in m:
         return "haiku"
-    return "sonnet"  # safe middle estimate for unknown/local models
+    if "glm" in m:
+        return "glm"
+    if "deepseek" in m:
+        return "deepseek"
+    if "qwen" in m:
+        return "qwen"
+    if "kimi" in m or "moonshot" in m:
+        return "kimi"
+    # Self-hosted / local runtimes carry no per-token API cost.
+    if any(k in m for k in ("ollama", "local", "llama", "mistral", "lmstudio", "lm-studio", "gemma", "phi")):
+        return "local"
+    return "sonnet"  # unknown hosted model → conservative Anthropic-mid estimate
 
 
 def _read_input() -> dict:
