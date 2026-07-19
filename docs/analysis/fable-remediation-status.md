@@ -16,7 +16,7 @@ Updated 2026-07-17.
 | 8 | `sync.ps1` push-failure reported as success | **DONE** | `$LASTEXITCODE` checks (a58d29e) |
 | 9 | Guide's `/claudster:cross-review` doesn't resolve | **DONE** | added core command (dccc4cd) |
 | 10 | Personal paths + credential-incident handoff in public files | **DONE** | genericized guide + copilot-instructions + commands (84f662f, 274bc16); removed handoff + `.archive/pipeline` (4d5536c, ac25092) |
-| 2 | `junai-mcp` ships an unauthenticated shell-exec tool | **OPEN** | *downgraded:* it's stdio/local (footgun, not remote RCE) — still worth gating behind an opt-in flag + arg-array exec |
+| 2 | `junai-mcp` ships an unauthenticated shell-exec tool | **DONE** | `run_command` gated: opt-in `JUNAI_ENABLE_RUN_COMMAND` (off by default) + arg-array `create_subprocess_exec` (no shell → no `;`/`&&`/`\|` chaining) + executable allowlist (`JUNAI_RUN_COMMAND_ALLOWLIST` override). Applied to canonical pool copy `.github/tools/mcp-server/server.py` **and** the PyPI mirror `src/junai_mcp/server.py` (byte-identical); 10 RED-first gate tests |
 | 4 | Live credential files in the working tree | **OPEN (human)** | gitignored/untracked → rotate the 3 tokens (your action) |
 | — | Exporter silently drops phantom skills / missing sources never fail export | **OPEN** | make export fail-closed |
 | — | Copilot→Claude conversion implicitly grants `Bash` to read-only agents | **OPEN** | default read-only |
