@@ -444,11 +444,11 @@
             ],
             "frontend": [
               "css-architecture", "design-system-tokens", "enterprise-dashboard-aesthetic-system",
-              "frontend-design", "high-end-visual-design", "mockup", "nextjs-app-router", "premium-react",
+              "frontend-design", "mockup", "nextjs-app-router",
               "react-best-practices", "react-dev", "react-useeffect", "responsive-mobile-native",
-              "shadcn-radix", "streamlit-animate", "streamlit-dev", "theme-factory", "ui-review",
-              "ui-styling-patterns", "ui-ux-intelligence", "ux-design", "warm-editorial-ui",
-              "warm-new", "webapp-development", "word-cloud"
+              "shadcn-radix", "streamlit-dev", "theme-factory", "ui-review",
+              "ui-styling-patterns", "ui-ux-intelligence", "warm-editorial-ui",
+              "webapp-development", "word-cloud"
             ],
             "media": [
               "draw-io", "excalidraw", "mermaid-diagrams", "plantuml", "svg-create"

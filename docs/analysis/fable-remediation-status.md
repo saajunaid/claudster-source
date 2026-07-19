@@ -18,13 +18,13 @@ Updated 2026-07-17.
 | 10 | Personal paths + credential-incident handoff in public files | **DONE** | genericized guide + copilot-instructions + commands (84f662f, 274bc16); removed handoff + `.archive/pipeline` (4d5536c, ac25092) |
 | 2 | `junai-mcp` ships an unauthenticated shell-exec tool | **DONE** | `run_command` gated: opt-in `JUNAI_ENABLE_RUN_COMMAND` (off by default) + arg-array `create_subprocess_exec` (no shell → no `;`/`&&`/`\|` chaining) + executable allowlist (`JUNAI_RUN_COMMAND_ALLOWLIST` override). Applied to canonical pool copy `.github/tools/mcp-server/server.py` **and** the PyPI mirror `src/junai_mcp/server.py` (byte-identical); 10 RED-first gate tests |
 | 4 | Live credential files in the working tree | **OPEN (human)** | gitignored/untracked → rotate the 3 tokens (your action) |
-| — | Exporter silently drops phantom skills / missing sources never fail export | **OPEN** | make export fail-closed |
-| — | Copilot→Claude conversion implicitly grants `Bash` to read-only agents | **OPEN** | default read-only |
+| — | Exporter silently drops phantom skills / missing sources never fail export | **DONE** | `export_runtime_resources.py` fail-closed: `_validate_skill_roster` + `ExportStats.errors` → `main()` returns 1 on any phantom skill or missing declared source. Removed the 5 stale `codex`/frontend phantoms from `runtime-targets.json`; canonical export still exits 0 (verified) |
+| — | Copilot→Claude conversion implicitly grants `Bash` to read-only agents | **DONE** | `convert_tools_to_claude_format` no-mapped-tools default tightened to `[Read, Grep, Glob]` (was `+Bash`); explicit `execute` still maps to Bash |
 | — | Redaction misses `-pPASSWORD` / `aws_secret_access_key <k>` shapes | **OPEN** | `dream_capture.redact` |
 | — | `session_end` cost model bills GLM/DeepSeek/local as Sonnet | **OPEN** | add the new-provider rates |
 | — | Cross-repo fact contamination (`_repo_root` uses launch cwd) | **OPEN** | anchor to the session repo |
 | — | `validate_agents` MCP-note hard-fails the build | **OPEN** | separate notes from errors |
-| — | No tests around export/validate/sync.ps1 | **OPEN** | add fixtures |
+| — | No tests around export/validate/sync.ps1 | **PARTIAL** | export now covered — `scripts/tests/test_export_runtime_resources.py` (11 tests: fail-closed, roster validation, read-only default, real-manifest regression); validate/sync.ps1 still uncovered |
 | — | Rebrand half-applied (`agent-sandbox` in deep docs) | **PARTIAL** | front-door + commands done (274bc16); `agent-workflow-design-reference.md` (63 refs), diagrams, test fixtures remain — cosmetic |
 
 ## docket

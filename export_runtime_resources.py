@@ -44,9 +44,15 @@ class ExportStats:
     files_copied: int = 0
     skipped_by_reason: dict[str, int] = field(default_factory=dict)
     dependency_errors: list[str] = field(default_factory=list)
+    # Hard errors that make the export fail-closed (missing declared sources,
+    # phantom skills in a roster). Distinct from skips, which are expected.
+    errors: list[str] = field(default_factory=list)
 
     def bump_skip(self, reason: str, count: int = 1) -> None:
         self.skipped_by_reason[reason] = self.skipped_by_reason.get(reason, 0) + count
+
+    def add_error(self, message: str) -> None:
+        self.errors.append(message)
 
 
 def _ignore_caches(_dir: str, names: list[str]) -> list[str]:
@@ -207,7 +213,11 @@ def convert_tools_to_claude_format(copilot_tools: list[str]) -> str:
                 claude_tools.append(mapped)
 
     if not claude_tools:
-        claude_tools = ["Read", "Grep", "Glob", "Bash"]
+        # No mapped tools → default read-only. NEVER implicitly grant Bash (shell):
+        # a Copilot agent that never declared 'execute' must not silently gain
+        # arbitrary command execution on conversion. Explicit 'execute' still maps
+        # to Bash above.
+        claude_tools = ["Read", "Grep", "Glob"]
 
     return ", ".join(claude_tools)
 
@@ -482,6 +492,32 @@ def write_bundle_registry(skills_dir: Path, category_map: dict[str, str] | None 
     return count
 
 
+def _validate_skill_roster(
+    source_skills: Path, roster: dict[str, set[str]]
+) -> list[str]:
+    """Return roster entries (category or skill) absent from ``source_skills``.
+
+    A target's ``included_skills`` maps category → skill names. If a named category
+    isn't a real directory, or a named skill isn't present under it, the roster is
+    stale: the export would silently ship fewer skills than declared (as the `codex`
+    target did with 5 renamed frontend skills). Callers treat any result as fatal.
+    """
+    problems: list[str] = []
+    for category in sorted(roster):
+        category_dir = source_skills / category
+        if not category_dir.is_dir():
+            problems.append(
+                f"included_skills category '{category}' does not exist under "
+                f"{source_skills.name}/"
+            )
+            continue
+        present = {p.name for p in category_dir.iterdir() if p.is_dir()}
+        for skill in sorted(roster[category]):
+            if skill not in present:
+                problems.append(f"included_skills skill '{category}/{skill}' does not exist")
+    return problems
+
+
 def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportStats:
     """Export one runtime target from the canonical .github source."""
     canonical_root = PROJECT_ROOT / manifest["canonical_root"]
@@ -537,8 +573,15 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
         excluded_names |= set(copy_spec.get("excluded_names", []))
         if not source.exists():
             stats.bump_skip("missing_source")
-            print(f"[SKIP] {target['name']}: source '{source_rel}' does not exist")
+            stats.add_error(f"copy source '{source_rel}' does not exist")
+            print(f"[FAIL] {target['name']}: copy source '{source_rel}' does not exist")
             continue
+        # Fail-closed: a stale skill roster (names a skill/category not on disk)
+        # would otherwise silently ship fewer skills than declared.
+        if depth2_included is not None:
+            for problem in _validate_skill_roster(source, depth2_included):
+                stats.add_error(problem)
+                print(f"[FAIL] {target['name']}: {problem}")
         stats.files_copied += copy_tree(
             source,
             destination,
@@ -562,7 +605,8 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
         destination = workspace_root / file_spec["destination"]
         if not source.exists():
             stats.bump_skip("missing_source")
-            print(f"[SKIP] {target['name']}: file '{source_rel}' does not exist")
+            stats.add_error(f"file source '{source_rel}' does not exist")
+            print(f"[FAIL] {target['name']}: file source '{source_rel}' does not exist")
             continue
         stats.files_copied += copy_file(source, destination)
 
@@ -634,6 +678,12 @@ def _print_report(all_stats: list[ExportStats]) -> None:
                 print(f"    - {reason}: {count}")
         else:
             print("  skipped: none")
+        if stats.errors:
+            print("  errors:")
+            for err in stats.errors:
+                print(f"    - {err}")
+        else:
+            print("  errors: none")
         if stats.dependency_errors:
             print("  dependency_errors:")
             for err in stats.dependency_errors:
@@ -683,6 +733,16 @@ def main() -> int:
 
     if args.report:
         _print_report(all_stats)
+
+    # Fail-closed: missing declared sources and phantom skills are defects, not skips.
+    export_errors = [
+        f"{stats.profile}: {err}" for stats in all_stats for err in stats.errors
+    ]
+    if export_errors:
+        print(f"[FAIL] Export errors detected ({len(export_errors)}):")
+        for err in export_errors:
+            print(f"   - {err}")
+        return 1
 
     dependency_errors = [
         f"{stats.profile}: {err}" for stats in all_stats for err in stats.dependency_errors
