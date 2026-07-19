@@ -144,6 +144,12 @@ def _repo_root(start: str) -> str:
 
 data = _read_input()
 
+# Anchor all session state (usage log + Dream Memory store) to the repo the SESSION
+# is operating in — the payload's cwd — not the hook process's launch cwd. Without
+# this, a session launched in one repo but working in another (e.g. claudster ↔
+# docket) leaks the second repo's facts into the first's store. Mirrors guard.py.
+_session_cwd = data.get("cwd") or os.getcwd()
+
 print(
     "\n[HARNESS] Session ending. Two things survive context death:\n"
     "  1. relay.md — refresh it so the next session resumes exactly (run /handoff).\n"
@@ -161,7 +167,7 @@ if u:
         f"(estimate — edit rates in session_end.py)"
     )
     try:
-        claudster_dir = os.path.join(_repo_root(os.getcwd()), ".claudster")
+        claudster_dir = os.path.join(_repo_root(_session_cwd), ".claudster")
         os.makedirs(claudster_dir, exist_ok=True)
         rec = {
             "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -205,7 +211,7 @@ try:
     # Consolidate whenever there's something to do: new candidates, OR an existing store to
     # self-compact (apply decay/cap, and dedup any facts the knowledge-transfer agent appended
     # out-of-band). No store and no candidates → nothing written (no noise).
-    _root = _repo_root(os.getcwd())
+    _root = _repo_root(_session_cwd)
     _store = os.path.join(_root, *_dm.DEFAULT_STORE.split("/"))
     _existing = _dm.load_facts(_store)
     if _candidates or _existing:

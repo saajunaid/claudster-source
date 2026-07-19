@@ -23,12 +23,15 @@ if _reconfig:
     except Exception:
         pass
 
-# Drain the event payload on stdin (we don't need any fields, but reading avoids
-# a broken pipe on some platforms).
+# Read the event payload on stdin (also avoids a broken pipe on some platforms).
+# We keep `cwd`: state anchors to the repo the SESSION is in, not the hook process's
+# launch cwd — otherwise a session launched in one repo but operating in another
+# resolves the wrong repo's relay/usage state.
 try:
-    json.load(sys.stdin)
+    _payload = json.load(sys.stdin)
 except Exception:
-    pass
+    _payload = {}
+_session_cwd = (_payload.get("cwd") if isinstance(_payload, dict) else None) or os.getcwd()
 
 INJECT_MAX_LINES = 120
 
@@ -61,7 +64,7 @@ def _repo_root(start: str) -> str:
     return start
 
 
-ROOT = _repo_root(os.getcwd())
+ROOT = _repo_root(_session_cwd)
 
 
 def _resolve_relay() -> str:

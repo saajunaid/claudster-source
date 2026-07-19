@@ -46,6 +46,21 @@ def test_inject_reads_new_relay(tmp_path):
     assert "# Relay — NEW" in r.stdout
 
 
+def test_inject_anchors_to_session_cwd_not_process_cwd(tmp_path):
+    """The relay resolves from the session's repo (payload cwd), not the launch cwd."""
+    session_repo = tmp_path / "session_repo"
+    launch_repo = tmp_path / "launch_repo"
+    (session_repo / ".claudster").mkdir(parents=True)
+    (session_repo / ".claudster" / "relay.md").write_text("# Relay — SESSION REPO", encoding="utf-8")
+    launch_repo.mkdir()
+    (launch_repo / ".claudster").mkdir()
+    (launch_repo / ".claudster" / "relay.md").write_text("# Relay — LAUNCH REPO", encoding="utf-8")
+    payload = json.dumps({"cwd": str(session_repo)})
+    r = _run(INJECT, launch_repo, payload)
+    assert "# Relay — SESSION REPO" in r.stdout
+    assert "LAUNCH REPO" not in r.stdout
+
+
 def test_inject_falls_back_to_legacy_root_relay(tmp_path):
     (tmp_path / "relay.md").write_text("# Relay — LEGACY", encoding="utf-8")
     r = _run(INJECT, tmp_path, "{}")
@@ -334,6 +349,29 @@ def test_session_end_captures_failure_to_memory_store(tmp_path):
     assert store.is_file()
     facts = [json.loads(l) for l in store.read_text(encoding="utf-8").splitlines() if l.strip()]
     assert any(f["kind"] == "failure-mode" and "pytest" in f["summary"] for f in facts)
+
+
+def test_session_end_anchors_store_to_session_cwd_not_process_cwd(tmp_path):
+    """Facts land in the session's repo (payload cwd), not the hook process's launch cwd.
+
+    Launching a session in one repo while it operates in another must not leak the
+    second repo's facts into the first's Dream Memory store.
+    """
+    session_repo = tmp_path / "session_repo"   # where the work actually happened
+    launch_repo = tmp_path / "launch_repo"      # the hook process's cwd
+    session_repo.mkdir()
+    launch_repo.mkdir()
+    transcript = tmp_path / "transcript.jsonl"
+    _transcript_with_failed_bash(transcript, "pytest tests/test_api.py", "ImportError: no module 'app'")
+    payload = json.dumps(
+        {"transcript_path": str(transcript), "session_id": "t", "cwd": str(session_repo)}
+    )
+    # Run the hook with its process cwd in launch_repo, but the session cwd is session_repo.
+    _run(SESSION_END, launch_repo, payload)
+    assert (session_repo / ".claudster" / "memory.jsonl").is_file()
+    assert not (launch_repo / ".claudster" / "memory.jsonl").exists()
+    # The usage log follows the same anchor.
+    assert not (launch_repo / ".claudster" / "usage-log.jsonl").exists()
 
 
 def test_session_end_capture_redacts_secret_in_store(tmp_path):
