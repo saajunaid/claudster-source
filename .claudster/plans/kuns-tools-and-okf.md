@@ -35,7 +35,7 @@ work below is only the two ✅ adoptions that were never landed.
 
 ## Phases
 
-### Phase 1 — OKF-lite frontmatter on KB notes + the mandate
+### Phase 1 — OKF-lite frontmatter on KB notes + the mandate  ✅ DONE (636be2b, 2026-07-20)
 **Spec:** `pass1-foundations.md` § "Phase 4 — KB OKF-lite" (schema block: `type` required;
 `title`, `description`, `tags`, `timestamp` recommended).
 **Touches:** `.claudster/kb/harness-memory.md` (migrate — currently the ONLY body note),
