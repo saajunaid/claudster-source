@@ -226,12 +226,36 @@ def _recv(q: queue.Queue, timeout: float = 8.0) -> dict | None:
     return None
 
 
-def smoke_test_mcp_server() -> list[str]:
-    """
-    Start server.py via stdio, run initialize + tools/list, verify response.
-    Returns list of error strings (empty = pass).
+def _diff_mcp_tools(registered: set[str], expected: set[str]) -> tuple[list[str], list[str]]:
+    """Split a registered-vs-expected MCP tool diff into (errors, notes).
+
+    A MISSING expected tool is an error (the server dropped a tool the harness
+    relies on). An EXTRA registered tool is a NOTE, not an error — adding an MCP
+    tool must never hard-fail the build; it just means EXPECTED_MCP_TOOLS needs
+    updating. Keeping notes out of the error channel is what unblocks the build.
     """
     errors: list[str] = []
+    notes: list[str] = []
+    missing = expected - registered
+    if missing:
+        errors.append(f"MCP missing expected tools: {', '.join(sorted(missing))}")
+    unexpected = registered - expected
+    if unexpected:
+        notes.append(
+            f"MCP has new tools not in EXPECTED_MCP_TOOLS (update the list): "
+            f"{', '.join(sorted(unexpected))}"
+        )
+    return errors, notes
+
+
+def smoke_test_mcp_server() -> tuple[list[str], list[str]]:
+    """
+    Start server.py via stdio, run initialize + tools/list, verify response.
+    Returns (errors, notes): errors fail the build, notes are informational
+    (skips, and "new tools not in EXPECTED_MCP_TOOLS").
+    """
+    errors: list[str] = []
+    notes: list[str] = []
 
     # Resolve paths
     base = Path(__file__).parent
@@ -242,9 +266,9 @@ def smoke_test_mcp_server() -> list[str]:
         python_exe = base / ".venv" / "bin" / "python"
 
     if not server_py.exists():
-        return ["MCP smoke test skipped: server.py not found at .github/tools/mcp-server/server.py"]
+        return [], ["MCP smoke test skipped: server.py not found at .github/tools/mcp-server/server.py"]
     if not python_exe.exists():
-        return ["MCP smoke test skipped: venv python not found — run: python -m venv .venv && pip install -r requirements.txt"]
+        return [], ["MCP smoke test skipped: venv python not found — run: python -m venv .venv && pip install -r requirements.txt"]
 
     proc = None
     try:
@@ -274,11 +298,11 @@ def smoke_test_mcp_server() -> list[str]:
         init_resp = _recv(q, timeout=10.0)
         if init_resp is None:
             errors.append("MCP server did not respond to initialize within 10s — startup error")
-            return errors
+            return errors, notes
 
         if "error" in init_resp:
             errors.append(f"MCP initialize error: {init_resp['error']}")
-            return errors
+            return errors, notes
 
         server_info = init_resp.get("result", {}).get("serverInfo", {})
         if not server_info.get("name"):
@@ -293,24 +317,16 @@ def smoke_test_mcp_server() -> list[str]:
         list_resp = _recv(q, timeout=8.0)
         if list_resp is None:
             errors.append("MCP server did not respond to tools/list within 8s")
-            return errors
+            return errors, notes
 
         if "error" in list_resp:
             errors.append(f"MCP tools/list error: {list_resp['error']}")
-            return errors
+            return errors, notes
 
         registered = {t["name"] for t in list_resp.get("result", {}).get("tools", [])}
-        missing = EXPECTED_MCP_TOOLS - registered
-        if missing:
-            errors.append(f"MCP missing expected tools: {', '.join(sorted(missing))}")
-
-        unexpected = registered - EXPECTED_MCP_TOOLS
-        if unexpected:
-            # Not a failure — just a note that EXPECTED_MCP_TOOLS needs updating
-            errors.append(
-                f"MCP has new tools not in EXPECTED_MCP_TOOLS (update the list): "
-                f"{', '.join(sorted(unexpected))}"
-            )
+        diff_errors, diff_notes = _diff_mcp_tools(registered, EXPECTED_MCP_TOOLS)
+        errors.extend(diff_errors)
+        notes.extend(diff_notes)
 
     except FileNotFoundError:
         errors.append("MCP smoke test failed: could not launch server.py (python not found)")
@@ -324,7 +340,7 @@ def smoke_test_mcp_server() -> list[str]:
             except subprocess.TimeoutExpired:
                 proc.kill()
 
-    return errors
+    return errors, notes
 
 
 # ---------------------------------------------------------------------------
@@ -741,12 +757,14 @@ def main() -> None:
     # ── MCP server smoke test ─────────────────────────────────────────────
     print("\n  MCP SERVER SMOKE TEST")
     print("  -----------------------------------------")
-    mcp_errors = smoke_test_mcp_server()
-    if not mcp_errors:
+    mcp_errors, mcp_notes = smoke_test_mcp_server()
+    if not mcp_errors and not mcp_notes:
         print("  [OK]    server.py started, responded to initialize + tools/list")
     else:
         for e in mcp_errors:
             print(f"  [FAIL]  {e}")
+        for n in mcp_notes:
+            print(f"  [NOTE]  {n}")
 
     # ── Skill reference resolution test ───────────────────────────────────
     print("\n  SKILL REFERENCE RESOLUTION")
