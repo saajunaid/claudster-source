@@ -54,7 +54,9 @@ def _write_log(path, n=3):
 def test_scaffolds_claudster_tree(tmp_path):
     _make_project(tmp_path)
     _run_setup(tmp_path)
-    for sub in ("plans", "handoffs", "agent-docs", "reviews", "prd"):
+    # kb + prompts (Track A Phase A3): .claudster/ is the default artifacts home for
+    # every working-artifact kind, not just plans/prd/handoffs/agent-docs/reviews.
+    for sub in ("plans", "handoffs", "agent-docs", "reviews", "prd", "kb", "prompts"):
         assert (tmp_path / ".claudster" / sub).is_dir(), sub
     gi = tmp_path / ".claudster" / ".gitignore"
     assert gi.is_file()
@@ -267,6 +269,16 @@ def test_root_claude_md_points_to_doc_map(tmp_path):
     _run_setup(tmp_path)
     cm = (tmp_path / "CLAUDE.md").read_text(encoding="utf-8")
     assert ".claudster/kb/DOC-MAP.md" in cm
+
+
+def test_root_claude_md_states_claudster_artifacts_convention(tmp_path):
+    # Track A Phase A3 (user request 2026-07-15): .claudster/ is the default artifacts
+    # home, stated explicitly so every session's CLAUDE.md read carries the rule.
+    _make_project(tmp_path)
+    _run_setup(tmp_path)
+    cm = (tmp_path / "CLAUDE.md").read_text(encoding="utf-8")
+    assert ".claudster/prompts/" in cm
+    assert "never scatter" in cm.lower()
 
 
 def test_doc_map_not_clobbered_on_resetup(tmp_path):

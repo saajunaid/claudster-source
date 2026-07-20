@@ -27,20 +27,24 @@ This page explains the **three model lanes**, the two paid providers behind them
 
 ## Where keys live
 
-Both tools read keys from a single file — **`~\.claudster\keys.env`** — and never print them:
+Every tool resolves keys the same way, never hardcoded — precedence: an explicit env var
+(`GLM_API_KEY` / `DEEPSEEK_API_KEY` / `OPENROUTER_API_KEY`, or the generic `OSS_API_KEY`) wins;
+otherwise a **keys file** at `$CLAUDSTER_KEYS_FILE` (default **`~/.claudster/keys.env`**), `KEY=VALUE`
+lines, `#` comments allowed:
 
 ```
-#deepseek api keys
-key: sk-…                       # ← the cross-review tool reads this
+# deepseek
+DEEPSEEK_API_KEY=sk-…            # ← cross-review + claude-oss deepseek read this
 
-#z.ai GLM api keys
-api key: …                      # ← the claude-glm wrapper reads this (NOT "api key id")
+# z.ai GLM Coding Plan
+GLM_API_KEY=…                    # ← claude-glm / claude-oss glm reads this
 ```
 
-- **DeepSeek key** → pay-per-token from your prepaid balance → used by cross-review.
-- **GLM Coding Plan key** → draws down your flat subscription quota → used by `claude-glm`.
+- **DeepSeek key** → pay-per-token from your prepaid balance → used by cross-review / `claude-oss deepseek`.
+- **GLM Coding Plan key** → draws down your flat subscription quota → used by `claude-glm` / `claude-oss glm`.
 
-Both are "API keys"; they bill completely differently because of the plan behind each.
+Both are "API keys"; they bill completely differently because of the plan behind each. No key ever
+prints to the console — a missing key exits with a message naming the exact env var to set.
 
 ## How to switch — the three commands
 
@@ -51,14 +55,19 @@ claude
 # Coding fallback — same Claude Code, running on GLM (subscription)
 claude-glm                 # interactive
 claude-glm -p "refactor X" # headless
-# (wrapper: your claude-glm launcher — reads the GLM key, sets the endpoint,
-#  restores your env on exit, so your normal `claude` stays on Anthropic)
+claude-oss glm -p "..."    # equivalent, explicit form (any provider: claude-oss <provider>)
+# (claude-harness/scripts/claude-oss.{sh,ps1} — resolves the key, sets the endpoint for
+#  THIS process only, restores env on exit, so your normal `claude` stays on Anthropic.
+#  See /claudster:use-model for the full reference.)
 
 # Reviewer — a second-vendor review of the current diff (DeepSeek by default)
 $env:REVIEW_API_KEY = <deepseek-key>
 python .github/tools/oss_review.py                     # working tree
 python .github/tools/oss_review.py --range origin/main..HEAD
 ```
+
+First-time install (adds `claude-oss`/`claude-glm` to your shell): `/setup-project-ai` prints the
+one-liner for your platform — it never silently edits your shell profile.
 
 Cross-review exit codes: **0 = clean, 1 = blocking, 2 = error, 3 = no key**.
 
@@ -85,5 +94,5 @@ The default DeepSeek model is `deepseek-v4-flash` (the older `deepseek-chat` nam
 ## Good to know
 
 - **DeepSeek peak pricing.** DeepSeek charges 2× during peak UTC windows (`01:00–04:00` and `06:00–10:00`). For reviews this is *negligible* (half a cent vs a quarter-cent) — don't optimize for it. Your heavy lane (GLM) is a flat subscription and is unaffected.
-- **Rotate a leaked key.** If a key ever ends up somewhere public, regenerate it in the provider console and update `api-keys.txt`. The tools read from the file each run, so nothing else needs changing.
+- **Rotate a leaked key.** If a key ever ends up somewhere public, regenerate it in the provider console and update your `$CLAUDSTER_KEYS_FILE` (or the env var, if that's how you set it). Every tool reads it fresh each run, so nothing else needs changing.
 - **docket harnesses are separate.** docket's own pipeline picks a model CLI via `agent_track.harness` (claude-code / gemini / antigravity / codex). That's independent of these terminal lanes — see the **docket** tab.

@@ -628,14 +628,17 @@ allow = [
 def scaffold_claudster(target: Path, dry: bool) -> list[str]:
     """Create the harness-owned .claudster/ artifact tree + a default .gitignore + a config example.
 
-    Committed subdirs: plans, handoffs, agent-docs, prd. Transient state
+    Committed subdirs: plans, handoffs, agent-docs, prd, kb, prompts. Transient state
     (reviews/*.html, usage-log.jsonl, .last-usage-review, relay*, PROJECT-FACTS.md, memory.jsonl)
-    is gitignored. Also drops a documented `config.toml.example` (guard/doc_coverage/dream_memory).
-    Idempotent; never clobbers an existing .gitignore or config example.
+    is gitignored. .claudster/ is the default home for every working-artifact kind (Track A
+    Phase A3) — kb/ and prompts/ round out plans/prd/agent-docs/reviews so nothing has to
+    scatter to the repo root or .github/. Also drops a documented `config.toml.example`
+    (guard/doc_coverage/dream_memory). Idempotent; never clobbers an existing .gitignore or
+    config example.
     """
     notes: list[str] = []
     root = target / ".claudster"
-    for sub in ("plans", "handoffs", "agent-docs", "reviews", "prd"):
+    for sub in ("plans", "handoffs", "agent-docs", "reviews", "prd", "kb", "prompts"):
         d = root / sub
         if d.is_dir():
             continue

@@ -77,12 +77,20 @@ tracker. The conversation is disposable; these files are the truth.
 | Every UI page → endpoints → DB (frontend repos) | `UI_PAGE_GUIDE.md` |
 | Active plans | `.claudster/plans/<feature>.md` |
 | PRDs | `.claudster/prd/<feature-slug>.md` |
+| Standing prompts / drivers / specs handed to an agent | `.claudster/prompts/` |
+| Review output (code-review, cross-review) | `.claudster/reviews/` |
 | ADRs, design docs, runbooks | `docs/adr/`, `docs/design/`, `docs/runbooks/` (team-facing, not tool scratch) |
 | Agent-produced docs (evals, reviews, debug) | `.claudster/agent-docs/` |
 | Session resume doc | `.claudster/relay.md` |
 | Custom commands | `.claude/commands/` |
 | Subagents | `.claude/agents/` |
 | Reusable skills | claudster plugin (by name; not copied into the project) |
+
+**`.claudster/` is the default home for working artifacts.** A plan → `.claudster/plans/`, a PRD →
+`.claudster/prd/`, the KB → `.claudster/kb/`, a prompt/driver/spec → `.claudster/prompts/`, a review →
+`.claudster/reviews/`. Interpret an unqualified reference ("write a plan", "save this prompt")
+accordingly — never scatter these to the repo root or `.github/` (the latter is often a published/
+synced tree in harness-authoring repos).
 
 ### Doc discipline (the KB can't silently rot)
 Read `.claudster/kb/DOC-MAP.md` first to find the right reference doc, then read it on demand (dispatch a
