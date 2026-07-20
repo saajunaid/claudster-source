@@ -82,3 +82,58 @@ denylist addition reproduces the original failure before re-applying the fix).
   the 6 new patterns + personal dev-machine paths `E:\Projects\`/`C:\Users\`) → **zero hits.**
 - Full suite: `python -m pytest scripts/tests/ claude-harness/hooks/tests/ -q` → **358 passed, 1
   skipped.**
+
+---
+
+# docket team-usability checklist (Track B Phase B3)
+
+**Goal:** verify the wider team can actually use docket — enablement, not open-sourcing (docket is
+explicitly out of scope for public release). Exit gate: a teammate could go from "given the URL" →
+"using a board" using only the docs.
+
+## Verified (code-level, not just doc claims)
+
+- **NTLM auto-provisioning actually works with zero setup.** `src/docket/api.py:436`: a first-seen
+  Windows-authenticated user auto-provisions as a read-only `stakeholder` — no admin has to
+  pre-create an account. A teammate who is simply handed the URL is authenticated and usable on
+  first visit.
+- **The Help tab is universally accessible.** `web/src/components/Sidebar.tsx:453`: "Help & guide —
+  available to every role; it's just docs." Confirmed no role gate blocks reading the onboarding
+  content itself.
+- **`docket.md`** (the in-app Help page, `web/src/help/docket.md`) already covers: install/quickstart,
+  what docket is and how it relates to claudster, core concepts (event sourcing, projects vs boards,
+  lanes), the full agent pipeline (lane commands, harness adapters, the Implement mini-pipeline,
+  config surface), roles & auth, and the safety rules (never push `main`, branch isolation, untested
+  implements never pass).
+
+## Doc gaps found and fixed
+
+Two gaps that could genuinely confuse a first-time teammate, both fixed in `docket.md`:
+1. **NTLM was described but not spelled out as "nothing to do."** A reader unfamiliar with SSO could
+   wonder whether they need to request an account or find a login page. Added: "there is no login page
+   and nothing to request... just open the board URL," plus how to get a role upgrade (ask a lead).
+2. **The "Turn on agents" quickstart step didn't flag that Settings is lead-only.** A contributor or
+   stakeholder following the quickstart literally would hit a wall with no explanation. Added: "Settings
+   is lead-only; a contributor or stakeholder should ask a lead to do this step."
+
+Both verified: `cd web && npx vitest run src/help/help.test.ts` → 5 passed (the existing content-shape
+test suite for the Help page markdown).
+
+## Code gaps (filed as follow-ups, not fixed here — B3 is docs-only)
+
+- **F20/F21 (already tracked, OPEN in `fable-remediation-status.md`):** NTLM trust rests on loopback;
+  first-seen users auto-provision with no opt-in gate. This is the *same* mechanism that makes
+  zero-setup onboarding possible (a feature for B3's goal) but is flagged elsewhere as a security
+  concern (an unexpected caller on the loopback proxy could also auto-provision). Not re-litigated
+  here — tracked where it already is.
+- No in-app "request a role upgrade" flow exists — a stakeholder wanting contributor+ access must know
+  to informally ask a lead (now documented, per the fix above) rather than there being a request button
+  or notification. Not blocking (the doc fix covers it), but a nicer flow is a future enhancement.
+
+## Exit gate
+
+A teammate given only the board URL: opens it → NTLM authenticates them silently → auto-provisions as
+stakeholder → lands on a board they can view and report bugs from → Help tab (unrestricted) explains
+the rest, including exactly who to ask for more access. **Met**, via the two doc additions above; no
+code changes were required (the auto-provisioning + universal-Help-access mechanisms already existed
+and were verified, not assumed).
