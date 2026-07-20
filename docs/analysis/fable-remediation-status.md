@@ -147,19 +147,21 @@ Work these from this tracker; per-item detail lives where each row points.
 3. Track B4 — decide whether/where to publish claudster publicly.
 
 **docket (feature branches only — NEVER push docket `main`, it deploys prod):**
-4. Fix the 2 blocking review findings on `feat/cross-review-gate` (+ the should-fixes: broaden the
-   `call_llm` except tuple, final-line-anchor `classify_verdict`, add endpoint-failure +
-   non-`main`-default-branch tests), re-review, then merge with the user's explicit go (= prod deploy).
-5. F20/F21 — `DOCKET_PROXY_SECRET` + opt-in auto-provisioning (keep zero-setup onboarding viable).
-6. The medium/low tail (~18 findings) — **first regenerate the findings** (scoped re-audit via
-   `.claudster/prompts/fable-inspect-docket.md`, persist the full detail), then spec via a
-   `docket-*-implement.md` prompt and implement.
-7. F12 full worktree isolation — design + correctness subtleties in
-   `.claudster/plans/oss-model-lanes-and-public-readiness.md` Track 0; needs a LIVE Implement run to verify.
+4. **Triage → spec → implement the 2026-07-20 re-audit backlog** (full detail:
+   `docs/analysis/fable-audit-docket-2026-07-20.md`; top-10 digest in the scoreboard section above).
+   Suggested first slice: the quick confirmed [High]s — `unarchive_task` serialization (one-line +
+   test), then the authz cluster (per-project authorization, NTLM provisioning gate = F20/F21,
+   attachment cross-project reads) as one spec'd pass modelled on the previous
+   `docket-*-implement.md` prompts.
+5. F12 full worktree isolation (re-confirmed top-6 in the re-audit) — design + correctness subtleties
+   in `.claudster/plans/oss-model-lanes-and-public-readiness.md` Track 0; needs a LIVE Implement run
+   to verify.
 
 **claudster:**
-8. pipeline-runner suite: 17 pre-existing failures (missing `.github/pipeline-state.template.json`) —
+6. pipeline-runner suite: 17 pre-existing failures (missing `.github/pipeline-state.template.json`) —
    decide keep-vs-retire (superseded by docket's pipeline), then restore the template or retire the tool.
 
-_(Closed 2026-07-20: sync.ps1 test coverage — which also exposed and fixed 4 more unchecked pushes —
-and the `agent-sandbox` rebrand tail.)_
+_(Closed 2026-07-20: sync.ps1 test coverage — which also exposed and fixed 4 more unchecked pushes;
+the `agent-sandbox` rebrand tail; **Track C fixed + merged + deployed (`7f612f4`)**; the docket
+re-audit — findings now persisted in full; agent-eval slim build — SubagentStop `agent_log.py` hook +
+6 tests, doc corrected.)_
