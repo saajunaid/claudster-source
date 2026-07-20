@@ -1,7 +1,52 @@
 # claudster-source
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 Public authoring home for **claudster** — the Claude Code plugin (`claudster` + `claudster-extras`),
 its MCP server (`junai-mcp`), the shared skill/agent pool, and the build machinery that publishes them.
+
+## Install claudster (as a Claude Code user)
+
+claudster ships as a Claude Code plugin from the marketplace mirror `saajunaid/junai` (built by this
+repo — see [Publishing](#publishing)):
+
+```bash
+claude plugin install claudster@claudster
+```
+
+That installs the core plugin (lean subagents, TDD commands, the core skill tier, hooks, a
+`CLAUDE.md` generator). Optionally add the long-tail skill library (disabled by default — zero
+always-on context cost until enabled):
+
+```bash
+claude plugin install claudster-extras@claudster   # one-time
+claude plugin enable  claudster-extras              # when you need the breadth
+```
+
+See `docs/guide/start-here.md` for the toolchain map and `docs/guide/claudster.md` for every
+command/skill/hook this plugin provides.
+
+## Quickstart (contributing to claudster-source itself)
+
+This repo is the **authoring** source, not the installed plugin — clone it to build/test/publish the
+bundles, not to use claudster in another project (use the Install step above for that).
+
+```bash
+git clone <this repository's clone URL>
+cd claudster-source
+python -m venv .venv
+.venv/Scripts/pip install pytest fastmcp   # .venv/bin/pip on macOS/Linux
+
+# Run the test suite
+.venv/Scripts/python -m pytest scripts/tests/ claude-harness/hooks/tests/ -q
+
+# Validate the pool (frontmatter, roster consistency, privacy denylist, ...)
+.venv/Scripts/python validate_pool.py
+```
+
+Both should pass clean on a fresh checkout. See `docs/guide/start-here.md` for the wider toolchain
+context (claudster + its companion project, docket) and `## Publishing` below for how a change here
+reaches the marketplace mirror.
 
 ## What's here
 - **`.github/`** — the pool: skills, agents, prompts, instructions, tools, recipes, and the build
@@ -48,3 +93,7 @@ trip an accidental release.
 This repo was extracted from a larger internal monorepo so that the publishable source lives on its own,
 cleanly separated from private/internal content. See [`MIGRATION.md`](./MIGRATION.md) for the extraction
 record.
+
+## License
+[MIT](./LICENSE) — see the `LICENSE` file. The published plugin bundles (`claudster` /
+`claudster-extras`) carry the same license in their manifests.
