@@ -1,12 +1,12 @@
-# JUNAI Sync - bidirectional pool sync
+﻿# JUNAI Sync - bidirectional pool sync
 # Dot-sourced by PowerShell profile. Provides junai-pull and junai-push globally.
 #
 # One-time setup (run once per machine):
-#   Add-Content $PROFILE "`n. 'E:\Projects\agent-sandbox\sync.ps1'"
+#   Add-Content $PROFILE "`n. 'E:\Projects\claudster-source\sync.ps1'"
 #
 # If you previously had juno-ai in your profile, update the path:
 #   Old:  . 'E:\Projects\juno-ai\sync.ps1'
-#   New:  . 'E:\Projects\agent-sandbox\sync.ps1'
+#   New:  . 'E:\Projects\claudster-source\sync.ps1'
 #
 # Usage from any project root:
 #   junai-pull                    pull latest pool from junai --> current project
@@ -39,17 +39,17 @@ $LOCAL_ONLY_POOL_FILES = @(
     "prompts\junai-ship.prompt.md"
 )
 # NOTE: "plans" intentionally REMOVED from $POOL_FOLDERS as of 2026-04-27 (Phase 1.0
-# stop-the-bleed). Plans are tracked in agent-sandbox only; they never sync to the
+# stop-the-bleed). Plans are tracked in claudster-source only; they never sync to the
 # public mirror. Do not re-add without explicit privacy review.
 $POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "hooks", "diagrams", "tools", "recipes", "agent-docs", "handoffs")
 $POOL_FILES = @("runtime-targets.json")
 $ROOT_PUSH_FILES = @("export_runtime_resources.py", "validate_agents.py", "validate_pool.py", "sync.ps1", ".env.example")
-# PRIVACY IS NOW STRUCTURAL. This repo (claudster-source) holds ONLY public, publishable source —
+# PRIVACY IS NOW STRUCTURAL. This repo (claudster-source) holds ONLY public, publishable source -
 # there is no private vmie/ root and no vmie skill category to purge (they live in the separate,
-# private agent-sandbox repo and never came across in the extraction). These arrays are therefore
+# private claudster-source repo and never came across in the extraction). These arrays are therefore
 # EMPTY: the post-copy purge loops below iterate over nothing. Keeping the machinery (empty) rather
 # than ripping it out means a future accidental re-introduction of a private category can be
-# re-gated by simply naming it here — but the intent is that nothing private ever lives in this repo.
+# re-gated by simply naming it here - but the intent is that nothing private ever lives in this repo.
 $PRIVATE_ROOT_FOLDERS = @()
 $PRIVATE_SKILL_CATEGORIES = @()
 # Fully-managed folders: wiped before copy so renamed/moved/deleted files don't persist
@@ -60,7 +60,7 @@ function Remove-ItemRobust {
     # the indexer/AV/Defender briefly holds a handle on a file mid-delete, so a
     # single Remove-Item -Recurse can fail even though nothing is wrong. Retry with
     # a short backoff; the handle releases within a few hundred ms. Warns (never
-    # throws) if it still can't — callers immediately re-copy in place, so a stale
+    # throws) if it still can't - callers immediately re-copy in place, so a stale
     # leftover is overwritten rather than fatal.
     param(
         [Parameter(Mandatory)][string]$Path,
@@ -320,7 +320,7 @@ function Bump-PackageJsonPatchVersion {
 function Get-RuntimeTargetsPluginVersion {
     # Read the version of a NAMED plugin block inside .github/runtime-targets.json (the export
     # source of truth for plugin.json). Scoped by the plugin's "name" so "claudster" never matches
-    # "claudster-extras" — the closing quote after the name disambiguates the two.
+    # "claudster-extras" - the closing quote after the name disambiguates the two.
     param(
         [Parameter(Mandatory)][string]$ManifestPath,
         [Parameter(Mandatory)][string]$PluginName
@@ -1030,7 +1030,7 @@ function junai-pull {
     }
     Write-Host "  [OK]  .pool-version" -ForegroundColor Green
 
-    # Deploy .vscode/mcp.json (pre-configured with ${workspaceFolder} — profile-agnostic)
+    # Deploy .vscode/mcp.json (pre-configured with ${workspaceFolder} - profile-agnostic)
     $mcpSrc = Join-Path $JUNO_POOL ".vscode\mcp.json"
     if (Test-Path $mcpSrc) {
         $vscodeTarget = Join-Path $ProjectRoot ".vscode"
@@ -1144,13 +1144,13 @@ function junai-push {
         }
     }
 
-    # ── Claude Code plugin bundle (Phase 4) ───────────────────────────────────
+    # -- Claude Code plugin bundle (Phase 4) -----------------------------------
     # Export the `claude` target and place it in the junai repo so it ships in the
     # same commit: marketplace.json at the repo root (.claude-plugin/), the plugin
-    # under plugin/. Repo is PUBLIC — vmie/ and any private skill categories are
+    # under plugin/. Repo is PUBLIC - vmie/ and any private skill categories are
     # purged from the plugin bundle after copy.
     # Private skills purged from BOTH public plugin bundles. After skill flattening these
-    # are flat dirs (skills/<name>/), not a skills/vmie/ category — so purge by skill name.
+    # are flat dirs (skills/<name>/), not a skills/vmie/ category - so purge by skill name.
     # Empty: golden-workflow + windows-deployment were promoted to public categories
     # (devops/, docs/) and now ship in the public bundles. Add a name here only to hold a
     # skill back from publish while keeping it in the pool.
@@ -1171,7 +1171,7 @@ function junai-push {
             if (Test-Path $destMarket) { Remove-ItemRobust $destMarket }
             Copy-Item (Join-Path $claudeBundle ".claude-plugin") $JUNO_POOL -Recurse -Force
 
-            # core plugin → junai/plugin ; extras plugin → junai/plugin-extras
+            # core plugin -> junai/plugin ; extras plugin -> junai/plugin-extras
             $destPlugin = Join-Path $JUNO_POOL "plugin"
             if (Test-Path $destPlugin) { Remove-ItemRobust $destPlugin }
             Copy-Item (Join-Path $claudeBundle "plugin") $JUNO_POOL -Recurse -Force
@@ -1210,7 +1210,7 @@ function junai-push {
         return [pscustomobject]$pushResult
     }
 
-    # ── PyPI build copy (src/junai_mcp/server.py) ─────────────────────────────
+    # -- PyPI build copy (src/junai_mcp/server.py) -----------------------------
     $poolServer  = Join-Path $JUNO_GITHUB "tools\mcp-server\server.py"
     $pypiServer  = Join-Path $JUNO_POOL   "src\junai_mcp\server.py"
     if ((Test-Path $poolServer) -and (Test-Path $pypiServer)) {
@@ -1224,9 +1224,9 @@ function junai-push {
             Write-Host "  [--]  src/junai_mcp/server.py  (no change)" -ForegroundColor DarkGray
         }
     }
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
-    # ── Auto-bump the claudster plugin version when its bundle content changed ──
+    # -- Auto-bump the claudster plugin version when its bundle content changed --
     # plugin.json is GENERATED from .github/runtime-targets.json by the export, so shipping
     # plugin content without bumping that manifest pins clients to a stale cached version (the
     # .claudster migration hit exactly this). When the mirror's plugin/ content changed beyond
@@ -1256,7 +1256,7 @@ function junai-push {
         }
     }
 
-    # ── Same auto-bump for claudster-extras when ITS bundle content changed ──
+    # -- Same auto-bump for claudster-extras when ITS bundle content changed --
     # The extras plugin (plugin-extras/) versions independently. Without this, a content change
     # to extras (e.g. a skill removed during re-privatization) ships without a version bump, so
     # clients keep the stale cached copy and `/plugin update` reports "already up to date".
@@ -1297,12 +1297,12 @@ function junai-push {
     git commit -m $Message | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Pop-Location
-        throw "junai mirror: git commit failed (exit $LASTEXITCODE) — mirror NOT updated."
+        throw "junai mirror: git commit failed (exit $LASTEXITCODE) - mirror NOT updated."
     }
     git push | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Pop-Location
-        throw "junai mirror: git push failed (exit $LASTEXITCODE) — the commit is local only and was NOT pushed. Fix the remote/auth and re-run."
+        throw "junai mirror: git push failed (exit $LASTEXITCODE) - the commit is local only and was NOT pushed. Fix the remote/auth and re-run."
     }
 
     $pushResult.MirrorChanged = $true
@@ -1313,7 +1313,7 @@ function junai-push {
     Write-Host "  Committed and pushed to junai." -ForegroundColor Magenta
     Write-Host ""
 
-    # Persist the auto-bump in the SOURCE repo — runtime-targets.json is the export's source of
+    # Persist the auto-bump in the SOURCE repo - runtime-targets.json is the export's source of
     # truth, so it must be committed here or the next export would regenerate plugin.json at the
     # old version and silently revert the bump. Path-scoped commit so unrelated source edits are
     # not swept in.
@@ -1327,7 +1327,7 @@ function junai-push {
         $bumpExit = $LASTEXITCODE
         Pop-Location
         if ($bumpExit -ne 0) {
-            Write-Warning "  Source manifest bump commit failed (exit $bumpExit) — the version bump may silently revert on the next export. Commit .github/runtime-targets.json by hand."
+            Write-Warning "  Source manifest bump commit failed (exit $bumpExit) - the version bump may silently revert on the next export. Commit .github/runtime-targets.json by hand."
         } else {
             Write-Host "  Source manifest committed: $bumpSummary." -ForegroundColor Magenta
             Write-Host ""
@@ -1371,9 +1371,9 @@ function junai-push {
         }
     }
 
-    # ── Publish gating (INVERTED default: release is opt-in via -Publish) ──────
+    # -- Publish gating (INVERTED default: release is opt-in via -Publish) ------
     # SAFETY (Track 0, 2026-07): historically junai-push auto-published whenever a
-    # PyPI/VS Code key was merely present in .env — one keystroke from a PERMANENT,
+    # PyPI/VS Code key was merely present in .env - one keystroke from a PERMANENT,
     # un-undoable PyPI upload, even for a plugin-only session. The default is now
     # inverted: a release fires ONLY when -Publish is explicitly passed. -NoPublish is
     # retained as a DEPRECATED silent no-op (its behaviour is now the default). The
@@ -1448,7 +1448,7 @@ function Sync-JunaiProfileRepo {
 
     if ([string]::IsNullOrWhiteSpace($Message)) {
         $today = Get-Date -Format "yyyy-MM-dd"
-        $Message = "feat: sync $Profile profile from agent-sandbox - $today"
+        $Message = "feat: sync $Profile profile from claudster-source - $today"
     }
 
     git commit -m $Message | Out-Null
@@ -1459,6 +1459,11 @@ function Sync-JunaiProfileRepo {
     }
 
     git push | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [WARN]  $Profile push failed - the commit is local only. Fix the remote/auth and push manually." -ForegroundColor Yellow
+        Pop-Location
+        return $true  # committed, push failed - caller can retry
+    }
     Write-Host "  [OK]  $Profile committed + pushed" -ForegroundColor Green
     Pop-Location
     return $true
@@ -1538,7 +1543,7 @@ function Sync-ExtensionRepo {
 
     if ([string]::IsNullOrWhiteSpace($Message)) {
         $today = Get-Date -Format "yyyy-MM-dd"
-        $Message = "feat: sync $($Label.ToLower()) pool from agent-sandbox - $today"
+        $Message = "feat: sync $($Label.ToLower()) pool from claudster-source - $today"
     }
     git commit -m $Message | Out-Null
 
@@ -1552,7 +1557,7 @@ function Sync-ExtensionRepo {
     if ($LASTEXITCODE -ne 0) {
         Write-Host "  [WARN]  $Label push failed." -ForegroundColor Yellow
         Pop-Location
-        return $true  # committed, push failed — caller can retry
+        return $true  # committed, push failed - caller can retry
     }
 
     Write-Host "  [OK]  $Label committed + pushed" -ForegroundColor Green
@@ -1665,7 +1670,7 @@ function junai-publish-mcp {
         twine upload dist\*.whl dist\*.tar.gz 2>&1 | Tee-Object -Variable twineOut | Write-Host
         if ($LASTEXITCODE -eq 0) { $uploadOk = $true; break }
         if ($attempt -lt 3) {
-            Write-Host "  [WARN]  Upload attempt $attempt failed, retrying in 5s…" -ForegroundColor Yellow
+            Write-Host "  [WARN]  Upload attempt $attempt failed, retrying in 5s..." -ForegroundColor Yellow
             Start-Sleep -Seconds 5
         }
     }
@@ -1824,7 +1829,7 @@ function junai-release {
     }
 
     if (-not $SkipMcp) {
-        # Content-diff gate: SHA256 of the MCP source (src\ *.py — excludes the
+        # Content-diff gate: SHA256 of the MCP source (src\ *.py - excludes the
         # version-bearing pyproject.toml) vs the last-published marker. PyPI is
         # permanent, so skip the upload entirely when the code is byte-identical.
         $mcpSourceRoot = Join-Path $JUNO_POOL "src"
@@ -1857,7 +1862,7 @@ function junai-release {
     }
 
     # Content-diff gate for the extension: SHA256 of the source (src\ *.ts/*.js +
-    # esbuild.mjs — excludes version-bearing package.json) vs the last-published marker.
+    # esbuild.mjs - excludes version-bearing package.json) vs the last-published marker.
     $extMarker = Join-Path $JUNAI_VSCODE ".last-published-ext.sha256"
     $extGate = $null
     if (-not $SkipExtension) {
@@ -2276,7 +2281,7 @@ function junai-ship {
 }
 
 function junai-revert {
-    # Reverts one or more commits in agent-sandbox and cascades to all downstream
+    # Reverts one or more commits in claudster-source and cascades to all downstream
     # repos (junai, junai-vscode, and any explicit project repos).
     # Safe -- new revert commits, no history rewrite.
     #
@@ -2285,7 +2290,7 @@ function junai-revert {
     #   junai-revert -Last 3                                 # revert last 3 commits
     #   junai-revert -Sha abc123                             # revert one specific commit
     #   junai-revert -Sha abc123,def456,ghi789               # revert multiple commits
-    #   junai-revert -Last 2 -NoCascade                      # revert agent-sandbox only
+    #   junai-revert -Last 2 -NoCascade                      # revert claudster-source only
     #   junai-revert -Last 3 -Force                          # skip confirmation (chat / CI use)
     #   junai-revert -Last 3 -Projects "E:\Projects\Foo"     # also restore pool in project repo
     #   junai-revert -Last 3 -Projects "E:\P\Foo,E:\P\Bar"  # multiple project repos
@@ -2352,9 +2357,9 @@ function junai-revert {
     }
     Write-Host ""
     if ($NoCascade) {
-        Write-Host "  Cascade   : agent-sandbox only (-NoCascade)" -ForegroundColor DarkGray
+        Write-Host "  Cascade   : claudster-source only (-NoCascade)" -ForegroundColor DarkGray
     } else {
-        Write-Host "  Cascade   : agent-sandbox --> junai --> junai-vscode (at next publish)" -ForegroundColor DarkGray
+        Write-Host "  Cascade   : claudster-source --> junai --> junai-vscode (at next publish)" -ForegroundColor DarkGray
         foreach ($proj in $projectList) {
             Write-Host "              --> $(Split-Path $proj -Leaf)  (junai-pull + commit)" -ForegroundColor DarkGray
         }
@@ -2385,13 +2390,17 @@ function junai-revert {
     }
 
     git push | Out-Null
-    Write-Host "  [OK]  agent-sandbox pushed" -ForegroundColor Green
+    if ($LASTEXITCODE -ne 0) {
+        Pop-Location
+        throw "junai-revert: git push failed (exit $LASTEXITCODE) - the revert commit is local only; cascade aborted. Fix the remote/auth and re-run."
+    }
+    Write-Host "  [OK]  claudster-source pushed" -ForegroundColor Green
 
     Pop-Location
 
     # -- Cascade to downstream repos -------------------------------------------
     if (-not $NoCascade) {
-        $revertMsg = "revert: undo $($resolved.Count) commit(s) from agent-sandbox"
+        $revertMsg = "revert: undo $($resolved.Count) commit(s) from claudster-source"
         if (-not [string]::IsNullOrWhiteSpace($Message)) { $revertMsg = $Message }
 
         # 1. junai -- pool folders + server.py SHA check (handled inside junai-push)
@@ -2411,13 +2420,17 @@ function junai-revert {
                 if ($dirty) {
                     git commit -m "$revertMsg (sync.ps1)" | Out-Null
                     git push | Out-Null
-                    Write-Host "  [OK]  junai sync.ps1 reverted" -ForegroundColor Green
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Host "  [WARN]  junai sync.ps1 revert push failed - commit is local only in the junai mirror." -ForegroundColor Yellow
+                    } else {
+                        Write-Host "  [OK]  junai sync.ps1 reverted" -ForegroundColor Green
+                    }
                 }
                 Pop-Location
             }
         }
 
-        # 3. junai-vscode -- pool/ is gitignored, rebuilt from agent-sandbox at publish
+        # 3. junai-vscode -- pool/ is gitignored, rebuilt from claudster-source at publish
         Write-Host "  [--]  junai-vscode pool/ is gitignored -- auto-updates at next publish" -ForegroundColor DarkGray
 
         # 4. Project repos -- restore reverted pool via junai-pull + commit + push
@@ -2435,7 +2448,11 @@ function junai-revert {
                 git add ".github"
                 git commit -m "$revertMsg (pool)" | Out-Null
                 git push | Out-Null
-                Write-Host "  [OK]  $(Split-Path $proj -Leaf) pool reverted and pushed" -ForegroundColor Green
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "  [WARN]  $(Split-Path $proj -Leaf) pool revert push failed - commit is local only." -ForegroundColor Yellow
+                } else {
+                    Write-Host "  [OK]  $(Split-Path $proj -Leaf) pool reverted and pushed" -ForegroundColor Green
+                }
             } else {
                 Write-Host "  [--]  $(Split-Path $proj -Leaf) -- pool already up to date" -ForegroundColor DarkGray
             }
