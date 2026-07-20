@@ -20,9 +20,10 @@ do not start the next until the prior track's Ship phase is green.
   easy-to-use claudster feature. Today the only way to run a Claude Code session on GLM is a *personal*
   machine-local wrapper (`C:\Users\jshaik\Documents\claude-glm.ps1`) that hardcodes a key path. Make it a
   first-class, cross-platform, teammate-usable capability shipped in the plugin.
-- **Track B (#1) — LICENSE decided (MIT); B1 not yet started.** Make claudster public-ready. Add a LICENSE,
-  sweep internal references, genericize the guide. docket is **not** being made public now — only confirm
-  the *wider team* can use it.
+- **Track B (#1) — B1/B2/B3 DONE (2026-07-20); B4 (publish decision) awaiting the user.** Make claudster
+  public-ready. Add a LICENSE, sweep internal references, genericize the guide. docket is **not** being
+  made public now — only confirm the *wider team* can use it. Reports:
+  `docs/analysis/PUBLIC-READINESS.md` (B2 privacy sweep + B3 docket checklist).
 - **Track C (#3) — DONE (2026-07-20), `feat/cross-review-gate` (docket, not pushed).** Cross-vendor
   code-review in the pipeline. The real need isn't per-phase quota-saving; it's running the *review* on a
   different vendor (DeepSeek) for genuine blind-spot diversity. The Implement lane already HAS a review
