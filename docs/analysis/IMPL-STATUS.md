@@ -771,3 +771,45 @@ preserved on rewrite.
 **Publish held (human decision):** all local work is committed, but `junai-push` is NOT run. This is a
 plugin-only change, so a bare `junai-push` would also republish MCP (PyPI) + VS Code unnecessarily — prefer
 `junai-push -NoPublish`. Awaiting user confirmation on which to run.
+
+---
+
+## 2026-07-19 — Track A: model-switching shipped as a first-class claudster feature
+
+Implements `.claudster/plans/oss-model-lanes-and-public-readiness.md` Track A end-to-end (A1–A4). Any
+user (not just the author) can now switch a Claude Code session to GLM/DeepSeek/OpenRouter with one
+command, cross-platform, with no hardcoded key path — the personal `claude-glm.ps1` wrapper becomes a
+real, shipped, tested feature.
+
+- **A1 (`bc4c907`)** — `claude-harness/scripts/oss_model.py`: `resolve(provider, env) -> {base_url,
+  model, api_key}`. Key precedence: provider env var (`GLM_API_KEY`/`DEEPSEEK_API_KEY`/
+  `OPENROUTER_API_KEY`) or generic `OSS_API_KEY` → keys file at `$CLAUDSTER_KEYS_FILE` (default
+  `~/.claudster/keys.env`, `KEY=VALUE`, `#` comments) → actionable `ConfigError`. `PROVIDERS` table
+  mirrors `oss_review.py`'s presets; env (`OSS_BASE_URL`/`OSS_MODEL`) always overrides. 12 TDD cases.
+- **A2 (`636be2b`*)** — `claude-harness/scripts/claude-oss.{sh,ps1}`: cross-platform launchers. Each
+  calls `oss_model.py` (captured, never echoed), sets `ANTHROPIC_BASE_URL`/`ANTHROPIC_MODEL`/
+  `ANTHROPIC_AUTH_TOKEN` for that process only, and hands off to the real `claude` with all passthrough
+  args. `claude-glm` is the same launcher invoked under that name (forces `provider=glm`). ps1 declares
+  no parameter block (`$args` directly — a declared param would swallow claude's own `-p`) and
+  saves/restores `ANTHROPIC_*` in `finally`. 8 content-lint tests + a live smoke against a stub `claude`
+  (env set, args passed through, missing key → actionable stderr + exit 3). *Landed inside a concurrently
+  authored commit due to a parallel session on `main` — code and tests verified intact post-collision.
+- **A3 (`aa62ffc`)** — `/claudster:use-model` command doc (lanes, key resolution, adding a provider,
+  install, exit codes); `setup-project-ai.md` documents the one-liner to add the launchers to
+  PATH/profile (never silently mutates the user's shell — a PowerShell function or bash alias, printed);
+  `docs/guide/providers-and-keys.md` genericized from the personal `key:`/`api key:` story to the real
+  `CLAUDSTER_KEYS_FILE`/`KEY=VALUE` convention, mirrored to docket (`web/src/help/`, branch
+  `docs/providers-and-keys-mirror`, not pushed — docket `main` auto-deploys). Also folded in the
+  `.claudster/` artifacts convention (user request 2026-07-15): `scaffold_claudster` now creates `kb/`
+  and `prompts/` alongside `plans/prd/agent-docs/reviews`, and the root `CLAUDE.md` template states
+  explicitly that `.claudster/` is the default home for every artifact kind — never scatter to the repo
+  root or `.github/`.
+
+**Validation:** `python -m pytest scripts/tests/ claude-harness/hooks/tests/` → **352 passed, 1
+skipped**; `validate_pool.py` → OK; a live export confirmed `use-model.md` ships in the `claude` bundle
+(no roster to update — `commands/` copies wholesale).
+
+**Not yet done:** manual smoke against a real `claude-glm <provider> -p "say ok"` (needs a live provider
+key — HUMAN); a wholly new provider beyond the three presets (deepseek/glm/openrouter) is supported via
+env override, untested with a table addition. `junai-push` not yet run (bare push = mirror sync + version
+bump, no publish) — pending user go-ahead.
