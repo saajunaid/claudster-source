@@ -24,47 +24,39 @@ task: you own a backlog and work it down, checking in with the user at the decis
 - **What's left is the medium/low tail** (~19 OPEN rows) plus the plan's un-started Tracks A/B/C. Goal:
   work that tail down, keeping claudster genuinely publish-safe and docket safe for the wider team.
 
-## Your queue (in order)
+## Your queue (in order) — updated 2026-07-20
 
-### 1. NOW — claudster mediums pass (implement DIRECTLY; no spec needed)
-Work the OPEN **claudster** rows in the tracker. Suggested order (detail in the audit):
-1. **Gate the `junai-mcp` shell-exec tool** — `vscode-extensions/junai/src/junai_mcp/server.py` (`run_command`,
-   ~line 800) runs any string via `create_subprocess_shell` (`shell=True`), no allowlist, and ships on PyPI.
-   It's **stdio/local** (a footgun, not remote RCE — don't overstate it). Put it behind an opt-in env flag,
-   use arg-array exec (no `shell=True`), add an allowlist.
-2. **Exporter fail-closed** — `export_runtime_resources.py`: a target roster naming a skill that doesn't exist,
-   and `missing_source`, currently fold into counters with exit 0 (the `codex` target names ~5 phantom skills).
-   Make them FAIL. Also: Copilot→Claude conversion defaults an agent with no mapped tools to include `Bash` —
-   never implicitly grant shell; default read-only.
-3. **Redaction shapes** — `claude-harness/scripts/dream_capture.py` `redact` misses `-pPASSWORD`,
-   `aws_secret_access_key <k>`, `curl -u user:pass`.
-4. **Cost model** — `claude-harness/hooks/session_end.py` only knows opus/sonnet/haiku, so GLM/DeepSeek/local
-   bill as Sonnet.
-5. **Cross-repo fact contamination** — `_repo_root` resolves from the launch cwd, so docket facts land in
-   claudster's Dream Memory store. Anchor to the session's repo.
-6. **`validate_agents.py`** — an MCP "note" is appended to `errors` and `:813` exits 1 on any error, so adding
-   an MCP tool hard-fails the build. Separate notes from errors.
-Then: the cosmetic rebrand tail (`agent-workflow-design-reference.md` has ~63 `agent-sandbox` refs, plus
-diagrams/test fixtures) — low value; do it only if the others are done.
+> Completed since this prompt was first written: the entire claudster mediums pass, docket F2/F3/F4/F5/F25
+> (merged via `feat/ux-correctness`), Track A (shipped), Track B B1/B2/B3, and Track C (branch
+> `feat/cross-review-gate`, unmerged). Details in the tracker. The remaining queue:
 
-### 2. NEXT — docket F2/F3/F4/F5/F25
-Write an implementation spec at `.claudster/prompts/docket-ux-correctness-implement.md`, modelled on the two
-existing ones (`docket-accessibility-implement.md`, `docket-reliability-security-implement.md`) — same shape:
-branch off docket `main`, TDD phases, exact files, acceptance, verification, per-phase commits. Covers:
-F2 (pipeline preset seeds a card into a lane that doesn't exist yet), F3 (default agent-lane config references
-lanes the board lacks), F4 (archived tasks unreachable — no unarchive; dead "Archived" toggle), F5 (corrupt
-`events.jsonl` → bare 500 with no escape), F25 ("Report bug" promises stakeholders uploads that 403).
-**Ask the user** whether they want you to run it or hand it to a separate session.
+### 1. NOW — push + review + merge docket `feat/cross-review-gate`
+Track C's output sits on that docket branch, not pushed. Push the branch, hand it back for review; merge to
+docket `main` only with the user's go-ahead (main auto-deploys prod).
 
-### 3. THEN — the strategic plan (ask the user before starting each)
-- **Track A** — model-switching as a real claudster feature (cross-platform `claude-oss`/`claude-glm`
-  launchers + `/claudster:use-model` + non-hardcoded key resolution). Design is settled in the plan.
-- **Track B** — claudster public-readiness. **BLOCKED on a human decision: the LICENSE choice**
-  (recommendation: MIT). Ask for it before starting B1.
-- **Track C** — point docket's Implement review gate at `oss_review.py` for cross-vendor review.
-- **F12 full worktree isolation** (docket) — deferred: it needs a **LIVE Implement run** to verify; the
-  correctness subtleties (uncommitted `.claudster/` plan artifacts aren't in a fresh worktree) are recorded
-  in the plan. Don't attempt it blind.
+### 2. NEXT — docket F20/F21 (auth hardening)
+NTLM trust rests on loopback; first-seen users auto-provision. Prefer a `DOCKET_PROXY_SECRET` shared header +
+an opt-in/toggleable provisioning gate — but preserve the zero-setup teammate onboarding that B3 verified
+(see the tension note in `docs/analysis/PUBLIC-READINESS.md` §B3). Spec first (a `docket-*-implement.md`
+prompt, modelled on the existing three), then implement on a feature branch.
+
+### 3. THEN — regenerate + work the docket medium/low tail (~18 findings)
+F7–F10, F14–F16, F18–F19, F22–F24, F26–F29, F35–F39 have **no saved descriptions** (transcript-only).
+Re-run a scoped audit via `.claudster/prompts/fable-inspect-docket.md` excluding the already-fixed areas,
+**persist the full per-finding detail to `docs/analysis/` this time**, update the tracker, then spec +
+implement the worthwhile ones.
+
+### 4. WHEN THE USER SCHEDULES IT — F12 full worktree isolation (docket)
+Deferred: it needs a **LIVE Implement run** to verify; the correctness subtleties (uncommitted `.claudster/`
+plan artifacts aren't in a fresh worktree) are recorded in the plan's Track 0. Don't attempt it blind.
+
+### 5. LOW-VALUE tail (only if the above are done)
+`sync.ps1` test coverage; the cosmetic rebrand tail (`agent-workflow-design-reference.md` ~63
+`agent-sandbox` refs, diagrams, test fixtures).
+
+### HUMAN actions (remind the user; not yours to do)
+Rotate the 3 tokens (`pypimcp.key`, `vscode.pat`, `ptarmigan.pat`); delete VS Code `junai-labs.junai`
+v0.4.0 at the marketplace hub; decide Track B4 (whether/where to publish claudster).
 
 ## Operating rules (these matter)
 - **TDD**: RED test first, then the fix. After **every** claudster fix run BOTH:
