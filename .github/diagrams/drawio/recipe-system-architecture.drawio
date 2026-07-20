@@ -97,7 +97,7 @@
         </mxCell>
 
         <!-- ═══════════════════════════════════════════════ -->
-        <!-- LAYER 1: Source of Truth (agent-sandbox)        -->
+        <!-- LAYER 1: Source of Truth (claudster-source)        -->
         <!-- ═══════════════════════════════════════════════ -->
         <mxCell id="L1_label" value="Layer 1 — Source of Truth" style="text;html=1;fontSize=16;fontStyle=1;fontFamily=Arial;fontColor=#1A1A2E;align=left;" vertex="1" parent="1">
           <mxGeometry x="40" y="80" width="300" height="30" as="geometry"/>
@@ -106,7 +106,7 @@
         <mxCell id="L1_frame" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=2;arcSize=6;" vertex="1" parent="1">
           <mxGeometry x="200" y="120" width="1100" height="120" as="geometry"/>
         </mxCell>
-        <mxCell id="L1_title" value="&lt;b&gt;agent-sandbox&lt;/b&gt; (portable resource pool)" style="text;html=1;fontSize=14;fontFamily=Arial;align=center;" vertex="1" parent="1">
+        <mxCell id="L1_title" value="&lt;b&gt;claudster-source&lt;/b&gt; (portable resource pool)" style="text;html=1;fontSize=14;fontFamily=Arial;align=center;" vertex="1" parent="1">
           <mxGeometry x="530" y="128" width="340" height="24" as="geometry"/>
         </mxCell>
 

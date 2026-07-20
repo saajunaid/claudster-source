@@ -22,7 +22,7 @@ from pathlib import Path
 # Paths (resolved relative to this file's location so they work from anywhere)
 # ---------------------------------------------------------------------------
 _TOOL_DIR = Path(__file__).resolve().parent        # .github/tools/pipeline-runner/
-_REPO_ROOT = _TOOL_DIR.parent.parent.parent        # workspace root (agent-sandbox/)
+_REPO_ROOT = _TOOL_DIR.parent.parent.parent        # workspace root (claudster-source/)
 _AGENTS_DIR = _REPO_ROOT / ".github" / "agents"
 _REGISTRY = _TOOL_DIR / "agents.registry.json"
 

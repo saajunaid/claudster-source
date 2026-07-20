@@ -2,7 +2,7 @@
   "version": 1,
   "canonical_root": ".github",
   "output_root": "dist/runtime-resources",
-  "_comment_privacy": "No exclusions block: this repo (claudster-source) holds ONLY public, publishable source. Privacy is structural — the private vmie/ skills and .github/plans never existed here, so there is nothing to exclude. (Removed the old exclusions/private_roots/private_paths gating during the extraction from agent-sandbox.)",
+  "_comment_privacy": "No exclusions block: this repo (claudster-source) holds ONLY public, publishable source. Privacy is structural — the private vmie/ skills and .github/plans never existed here, so there is nothing to exclude. (Removed the old exclusions/private_roots/private_paths gating during the extraction from the predecessor repo.)",
   "targets": [
     {
       "name": "copilot",

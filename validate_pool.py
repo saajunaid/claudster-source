@@ -80,7 +80,7 @@ DOC_FRONTMATTER_REFERENCERS = [
 ]
 
 # External pool roots that are checked when present. Only this repo's own build output — the old
-# hardcoded mirror paths (E:\Projects\junai-vscode\pool, E:\Projects\junai\.github) were agent-sandbox
+# hardcoded mirror paths (E:\Projects\junai-vscode\pool, E:\Projects\junai\.github) were predecessor-repo
 # artefacts and are dropped in the extraction; Phase 3 re-adds mirror roots (configurable) if needed.
 EXTRA_POOL_ROOTS = [
     REPO_ROOT / "dist" / "runtime-resources",

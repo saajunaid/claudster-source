@@ -35,7 +35,7 @@ def make_state(workspace_root: Path):
         supervision_overrides = supervision_overrides or {}
 
         base = {
-            "project": "agent-sandbox",
+            "project": "claudster-source",
             "feature": "deterministic-routing",
             "pipeline_version": "1.0",
             "pipeline_mode": pipeline_mode,

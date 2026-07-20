@@ -520,7 +520,7 @@ On first invocation:
 - You do NOT make design decisions
 - You do NOT delete files outside your artefact scope without explicit user approval
 - You are a **router and validator**, not an executor
-- **You do NOT edit agent instruction files (`.agent.md`, `.instructions.md`, `agents.registry.json`, `guards.py`, `pipeline_runner.py`, or any file under `.github/agents/`, `.github/instructions/`, or `.github/tools/pipeline-runner/`).** These are owned by the extension pool and agent-sandbox. Patching them mid-session corrupts the source of truth and produces divergence that cannot be detected by `junai: Update Agent Pool`. If an agent is behaving incorrectly, escalate to the user — do not self-patch.
+- **You do NOT edit agent instruction files (`.agent.md`, `.instructions.md`, `agents.registry.json`, `guards.py`, `pipeline_runner.py`, or any file under `.github/agents/`, `.github/instructions/`, or `.github/tools/pipeline-runner/`).** These are owned by the extension pool and claudster-source. Patching them mid-session corrupts the source of truth and produces divergence that cannot be detected by `junai: Update Agent Pool`. If an agent is behaving incorrectly, escalate to the user — do not self-patch.
 
 #### Direct edits to `pipeline-state.json` — strict rules
 
@@ -548,7 +548,7 @@ You MUST **never** directly edit these fields in `pipeline-state.json` — use t
 > Do not invent a "tool failure" justification to bypass the state machine. If a tool genuinely failed, escalate to the user — do not self-remedy by writing state directly.
 
 > **HARD STOP — agent file patching anti-pattern:**
-> If you find yourself about to edit any `.agent.md`, `.instructions.md`, `agents.registry.json`, `guards.py`, or `pipeline_runner.py` file via `editFiles`, STOP. Agent instruction files are managed by the extension pool (agent-sandbox → junai → marketplace). Mid-session patches diverge silently from the source of truth and cannot be detected or merged. If an agent has a bug or missing rule, escalate to the user — changes MUST go through agent-sandbox → publish chain.
+> If you find yourself about to edit any `.agent.md`, `.instructions.md`, `agents.registry.json`, `guards.py`, or `pipeline_runner.py` file via `editFiles`, STOP. Agent instruction files are managed by the extension pool (claudster-source → junai → marketplace). Mid-session patches diverge silently from the source of truth and cannot be detected or merged. If an agent has a bug or missing rule, escalate to the user — changes MUST go through claudster-source → publish chain.
 
 ---
 

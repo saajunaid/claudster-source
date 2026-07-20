@@ -210,7 +210,7 @@ def load_agent_config(cwd: str) -> list[dict]:
     Checks paths in priority order:
       1. $CLAUDE_PLUGIN_ROOT/agents/   — plugin install
       2. <cwd>/.claude/agents/         — user's project agents
-      3. <cwd>/claude-harness/agents/  — agent-sandbox dev checkout
+      3. <cwd>/claude-harness/agents/  — claudster-source dev checkout
     """
     plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
     candidates = []

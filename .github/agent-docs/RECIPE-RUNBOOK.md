@@ -76,7 +76,7 @@ No action needed. When `project-config.md` has no `recipe` field (or it's blank)
 
 When you have a **repeatable project archetype** that differs from existing recipes:
 
-1. Create `.github/recipes/{name}.recipe.md` in `agent-sandbox`
+1. Create `.github/recipes/{name}.recipe.md` in `claudster-source`
 2. Use `enterprise-dashboard.recipe.md` as a structural template
 3. Define your delivery pipeline phases (can be fewer or more than 9)
 4. Map each phase to existing skills in the Mandatory Skill Composition table
@@ -219,4 +219,4 @@ A: Not currently. The `recipe` field takes a single value. If you need to compos
 
 ## 7. Architecture Diagram
 
-See `.github/diagrams/recipe-system-architecture.drawio` for the full visual representation of the recipe system flow — from agent-sandbox source of truth through project bootstrap to agent execution.
+See `.github/diagrams/recipe-system-architecture.drawio` for the full visual representation of the recipe system flow — from claudster-source source of truth through project bootstrap to agent execution.

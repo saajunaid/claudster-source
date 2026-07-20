@@ -27,7 +27,7 @@ def _load_json(path: Path) -> dict:
 
 def _seed_state(state_file: Path, *, feature: str = "alpha-plan") -> None:
     payload = json.loads(TEMPLATE_PATH.read_text(encoding="utf-8"))
-    payload["project"] = "agent-sandbox"
+    payload["project"] = "claudster-source"
     payload["feature"] = feature
     state_file.parent.mkdir(parents=True, exist_ok=True)
     state_file.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

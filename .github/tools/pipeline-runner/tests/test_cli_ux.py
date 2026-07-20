@@ -39,7 +39,7 @@ def _create_workspace_with_template(tmp_path: Path) -> tuple[Path, Path]:
 
 def _seed_state_from_template(state_file: Path) -> None:
     payload = _load_json(TEMPLATE_PATH)
-    payload["project"] = "agent-sandbox"
+    payload["project"] = "claudster-source"
     payload["feature"] = "deterministic-routing"
     state_file.parent.mkdir(parents=True, exist_ok=True)
     state_file.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -108,20 +108,20 @@ def test_init_creates_state_from_template_with_defaults(tmp_path: Path) -> None:
         "--state-file",
         str(state_file),
         "--project",
-        "agent-sandbox",
+        "claudster-source",
         "--feature",
         "deterministic-routing",
     )
     assert result.returncode == 0
     payload = json.loads(result.stdout)
     assert payload["ok"] is True
-    assert payload["project"] == "agent-sandbox"
+    assert payload["project"] == "claudster-source"
     assert payload["feature"] == "deterministic-routing"
     assert payload["type"] is None
     assert Path(payload["state_file"]) == state_file
 
     written = _load_json(state_file)
-    assert written["project"] == "agent-sandbox"
+    assert written["project"] == "claudster-source"
     assert written["feature"] == "deterministic-routing"
     assert written["pipeline_mode"] == "supervised"
 
@@ -136,7 +136,7 @@ def test_init_existing_file_fails_without_force(tmp_path: Path) -> None:
         "--state-file",
         str(state_file),
         "--project",
-        "agent-sandbox",
+        "claudster-source",
         "--feature",
         "deterministic-routing",
     )
