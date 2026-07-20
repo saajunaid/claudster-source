@@ -14,32 +14,66 @@ everything done since. Living status of every finding (from `fable-audit-claudst
 | **Driver prompt for the remaining backlog** — hand to a fresh session to continue | `.claudster/prompts/driver-remaining-toolchain-work.md` (update its "queue" section — items 1–3 are now done; the remaining queue is below) |
 | Strategic plan (Track 0 hardening + Tracks A/B/C) | `.claudster/plans/oss-model-lanes-and-public-readiness.md` |
 | Audit executive summaries (Top-10 + themes only) | `docs/analysis/fable-audit-{claudster,docket}-2026-07-15.md` |
+| **Full-detail docket re-audit (2026-07-20)** — the current OPEN docket backlog, with file:line | `docs/analysis/fable-audit-docket-2026-07-20.md` |
 | Track B privacy sweep + docket team-usability report | `docs/analysis/PUBLIC-READINESS.md` |
 | Implementation specs used for the docket passes | `.claudster/prompts/done/docket-{accessibility,reliability-security,ux-correctness}-implement.md` |
 
-> ⚠ **Known gap:** the full per-finding detail (file:line, failure scenario, fix, confidence) for the
-> docket audit's F1–F39 existed only in the audit session transcript — only the executive layer was saved
-> to disk. Everything fixed so far had its detail re-derived in the implementation specs. The remaining
-> ~18 medium/low docket findings (F7–F10, F14–F16, F18–F19, F22–F24, F26–F29, F35–F39) are **numbers
-> without saved descriptions**; closing them requires re-running a scoped Fable inspection on docket
-> (reuse `.claudster/prompts/fable-inspect-docket.md`, excluding the fixed areas) to regenerate the tail.
+> ✅ **Known gap CLOSED (2026-07-20):** the 2026-07-15 docket audit's full per-finding detail existed
+> only in the session transcript — only the executive layer was saved to disk, leaving ~18 medium/low
+> findings as numbers with no saved description. Re-ran a scoped Fable inspection
+> (`.claudster/prompts/fable-inspect-docket.md`) against `main` (post `feat/ux-correctness` merge, pre
+> `feat/cross-review-gate` merge) and saved the FULL report this time:
+> `docs/analysis/fable-audit-docket-2026-07-20.md`. This is a fresh pass, not a 1:1 remap of the old
+> F7–F39 numbers — read the new doc directly. **Ready to hand to an Opus/Sonnet session to
+> triage/spec/implement.**
 
 ## Scoreboard (2026-07-20)
 
 - **All Critical/High findings in both repos: CLOSED and deployed.**
 - claudster: 17 findings DONE (test-coverage + rebrand tails closed 2026-07-20), 1 OPEN (human: token
   rotation + marketplace v0.4.0 deletion), 1 OPEN new (pipeline-runner suite broken, pre-existing).
-- docket: 14 findings DONE (incl. all of F30–F34 a11y), 1 PARTIAL (F12 worktree isolation), ~20 OPEN
-  (F20/F21 + the untracked medium/low tail).
-- Tracks: **A DONE** (shipped 2026-07-19) · **B B1/B2/B3 DONE, B4 awaits the user** · **C
-  code-complete but NOT mergeable** — branch `feat/cross-review-gate` pushed 2026-07-20; independent
-  review returned **changes-requested with 2 blocking issues**: (1) fail-open — a repo whose default
-  branch isn't `main`/`master` yields an empty diff → `REVIEW: CLEAN` with the endpoint never called
-  (PoC-confirmed; docket itself supports arbitrary default branches via `origin/HEAD`); (2) the
-  install doc points `review_cmd` at the bare `.py`, which cannot spawn (Windows `WinError 193`;
-  no POSIX exec bit) — needs the launcher shim the e2e tests already use. Plus should-fixes:
-  uncaught read-phase socket errors, and `classify_verdict` matching CLEAN anywhere instead of
-  final-line (the F6 lesson). Fix on the branch before merge.
+- docket: 14 findings DONE (incl. all of F30–F34 a11y), 1 PARTIAL (F12 worktree isolation), fresh
+  full-detail backlog from the 2026-07-20 re-audit (see below) supersedes the old undescribed F7–F39 tail.
+- Tracks: **A DONE** (shipped 2026-07-19) · **B B1/B2/B3 DONE, B4 awaits the user** · **C DONE, MERGED,
+  DEPLOYED (2026-07-20)** — `feat/cross-review-gate` fixed both blocking review findings + all
+  should-fixes (fail-open on non-main/master default branch → now resolves `origin/HEAD` + prefers the
+  prompt-embedded base sha; unspawnable install → shipped `.cmd`/`.sh` launcher shims), re-reviewed
+  **approved**, one more should-fix from re-review addressed (origin/ prefix kept for the merge-base
+  candidate), merged to `main` (`7f612f4`), pushed, Gitea Actions `python_tests → web_checks → deploy`
+  all **success** — live in prod. Full suite 548 passed throughout.
+
+### docket — fresh full-detail backlog (2026-07-20 re-audit)
+
+Full report: `docs/analysis/fable-audit-docket-2026-07-20.md`. Top 10 by impact (severity in brackets),
+audited against `main` before the `feat/cross-review-gate` merge:
+
+1. **[High]** `unarchive_task` not write-serialized — missing from the `@_serialized` wrap-loop
+   (`engine.py:887-894`); a race can clobber `board.json`.
+2. **[High]** No per-project authorization — any stakeholder/contributor can read/write **any**
+   registered project via `?project=`; role is global, not per-board (`api.py:733-747, 957-966`).
+3. **[High]** First-seen NTLM users auto-provision with no allowlist/opt-in — the full F20/F21 detail
+   (`api.py:437-446`).
+4. **[High]** Implement lane has no confirmation gate (only Ship does) — one drag/click starts an
+   autonomous code-writing run (`config.py:90`; `CardDrawer.tsx:248-262`).
+5. **[Medium]** `wip_limits` is dead config — editable, validated, never enforced anywhere
+   (`Settings.tsx:152-165`; no check in `engine.move_task`).
+6. **[High]** Implement runs share the human's working tree — F12's still-open half
+   (`runner.py:336-339`).
+7. **[Medium]** Parked `requires_confirmation` runs count against `max_concurrent_runs`, wedging the
+   WIP cap (`engine.py:659-664`).
+8. **[Medium]** Stakeholders get a fully-editable `CardDrawer` whose writes silently 403 — only Triage
+   is role-gated (`CardDrawer.tsx:191`).
+9. **[Medium]** Attachment store is global and cross-project readable by id, no ownership check
+   (`api.py:1345-1369`).
+10. **[Medium]** Renaming a lane silently orphans its `agent_track.lanes` config, no warning
+    (`Settings.tsx:132-144`).
+
+Also confirmed: **F25's fix was live on `feat/ux-correctness`, not yet on `main`** at audit time —
+merge to `main` to close it fully. 4 systemic themes in the full report (auth model doesn't match the
+multi-project deployment shape; config surfaces not wired to behavior; safety invariants enforced
+unevenly across newest features; "fixed" ≠ "on `main`" — branch/merge hygiene). **Not yet triaged into
+individual DONE/OPEN rows below** — hand `docs/analysis/fable-audit-docket-2026-07-20.md` to an
+implementation session to spec and fix.
 
 ## claudster
 | # | Finding | Status | Where |
