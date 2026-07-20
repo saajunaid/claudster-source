@@ -164,4 +164,4 @@ npx @google/design.md export --format dtcg DESIGN.md > tokens.json
 
 - After writing `DESIGN.md`, use `popular-web-designs` for inspiration on how real brands apply similar systems
 - Use `design-system-tokens` when you need to implement the spec as actual CSS custom properties
-- Use `warm-editorial-ui` when the project is VMIE — it already has a complete DESIGN.md-compatible token set
+- Use `warm-editorial-ui` when the project is your organization's internal app family — it already has a complete DESIGN.md-compatible token set

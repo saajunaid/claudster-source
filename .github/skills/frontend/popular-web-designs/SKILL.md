@@ -138,5 +138,5 @@ Additional templates can be added to `templates/` as needed. When a template doe
 
 - Pair with **`sketch`** for exploring which brand reference fits the brief
 - Pair with **`design-md`** when deliverable is a formal spec file
-- Pair with **`warm-editorial-ui`** for VMIE apps (already has a complete custom system)
+- Pair with **`warm-editorial-ui`** for your organization's internal app family (already has a complete custom system)
 - Pair with **`claude-design`** principles (anti-slop quality standards) when building any HTML artifact

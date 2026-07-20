@@ -1,6 +1,6 @@
 """Generic doc-discipline checker for claudster-managed repos.
 
-Lifted from rev-sight (commit 153b835) and made harness-generic: the same route-drift /
+Ported from an internal project and made harness-generic: the same route-drift /
 doc-map-integrity / CLAUDE.md-budget checks, but every check **auto-skips** when its inputs
 are absent, so a backend-only or doc-less repo passes silently with no noise. Read-only; never writes.
 
@@ -529,7 +529,7 @@ def run(root: Path, check: bool) -> int:
     warnings: list[str] = []
 
     # 1. Page-guide route coverage. Skip SILENTLY when either input is absent — a backend-only
-    #    repo has no route tree and must not be nagged (inversion vs the rev-sight reference).
+    #    repo has no route tree and must not be nagged (inversion vs the ported reference impl).
     if route_tree.exists() and page_guide.exists():
         missing, extra = route_coverage_gaps(
             route_tree.read_text(encoding="utf-8"),
@@ -542,7 +542,7 @@ def run(root: Path, check: bool) -> int:
             warnings.append("UI_PAGE_GUIDE.md documents route(s) not in code: " + ", ".join(extra))
 
     # 2. Doc-map integrity. Skip when the doc-map is absent — a repo without a KB is fine, NOT a
-    #    hard failure (inversion vs the rev-sight reference, which failed here). Links are written
+    #    hard failure (inversion vs the ported reference impl, which failed here). Links are written
     #    relative to the doc-map's own location; normalise to repo-root-relative before comparing.
     if doc_map.exists():
         raw = extract_docmap_entries(doc_map.read_text(encoding="utf-8"))

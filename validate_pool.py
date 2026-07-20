@@ -112,6 +112,23 @@ PRIVACY_SUBSTRINGS = [
     "ievxcoppoc",
     "gitea.internal",
     "VMIE_BOT_TOKEN",
+    # Real internal product codenames — found leaking into ui-brief.md / design-md / popular-web-designs
+    # skill-routing examples during the Track B2 public-readiness sweep (2026-07-20), genericized there.
+    # These four are specific enough to be unambiguous internal identifiers (not generic English), so
+    # they fail-closed here rather than being allowlisted — a bare "vmie" mention stays permitted (it's
+    # also used as a legitimate, intentional category label for the private-skill opt-in mechanism, e.g.
+    # setup-project-ai.md's "deploy vmie skills (optional, personal)" step).
+    "appointment-assist",
+    "nps-lens",
+    "rev-sight",
+    "app-sight",
+    # Internal-tool references found leaking as "learned from X" provenance comments / worked
+    # examples (check_doc_coverage.py, test_hook_paths.py, an onboarding runbook + recipe runbook
+    # excluded from export entirely) during the same B2 sweep — an internal scaffolding tool with
+    # no public existence, so genericizing a mention of it would describe something readers can't
+    # use anyway.
+    "platform-infra",
+    "new-vmie-project",
 ]
 
 # Privacy denylist — regex matches

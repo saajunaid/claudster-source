@@ -201,8 +201,8 @@ Implementation rules:
   eye never leaves the navigation zone, preserving context
 - Drawers are better for filter/settings panels; dropdowns are better for destination switching
 
-Real-world example: nps-lens NPSIGHT dashboard (9 tabs → 4 pinned: Overview, Trends,
-Product, Geography + "More" for Executive/Verbatim/Product Detail/Sampling/Geography Detail)
+Real-world example: an analytics dashboard (9 tabs → 4 pinned: Overview, Trends,
+Product, Geography + "More" for the remaining 5 detail tabs)
 `frontend/src/components/layout/MobileBottomNav.tsx`
 
 ### Sidebar → Slide-in Drawer

@@ -14,7 +14,8 @@ DBs / files / APIs decide what can be displayed.
 Ingestion model → normalizer → DisplayDTO defines the safe contract between them.
 ```
 
-Reference scaffold: `platform-infra/templates/data-feature/` — run its tests first to understand the pattern.
+If your organization has a reference scaffold for this pattern, run its tests first to understand it
+before applying the pipeline below.
 
 ---
 

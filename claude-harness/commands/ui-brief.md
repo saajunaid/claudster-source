@@ -15,11 +15,12 @@ Your job right now is to propose the visual direction and get approval before to
 
 ## Step 1 — Load the right skill
 
-**VMIE app** (appointment-assist, nps-lens, rev-sight, app-sight): load `warm-editorial-ui`.
+**Your organization's internal app family** (an existing internal tool/dashboard suite that shares a
+house design system): load `warm-editorial-ui`.
 
 **Matching a known brand** (Stripe, Linear, Vercel, Supabase, Notion, Apple, Cursor, PostHog, or any company the user names): load `popular-web-designs` and read the matching template. Use that brand's exact tokens as the basis for your brief proposal.
 
-**Data dashboard** (not VMIE): load `enterprise-dashboard-aesthetic-system`.
+**Data dashboard** (not part of an existing internal design system): load `enterprise-dashboard-aesthetic-system`.
 
 **Standalone or public-facing product** (no brand specified): load `frontend-design`.
 

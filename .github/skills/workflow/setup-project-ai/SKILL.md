@@ -65,7 +65,8 @@ python <harness-root>/scripts/setup_project_ai.py <target-project-dir> \
     --set PROJECT_NAME=<slug> --set API_PORT_DEV=<n> --set FE_PORT_DEV=<n> --set PROJECT_SHORT=<short> ...
 ```
 > ⚠ **Never pass `--substitute` on an existing repo** — it would rewrite docs/code containing `{{...}}`
-> as literal examples (dogfood learning from appointment-assist). Substitution is a template-bootstrap step.
+> as literal examples (dogfood learning from a live incident on an existing project). Substitution is a
+> template-bootstrap step.
 
 Add `--force` only when intentionally overwriting an existing CLAUDE.md/AGENTS.md/harness file.
 Confirm zero runtime placeholders remain: the runtime files (`settings.py`, `vite.config.ts`,

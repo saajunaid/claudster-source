@@ -22,7 +22,7 @@ These rules apply whenever an agent is asked to verify, validate, audit, or chec
 
 ```powershell
 # ✅ CORRECT: confirm absence
-Select-String -Path "docs\port-registry.md" -Pattern "nps-lens"
+Select-String -Path "docs\port-registry.md" -Pattern "my-service"
 # Empty result = entry is absent. Non-empty = entry exists.
 
 # ❌ WRONG: read lines 1-60, see nothing, declare absent

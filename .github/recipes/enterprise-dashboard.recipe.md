@@ -222,7 +222,7 @@ Every enterprise-dashboard product MUST integrate your organization's observabil
 3. Configure environment variables in `config/.env.api.dev` and `config/.env.api.prod`:
    - `OBS_INGESTION_URL` — URL of the central ingestion service
    - `OBS_API_KEY` — per-app API key (request from platform team)
-   - `OBS_APP_ID` — unique app identifier (e.g., `nps-lens`, `appointment-assist`)
+   - `OBS_APP_ID` — unique app identifier (e.g., `billing-service`, `customer-portal`)
    - `OBS_ENVIRONMENT` — `dev` or `prod`
 4. Verify middleware captures HTTP request duration and error events automatically
 5. Add custom backend events for domain-specific operations if needed

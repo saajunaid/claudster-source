@@ -389,9 +389,7 @@
           "destination": "agent-docs",
           "included_names": [
             "ARTIFACTS.md",
-            "PROJECT-ONBOARDING-RUNBOOK.md",
             "README.md",
-            "RECIPE-RUNBOOK.md",
             "escalations"
           ]
         }

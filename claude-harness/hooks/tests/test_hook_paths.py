@@ -439,7 +439,7 @@ def test_session_end_capture_anchors_store_to_repo_root(tmp_path):
 
 def test_session_end_anchors_log_to_repo_root(tmp_path):
     """A session launched from a subfolder must append to the repo-root log,
-    not scatter a .claudster/ into the subfolder (the rev-sight bug)."""
+    not scatter a .claudster/ into the subfolder (a real bug seen in the wild)."""
     _git_init(tmp_path)
     sub = tmp_path / "frontend"
     sub.mkdir()
