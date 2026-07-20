@@ -21,7 +21,9 @@ The right amount of scaffolding is a function of model capability. Running heter
 ## Three signals (in priority order)
 
 ### Signal 1 — agent-log.jsonl (runtime, always-on)
-The `agent-log.jsonl` written by the SubagentStop hook is the primary live signal.
+The `.claudster/agent-log.jsonl` written by the SubagentStop hook
+(`claude-harness/hooks/agent_log.py`, wired 2026-07-20 — one JSONL line per subagent
+dispatch: ts, agent, best-effort verdict, session id) is the primary live signal.
 Watch verdict distribution per agent over time:
 
 | Pattern | Interpretation |
@@ -30,7 +32,7 @@ Watch verdict distribution per agent over time:
 | `FAIL` / `changes-requested` > 60% | Miscalibrated method or wrong scope; too strict or too noisy |
 | Missing runs for weeks | Subagent not being dispatched — trigger condition needs checking |
 
-**How to read:** `cat .claude/agent-log.jsonl | python -c "import sys,json; [print(r['agent'],r['verdict']) for r in (json.loads(l) for l in sys.stdin)]"`
+**How to read:** `cat .claudster/agent-log.jsonl | python -c "import sys,json; [print(r['agent'],r['verdict']) for r in (json.loads(l) for l in sys.stdin)]"`
 
 ### Signal 2 — golden task set (per-subagent, 3–5 tasks each)
 A small set of representative inputs stored in `.github/agent-docs/eval/tasks/<agent>/`.
@@ -59,7 +61,9 @@ the expected findings. Takes ~2 min per agent. No automation required; this is a
 | `ui-design-reviewer` | (URL-based) Local app with WCAG contrast failure; clean app |
 
 ### Signal 3 — new-model bake-off (triggered, not scheduled)
-When a new Claude model drops or you change tier assignments in `model-aliases.json`:
+When a new Claude model drops or you change tier assignments (there is no `model-aliases.json` — a
+tier is the `model:` frontmatter field in each `claude-harness/agents/<name>.md`; see `LOCAL-MODELS.md`
+for the tier→model mapping the gateway resolves it against):
 1. Pick 1 golden task per agent (the hardest one).
 2. Run it with the current model AND the new model.
 3. If the new model returns the same or better verdict with fewer tokens → update the tier.
@@ -74,7 +78,8 @@ When a new Claude model drops or you change tier assignments in `model-aliases.j
 2. For each flagged agent, run 1–2 golden tasks.
    Compare output to baseline transcript in eval/tasks/<agent>/.
 
-3. Check model-aliases.json — if any model was upgraded, run the bake-off for agents
+3. Check for `model:` frontmatter changes across `claude-harness/agents/*.md` (or a gateway
+   tier→model remap in `LOCAL-MODELS.md`) — if any model was upgraded, run the bake-off for agents
    on that tier.
 
 4. Update this file with findings:
