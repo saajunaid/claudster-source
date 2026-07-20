@@ -1,9 +1,10 @@
 # Driver — docket re-audit backlog (FULL) + F12 worktree isolation + pipeline-runner fix
 
 You are the driver for the final three items of the Fable remediation queue, in this order:
-**(1)** fix claudster's pipeline-runner, **(2)** implement EVERYTHING in the 2026-07-20 docket
+**(1)** RETIRE claudster's pipeline-runner, **(2)** implement EVERYTHING in the 2026-07-20 docket
 re-audit, **(3)** docket F12 full worktree isolation. The user chose this scope explicitly
-(2026-07-20): pipeline-runner = **fix, not retire**; audit scope = **everything, not just the top-10**.
+(2026-07-20): pipeline-runner = **retire** (Copilot rarely used; docket supersedes it — this supersedes
+an earlier same-day "fix" choice); audit scope = **everything, not just the top-10**.
 
 ## Orient first (read in this order — do NOT skip)
 1. `.claudster/relay.md` — session state, validation baselines.
@@ -31,27 +32,33 @@ re-audit, **(3)** docket F12 full worktree isolation. The user chose this scope 
 
 ---
 
-## Phase 1 — claudster: fix pipeline-runner (queue item 6; small, do first)
+## Phase 1 — claudster: RETIRE pipeline-runner (queue item 6; small, do first)
 
-**Problem:** `.github/pipeline-state.template.json` never survived the extraction from the predecessor
-repo. `pipeline_runner.py` reads it **at runtime** (`:967`, `:1523` — the `init` path), so the shipped
-tool's `init` is broken for consumers, and 17 of 138 tests fail
-(`python -m pytest .github/tools/pipeline-runner/tests/ -q --import-mode=importlib`).
+**Decision (user, 2026-07-20, superseding an earlier "fix" choice):** GitHub Copilot is rarely used
+now; docket supersedes this pipeline. **Retire the tool — do not fix it.** Context: its state template
+(`.github/pipeline-state.template.json`) never survived the repo extraction, so the shipped tool's
+`init` is broken at runtime anyway (`pipeline_runner.py:967`, `:1523`) and 17 of its 138 tests fail.
+
+**Scope guard — what "retire" does NOT mean:** the `.github/` pool stays the canonical, harness-neutral
+toolbox (settled in `.claudster/plans/toolbox-portability.md`: one source, per-harness exports, never
+fork). Do NOT delete the pool, the `copilot` export profile, the agent briefs' knowledge content, or
+any extension repo in this phase. Only the dead execution-layer machinery goes.
 
 **Do:**
-1. Reconstruct the template at `.github/pipeline-state.template.json`. Sources of truth for its shape:
-   the fixture in `tests/test_cli_ux.py:33` (writes a template inline) + every field
-   `pipeline_runner.py` reads from it + `tests/conftest.py`'s base payload. Reconcile all three; the
-   template must make `init` produce a state the rest of the suite accepts.
-2. Get the full pipeline-runner suite green: **138 passed, 0 failed** (there is also 1 assertion
-   failure beyond the 16 FileNotFoundErrors — diagnose it; it may or may not share the root cause).
-3. Wire the suite into the standard gate so it can't rot silently again: add it to the validation
-   command documented in `.claudster/relay.md` + the driver prompt, and (if a test-runner config
-   exists, e.g. a pytest ini/addopts) include the path there.
-4. `validate_pool.py` must stay OK (the template lands in `.github/` — the published pool; keep it
-   generic, no internal names/paths).
-**Commit:** `fix(pipeline-runner): restore pipeline-state.template.json + green the 138-test suite`
-(+ tracker row flip).
+1. Delete `.github/tools/pipeline-runner/` entirely (the 13-file tool + its whole test suite).
+2. Strip/reword every reference to `pipeline-runner`/`pipeline_runner.py` in the pool so nothing points
+   at a deleted tool: the 8+ `.github/agents/*.agent.md` files (e.g. orchestrator's "do not edit
+   pipeline_runner.py" rules), plus any `.github/instructions/` / agent-docs hits
+   (`git grep -l "pipeline_runner\|pipeline-runner" -- .github`). Keep each agent's knowledge/method
+   content intact — remove only the dead workflow-machinery references.
+3. Remove `"pipeline-runner"` from the **ptarmigan** and **liffey** rosters in
+   `.github/runtime-targets.json` (the only two targets that ship it).
+4. Re-export both profiles (`python export_runtime_resources.py --profile ptarmigan --profile liffey`)
+   — the fail-closed exporter must exit 0 — and `git grep` the exported bundles to prove zero dangling
+   pipeline-runner references.
+5. Standard gates green: full claudster suite + `python validate_pool.py`.
+**Commit:** `chore(pool): retire the Copilot-era pipeline-runner (superseded by docket)` (+ tracker row
+flip: note "retired by user decision 2026-07-20 — Copilot rarely used; template was broken at runtime").
 
 ---
 

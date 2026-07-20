@@ -160,8 +160,13 @@ fix): `.claudster/prompts/docket-reaudit-f12-and-pipeline-runner.md` — hand it
    to verify.
 
 **claudster:**
-6. pipeline-runner suite: 17 pre-existing failures (missing `.github/pipeline-state.template.json`) —
-   decide keep-vs-retire (superseded by docket's pipeline), then restore the template or retire the tool.
+6. **RETIRE pipeline-runner** (user decision 2026-07-20: Copilot rarely used; docket supersedes it;
+   the tool's `init` was broken at runtime anyway — its state template never survived the repo
+   extraction). Delete tool + tests, strip pool references, drop from the ptarmigan/liffey rosters,
+   re-export + verify. The `.github/` pool itself stays canonical (see
+   `.claudster/plans/toolbox-portability.md` — Antigravity/Codex arrive via export targets +
+   `claudster-init`, NOT via reviving Copilot machinery). junai-extension/mirror deprecation = a
+   separate, later human decision.
 
 _(Closed 2026-07-20: sync.ps1 test coverage — which also exposed and fixed 4 more unchecked pushes;
 the `agent-sandbox` rebrand tail; **Track C fixed + merged + deployed (`7f612f4`)**; the docket
