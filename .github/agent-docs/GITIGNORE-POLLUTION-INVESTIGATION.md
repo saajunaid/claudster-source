@@ -1,7 +1,7 @@
 # Investigation: .github Pool Files Polluting Downstream Project Git Trees
 
 **Date:** 2026-04-15  
-**Affected repos:** `vmie/appointment-assist`, `vmie/nps-lens` (and any other project using `junai-pull`)  
+**Affected repos:** `<org>/project-a`, `<org>/project-b` (and any other project using `junai-pull`)  
 **Status:** Mitigated in affected repos. Extension fix required (see § Recommended Fix).
 
 ---
@@ -37,7 +37,7 @@ Copy-Item $src $target -Recurse -Force
 **Intent:** Correct — prevents stale files from lingering when pool renames/deletes an agent or skill.
 
 **Side-effect:** Any project-specific file that lived inside a `$CLEAN_FOLDER` (e.g.
-`nps-lens-frontend.instructions.md`) is silently deleted and shows up as `D` in git status.
+`project-b-frontend.instructions.md`) is silently deleted and shows up as `D` in git status.
 Previously those files were untouched.
 
 ---
@@ -59,7 +59,7 @@ $POOL_FOLDERS = @("agents", "skills", "prompts", "instructions", "diagrams", "to
 (`agent-docs/ARTIFACTS.md`, `plans/backlog/`, etc.) and need to be kept in sync.
 
 **Side-effect:** `junai-pull` now overwrites project-specific pipeline artefacts in those
-folders (e.g. `plans/backlog/nps-lens-v4-mockup.md`). Files that don't exist in the pool
+folders (e.g. `plans/backlog/project-b-v4-mockup.md`). Files that don't exist in the pool
 survive, but any pool-side README or placeholder gets written unconditionally. These folders
 were previously "yours only" — they never changed after initial install.
 
@@ -105,7 +105,7 @@ Two legitimate reasons:
 
 ## 4. Mitigation Applied to Affected Repos
 
-For both `appointment-assist` and `nps-lens` the following was applied manually:
+For both `project-a` and `project-b` the following was applied manually:
 
 ### Step 1 — Append to `.gitignore`
 
@@ -244,10 +244,10 @@ in place first.
 
 | Repo | File | Change |
 |------|------|--------|
-| `appointment-assist` | `.gitignore` | Selective `.github` tracking block + `.claude/` ignore appended |
-| `appointment-assist` | `.github/**` (670 files) | Removed from git index; 37 project files re-added |
-| `nps-lens` | `.gitignore` | Selective `.github` tracking block + `.claude/` ignore appended |
-| `nps-lens` | `.github/**` (676 files) | Removed from git index; 28 project files re-added |
+| `project-a` | `.gitignore` | Selective `.github` tracking block + `.claude/` ignore appended |
+| `project-a` | `.github/**` (670 files) | Removed from git index; 37 project files re-added |
+| `project-b` | `.gitignore` | Selective `.github` tracking block + `.claude/` ignore appended |
+| `project-b` | `.github/**` (676 files) | Removed from git index; 28 project files re-added |
 | `junai-vscode` | `src/extension.ts` | **Not yet changed** — see § 5 above |
 
 ### Additional finding: `.claude/` runtime directory
