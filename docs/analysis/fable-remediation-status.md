@@ -140,6 +140,8 @@ implementation session to spec and fix.
 ## Remaining work — the definitive queue
 
 Work these from this tracker; per-item detail lives where each row points.
+**Implementation prompt for items 4–6 (user-approved scope 2026-07-20: full audit; pipeline-runner =
+fix): `.claudster/prompts/docket-reaudit-f12-and-pipeline-runner.md` — hand it to a fresh session.**
 
 **Human-only (no code):**
 1. Rotate the 3 tokens (`pypimcp.key`, `vscode.pat`, `ptarmigan.pat`) — claudster #4.
