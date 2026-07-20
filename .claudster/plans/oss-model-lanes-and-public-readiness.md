@@ -1,11 +1,14 @@
 ---
 type: plan
-status: draft
+status: current
 feature: oss-model-lanes-and-public-readiness
 creation-agent: claudster
 Original Author: Claude Code
 Creation Date: 2026-07-15T00:00:00Z
 Creating Model: claude-opus-4-8
+Last Author: Claude Code
+Last Updated: 2026-07-20T00:00:00Z
+Last Model Used: claude-opus-4-8
 ---
 
 # OSS model lanes → public-readiness → cross-vendor review
@@ -13,15 +16,21 @@ Creating Model: claude-opus-4-8
 Three tracks, **executed in this order** (the user set the sequence). Each is independently shippable;
 do not start the next until the prior track's Ship phase is green.
 
-- **Track A (#2) — Model-switching as a real, easy-to-use claudster feature.** Today the only way to run a
-  Claude Code session on GLM is a *personal* machine-local wrapper (`C:\Users\jshaik\Documents\claude-glm.ps1`)
-  that hardcodes a key path. Make it a first-class, cross-platform, teammate-usable capability shipped in the
-  plugin.
-- **Track B (#1) — Make claudster public-ready.** Add a LICENSE, sweep internal references, genericize the
-  guide. docket is **not** being made public now — only confirm the *wider team* can use it.
-- **Track C (#3) — Cross-vendor code-review in the pipeline.** The real need isn't per-phase quota-saving;
-  it's running the *review* on a different vendor (DeepSeek) for genuine blind-spot diversity. The Implement
-  lane already HAS a review gate — point it (optionally) at `oss_review.py`.
+- **Track A (#2) — DONE (2026-07-19, A1–A4 all shipped, `junai-push`'d).** Model-switching as a real,
+  easy-to-use claudster feature. Today the only way to run a Claude Code session on GLM is a *personal*
+  machine-local wrapper (`C:\Users\jshaik\Documents\claude-glm.ps1`) that hardcodes a key path. Make it a
+  first-class, cross-platform, teammate-usable capability shipped in the plugin.
+- **Track B (#1) — LICENSE decided (MIT); B1 not yet started.** Make claudster public-ready. Add a LICENSE,
+  sweep internal references, genericize the guide. docket is **not** being made public now — only confirm
+  the *wider team* can use it.
+- **Track C (#3) — DONE (2026-07-20), `feat/cross-review-gate` (docket, not pushed).** Cross-vendor
+  code-review in the pipeline. The real need isn't per-phase quota-saving; it's running the *review* on a
+  different vendor (DeepSeek) for genuine blind-spot diversity. The Implement lane already HAS a review
+  gate — points it (optionally) at `tools/cross_review_gate.py`. C3 skipped (see the investigation note —
+  the plan-skill review dispatch is a separate, non-conflicting mechanism). Results:
+  `E:\Projects\docket\docs\analysis\track-c-cross-review-gate-results.md`.
+  **Note:** run out of the plan's stated A→B→C order (C before B) per explicit user direction after A
+  shipped — each track is independently shippable, so this is safe.
 
 ## Current state (verified 2026-07-15)
 - **Model switching:** no claudster feature exists. `oss_review.py` (`.github/tools/`) has provider presets
