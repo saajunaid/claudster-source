@@ -101,7 +101,7 @@ everything done since. Living status of every finding (from `fable-audit-claudst
 |---|---|---|
 | **A — model-switching as a claudster feature** | **DONE** (2026-07-19) | `oss_model.py` resolver (bc4c907), `claude-oss` launchers, `/claudster:use-model` + setup install (aa62ffc), shipped `junai-push` (dc3de43) |
 | **B — claudster public-readiness** | **B1/B2/B3 DONE (2026-07-20); B4 OPEN (human)** | LICENSE (MIT) + public README (386b6d6); privacy sweep — 12 findings genericized/excluded + scanner hardening (29784d2, `PUBLIC-READINESS.md`); docket team-usability verified with 2 doc fixes (5616cdb). **B4 = the user decides whether/where to publish** |
-| **C — cross-vendor review gate in the pipeline** | **code-complete; review = changes-requested (2 blocking)** | docket branch `feat/cross-review-gate` pushed 2026-07-20; results `E:\Projects\docket\docs\analysis\track-c-cross-review-gate-results.md`. Blocking: non-`main`/`master` default branch fail-opens to CLEAN; bare-`.py` `review_cmd` never spawns (WinError 193 / no exec bit). Fix on the branch, re-review, then merge (= prod deploy) with the user's go |
+| **C — cross-vendor review gate in the pipeline** | **code-complete; review = changes-requested (2 blocking)** | docket branch `feat/cross-review-gate` pushed 2026-07-20; results `E:\Projects\docket\docs\analysis\track-c-cross-review-gate-results.md`. Blocking: non-`main`/`master` default branch fail-opens to CLEAN; bare-`.py` `review_cmd` never spawns (WinError 193 / no exec bit). **Full review: `.claudster/reviews/track-c-cross-review-gate-review-2026-07-20.md`.** Fix on the branch, re-review, then merge (= prod deploy) with the user's go |
 
 ## Remaining work — the definitive queue
 
