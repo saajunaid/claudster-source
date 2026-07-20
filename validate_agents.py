@@ -15,11 +15,8 @@ Usage:
 
 from __future__ import annotations
 import json
-import queue
 import re
-import subprocess
 import sys
-import threading
 import yaml
 from pathlib import Path
 
@@ -167,180 +164,6 @@ def validate_agent(path: Path, all_agent_slugs: set[str]) -> list[str]:
                 )
 
     return errors
-
-
-# ---------------------------------------------------------------------------
-# MCP Server smoke test
-# ---------------------------------------------------------------------------
-
-# Expected tools registered by server.py — update if tools are added/removed
-EXPECTED_MCP_TOOLS: set[str] = {
-    "notify_orchestrator",
-    "validate_deferred_paths",
-    "get_pipeline_status",
-    "skip_stage",
-    "set_pipeline_mode",
-    "satisfy_gate",
-    "update_notes",
-    "replay_stage",
-    "pipeline_init",
-    "pipeline_reset",
-    "run_command",
-}
-
-def _read_lines_into_queue(stream, q: queue.Queue) -> None:
-    """Thread target: read lines from stream and push to queue."""
-    try:
-        for line in stream:
-            q.put(line)
-    except Exception:
-        pass
-    finally:
-        q.put(None)  # sentinel
-
-
-def _send(proc: subprocess.Popen, msg: dict) -> None:
-    proc.stdin.write(json.dumps(msg) + "\n")
-    proc.stdin.flush()
-
-
-def _recv(q: queue.Queue, timeout: float = 8.0) -> dict | None:
-    """Read next non-empty line from the queue, parse as JSON."""
-    deadline = timeout
-    while deadline > 0:
-        try:
-            line = q.get(timeout=min(1.0, deadline))
-        except queue.Empty:
-            deadline -= 1.0
-            continue
-        if line is None:
-            return None  # stream closed
-        line = line.strip()
-        if not line:
-            deadline -= 0.05
-            continue
-        try:
-            return json.loads(line)
-        except json.JSONDecodeError:
-            continue  # log lines from FastMCP — skip and keep reading
-    return None
-
-
-def _diff_mcp_tools(registered: set[str], expected: set[str]) -> tuple[list[str], list[str]]:
-    """Split a registered-vs-expected MCP tool diff into (errors, notes).
-
-    A MISSING expected tool is an error (the server dropped a tool the harness
-    relies on). An EXTRA registered tool is a NOTE, not an error — adding an MCP
-    tool must never hard-fail the build; it just means EXPECTED_MCP_TOOLS needs
-    updating. Keeping notes out of the error channel is what unblocks the build.
-    """
-    errors: list[str] = []
-    notes: list[str] = []
-    missing = expected - registered
-    if missing:
-        errors.append(f"MCP missing expected tools: {', '.join(sorted(missing))}")
-    unexpected = registered - expected
-    if unexpected:
-        notes.append(
-            f"MCP has new tools not in EXPECTED_MCP_TOOLS (update the list): "
-            f"{', '.join(sorted(unexpected))}"
-        )
-    return errors, notes
-
-
-def smoke_test_mcp_server() -> tuple[list[str], list[str]]:
-    """
-    Start server.py via stdio, run initialize + tools/list, verify response.
-    Returns (errors, notes): errors fail the build, notes are informational
-    (skips, and "new tools not in EXPECTED_MCP_TOOLS").
-    """
-    errors: list[str] = []
-    notes: list[str] = []
-
-    # Resolve paths
-    base = Path(__file__).parent
-    server_py = base / ".github" / "tools" / "mcp-server" / "server.py"
-    # Support both Windows (.venv/Scripts) and Unix (.venv/bin)
-    python_exe = base / ".venv" / "Scripts" / "python.exe"
-    if not python_exe.exists():
-        python_exe = base / ".venv" / "bin" / "python"
-
-    if not server_py.exists():
-        return [], ["MCP smoke test skipped: server.py not found at .github/tools/mcp-server/server.py"]
-    if not python_exe.exists():
-        return [], ["MCP smoke test skipped: venv python not found — run: python -m venv .venv && pip install -r requirements.txt"]
-
-    proc = None
-    try:
-        proc = subprocess.Popen(
-            [str(python_exe), str(server_py)],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
-        )
-
-        q: queue.Queue = queue.Queue()
-        reader = threading.Thread(target=_read_lines_into_queue, args=(proc.stdout, q), daemon=True)
-        reader.start()
-
-        # ── 1. initialize ──────────────────────────────────────────────────
-        _send(proc, {
-            "jsonrpc": "2.0", "id": 1, "method": "initialize",
-            "params": {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {"name": "junai-smoke-test", "version": "1.0"},
-            },
-        })
-
-        init_resp = _recv(q, timeout=10.0)
-        if init_resp is None:
-            errors.append("MCP server did not respond to initialize within 10s — startup error")
-            return errors, notes
-
-        if "error" in init_resp:
-            errors.append(f"MCP initialize error: {init_resp['error']}")
-            return errors, notes
-
-        server_info = init_resp.get("result", {}).get("serverInfo", {})
-        if not server_info.get("name"):
-            errors.append("MCP initialize response missing serverInfo.name")
-
-        # ── 2. notifications/initialized ──────────────────────────────────
-        _send(proc, {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}})
-
-        # ── 3. tools/list ─────────────────────────────────────────────────
-        _send(proc, {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
-
-        list_resp = _recv(q, timeout=8.0)
-        if list_resp is None:
-            errors.append("MCP server did not respond to tools/list within 8s")
-            return errors, notes
-
-        if "error" in list_resp:
-            errors.append(f"MCP tools/list error: {list_resp['error']}")
-            return errors, notes
-
-        registered = {t["name"] for t in list_resp.get("result", {}).get("tools", [])}
-        diff_errors, diff_notes = _diff_mcp_tools(registered, EXPECTED_MCP_TOOLS)
-        errors.extend(diff_errors)
-        notes.extend(diff_notes)
-
-    except FileNotFoundError:
-        errors.append("MCP smoke test failed: could not launch server.py (python not found)")
-    except Exception as exc:
-        errors.append(f"MCP smoke test exception: {exc}")
-    finally:
-        if proc and proc.poll() is None:
-            proc.terminate()
-            try:
-                proc.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-
-    return errors, notes
 
 
 # ---------------------------------------------------------------------------
@@ -637,76 +460,6 @@ def validate_vocabulary(agents_dir: Path) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# Skippable Consistency Test
-# ---------------------------------------------------------------------------
-
-def validate_skippable_consistency(agents_dir: Path) -> list[str]:
-    """
-    Cross-check that the `skippable` field in agents.registry.json stages
-    is consistent with `_UNSKIPPABLE_STAGES` in pipeline_runner.py.
-
-    - Stages marked `"skippable": false` in the registry must appear in
-      `_UNSKIPPABLE_STAGES` in the runner (and vice versa).
-
-    Returns a list of warning strings (empty = consistent).
-    """
-    warnings: list[str] = []
-    base = agents_dir.parent.parent  # .github/agents/ -> repo root
-
-    registry_path = base / ".github" / "tools" / "pipeline-runner" / "agents.registry.json"
-    runner_path   = base / ".github" / "tools" / "pipeline-runner" / "pipeline_runner.py"
-
-    if not registry_path.exists():
-        return ["Skippable check skipped: agents.registry.json not found"]
-    if not runner_path.exists():
-        return ["Skippable check skipped: pipeline_runner.py not found"]
-
-    # ── 1. Extract stages with skippable: false from registry ─────────────
-    try:
-        registry = json.loads(registry_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        return [f"Skippable check skipped: registry JSON parse error — {exc}"]
-
-    registry_unskippable: set[str] = {
-        stage
-        for stage, data in registry.get("stages", {}).items()
-        if isinstance(data, dict) and data.get("skippable") is False
-    }
-
-    # ── 2. Extract _UNSKIPPABLE_STAGES from pipeline_runner.py ─────────────
-    runner_text = runner_path.read_text(encoding="utf-8")
-    m = re.search(
-        r"_UNSKIPPABLE_STAGES\s*=\s*\{([^}]+)\}",
-        runner_text,
-    )
-    if not m:
-        return ["Skippable check skipped: could not find _UNSKIPPABLE_STAGES in pipeline_runner.py"]
-
-    runner_unskippable: set[str] = {
-        s.strip().strip("\"'")
-        for s in m.group(1).split(",")
-        if s.strip().strip("\"'")
-    }
-
-    # ── 3. Cross-check ────────────────────────────────────────────────────
-    only_in_registry = registry_unskippable - runner_unskippable
-    only_in_runner   = runner_unskippable - registry_unskippable
-
-    for stage in sorted(only_in_registry):
-        warnings.append(
-            f"Stage '{stage}' has skippable:false in registry but is NOT in "
-            f"_UNSKIPPABLE_STAGES in pipeline_runner.py — add it or correct the registry"
-        )
-    for stage in sorted(only_in_runner):
-        warnings.append(
-            f"Stage '{stage}' is in _UNSKIPPABLE_STAGES (pipeline_runner.py) but "
-            f"lacks skippable:false in agents.registry.json — add '\"skippable\": false' to the registry"
-        )
-
-    return warnings
-
-
-# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -753,18 +506,6 @@ def main() -> None:
             f"  {total_errors} error(s) in {len(failed)} agent(s). "
             f"Fix before publishing."
         )
-
-    # ── MCP server smoke test ─────────────────────────────────────────────
-    print("\n  MCP SERVER SMOKE TEST")
-    print("  -----------------------------------------")
-    mcp_errors, mcp_notes = smoke_test_mcp_server()
-    if not mcp_errors and not mcp_notes:
-        print("  [OK]    server.py started, responded to initialize + tools/list")
-    else:
-        for e in mcp_errors:
-            print(f"  [FAIL]  {e}")
-        for n in mcp_notes:
-            print(f"  [NOTE]  {n}")
 
     # ── Skill reference resolution test ───────────────────────────────────
     print("\n  SKILL REFERENCE RESOLUTION")
@@ -816,19 +557,9 @@ def main() -> None:
         for e in handoff_errors:
             print(f"  [WARN]  {e}")
 
-    # ── Skippable consistency check ───────────────────────────────────────
-    print("\n  REGISTRY / RUNNER SKIPPABLE CONSISTENCY")
-    print("  -----------------------------------------")
-    skippable_warnings = validate_skippable_consistency(agents_dir)
-    if not skippable_warnings:
-        print("  [OK]    Registry skippable:false matches _UNSKIPPABLE_STAGES in pipeline_runner.py")
-    else:
-        for w in skippable_warnings:
-            print(f"  [WARN]  {w}")
-
     print("")
 
-    if failed or mcp_errors:
+    if failed:
         sys.exit(1)
     else:
         sys.exit(0)

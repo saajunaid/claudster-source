@@ -133,9 +133,16 @@ For fully hands-free runs: enable VS Code Chat → permissions picker → **Auto
 
 ---
 
-## The 9 MCP Tools
+## The MCP Tools
 
-The MCP server at `.github/tools/mcp-server/server.py` is launched via `uv run` (PEP 723 inline deps — `fastmcp` installs automatically on first start, no `pip install` needed).
+> **⚠ Retired 2026-07-20.** The Copilot-era agent-pipeline runtime — the deterministic pipeline
+> runner and its companion MCP server — was retired (Copilot rarely used; superseded by docket). The
+> tools below are documented for historical reference only; the server they were served from no
+> longer ships in the pool. Agents now run in standalone mode. A dedicated pass to fully retire
+> the dormant orchestration layer (the `notify_orchestrator` protocol still referenced across the
+> agent briefs) is tracked separately.
+
+The tool set the retired MCP server exposed:
 
 | Tool | Purpose |
 |------|---------|

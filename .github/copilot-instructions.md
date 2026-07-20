@@ -22,7 +22,7 @@ claudster-source/
 │   ├── skills/              ← reusable skill bundles (domain knowledge packs)
 │   ├── prompts/             ← reusable prompt files
 │   ├── instructions/        ← coding convention files (*.instructions.md)
-│   ├── tools/               ← pool tooling (pool-sync, pipeline-runner, oss_review.py, …)
+│   ├── tools/               ← pool tooling (pool-sync, pool-validator, oss_review.py, …)
 │   ├── agent-docs/          ← pipeline schema docs, runbooks, artefact templates
 │   ├── recipes/             ← delivery recipes
 │   ├── diagrams/            ← architecture and workflow reference diagrams

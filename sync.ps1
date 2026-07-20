@@ -788,10 +788,6 @@ function Get-AffectedReleaseTargetsFromSourcePaths {
         if ($normalizedPath -eq "export_runtime_resources.py" -or $normalizedPath -eq ".github/runtime-targets.json" -or $normalizedPath.StartsWith(".github/")) {
             $null = $affected.Add("junai-vscode")
         }
-
-        if ($normalizedPath -eq ".github/tools/mcp-server/server.py") {
-            $null = $affected.Add("mcp")
-        }
     }
 
     return @($affected | Sort-Object)
@@ -1210,21 +1206,9 @@ function junai-push {
         return [pscustomobject]$pushResult
     }
 
-    # -- PyPI build copy (src/junai_mcp/server.py) -----------------------------
-    $poolServer  = Join-Path $JUNO_GITHUB "tools\mcp-server\server.py"
-    $pypiServer  = Join-Path $JUNO_POOL   "src\junai_mcp\server.py"
-    if ((Test-Path $poolServer) -and (Test-Path $pypiServer)) {
-        $poolHash = (Get-FileHash $poolServer  -Algorithm SHA256).Hash
-        $pypiHash = (Get-FileHash $pypiServer -Algorithm SHA256).Hash
-        if ($poolHash -ne $pypiHash) {
-            Copy-Item $poolServer $pypiServer -Force
-            Write-Host "  [OK]  src/junai_mcp/server.py  (synced from pool)" -ForegroundColor Green
-            Write-Host "  [!!]  server.py changed -- run junai-publish-mcp to bump version + publish to PyPI" -ForegroundColor Yellow
-        } else {
-            Write-Host "  [--]  src/junai_mcp/server.py  (no change)" -ForegroundColor DarkGray
-        }
-    }
-    # --------------------------------------------------------------------------
+    # (PyPI build copy of the pool mcp-server retired 2026-07-20 -- the pool
+    #  mcp-server tool was removed alongside the Copilot-era pipeline runner.
+    #  The published junai-mcp PyPI package is a separate artifact, untouched here.)
 
     # -- Auto-bump the claudster plugin version when its bundle content changed --
     # plugin.json is GENERATED from .github/runtime-targets.json by the export, so shipping

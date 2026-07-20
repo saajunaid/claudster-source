@@ -672,7 +672,7 @@ When context window is limited, read in this order:
 When your plan is complete:
 1. Commit with the message from the orchestrator handoff prompt, or fallback: `feat(<feature>): plan — <description>`
 2. Update `.github/pipeline-state.json` — set `plan` stage `status: complete`, `completed_at: <ISO-date>`, `artefact: <path>`
-   > **Scope restriction (GAP-I2-c):** Only write your own stage's `status`, `completed_at`, and `artefact` fields. Never write `current_stage`, `_notes._routing_decision`, or `supervision_gates` — those belong exclusively to Orchestrator and pipeline-runner.
+   > **Scope restriction (GAP-I2-c):** Only write your own stage's `status`, `completed_at`, and `artefact` fields. Never write `current_stage`, `_notes._routing_decision`, or `supervision_gates` — those belong exclusively to the Orchestrator.
 3. Report completion in this format ONLY:
 
    **Plan complete.**

@@ -9,7 +9,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 POOL_SYNC_PATH = REPO_ROOT / ".github" / "tools" / "pool-sync" / "pool_sync.py"
-JUNAI_PATH = REPO_ROOT / ".github" / "tools" / "pipeline-runner" / "junai.py"
 
 
 def _run_python(
@@ -194,13 +193,6 @@ def _write_inbox(project_root: Path, *blocks: str) -> None:
         project_root / ".github" / "agent-docs" / "nuggets-inbox.md",
         "# Nugget Inbox\n\n> Review candidates.\n\n" + "".join(blocks),
     )
-
-
-def test_junai_pool_version_prints_current_repo_head() -> None:
-    expected = _git(REPO_ROOT, "rev-parse", "HEAD")
-    result = _run_python(JUNAI_PATH, "pool", "version")
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
 
 
 def test_pool_status_json_is_valid_when_stamp_missing(tmp_path: Path) -> None:

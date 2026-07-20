@@ -38,11 +38,7 @@ SKILLS_DIR = GITHUB_DIR / "skills"
 SKILLS_REGISTRY = SKILLS_DIR / "_registry.md"
 RUNTIME_TARGETS = GITHUB_DIR / "runtime-targets.json"
 DIST_RUNTIME_ROOT = REPO_ROOT / "dist" / "runtime-resources"
-PIPELINE_RUNNER_DIR = GITHUB_DIR / "tools" / "pipeline-runner"
 POOL_SYNC_DIR = GITHUB_DIR / "tools" / "pool-sync"
-REGISTRY_PATH = PIPELINE_RUNNER_DIR / "agents.registry.json"
-PIPELINE_RUNNER_PY = PIPELINE_RUNNER_DIR / "pipeline_runner.py"
-STATE_TEMPLATE = GITHUB_DIR / "pipeline-state.template.json"
 GOLDEN_PLAN_SKILL = SKILLS_DIR / "workflow" / "golden-plan" / "SKILL.md"
 DENYLIST_EXCEPTIONS = GITHUB_DIR / "tools" / "pool-validator" / "denylist-exceptions.txt"
 DOC_FRONTMATTER_INSTRUCTION = GITHUB_DIR / "instructions" / "document-frontmatter.instructions.md"
@@ -299,172 +295,9 @@ def check_manifest_contract() -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# Check 2 — Registry agent_file resolution + transition uniqueness
+# (Checks 2–3 — pipeline-runner registry + gate-consistency — removed 2026-07-20
+#  when the Copilot-era pipeline-runner was retired; superseded by docket.)
 # ---------------------------------------------------------------------------
-
-def check_registry() -> CheckResult:
-    r = CheckResult(name="Registry — agents, transitions, stages")
-    if not REGISTRY_PATH.exists():
-        r.passed = False
-        r.failures.append(f"Missing registry: {REGISTRY_PATH}")
-        return r
-
-    try:
-        data = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        r.passed = False
-        r.failures.append(f"Invalid JSON in {REGISTRY_PATH}: {exc}")
-        return r
-
-    stages = data.get("stages", {})
-    transitions = data.get("transitions", [])
-
-    # 1a — agent_file resolves under .github/
-    for stage_name, info in stages.items():
-        agent_file = info.get("agent_file")
-        if agent_file is None:
-            continue
-        path = GITHUB_DIR / agent_file
-        if not path.is_file():
-            r.failures.append(
-                f"stage '{stage_name}' agent_file does not exist: {agent_file}"
-            )
-
-    # 1b — transition IDs unique
-    ids = [t.get("id") for t in transitions]
-    seen: set[str] = set()
-    for tid in ids:
-        if tid in seen:
-            r.failures.append(f"Duplicate transition id: {tid}")
-        seen.add(tid)
-
-    # 1c — from/to stages known or wildcard
-    known_stages = set(stages.keys())
-    wildcards = {"*"}
-    for t in transitions:
-        for key in ("from_stage", "to_stage"):
-            val = t.get(key)
-            if val is None:
-                continue
-            if val in known_stages or val in wildcards:
-                continue
-            r.failures.append(
-                f"transition {t.get('id')}: {key}='{val}' is not a known stage and not '*'"
-            )
-
-    r.info.append(f"stages: {len(stages)}, transitions: {len(transitions)}")
-    r.passed = not r.failures
-    return r
-
-
-def check_dependency_closure_profile(profile: str, profile_root: Path) -> CheckResult:
-    r = CheckResult(name=f"Dependency closure — profile '{profile}'")
-    registry_path = profile_root / "tools" / "pipeline-runner" / "agents.registry.json"
-    if not registry_path.exists():
-        r.passed = False
-        r.failures.append(f"Missing registry: {registry_path}")
-        return r
-
-    try:
-        data = json.loads(registry_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        r.passed = False
-        r.failures.append(f"Invalid registry JSON: {exc}")
-        return r
-
-    missing = 0
-    for stage_name, info in (data.get("stages") or {}).items():
-        agent_file = info.get("agent_file")
-        if not agent_file:
-            continue
-        resolved = profile_root / agent_file
-        if not resolved.is_file():
-            missing += 1
-            r.failures.append(f"stage '{stage_name}' missing agent_file: {agent_file}")
-
-    r.info.append(f"checked {len((data.get('stages') or {}))} stages")
-    r.info.append(f"missing agent files: {missing}")
-    r.passed = not r.failures
-    return r
-
-
-# ---------------------------------------------------------------------------
-# Check 3 — Gate consistency: registry vs schema vs runner allowlist
-# ---------------------------------------------------------------------------
-
-def _registry_gates() -> set[str]:
-    if not REGISTRY_PATH.exists():
-        return set()
-    data = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
-    return {t["gate"] for t in data.get("transitions", []) if t.get("gate")}
-
-
-def _schema_gates() -> set[str]:
-    if not STATE_TEMPLATE.exists():
-        return set()
-    data = json.loads(STATE_TEMPLATE.read_text(encoding="utf-8"))
-    return set((data.get("supervision_gates") or {}).keys())
-
-
-def _runner_allowlist() -> set[str] | None:
-    """Import pipeline_runner and return its ALLOWED_SUPERVISION_GATES."""
-    if not PIPELINE_RUNNER_PY.exists():
-        return None
-    runner_dir = str(PIPELINE_RUNNER_DIR)
-    inserted = runner_dir not in sys.path
-    if inserted:
-        sys.path.insert(0, runner_dir)
-    try:
-        # Force-reload to pick up edits between runs
-        import importlib
-
-        if "pipeline_runner" in sys.modules:
-            mod = importlib.reload(sys.modules["pipeline_runner"])
-        else:
-            mod = importlib.import_module("pipeline_runner")
-        return set(getattr(mod, "ALLOWED_SUPERVISION_GATES", set()))
-    except Exception as exc:  # noqa: BLE001
-        print(f"        (warning) could not import pipeline_runner: {exc}")
-        return None
-    finally:
-        if inserted:
-            try:
-                sys.path.remove(runner_dir)
-            except ValueError:
-                pass
-
-
-def check_gate_consistency() -> CheckResult:
-    r = CheckResult(name="Gate consistency — registry vs schema vs runner")
-    reg = _registry_gates()
-    sch = _schema_gates()
-    allow = _runner_allowlist()
-
-    if allow is None:
-        r.passed = False
-        r.failures.append("Could not load ALLOWED_SUPERVISION_GATES from pipeline_runner.py")
-        return r
-
-    # Every registry gate must be in runner allowlist
-    missing_in_runner = reg - allow
-    for g in sorted(missing_in_runner):
-        r.failures.append(f"Gate '{g}' used in registry transitions but not in runner allowlist")
-
-    # Every schema gate must be in runner allowlist (and vice versa)
-    if sch - allow:
-        for g in sorted(sch - allow):
-            r.failures.append(f"Gate '{g}' in pipeline-state.template.json but not in runner allowlist")
-    if allow - sch - reg:
-        for g in sorted(allow - sch - reg):
-            r.failures.append(
-                f"Gate '{g}' in runner allowlist but neither in schema nor in any registry transition"
-            )
-
-    r.info.append(f"registry={sorted(reg)}")
-    r.info.append(f"schema={sorted(sch)}")
-    r.info.append(f"runner={sorted(allow)}")
-    r.passed = not r.failures
-    return r
 
 
 # ---------------------------------------------------------------------------
@@ -1377,7 +1210,6 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
         results = [
-            check_dependency_closure_profile(args.profile, profile_root),
             check_profile_manifest_alignment(args.profile, profile_root),
             check_privacy_scan(roots),
             check_generated_artifacts([profile_root.parent]),
@@ -1392,8 +1224,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         results = [
             check_manifest_contract(),
-            check_registry(),
-            check_gate_consistency(),
             check_privacy_scan(roots),
             check_generated_artifacts(roots),
             check_prompts(),

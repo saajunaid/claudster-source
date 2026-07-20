@@ -30,8 +30,8 @@ everything done since. Living status of every finding (from `fable-audit-claudst
 ## Scoreboard (2026-07-20)
 
 - **All Critical/High findings in both repos: CLOSED and deployed.**
-- claudster: 17 findings DONE (test-coverage + rebrand tails closed 2026-07-20), 1 OPEN (human: token
-  rotation + marketplace v0.4.0 deletion), 1 OPEN new (pipeline-runner suite broken, pre-existing).
+- claudster: 18 findings DONE (test-coverage + rebrand tails closed 2026-07-20; **pipeline-runner +
+  mcp-server RETIRED 2026-07-20**), 1 OPEN (human: token rotation + marketplace v0.4.0 deletion).
 - docket: 14 findings DONE (incl. all of F30–F34 a11y), 1 PARTIAL (F12 worktree isolation), fresh
   full-detail backlog from the 2026-07-20 re-audit (see below) supersedes the old undescribed F7–F39 tail.
 - Tracks: **A DONE** (shipped 2026-07-19) · **B B1/B2/B3 DONE, B4 awaits the user** · **C DONE, MERGED,
@@ -96,7 +96,7 @@ implementation session to spec and fix.
 | — | `validate_agents` MCP-note hard-fails the build | **DONE** | `smoke_test_mcp_server` now returns `(errors, notes)`; new `_diff_mcp_tools` routes extra/new tools and skips to NOTES (printed `[NOTE]`), only genuine failures to errors. Exit keys on `mcp_errors` only, so adding an MCP tool no longer fails the build. 4 TDD cases |
 | — | No tests around export/validate/sync.ps1 | **DONE** | export (11 tests) + `validate_pool` privacy regression tests (29784d2) + `scripts/tests/test_sync_ps1.py` (8 tests, 2026-07-20: pwsh syntax-parse, BOM/ASCII encoding lock, every-`git push`-checks-`$LASTEXITCODE`, entry points, opt-in publish, privacy markers). The RED run exposed **4 push sites still reporting success on failure** (profile export, `junai-revert` source + 2 cascade pushes) — all fixed |
 | — | Rebrand half-applied (`agent-sandbox` in deep docs) | **DONE** | 2026-07-20 sweep: `sync.ps1` (13), orchestrator agent, `setup_project_ai`/`usage_review`/`agent_manager`, pipeline-runner test fixtures, both drawio diagrams, RECIPE-RUNBOOK → `claudster-source`; historical mentions in `validate_pool.py`/`runtime-targets.json` → "predecessor repo". (`agent-workflow-design-reference.md` was already clean — the "63 refs" were in gitignored mirror copies.) Historical analysis docs (`pass1-foundations.md`) deliberately untouched |
-| — | pipeline-runner test suite broken — `.github/pipeline-state.template.json` missing → 17 of 138 tests fail (pre-existing; found 2026-07-20; not in the standard gate so unnoticed) | **OPEN** | decide keep-vs-retire: the Copilot-era pipeline-runner is superseded by docket's pipeline; either restore the template or retire the tool + tests |
+| — | pipeline-runner test suite broken — `.github/pipeline-state.template.json` missing → 17 of 138 tests fail (pre-existing; found 2026-07-20; not in the standard gate so unnoticed) | **DONE** | **RETIRED by user decision 2026-07-20** — Copilot rarely used; docket supersedes; template was broken at runtime. User chose **retire-both**: deleted `.github/tools/pipeline-runner/` AND `.github/tools/mcp-server/` (the MCP server was a pipeline-runner frontend, ~8/11 tools drove pipeline state), dropped both from ptarmigan/liffey rosters, deleted `junai.bat`/`junai.sh`, ripped the dead registry/gate/skippable checks out of `validate_pool`/`validate_agents`/`export_runtime_resources` (+ removed obsolete `test_validate_agents.py`). Zero dangling `pipeline-runner` refs in exported bundles; export/validate exit 0; suite 368 passed. **Dormant follow-up flagged:** the `notify_orchestrator` orchestration protocol across ~25 agent briefs + `orchestrator.agent.md` + `junai-system.instructions.md` describes the now-retired runtime (agents run standalone) — a dedicated orchestration-layer retirement pass is deferred. The published `junai-mcp` PyPI package is untouched (separate human deprecation decision, per the toolbox-portability plan) |
 
 ## docket
 > **Deployed to prod (2026-07-17, `096cbb3`):** F1, F17, F12-partial + the full F30–F34 accessibility set
@@ -160,13 +160,12 @@ fix): `.claudster/prompts/docket-reaudit-f12-and-pipeline-runner.md` — hand it
    to verify.
 
 **claudster:**
-6. **RETIRE pipeline-runner** (user decision 2026-07-20: Copilot rarely used; docket supersedes it;
-   the tool's `init` was broken at runtime anyway — its state template never survived the repo
-   extraction). Delete tool + tests, strip pool references, drop from the ptarmigan/liffey rosters,
-   re-export + verify. The `.github/` pool itself stays canonical (see
-   `.claudster/plans/toolbox-portability.md` — Antigravity/Codex arrive via export targets +
-   `claudster-init`, NOT via reviving Copilot machinery). junai-extension/mirror deprecation = a
-   separate, later human decision.
+6. ~~**RETIRE pipeline-runner**~~ **DONE 2026-07-20** — user chose **retire-both** (pipeline-runner +
+   mcp-server, since the MCP server was a pipeline-runner frontend). Both tool dirs deleted, dropped
+   from ptarmigan/liffey rosters, `junai.bat`/`junai.sh` removed, dead validator/exporter checks ripped
+   out, re-exported + verified (zero dangling refs, exit 0). See the flipped row in the claudster table.
+   The `.github/` pool stays canonical; the published `junai-mcp` PyPI package + the dormant
+   orchestration-protocol prose are deferred follow-ups (separate decisions).
 
 _(Closed 2026-07-20: sync.ps1 test coverage — which also exposed and fixed 4 more unchecked pushes;
 the `agent-sandbox` rebrand tail; **Track C fixed + merged + deployed (`7f612f4`)**; the docket

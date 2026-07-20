@@ -43,7 +43,6 @@ class ExportStats:
     profile: str
     files_copied: int = 0
     skipped_by_reason: dict[str, int] = field(default_factory=dict)
-    dependency_errors: list[str] = field(default_factory=list)
     # Hard errors that make the export fail-closed (missing declared sources,
     # phantom skills in a roster). Distinct from skips, which are expected.
     errors: list[str] = field(default_factory=list)
@@ -302,98 +301,6 @@ def _normalize_paths(paths: list[str]) -> set[str]:
     return {p.replace("\\", "/").strip("/") for p in paths if p}
 
 
-def _check_dependency_closure(workspace_root: Path, stats: ExportStats) -> None:
-    """Validate all agent_file references in agents.registry.json resolve in exported profile."""
-    registry_path = workspace_root / "tools" / "pipeline-runner" / "agents.registry.json"
-    if not registry_path.exists():
-        stats.dependency_errors.append(f"Missing registry file: {registry_path}")
-        return
-
-    try:
-        registry_data = json.loads(registry_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        stats.dependency_errors.append(f"Invalid registry JSON: {exc}")
-        return
-
-    for stage_name, info in (registry_data.get("stages") or {}).items():
-        agent_file = info.get("agent_file")
-        if not agent_file:
-            continue
-        resolved = workspace_root / agent_file
-        if not resolved.exists():
-            stats.dependency_errors.append(
-                f"Stage '{stage_name}' references missing agent file: {agent_file}"
-            )
-
-
-def prune_registry(
-    workspace_root: Path,
-    additional_transitions: list[dict[str, Any]] | None = None,
-) -> int:
-    """Prune agents.registry.json to match the agent files present in the profile.
-
-    Stages whose agent_file is not present in the agents/ directory are removed.
-    Transitions that reference removed stages are removed.
-    Any additional_transitions from the manifest are appended after pruning.
-    Returns the number of stages pruned.
-    """
-    registry_path = workspace_root / "tools" / "pipeline-runner" / "agents.registry.json"
-    if not registry_path.exists():
-        return 0
-
-    agents_dir = workspace_root / "agents"
-    present_agents: set[str] = set()
-    if agents_dir.exists():
-        present_agents = {f.name for f in agents_dir.glob("*.agent.md")}
-
-    try:
-        data = json.loads(registry_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return 0
-
-    active_stages: set[str] = set()
-    pruned_stages: dict[str, Any] = {}
-    original_count = len(data.get("stages") or {})
-
-    for stage_name, info in (data.get("stages") or {}).items():
-        agent_file = info.get("agent_file")
-        if agent_file is None:
-            # terminal/control stages (closed, BLOCKED) — always keep
-            active_stages.add(stage_name)
-            pruned_stages[stage_name] = info
-        elif Path(agent_file).name in present_agents:
-            active_stages.add(stage_name)
-            pruned_stages[stage_name] = info
-        # else: agent file absent from this profile — drop stage
-
-    pruned_transitions: list[dict[str, Any]] = []
-    for t in (data.get("transitions") or []):
-        from_s = t.get("from_stage", "")
-        to_s = t.get("to_stage", "")
-        # wildcard stages ("*") always survive; specific stages must be active
-        if (from_s == "*" or from_s in active_stages) and (to_s == "*" or to_s in active_stages):
-            pruned_transitions.append(t)
-
-    if additional_transitions:
-        # Guard: only add if both stages are active in this profile
-        existing_ids = {t.get("id") for t in pruned_transitions}
-        for t in additional_transitions:
-            if t.get("id") in existing_ids:
-                continue
-            from_s = t.get("from_stage", "")
-            to_s = t.get("to_stage", "")
-            if (from_s == "*" or from_s in active_stages) and (to_s == "*" or to_s in active_stages):
-                pruned_transitions.append(t)
-
-    data["stages"] = pruned_stages
-    data["transitions"] = pruned_transitions
-    registry_path.write_text(
-        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
-    return original_count - len(pruned_stages)
-
-
 def write_plugin_manifests(bundle_root: Path, plugin_dir: Path, target: dict[str, Any]) -> None:
     """Emit the plugin + marketplace manifests for a plugin-shaped target.
 
@@ -626,13 +533,6 @@ def export_target(manifest: dict[str, Any], target: dict[str, Any]) -> ExportSta
         else:
             raise ValueError(f"Unsupported transform type: {transform_spec['type']}")
 
-    if target.get("dependency_closure"):
-        additional_transitions: list[dict[str, Any]] = target.get("additional_registry_transitions", [])
-        pruned = prune_registry(workspace_root, additional_transitions)
-        if pruned:
-            stats.bump_skip("registry_stages_pruned", pruned)
-        _check_dependency_closure(workspace_root, stats)
-
     # Plugin packaging (Phase 4): emit .claude-plugin manifests + a bundle-scoped skill registry.
     # marketplace.json at the bundle root (output_root); plugin.json + content under workspace_root.
     if target.get("plugin"):
@@ -684,12 +584,6 @@ def _print_report(all_stats: list[ExportStats]) -> None:
                 print(f"    - {err}")
         else:
             print("  errors: none")
-        if stats.dependency_errors:
-            print("  dependency_errors:")
-            for err in stats.dependency_errors:
-                print(f"    - {err}")
-        else:
-            print("  dependency_errors: none")
 
 
 def main() -> int:
@@ -741,15 +635,6 @@ def main() -> int:
     if export_errors:
         print(f"[FAIL] Export errors detected ({len(export_errors)}):")
         for err in export_errors:
-            print(f"   - {err}")
-        return 1
-
-    dependency_errors = [
-        f"{stats.profile}: {err}" for stats in all_stats for err in stats.dependency_errors
-    ]
-    if dependency_errors:
-        print(f"[FAIL] Dependency closure errors detected ({len(dependency_errors)}):")
-        for err in dependency_errors:
             print(f"   - {err}")
         return 1
 

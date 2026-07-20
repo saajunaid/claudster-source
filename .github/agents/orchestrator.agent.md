@@ -121,7 +121,7 @@ After reading `pipeline-state.json` (and clearing any stale halt above), classif
 | `file_missing` | `pipeline-state.json` does not exist on disk | No pipeline has been created |
 | `uninitialized` | `current_stage` is absent, null, or empty string **OR** `project` is absent/null/empty/placeholder (`"<project-name>"`) **OR** `feature` is absent/null/empty/placeholder (`"<feature-slug>"`) **OR** `stages` is `{}` (empty object) | State file exists but no pipeline has been properly initialised |
 | `closed` | `current_stage == "closed"` | Previous pipeline completed; no active work |
-| `active` | `current_stage` is a known stage in `.github/tools/pipeline-runner/agents.registry.json` **AND** `stages` is non-empty | Pipeline is in progress |
+| `active` | `current_stage` is a known stage in `the agent registry` **AND** `stages` is non-empty | Pipeline is in progress |
 | `corrupted` | `current_stage` is non-empty but NOT a known stage name (e.g. typo like `"implment"`) **OR** `_routing_decision` exists but is not a valid object with `next_stage` and `blocked` fields | State is malformed — cannot safely route |
 
 > **Evaluation order:** Check `file_missing` first, then `uninitialized`, then `closed`, then `active`. If none match, classify as `corrupted`.
@@ -240,7 +240,7 @@ Before routing to the next agent:
    - `"exception:blocked:<reason>"` — pipeline is blocked pending user action
 
 ### 3. Routing Logic
-The pipeline-runner owns all transition inference. Do NOT infer the next stage yourself.
+The runner owns all transition inference. Do NOT infer the next stage yourself.
 
 After a stage completes:
 1. In assisted or autopilot mode, the agent calls `notify_orchestrator` (MCP) and the runner writes `_notes._routing_decision`.
@@ -301,7 +301,7 @@ This is possible only when the plan is already approved and complete enough for 
 All stage-to-agent mappings and pipeline transitions are defined in a **single source of truth**:
 
 ```
-.github/tools/pipeline-runner/agents.registry.json
+the agent registry
 ```
 
 You do not need to memorise the routing table. When you need to know which agent handles a stage, read that file.
@@ -313,7 +313,7 @@ You do not need to memorise the routing table. When you need to know which agent
    ```
 2. Add one or more `transitions` entries wiring the stage into the pipeline (copy an existing entry and set the correct `from_stage`, `to_stage`, `event`, `guards`).
 3. Write the `.agent.md` file with §8 Completion Reporting Protocol and HARD STOP.
-4. The pipeline-runner reads the registry at startup — no restart required.
+4. The runner reads the registry at startup — no restart required.
 
 ### 3.3 Pre-Tester Cumulative Intent Audit
 
@@ -365,7 +365,7 @@ If all gates for a stage are already `true` in `pipeline-state.json`, auto-proce
 After every routing decision, update `.github/pipeline-state.json`.
 
 > **CRITICAL — never directly set `current_stage` via `editFiles`.**
-> `current_stage` is a runner-owned field. It advances only when the pipeline-runner processes a `notify_orchestrator` MCP call. You call `notify_orchestrator`; the runner writes `current_stage`. The only exception is §10 Pipeline Close, which sets `current_stage: closed` directly as the final terminal state.
+> `current_stage` is a runner-owned field. It advances only when the runner processes a `notify_orchestrator` MCP call. You call `notify_orchestrator`; the runner writes `current_stage`. The only exception is §10 Pipeline Close, which sets `current_stage: closed` directly as the final terminal state.
 
 Fields you MAY set directly (via `editFiles`):
 - `stages[*].status` → set `complete` and record `completed_at`
@@ -520,7 +520,7 @@ On first invocation:
 - You do NOT make design decisions
 - You do NOT delete files outside your artefact scope without explicit user approval
 - You are a **router and validator**, not an executor
-- **You do NOT edit agent instruction files (`.agent.md`, `.instructions.md`, `agents.registry.json`, `guards.py`, `pipeline_runner.py`, or any file under `.github/agents/`, `.github/instructions/`, or `.github/tools/pipeline-runner/`).** These are owned by the extension pool and claudster-source. Patching them mid-session corrupts the source of truth and produces divergence that cannot be detected by `junai: Update Agent Pool`. If an agent is behaving incorrectly, escalate to the user — do not self-patch.
+- **You do NOT edit agent instruction files (`.agent.md`, `.instructions.md`, or any file under `.github/agents/` or `.github/instructions/`).** These are owned by the extension pool and claudster-source. Patching them mid-session corrupts the source of truth and produces divergence that cannot be detected by `junai: Update Agent Pool`. If an agent is behaving incorrectly, escalate to the user — do not self-patch.
 
 #### Direct edits to `pipeline-state.json` — strict rules
 
@@ -548,7 +548,7 @@ You MUST **never** directly edit these fields in `pipeline-state.json` — use t
 > Do not invent a "tool failure" justification to bypass the state machine. If a tool genuinely failed, escalate to the user — do not self-remedy by writing state directly.
 
 > **HARD STOP — agent file patching anti-pattern:**
-> If you find yourself about to edit any `.agent.md`, `.instructions.md`, `agents.registry.json`, `guards.py`, or `pipeline_runner.py` file via `editFiles`, STOP. Agent instruction files are managed by the extension pool (claudster-source → junai → marketplace). Mid-session patches diverge silently from the source of truth and cannot be detected or merged. If an agent has a bug or missing rule, escalate to the user — changes MUST go through claudster-source → publish chain.
+> If you find yourself about to edit any `.agent.md` or `.instructions.md` file via `editFiles`, STOP. Agent instruction files are managed by the extension pool (claudster-source → junai → marketplace). Mid-session patches diverge silently from the source of truth and cannot be detected or merged. If an agent has a bug or missing rule, escalate to the user — changes MUST go through claudster-source → publish chain.
 
 ---
 
@@ -653,7 +653,7 @@ After the command succeeds, read `_notes._routing_decision` and route to the rep
 
 Manual fallback:
 
-When §9 table says "Entry stage: `preflight`", `implement`, or any stage other than `intent`, the pipeline-runner always starts at `intent` after a reset. You MUST advance through intermediate stages using MCP tools — NEVER write `current_stage` directly via editFiles.
+When §9 table says "Entry stage: `preflight`", `implement`, or any stage other than `intent`, the runner always starts at `intent` after a reset. You MUST advance through intermediate stages using MCP tools — NEVER write `current_stage` directly via editFiles.
 
 Before advancing, make sure each skipped stage has an artefact path that exists on disk. Use the real matching stage artefact when available; for an explicitly approved plan-only fast-track, use the approved plan path as the source artefact for skipped upstream stages so `artefact_exists` / `artefact_approved` guards still pass.
 
@@ -789,7 +789,7 @@ Shall I start with item 1?
    Actual state: stages [<list>] appear complete based on commits
    ```
 2. Ask user to confirm: *"Based on git history, it looks like [stages] are done. Should I align the pipeline state and route to [next_stage]?"*
-3. If confirmed: run `junai pipeline advance --completed-stage <actual_current_stage> --result-status <transition_event> --artefact-path <existing_artefact_path>` to sync state file. Use the exact `result_status` event from `.github/tools/pipeline-runner/agents.registry.json` (`complete`, `passed`, `approved`, etc.).
+3. If confirmed: run `junai pipeline advance --completed-stage <actual_current_stage> --result-status <transition_event> --artefact-path <existing_artefact_path>` to sync state file. Use the exact `result_status` event from `the agent registry` (`complete`, `passed`, `approved`, etc.).
 4. Commit the corrected state:
    ```
    git add .github/pipeline-state.json
@@ -833,13 +833,13 @@ If the reviewer produced no `deferred:` block, write `"deferred": []` and procee
 
 ### 11. Tester Retry Loop (GAP-H2/H3)
 
-The pipeline-runner resolves tester outcomes (pass/fail/retry-budget) and writes `_notes._routing_decision`.
+The runner resolves tester outcomes (pass/fail/retry-budget) and writes `_notes._routing_decision`.
 
 On tester completion:
 1. Read `_notes._routing_decision`.
 2. If blocked (retry budget exhausted): 
    - **`supervised` / `assisted` mode:** report `blocked_reason` and STOP. User decides next step.
-   - **`autopilot` mode:** pipeline-runner routes to Debug (T-28) automatically — invoke Debug immediately with failing test context from `_notes.tester_result`. No user intervention required.
+   - **`autopilot` mode:** runner routes to Debug (T-28) automatically — invoke Debug immediately with failing test context from `_notes.tester_result`. No user intervention required.
 3. If not blocked, execute the routed handoff (supervised → button, assisted/autopilot → auto-invoke per `pipeline_mode`).
 
 Do not infer retry routing manually.
@@ -850,7 +850,7 @@ Do not infer retry routing manually.
 
 When `pipeline-state.json` contains `"type": "hotfix"` OR the user initiates with a bug/defect scenario:
 
-**Fast-track route:** Determined by pipeline-runner and read from `_notes._routing_decision`.
+**Fast-track route:** Determined by runner and read from `_notes._routing_decision`.
 
 Rules:
 - Skip `intent`, `prd`, `architect`, `plan` stages entirely — auto-approve all gates
@@ -911,7 +911,7 @@ Pipeline state for hotfix:
 
 ### 13. Pipeline Halt & Recovery Protocol (GAP-I4)
 
-When the pipeline-runner returns `blocked: true` or `pipeline-state.json` shows `blocked_by` is set, **STOP all routing** and surface the issue to the user immediately.
+When the runner returns `blocked: true` or `pipeline-state.json` shows `blocked_by` is set, **STOP all routing** and surface the issue to the user immediately.
 
 **Halt output format (always use this):**
 ```
@@ -942,7 +942,7 @@ Recovery path: see below
 **After user resolves the issue:**
 1. Re-read `pipeline-state.json`
 2. Clear `blocked_by: null`
-3. Re-run `notify_orchestrator` or `pipeline-runner next` to recompute transition
+3. Re-run `notify_orchestrator` to recompute transition
 4. If transition is now valid, proceed with routing (supervised → button, assisted/autopilot → auto-invoke per `pipeline_mode`)
 5. Commit updated `pipeline-state.json`
 
