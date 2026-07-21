@@ -150,7 +150,25 @@ def _analyze_query(ast, dialect: str) -> dict[str, Any]:
         proj_bits.append(_sanitize_label(order.sql(dialect=dialect)))
     projection = " . ".join(b for b in proj_bits if b) or None
 
-    mermaid = _render_flowchart(source_tables, cte_names, joins, filters, projection)
+    # GROUP BY (+ HAVING) is its own pipeline stage — the Σ box between σ WHERE and the result.
+    aggregate = None
+    group = ast.args.get("group") if hasattr(ast, "args") else None
+    if group is not None:
+        aggregate = _sanitize_label(group.sql(dialect=dialect))
+        having = ast.args.get("having")
+        if having is not None:
+            aggregate += f" {_sanitize_label(having.sql(dialect=dialect))}"
+
+    # UNION / INTERSECT / EXCEPT: annotate the result (the branches' tables all feed it).
+    set_op = None
+    op_name = type(ast).__name__
+    if op_name in ("Union", "Except", "Intersect"):
+        set_op = {"Union": "UNION", "Except": "EXCEPT", "Intersect": "INTERSECT"}[op_name]
+        if op_name == "Union" and not ast.args.get("distinct", True):
+            set_op = "UNION ALL"
+
+    mermaid = _render_flowchart(source_tables, cte_names, joins, filters, projection,
+                                aggregate=aggregate, set_op=set_op)
     return {
         "diagram_type": "flowchart",
         "confidence": "high",
@@ -160,22 +178,31 @@ def _analyze_query(ast, dialect: str) -> dict[str, Any]:
         "joins": joins,
         "filters": filters,
         "projection": projection,
+        "aggregate": aggregate,
+        "set_op": set_op,
         "entities": [],
         "relationships": [],
         "mermaid": mermaid,
     }
 
 
+# Relational-algebra notation — the professional shorthand DB folk already read. Operations get
+# symbols; tables stay clean (the name is the star).
+#   σ = selection (WHERE) · Σ = aggregation (GROUP BY) · π = projection (TOP/ORDER)
+#   ⋈ = join · ρ = rename (a CTE) · ∪/∩/∖ = set operations
+_SET_OP_SYM = {"UNION": "∪", "UNION ALL": "∪", "INTERSECT": "∩", "EXCEPT": "∖"}
+
 # Mermaid classDef fills — light-first, but chosen to stay legible if the viewer flips to dark
 # (Mermaid re-tints on the viewer's theme; these are the base hues, matching the SVG/Excalidraw palette).
-# Palette: evergreen / violet dusk / amber sand / slate indigo / terracotta on warm paper — deliberate
-# hues, not the default pastel set every generated diagram ships with.
+# Palette "jewel on ivory": harbor teal / plum / saffron / madder / ink-blue / viridian on warm ivory —
+# a deliberate identity, not the default pastel set every generated diagram ships with.
 _MERMAID_CLASSDEF = {
-    "table": "fill:#DDEEE4,stroke:#1F7A5C,color:#123D2E",
-    "cte": "fill:#E9E4F5,stroke:#67589E,color:#322852",
-    "filter": "fill:#F9EED9,stroke:#B97C10,color:#5B3A05",
-    "result": "fill:#E1E7F8,stroke:#3E5C9A,color:#1C2C50",
-    "projection": "fill:#F8E7DF,stroke:#C05B41,color:#5F2A1B",
+    "table": "fill:#EDF7F6,stroke:#0E7C7B,color:#073938",
+    "cte": "fill:#F4EEF8,stroke:#7B4B94,color:#3A2149",
+    "filter": "fill:#FBF1E3,stroke:#C36F09,color:#5E3604",
+    "aggregate": "fill:#F9ECEE,stroke:#B23A48,color:#571C24",
+    "result": "fill:#EBF1FA,stroke:#2D5DA1,color:#16294D",
+    "projection": "fill:#EDF5F0,stroke:#4A7C59,color:#1F3A29",
 }
 _MERMAID_WRAP = 26  # chars before inserting <br/> in a node label (keeps text inside the box)
 
@@ -185,10 +212,11 @@ def _mwrap(text: str) -> str:
     return "<br/>".join(_wrap(text, _MERMAID_WRAP))
 
 
-def _render_flowchart(source_tables, ctes, joins, filters, projection) -> str:
-    # PIPELINE rule: sources/CTEs -> WHERE (one box, all ANDed predicates) -> result -> projection.
+def _render_flowchart(source_tables, ctes, joins, filters, projection,
+                      aggregate=None, set_op=None) -> str:
+    # PIPELINE rule: sources/CTEs -> σ WHERE -> Σ GROUP BY -> result -> π projection.
     # Every edge connects ADJACENT stages only — an arrow can never cross a box, and there is
-    # exactly one fan-in point (the WHERE box or, without filters, the result).
+    # exactly one fan-in point (the first stage present, or the result).
     seen: dict[str, int] = {}
     lines = ["flowchart LR"]
     ids: dict[str, str] = {}
@@ -203,7 +231,7 @@ def _render_flowchart(source_tables, ctes, joins, filters, projection) -> str:
     for name in ctes:
         nid = _node_id("cte", name, seen)
         ids[f"cte:{name}"] = nid
-        lines.append(f'    {nid}{{{{"CTE: {name}"}}}}')
+        lines.append(f'    {nid}{{{{"ρ CTE: {name}"}}}}')
         classes["cte"].append(nid)
         order.append(f"cte:{name}")
     # join labels by target; a join target that isn't a plain source (e.g. a subquery) still
@@ -211,30 +239,38 @@ def _render_flowchart(source_tables, ctes, joins, filters, projection) -> str:
     join_label: dict[str, str] = {}
     for j in joins:
         on = f" on {j['on']}" if j["on"] else ""
-        join_label[j["target"]] = f'{j["side_kind"]} JOIN{on}'
+        join_label[j["target"]] = f'⋈ {j["side_kind"]} JOIN{on}'
         if not (ids.get(f"table:{j['target']}") or ids.get(f"cte:{j['target']}")):
             nid = _node_id("t", j["target"], seen)
             ids[f"table:{j['target']}"] = nid
             lines.append(f'    {nid}[({j["target"]})]')
             classes["table"].append(nid)
             order.append(f"table:{j['target']}")
-    hub = "result"
+    # the operation chain: σ WHERE → Σ GROUP BY → result (only the stages the query has)
+    chain: list[str] = []
     if filters:
-        parts = [_mwrap(("WHERE " if i == 0 else "AND ") + f) for i, f in enumerate(filters)]
+        parts = [_mwrap(("σ WHERE " if i == 0 else "AND ") + f) for i, f in enumerate(filters)]
         lines.append(f'    where["{"<br/>".join(parts)}"]')
         classes["filter"].append("where")
-        hub = "where"
-    lines.append('    result[/"result"/]')
+        chain.append("where")
+    if aggregate:
+        lines.append(f'    agg["{_mwrap("Σ " + aggregate)}"]')
+        classes["aggregate"].append("agg")
+        chain.append("agg")
+    result_label = "result" if not set_op else f"{_SET_OP_SYM[set_op]} {set_op} result"
+    lines.append(f'    result[/"{result_label}"/]')
     classes["result"].append("result")
+    chain.append("result")
+    hub = chain[0]
     for key in order:
         name = key.split(":", 1)[1]
         lbl = join_label.get(name, "")
         edge = f'-->|"{lbl}"|' if lbl else "-->"
         lines.append(f'    {ids[key]} {edge} {hub}')
-    if filters:
-        lines.append("    where --> result")
+    for a, b in zip(chain, chain[1:]):
+        lines.append(f"    {a} --> {b}")
     if projection:
-        lines.append(f'    result --> proj[/"{_mwrap(projection)}"/]')
+        lines.append(f'    result --> proj[/"{_mwrap("π " + projection)}"/]')
         classes["projection"].append("proj")
     # classDefs + assignments (colour the typed nodes; harmless if a viewer strips styling)
     for role, style in _MERMAID_CLASSDEF.items():
@@ -306,6 +342,8 @@ def _analyze_ddl(statements, dialect: str) -> dict[str, Any]:
         "joins": [],
         "filters": [],
         "projection": None,
+        "aggregate": None,
+        "set_op": None,
         "entities": entities,
         "relationships": relationships,
         "mermaid": mermaid,
@@ -344,18 +382,20 @@ _MARGIN = 36        # canvas margin
 _CHAR_W = _FONT * 0.55  # approx glyph advance for wrap-width math
 
 # target box width per role (px) — wrap width derives from this, so text is guaranteed to fit.
-_ROLE_W = {"table": 200, "cte": 200, "filter": 250, "result": 150, "projection": 230, "entity": 240}
+_ROLE_W = {"table": 200, "cte": 200, "filter": 250, "aggregate": 250, "result": 170,
+           "projection": 230, "entity": 240}
 _EDGE_LABEL_WRAP = 28   # chars per line for a join label riding beside its arrow
 _EDGE_LABEL_FONT = 12   # edge label font size (px)
 # fixed Excalidraw palette (the app re-tints for dark itself; these are the light/base hues) —
-# same evergreen/violet/amber/indigo/terracotta family as Mermaid + SVG.
+# the same "jewel on ivory" family as Mermaid + SVG.
 _EXCALI = {
-    "table": ("#DDEEE4", "#1F7A5C"), "cte": ("#E9E4F5", "#67589E"),
-    "filter": ("#F9EED9", "#B97C10"), "result": ("#E1E7F8", "#3E5C9A"),
-    "projection": ("#F8E7DF", "#C05B41"), "entity": ("#DDEEE4", "#1F7A5C"),
+    "table": ("#EDF7F6", "#0E7C7B"), "cte": ("#F4EEF8", "#7B4B94"),
+    "filter": ("#FBF1E3", "#C36F09"), "aggregate": ("#F9ECEE", "#B23A48"),
+    "result": ("#EBF1FA", "#2D5DA1"), "projection": ("#EDF5F0", "#4A7C59"),
+    "entity": ("#EDF7F6", "#0E7C7B"),
 }
-_EXCALI_INK = "#1F2A33"
-_EDGE_COLOR = "#4A5568"
+_EXCALI_INK = "#1C2431"
+_EDGE_COLOR = "#5B6472"
 
 
 def _edge_label_size(label: str) -> tuple[list[str], float, float]:
@@ -436,10 +476,10 @@ def _annotate_fan_in(edges: list[dict[str, Any]]) -> None:
 
 def _mk_where_node(filters: list[str]) -> dict[str, Any]:
     """ONE box for all ANDed predicates (one per line, wrapped) — three stacked filter boxes read
-    as three alternative paths; one WHERE box reads as what it is: a single conjunctive gate."""
+    as three alternative paths; one σ WHERE box reads as what it is: a single conjunctive gate."""
     lines: list[str] = []
     for i, f in enumerate(filters):
-        lines.extend(_wrap(("WHERE " if i == 0 else "AND ") + f, _role_max_chars("filter")))
+        lines.extend(_wrap(("σ WHERE " if i == 0 else "AND ") + f, _role_max_chars("filter")))
     line_px = int(_FONT * 1.25)
     h = max(_MIN_H, len(lines) * line_px + 2 * _PAD_V)
     return {"id": "where", "role": "filter", "lines": lines, "text": "\n".join(lines),
@@ -468,25 +508,30 @@ def _layout_flowchart(graph: dict[str, Any]) -> dict[str, Any]:
         by_name[f"table:{name}"] = n
         sources_col.append(n)
     for name in graph.get("ctes", []):
-        n = _mk_node(_node_id("cte", name, seen), "cte", f"CTE: {name}", sub=join_label.get(name))
+        n = _mk_node(_node_id("cte", name, seen), "cte", f"ρ CTE: {name}", sub=join_label.get(name))
         by_name[f"cte:{name}"] = n
         sources_col.append(n)
 
     filters = graph.get("filters", [])
     where_col = [_mk_where_node(filters)] if filters else []
-    result = _mk_node("result", "result", "result")
+    aggregate = graph.get("aggregate")
+    agg_col = [_mk_node("agg", "aggregate", f"Σ {aggregate}", align="left")] if aggregate else []
+    set_op = graph.get("set_op")
+    result = _mk_node("result", "result", "result",
+                      sub=f"{_SET_OP_SYM[set_op]} {set_op}" if set_op else None)
     proj = graph.get("projection")
-    proj_col = [_mk_node("proj", "projection", proj)] if proj else []
+    proj_col = [_mk_node("proj", "projection", f"π {proj}")] if proj else []
 
-    placed = _place_columns([sources_col, where_col, [result], proj_col])
+    placed = _place_columns([sources_col, where_col, agg_col, [result], proj_col])
 
-    hub = where_col[0] if where_col else result
+    # the operation chain (only the stages this query has), then chain edges through it
+    chain = [c[0] for c in (where_col, agg_col) if c] + [result]
     edges: list[dict[str, Any]] = []
     for n_key in ([f"table:{t}" for t in graph.get("source_tables", [])]
                   + [f"cte:{c}" for c in graph.get("ctes", [])]):
-        edges.append({"src": by_name[n_key]["id"], "dst": hub["id"], "label": ""})
-    if where_col:
-        edges.append({"src": hub["id"], "dst": result["id"], "label": ""})
+        edges.append({"src": by_name[n_key]["id"], "dst": chain[0]["id"], "label": ""})
+    for a, b in zip(chain, chain[1:]):
+        edges.append({"src": a["id"], "dst": b["id"], "label": ""})
     if proj_col:
         edges.append({"src": result["id"], "dst": proj_col[0]["id"], "label": ""})
     _annotate_fan_in(edges)
@@ -631,18 +676,21 @@ def to_excalidraw(graph: dict[str, Any]) -> dict[str, Any]:
 # ── SVG / HTML export (self-contained, dual-theme via CSS custom props) ─────────
 
 # role -> (fill, stroke, ink); page-level keys bg/ink/edge/edge_ink. Light is the default.
-_SVG_ROLES = ["table", "cte", "filter", "result", "projection", "entity"]
+# "Jewel on ivory": harbor teal / plum / saffron / madder / ink-blue / viridian on warm ivory.
+_SVG_ROLES = ["table", "cte", "filter", "aggregate", "result", "projection", "entity"]
 _SVG_LIGHT = {
-    "page": {"bg": "#FDFCF9", "ink": "#23303B", "edge": "#8B93A7", "edge_ink": "#4A5568"},
-    "table": ("#DDEEE4", "#1F7A5C", "#123D2E"), "cte": ("#E9E4F5", "#67589E", "#322852"),
-    "filter": ("#F9EED9", "#B97C10", "#5B3A05"), "result": ("#E1E7F8", "#3E5C9A", "#1C2C50"),
-    "projection": ("#F8E7DF", "#C05B41", "#5F2A1B"), "entity": ("#DDEEE4", "#1F7A5C", "#123D2E"),
+    "page": {"bg": "#FBF8F1", "ink": "#1C2431", "edge": "#A39E93", "edge_ink": "#5B6472"},
+    "table": ("#EDF7F6", "#0E7C7B", "#073938"), "cte": ("#F4EEF8", "#7B4B94", "#3A2149"),
+    "filter": ("#FBF1E3", "#C36F09", "#5E3604"), "aggregate": ("#F9ECEE", "#B23A48", "#571C24"),
+    "result": ("#EBF1FA", "#2D5DA1", "#16294D"), "projection": ("#EDF5F0", "#4A7C59", "#1F3A29"),
+    "entity": ("#EDF7F6", "#0E7C7B", "#073938"),
 }
 _SVG_DARK = {
-    "page": {"bg": "#171C26", "ink": "#E5EAF3", "edge": "#55617A", "edge_ink": "#A8B3C7"},
-    "table": ("#12352A", "#3FBF95", "#C5EBDD"), "cte": ("#241F3D", "#9C8BD8", "#DCD4F5"),
-    "filter": ("#33270E", "#D9A03E", "#F2DDB5"), "result": ("#16223D", "#7396E0", "#CBD8F5"),
-    "projection": ("#351E15", "#E08A66", "#F5D5C8"), "entity": ("#12352A", "#3FBF95", "#C5EBDD"),
+    "page": {"bg": "#10151F", "ink": "#E8EAF2", "edge": "#4E586C", "edge_ink": "#9FB0C8"},
+    "table": ("#0D2B2A", "#2FB5AE", "#BDECE9"), "cte": ("#251A31", "#B08DD9", "#E3D4F4"),
+    "filter": ("#2E2110", "#E0A33E", "#F5DFB8"), "aggregate": ("#2E151A", "#E06D7E", "#F6C9D0"),
+    "result": ("#131F35", "#6E9BE8", "#C9DAF8"), "projection": ("#14261B", "#66B285", "#C5E8D2"),
+    "entity": ("#0D2B2A", "#2FB5AE", "#BDECE9"),
 }
 
 
@@ -667,6 +715,7 @@ def _svg_struct_css() -> str:
              "#dbd-arrow path { fill: var(--dbd-edge); }"]
     for role in _SVG_ROLES:
         rules.append(f".dbd-node.{role} rect {{ fill: var(--dbd-{role}-fill); stroke: var(--dbd-{role}-stroke); }}")
+        rules.append(f".dbd-node.{role} rect.accent {{ fill: var(--dbd-{role}-stroke); stroke: none; }}")
         rules.append(f".dbd-node.{role} text {{ fill: var(--dbd-{role}-ink); }}")
     return "\n".join(rules)
 
@@ -686,12 +735,18 @@ def _svg_node(n: dict[str, Any]) -> str:
         anchor, tx = "start", x + _PAD_H
         first = y + _PAD_V + font * 0.8
     tspans = "".join(
-        f'<tspan x="{round(tx, 1)}" y="{round(first + i * n["line_px"], 1)}">{_esc(line)}</tspan>'
+        f'<tspan x="{round(tx, 1)}" y="{round(first + i * n["line_px"], 1)}"'
+        + (' font-weight="600"' if i == 0 else "")   # title line reads as a header
+        + f'>{_esc(line)}</tspan>'
         for i, line in enumerate(n["lines"])
     )
+    # left accent bar in the role's stroke colour — the box's identity at a glance
+    accent = (f'<rect class="accent" x="{round(x + 1.2, 1)}" y="{round(y + 1.2, 1)}" '
+              f'width="5" height="{round(h - 2.4, 1)}" rx="2"/>')
     return (
         f'<g class="dbd-node {n["role"]}">'
         f'<rect x="{round(x, 1)}" y="{round(y, 1)}" width="{w}" height="{h}" rx="8"/>'
+        f'{accent}'
         f'<text text-anchor="{anchor}" font-size="{font}">{tspans}</text>'
         f'</g>'
     )
@@ -830,7 +885,8 @@ def analyze(sql: str, dialect: str = "tsql") -> dict[str, Any]:
             "inferred": [f"sqlglot could not parse this SQL ({type(exc).__name__}); "
                          "the structure below is best-effort and must be verified by hand"],
             "source_tables": [], "ctes": [], "joins": [], "filters": [],
-            "projection": None, "entities": [], "relationships": [],
+            "projection": None, "aggregate": None, "set_op": None,
+            "entities": [], "relationships": [],
             "mermaid": "flowchart TD\n    unparsed[\"(could not parse SQL — hand-verify)\"]",
         }
 
@@ -839,7 +895,8 @@ def analyze(sql: str, dialect: str = "tsql") -> dict[str, Any]:
             "diagram_type": "flowchart", "confidence": "partial",
             "inferred": ["empty or comment-only SQL — nothing to diagram"],
             "source_tables": [], "ctes": [], "joins": [], "filters": [],
-            "projection": None, "entities": [], "relationships": [],
+            "projection": None, "aggregate": None, "set_op": None,
+            "entities": [], "relationships": [],
             "mermaid": "flowchart TD\n    empty[\"(no SQL statements found)\"]",
         }
 

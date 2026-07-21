@@ -42,7 +42,16 @@ python <skill-dir>/scripts/sql_to_graph.py --sql "<SELECT ...>" --json         #
 ```
 All five formats (`mermaid` | `excalidraw` | `svg` | `html` | `json`) come from **one deterministic layout**
 — same SQL always produces byte-identical output, boxes are grid-aligned, and every label is wrapped to fit
-*inside* its box. `--dialect` defaults to `tsql`; pass `postgres`/`mysql`/etc. for other engines. Requires `sqlglot`
+*inside* its box.
+
+**Notation (relational algebra — keep it when narrating):** operations carry the professional symbols
+DB engineers already read — `σ` selection (WHERE), `Σ` aggregation (GROUP BY/HAVING, its own pipeline
+stage), `π` projection (TOP/ORDER BY), `⋈` join (in the joined table's box), `ρ` rename (a CTE),
+`∪`/`∩`/`∖` set operations (annotated on the result). Tables stay symbol-free — the name is the star.
+Palette is the skill's own "jewel on ivory" identity (harbor teal / plum / saffron / madder / ink-blue /
+viridian) — don't restyle it per diagram.
+
+`--dialect` defaults to `tsql`; pass `postgres`/`mysql`/etc. for other engines. Requires `sqlglot`
 (`pip install sqlglot` — pure-Python, no DB driver). **If sqlglot is absent** the script exits with an
 actionable message; then hand-parse the SQL yourself and mark every inferred element (per safety rule 2).
 

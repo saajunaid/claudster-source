@@ -362,6 +362,55 @@ def test_excalidraw_no_text_covers_any_arrow():
                     assert not inside, f"label {t['id']} covers arrow {a['id']}"
 
 
+# ── relational-algebra notation: σ / Σ / π / ⋈ / ρ / ∪ ─────────────────────────
+
+_GROUPED = """
+SELECT region, COUNT(*) AS n
+FROM Orders
+WHERE status = 'open'
+GROUP BY region
+HAVING COUNT(*) > 10
+ORDER BY n DESC
+"""
+
+_UNION = "SELECT id FROM A UNION ALL SELECT id FROM B"
+
+
+@requires_sqlglot
+def test_operations_carry_relational_algebra_symbols():
+    g = s2g.analyze(_QUERY)
+    m = g["mermaid"]
+    assert "σ WHERE" in m, "the WHERE stage carries σ (selection)"
+    assert "π " in m, "the projection carries π"
+    assert "⋈ " in m, "join labels carry the bowtie"
+    assert "ρ CTE:" in m, "a CTE carries ρ (rename)"
+
+
+@requires_sqlglot
+def test_group_by_becomes_sigma_aggregate_stage():
+    g = s2g.analyze(_GROUPED)
+    assert g["aggregate"] and "region" in g["aggregate"] and "HAVING" in g["aggregate"].upper()
+    assert "Σ " in g["mermaid"], "GROUP BY renders as the Σ stage"
+    # and in the layout: a distinct aggregate box between the WHERE stage and the result
+    ex = s2g.to_excalidraw(g)
+    kinds = {e["customData"]["kind"]: e["x"] for e in ex["elements"] if e["type"] == "rectangle"}
+    assert "aggregate" in kinds
+    assert kinds["filter"] < kinds["aggregate"] < kinds["result"]
+
+
+@requires_sqlglot
+def test_union_annotates_the_result():
+    g = s2g.analyze(_UNION)
+    assert g["set_op"] == "UNION ALL"
+    assert "∪" in g["mermaid"], "the result node shows the set-operation symbol"
+    ex = s2g.to_excalidraw(g)
+    rects = {e["id"]: e for e in ex["elements"] if e["type"] == "rectangle"}
+    result_text = next(t for t in ex["elements"]
+                       if t["type"] == "text" and t.get("containerId") == "result")
+    assert "∪" in result_text["text"] and "UNION ALL" in result_text["text"]
+    assert rects  # both branch tables feed the annotated result
+
+
 @requires_sqlglot
 def test_mermaid_follows_the_same_pipeline():
     m = s2g.analyze(_QUERY)["mermaid"]
