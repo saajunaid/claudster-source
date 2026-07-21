@@ -66,7 +66,26 @@ Then a normal loop looks like:
 | `/usage-review [days]` | Analyze your usage log, surface prioritized harness tweaks, apply config changes |
 | `/digress [reason]` · `/resume` | The **workstream stack** — park the current task on a detour, pop it back later |
 | `/cross-review` | A second-vendor review of your current diff (see **Providers & keys**) |
+| `/mermaid-db [sql\|file\|object] [out]` | Turn a SQL proc/view/query/schema into a **Mermaid** diagram (git-diffable `.md`) — deterministic structure from `sqlglot`, business narration on top |
+| `/excalidraw-db [sql\|file\|object]` | Same, as an **Excalidraw** diagram for a design review / ARB / slide (drag-the-boxes, higher-level) |
 | `/setup-project-ai` | Install/refresh the harness into a project |
+
+**DB diagramming (`/mermaid-db`, `/excalidraw-db`).** Both take a SQL artifact — a file path, a
+database object name (looked up via a DB MCP tool or read-only `sqlcmd`/`psql`), pasted SQL, or the
+current file — and explain it as a diagram. The `db-diagram` skill's `sql_to_graph.py` extracts the
+structure *deterministically* (tables `[(T)]`, CTEs `{{CTE: name}}`, joins with keys on the edge,
+filters as distinct nodes, projection) so diagrams diff cleanly and regenerate on schema change; the
+model adds the business-terms explanation and per-table descriptions. Both are **read-only** (never
+DDL/DML) and **never guess schema** (inferred-from-SQL-text-only elements are marked). Examples:
+
+```bash
+/mermaid-db dbo.usp_GetActiveSubscriptions            # look up the proc, diagram it → docs/diagrams/usp_GetActiveSubscriptions.md
+/mermaid-db ./queries/revenue_rollup.sql docs/diagrams/revenue.md   # a .sql file → a chosen path
+/mermaid-db                                            # diagram the SQL in the current file / paste
+/excalidraw-db Customers Orders Invoices               # multiple tables → ONE relationship diagram for a review
+```
+Requires `pip install sqlglot` for the deterministic parse (pure-Python, no DB driver); without it the
+skill hand-parses from the SQL text and marks everything inferred.
 
 ### Skills (the pool)
 
