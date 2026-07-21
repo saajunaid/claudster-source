@@ -1,4 +1,3 @@
-```skill
 ---
 name: architecture-document
 context: fork
@@ -320,4 +319,3 @@ Before delivering:
 - [ ] No placeholder tokens (`<ORG_NAME>` etc.) remain — all resolved from project-config.md
 - [ ] Section numbering is consistent and sequential
 - [ ] Cross-references (e.g., "See §4.2") point to correct sections
-```

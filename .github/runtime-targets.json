@@ -332,7 +332,7 @@
     },
     {
       "name": "codex",
-      "_comment": "Codex CLI bundle — lite tier (skills + AGENTS.md + MCP example). No subagents/commands (Claude-native only). Skills mirror the claude bundle exactly. workspace_root='.' so bundle dirs map to project-root layout: .agents/skills/ (project skills), AGENTS.md, .codex/config.toml.example.",
+      "_comment": "Codex CLI bundle — lite tier (skills + AGENTS.md + MCP example). No subagents/commands (Claude-native only). Skills mirror the claude bundle exactly. workspace_root='.' so bundle dirs map to project-root layout: .codex/skills/ (project skills root probed from codex 0.137 — see docs/analysis/codex-cli-contract.md; .agents/ is the PLUGINS root, not skills), AGENTS.md, .codex/config.toml.example.",
       "workspace_root": ".",
       "extra_roots": {"harness": "claude-harness"},
       "files": [
@@ -342,7 +342,7 @@
       "copies": [
         {
           "source": "skills",
-          "destination": ".agents/skills",
+          "destination": ".codex/skills",
           "excluded_names": ["_registry.md"],
           "included_skills": {
             "coding": [

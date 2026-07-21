@@ -1,4 +1,3 @@
-```skill
 ---
 name: agent-orchestration
 description: "End-to-end blueprint for orchestrating the full agent pipeline — from spec intake through planning, implementation, testing, and debugging"
@@ -516,4 +515,3 @@ The methodology in this document was extracted from the delivery of **Juno UX Po
 | Debug | 7 issues catalogued (A–G) | Fix-up plan created |
 
 This end-to-end cycle took **~10 sessions** with full artefact trail and zero rework of fundamental design decisions.
-```

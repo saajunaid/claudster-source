@@ -9,12 +9,14 @@
 # model = "codex-mini-latest"
 
 # ── Skills ────────────────────────────────────────────────────────────────────
-# Project skills:  <project>/.agents/skills/<category>/<name>/SKILL.md
+# Project skills:  <project>/.codex/skills/<category>/<name>/SKILL.md
 # User skills:     ~/.codex/skills/<name>/SKILL.md  (no category subdir)
+# (Paths probed from codex 0.137 — see docs/analysis/codex-cli-contract.md.
+#  .agents/ is codex's PLUGINS root, not a skills root.)
 #
 # Disable a skill without deleting it:
 # [[skills.config]]
-# path = ".agents/skills/vmie/windows-deployment"
+# path = ".codex/skills/devops/windows-deployment"
 # enabled = false
 
 # ── junai MCP (pipeline state + project context) ─────────────────────────────
