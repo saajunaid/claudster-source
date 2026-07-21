@@ -461,7 +461,7 @@
               "ci-cd-pipeline", "gh-cli", "git-commit", "using-git-worktrees", "windows-deployment"
             ],
             "data": [
-              "database-design"
+              "database-design", "db-diagram"
             ],
             "frontend": [
               "css-architecture", "frontend-design", "mockup", "react-best-practices", "react-dev",
@@ -504,7 +504,7 @@
             "skill-creator",
             "code-documentation", "technical-writing", "writing-plans",
             "ci-cd-pipeline", "gh-cli", "git-commit", "using-git-worktrees",
-            "database-design",
+            "database-design", "db-diagram",
             "css-architecture", "frontend-design", "mockup", "react-best-practices", "react-dev",
             "ui-review", "warm-editorial-ui",
             "draw-io", "mermaid-diagrams", "particle-art"
