@@ -34,10 +34,15 @@ Resolve the argument:
 ## Step 2 — run the deterministic extractor
 
 ```bash
-python <skill-dir>/scripts/sql_to_graph.py --file <path> --json     # full graph JSON
-python <skill-dir>/scripts/sql_to_graph.py --sql "<SELECT ...>"      # just the Mermaid block
+python <skill-dir>/scripts/sql_to_graph.py --file <path>                       # Mermaid block (default)
+python <skill-dir>/scripts/sql_to_graph.py --file <path> --format excalidraw   # native .excalidraw JSON
+python <skill-dir>/scripts/sql_to_graph.py --file <path> --format html --title "..."   # self-contained page
+python <skill-dir>/scripts/sql_to_graph.py --file <path> --format svg          # self-contained .svg
+python <skill-dir>/scripts/sql_to_graph.py --sql "<SELECT ...>" --json         # full graph JSON
 ```
-`--dialect` defaults to `tsql`; pass `postgres`/`mysql`/etc. for other engines. Requires `sqlglot`
+All five formats (`mermaid` | `excalidraw` | `svg` | `html` | `json`) come from **one deterministic layout**
+— same SQL always produces byte-identical output, boxes are grid-aligned, and every label is wrapped to fit
+*inside* its box. `--dialect` defaults to `tsql`; pass `postgres`/`mysql`/etc. for other engines. Requires `sqlglot`
 (`pip install sqlglot` — pure-Python, no DB driver). **If sqlglot is absent** the script exits with an
 actionable message; then hand-parse the SQL yourself and mark every inferred element (per safety rule 2).
 
@@ -46,7 +51,7 @@ The extractor classifies the input and picks the diagram type:
 | Input | Diagram type | Extractor emits |
 |---|---|---|
 | `CREATE TABLE` / schema DDL | `erDiagram` | entities, columns, PK/FK, FK relationships |
-| A query, proc, or CTE chain | `flowchart TD` | tables `[(T)]`, CTEs `{{CTE: name}}`, joins (with keys, on the edge), filters as distinct nodes, final projection `[/…/]` |
+| A query, proc, or CTE chain | `flowchart LR` | a strict pipeline: tables `[(T)]` / CTEs `{{CTE: name}}` → ONE `WHERE` box (all ANDed predicates, one per line) → `result` → projection `[/…/]`; join type+key labels ride on the source edges |
 | An API/service path ending in a DB call | `sequenceDiagram` | *not structural — you build this from the code path; the extractor won't* |
 | A status/lifecycle column | `stateDiagram-v2` | *not structural — you build this from the state values* |
 
@@ -85,12 +90,26 @@ Malformed Mermaid renders as an error block — worse than no diagram. Before wr
 
 ## Output rules — `/excalidraw-db` (for human conversation)
 
-Use for a design review / ARB / slide deck. Produce the `.excalidraw` via the **`excalidraw` skill** (it
-writes `.excalidraw` JSON directly — no MCP server required). Load that skill and hand it the extractor's
-graph.
-- **Layout**: left-to-right data flow — sources left, transform/staging middle, outputs/consumers right.
-  Group related nodes. Deliberately **higher-level** than the Mermaid version — this is for a conversation,
-  not a reference.
+Use for a design review / ARB / slide deck. **The extractor emits the `.excalidraw` JSON directly** — run
+`--format excalidraw` and save the output as a `.excalidraw` file. No separate drawing skill, no MCP server.
+The generator already guarantees what a hand-drawn diagram gets wrong:
+- **Layout**: a strict left-to-right pipeline — sources → `WHERE` → `result` → projection — on a
+  deterministic grid (same-column boxes share an x; columns balanced on one mid-line). **Edges connect
+  adjacent stages only**, so an arrow can never cross a box; fan-in arrows land on distinct anchor
+  points (never one pile-up).
+- **Arrows carry no text**: each join condition is a `⋈ …` sub-line INSIDE the joined table's box —
+  in a converging fan a floating label always ends up covering some arrow, so text never floats.
+- **One WHERE box**: all ANDed predicates in a single box, one per line — stacked filter boxes read as
+  alternative paths, which is wrong.
+- **Containment**: every label is a container-**bound** text element that auto-wraps and stays vertically
+  centred *inside* its box; box heights are computed from the wrapped line count, so text never overflows.
+- **Theme**: `appState.theme` is `"light"` (default light; Excalidraw re-tints for dark itself if toggled).
+- **Determinism**: fixed ids/seeds — regenerating on a schema change produces a clean diff, not a reshuffle.
+
+Then add the narration around it (business context + per-table descriptions + the execution-plan caveat).
+If someone wants a **shareable, no-app preview**, `--format html` produces a self-contained page (the SVG
+inline, a light/dark toggle, **default light**, zero external requests) and `--format svg` a standalone SVG.
+
 - **Do not maintain both formats for the same artifact.** If a Mermaid diagram already exists for an
   object and the user runs `/excalidraw-db` on it, say so and ask: a one-off review copy, or a replacement?
 

@@ -73,8 +73,9 @@ Then a normal loop looks like:
 **DB diagramming (`/mermaid-db`, `/excalidraw-db`).** Both take a SQL artifact — a file path, a
 database object name (looked up via a DB MCP tool or read-only `sqlcmd`/`psql`), pasted SQL, or the
 current file — and explain it as a diagram. The `db-diagram` skill's `sql_to_graph.py` extracts the
-structure *deterministically* (tables `[(T)]`, CTEs `{{CTE: name}}`, joins with keys on the edge,
-filters as distinct nodes, projection) so diagrams diff cleanly and regenerate on schema change; the
+structure *deterministically* as a strict pipeline (tables `[(T)]` / CTEs `{{CTE: name}}` → one `WHERE`
+box → result → projection, joins with keys labelled on the edges) so diagrams diff cleanly and
+regenerate on schema change; the
 model adds the business-terms explanation and per-table descriptions. Both are **read-only** (never
 DDL/DML) and **never guess schema** (inferred-from-SQL-text-only elements are marked). Examples:
 
