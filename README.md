@@ -26,6 +26,25 @@ claude plugin enable  claudster-extras              # when you need the breadth
 See `docs/guide/start-here.md` for the toolchain map and `docs/guide/claudster.md` for every
 command/skill/hook this plugin provides.
 
+## Installing outside Claude Code (codex, Antigravity, …)
+
+The toolbox's knowledge layer (skills + AGENTS.md conventions) works in any harness. Per-harness
+bundles are produced by the exporter and installed into a project with `claudster-init`:
+
+```bash
+# from a local claudster-source checkout (uses dist/runtime-resources/<target>)
+python scripts/claudster_init.py --target codex        --dest C:\path\to\project
+python scripts/claudster_init.py --target antigravity  --dest C:\path\to\project
+
+# or fetch the published bundles from GitHub (once bundles/ are published to saajunaid/junai)
+python scripts/claudster_init.py --target codex
+```
+
+Safe by design: a sha256 manifest tracks what the installer wrote; re-runs update only unmodified
+files, and anything you edited locally is reported as a conflict, never overwritten (use `--force`
+to override). Each harness's discovery contract (where skills/AGENTS.md must live and why) is probed,
+not assumed — see `docs/guide/porting-to-a-harness.md` to add a new harness in five steps.
+
 ## Quickstart (contributing to claudster-source itself)
 
 This repo is the **authoring** source, not the installed plugin — clone it to build/test/publish the
