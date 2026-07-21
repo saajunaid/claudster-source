@@ -393,6 +393,137 @@
       ]
     },
     {
+      "name": "antigravity",
+      "_comment": "Antigravity IDE bundle — probed contract (docs/analysis/antigravity-contract.md, v1.107.0): AGENTS.md discovered workspace-wide; skills read from .claude/skills/<name>/SKILL.md in the CLAUDE format, FLAT (no category nesting — hence flatten_skills). Roster mirrors the codex bundle. Rules dir (.agents/rules) and .gemini/mcp_config.json are Phase-5 seams, not shipped yet.",
+      "workspace_root": ".",
+      "extra_roots": {"harness": "claude-harness"},
+      "files": [
+        {"root": "harness", "source": "claude-md/agents.md.tmpl", "destination": "AGENTS.md"}
+      ],
+      "copies": [
+        {
+          "source": "skills",
+          "destination": ".claude/skills",
+          "flatten_skills": true,
+          "excluded_names": ["_registry.md"],
+          "included_skills": {
+            "coding": [
+              "anchor-review",
+              "api-client-patterns",
+              "api-design",
+              "architecture-design",
+              "backend-development",
+              "backend-to-frontend-handoff",
+              "caching-patterns",
+              "codebase-audit",
+              "code-explainer",
+              "code-review",
+              "error-handling",
+              "fastapi-dev",
+              "javascript-typescript",
+              "llm-application-dev",
+              "mcp-builder",
+              "observability",
+              "python",
+              "refactoring",
+              "security-review",
+              "sql",
+              "understand-anything"
+            ],
+            "testing": [
+              "component-testing",
+              "performance-testing",
+              "playwright",
+              "tdd-workflow",
+              "test-strategy",
+              "ui-testing",
+              "webapp-testing"
+            ],
+            "workflow": [
+              "agent-md-refactor",
+              "asking-questions",
+              "best-practices",
+              "brainstorming",
+              "context-curator",
+              "data-contract-pipeline",
+              "golden-nuggets",
+              "golden-plan",
+              "intent-writer",
+              "onboard-project",
+              "preflight",
+              "receiving-code-review",
+              "relay",
+              "requesting-code-review",
+              "setup-project-ai",
+              "skill-creator",
+              "state-tracking",
+              "verification-loop"
+            ],
+            "docs": [
+              "architecture-document",
+              "code-documentation",
+              "doc-coauthoring",
+              "documentation-analyzer",
+              "naming-analyzer",
+              "prd-to-code",
+              "technical-writing",
+              "writing-plans"
+            ],
+            "devops": [
+              "changelog-generator",
+              "ci-cd-pipeline",
+              "deploy-local",
+              "gh-cli",
+              "git-commit",
+              "monorepo",
+              "update-readme",
+              "using-git-worktrees"
+            ],
+            "data": [
+              "data-analysis",
+              "database-design",
+              "data-loader",
+              "data-validation",
+              "db-testing",
+              "schema-migration"
+            ],
+            "frontend": [
+              "css-architecture",
+              "design-system-tokens",
+              "enterprise-dashboard-aesthetic-system",
+              "frontend-design",
+              "mockup",
+              "nextjs-app-router",
+              "react-best-practices",
+              "react-dev",
+              "react-useeffect",
+              "responsive-mobile-native",
+              "shadcn-radix",
+              "streamlit-dev",
+              "theme-factory",
+              "ui-review",
+              "ui-styling-patterns",
+              "ui-ux-intelligence",
+              "warm-editorial-ui",
+              "webapp-development",
+              "word-cloud"
+            ],
+            "media": [
+              "draw-io",
+              "excalidraw",
+              "mermaid-diagrams",
+              "plantuml",
+              "svg-create"
+            ],
+            "productivity": [
+              "github-issues",
+              "jira-issues"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "claude",
       "_comment": "Claude Code bundle — the lean Phase 0-2 harness (subagents + commands + CLAUDE.md fragments) sourced from claude-harness/, plus the tiered dev skill set (core + frontend) from .github/skills. Flat layout (workspace_root='.') feeds Phase 4 plugin packaging. Skills tier table: .github/plans/phase-3-commands-skills-export.md §Step 1.",
       "_comment_private": "No include_private here: the core bundle is public, so the private vmie/ category is excluded. golden-workflow and vm-ppt (proprietary: internal hostnames/repos, third-party .pptx) live in vmie/ (private, local-use only) and are NOT published in any public bundle. windows-deployment is a generic Windows deploy skill (the vmie service-name prefix is just an example NSSM convention) and stays in the public core (devops).",
