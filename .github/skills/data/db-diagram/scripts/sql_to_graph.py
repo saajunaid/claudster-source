@@ -715,7 +715,6 @@ def _svg_struct_css() -> str:
              "#dbd-arrow path { fill: var(--dbd-edge); }"]
     for role in _SVG_ROLES:
         rules.append(f".dbd-node.{role} rect {{ fill: var(--dbd-{role}-fill); stroke: var(--dbd-{role}-stroke); }}")
-        rules.append(f".dbd-node.{role} rect.accent {{ fill: var(--dbd-{role}-stroke); stroke: none; }}")
         rules.append(f".dbd-node.{role} text {{ fill: var(--dbd-{role}-ink); }}")
     return "\n".join(rules)
 
@@ -740,13 +739,9 @@ def _svg_node(n: dict[str, Any]) -> str:
         + f'>{_esc(line)}</tspan>'
         for i, line in enumerate(n["lines"])
     )
-    # left accent bar in the role's stroke colour — the box's identity at a glance
-    accent = (f'<rect class="accent" x="{round(x + 1.2, 1)}" y="{round(y + 1.2, 1)}" '
-              f'width="5" height="{round(h - 2.4, 1)}" rx="2"/>')
     return (
         f'<g class="dbd-node {n["role"]}">'
         f'<rect x="{round(x, 1)}" y="{round(y, 1)}" width="{w}" height="{h}" rx="8"/>'
-        f'{accent}'
         f'<text text-anchor="{anchor}" font-size="{font}">{tspans}</text>'
         f'</g>'
     )
