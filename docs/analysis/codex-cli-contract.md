@@ -1,12 +1,12 @@
 # Codex CLI 0.137.0 — headless + discovery contract (probed 2026-07-21, not assumed)
 
-Probed live on IEVXCOPPOC01 (`codex-cli 0.137.0`, npm install, Windows). Sources: `codex --help`,
+Probed live on the dev workstation (`codex-cli 0.137.0`, npm install, Windows). Sources: `codex --help`,
 `codex exec --help`, `codex doctor`, `codex features list`, and literal strings extracted from the
 shipped binary (`@openai/codex-win32-x64 … bin/codex.exe`). Every claudster codex integration cites
 THIS file; re-probe on version bump (0.145.0 already available).
 
 ## Auth state (this box)
-`codex doctor` → "auth is configured" (mode `chatgpt`, tokens in `C:\Users\jshaik\.codex\auth.json`),
+`codex doctor` → "auth is configured" (mode `chatgpt`, tokens in `%USERPROFILE%\.codex\auth.json`),
 **BUT a live `codex exec` failed with "refresh token was revoked"** — doctor checks token *presence*,
 not validity. **HUMAN: `codex logout && codex login` before any model-call validation.**
 (Also: WebSocket to chatgpt.com fails on this network; HTTPS fallback reachable.)
@@ -23,7 +23,6 @@ Verbatim-confirmed flags (from `codex exec --help`):
 | approvals | **NONE — `exec` has no `-a/--ask-for-approval`** (live-verified: "unexpected argument"; that flag is interactive-only). Headless behavior is governed by `--sandbox` alone |
 | model | `-m, --model <MODEL>` |
 | sandbox | `-s, --sandbox <read-only\|workspace-write\|danger-full-access>` |
-| approvals | `-a, --ask-for-approval <untrusted\|on-failure\|on-request\|never>` — use `never` headless (`on-failure` is deprecated for this) |
 | JSON events | `--json` (JSONL on stdout) |
 | **last message** | `-o, --output-last-message <FILE>` — **preferred parse target** |
 | structured output | `--output-schema <FILE>` (JSON Schema for the final response) |
@@ -32,7 +31,7 @@ Verbatim-confirmed flags (from `codex exec --help`):
 | ignore user config | `--ignore-user-config` (auth still via `CODEX_HOME`) |
 | config override | `-c key=value` (dotted TOML paths) |
 
-Read-only review shape: `codex exec -s read-only -a never -o out.txt "<prompt>"`.
+Read-only review shape: `codex exec -s read-only -o out.txt "<prompt>"`.
 `codex review` / `codex exec review` also exist as a first-class non-interactive code review.
 
 ## Project-context discovery (what an exported bundle must look like)

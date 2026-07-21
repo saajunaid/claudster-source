@@ -1,6 +1,6 @@
 # Antigravity IDE 1.107.0 — agent-context discovery contract (probed 2026-07-21, not assumed)
 
-Probed from the installed product on IEVXCOPPOC01: `C:\Users\jshaik\AppData\Local\Programs\Antigravity IDE`
+Probed from the installed product on the dev workstation: `%USERPROFILE%\AppData\Local\Programs\Antigravity IDE`
 (version 1.107.0, VS Code fork, launcher `bin\antigravity-ide.cmd`). Method: literal strings extracted from
 `resources\app\out\vs\workbench\workbench.desktop.main.js` (the agent runtime is compiled into the
 workbench bundle). Re-probe on version bump — this surface churns.
