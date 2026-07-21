@@ -1,6 +1,6 @@
 ---
 type: plan
-status: in-progress
+status: done
 feature: ship-pr-and-ship-merge
 creation-agent: claudster
 Original Author: Claude Code
@@ -186,11 +186,11 @@ not automated here (publish is irreversible/opt-in per README).
 ## Tracker
 | Phase | Status | Commit |
 |---|---|---|
-| 0 — Contract doc (design lock) | ✅ done | (this commit) |
-| 1 — `/ship-pr` (RED → GREEN) | ⏳ pending | — |
-| 2 — `/ship-merge` (RED → GREEN) | ⏳ pending | — |
-| 3 — Cross-references & discoverability | ⏳ pending | — |
-| 4 — Build, validate, hand off publish | ⏳ pending | — |
+| 0 — Contract doc (design lock) | ✅ done | `f26a108` |
+| 1 — `/ship-pr` (RED → GREEN) | ✅ done | `4d28a6d` — 14 content-lint tests |
+| 2 — `/ship-merge` (RED → GREEN) | ✅ done | `24f34fe` — 10 content-lint tests |
+| 3 — Cross-references & discoverability | ✅ done | `adb8596` — ship.md pointer + guide table + quickstart |
+| 4 — Build, validate, hand off publish | ✅ done | export OK ×6 targets; both commands in `dist/runtime-resources/claude/plugin/commands/`; validate_pool + `--profile claude`/`claude-extras` OK; suite 426 passed/1 skipped. VS Code mirror refreshes at `junai-push` (HUMAN, deliberately not automated) |
 
 ## Definition of done
 - `/ship-pr` opens/updates a PR, monitors CI, stops at green, never merges/deploys — across Gitea +
