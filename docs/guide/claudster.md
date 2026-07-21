@@ -22,7 +22,8 @@ Then a normal loop looks like:
 ```
 /feature-plan      # (or /prd first) → writes .claudster/plans/<slug>.md, the durable spine
 /implement         # executes the plan phase-by-phase, TDD, commit per phase
-/ship              # commit → push → CI → prod (auto-detects Gitea / GitHub Actions / local)
+/ship              # express lane: commit → push → CI → prod (hotfixes; auto-detects the pipeline)
+                   #   feature work: /ship-pr (PR → CI green, stops) then /ship-merge (deploy + cleanup)
 /handoff           # ALWAYS end a session with this — writes the resume doc
 ```
 
@@ -61,7 +62,9 @@ Then a normal loop looks like:
 | `/prd` | Requirements discovery → a PRD (headless-safe; won't interrogate on terse input) |
 | `/implement` | Headless plan executor — branch-only, TDD, commit-per-phase, updates the Tracker |
 | `/tdd` | A strict red-green-refactor cycle for one unit of behavior |
-| `/ship` | Commit → push → monitor deploy (auto-detects Gitea, GitHub Actions, or local-only) |
+| `/ship` | **Express lane**: commit → push → monitor deploy (auto-detects Gitea, GitHub Actions, or local-only). Right for hotfixes — pushes the default branch straight through |
+| `/ship-pr` | **Reviewed lane ½**: push the feature branch safely (backup ref + `--force-with-lease` if rebased), open/update the PR, monitor its CI, **stop at green** with a mergeability verdict. Never merges |
+| `/ship-merge [pr]` | **Reviewed lane 2/2**: merge an already-green, reviewed PR behind an explicit "this will DEPLOY" confirm, watch the deploy, validate prod, then clean up the branch — only on a green deploy |
 | `/kb` | Rebuild the KB index (`.claudster/kb/DOC-MAP.md`) — create, reindex, prune, or check |
 | `/usage-review [days]` | Analyze your usage log, surface prioritized harness tweaks, apply config changes |
 | `/digress [reason]` · `/resume` | The **workstream stack** — park the current task on a detour, pop it back later |

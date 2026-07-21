@@ -9,6 +9,11 @@ Ship the current working changes via this repo's actual delivery pipeline. The p
 repo, so **detect it first**, then follow the matching lane. Preflight, staging, and commit are
 identical across lanes; only monitoring and validation differ.
 
+> **This is the express lane** — on repos where a push to the default branch deploys, `/ship` sends
+> work straight to prod with no review pause. Right for a hotfix. **For feature work, use the
+> reviewed lane instead: `/ship-pr`** (open a PR, monitor CI, stop at green) **→ `/ship-merge`**
+> (merge the green PR behind a deploy-confirm, validate, clean up).
+
 Optional message: **$ARGUMENTS** (if empty, derive a conventional commit message from staged changes)
 
 ## Step 0 — Detect the pipeline (do this before anything else)
