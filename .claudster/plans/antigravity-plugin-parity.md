@@ -122,6 +122,14 @@ harness agents `code-reviewer, preflight, tester, data-engineer, security-analys
 ui-design-reviewer`; commands `implement, tdd, ship, ship-pr, ship-merge`; pool skills
 `best-practices (SKILL + references + codebase-context-builder), agent-md-refactor,
 receiving-code-review, using-git-worktrees, understand-anything (references/commands.md)`.
+**NEW command — `/claudster:add-rules <folder> [purpose]`** (`claude-harness/commands/add-rules.md` +
+`claude-harness/claude-md/folder-agents.md.tmpl`): creates rules for ANY folder, not just the
+stack-map ones. Behavior: refuse if `<folder>/AGENTS.md` exists (point at knowledge-transfer for
+updates); write `<folder>/AGENTS.md` from the template (folder purpose, conventions, gotchas
+sections — seeded from `[purpose]` + a quick read of the folder's contents) and `<folder>/CLAUDE.md`
+as the standard 2-line shim; remind that ongoing updates flow through knowledge-transfer/curator
+(no separate upkeep command needed — they match ANY existing AGENTS.md, not a fixed folder list).
+Register it wherever commands are registered; convention test covers its template too.
 **Enforcement:** add `scripts/tests/test_agents_md_canonical.py` — greps the harness agents/commands
 for instruction patterns that direct WRITING rules into CLAUDE.md (allowlist the shim-block
 exception) so regressions fail the build.
@@ -162,6 +170,10 @@ ship in the plugin (`runtime-targets.json` claude target files list, like clauds
 - SUBFOLDERS: each `<dir>/CLAUDE.md` → `git mv` to `<dir>/AGENTS.md` + write `<dir>/CLAUDE.md` shim.
 - Preserve document-frontmatter provenance if present; idempotent (re-run = no-op); `git mv` when
   tracked; never touch `done/`-style archived files; summary report (migrated / skipped / conflicts).
+- **`--check` mode (fork detector, for re-runs after migration):** flag any `CLAUDE.md` that is NOT
+  a shim while a sibling `AGENTS.md` exists (drifted shim), and any bare `CLAUDE.md` with no sibling
+  `AGENTS.md` (a hand-created fork — the fix is `/claudster:add-rules` semantics: promote content to
+  AGENTS.md + shim). Exit 1 on findings so it can gate future sweeps.
 **Exit gate:** tests cover: mirror-replace, absent-AGENTS create, divergence-conflict skip,
 subfolder pair, idempotent re-run, dirty-tree refusal, dry-run touches nothing. Full suite green.
 **Commit:** `feat(tools): claudster_migrate_rules — CLAUDE.md→AGENTS.md-canonical fleet migration`
