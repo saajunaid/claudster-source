@@ -23,6 +23,42 @@ One claudster, same experience in every coding agent. Three linked outcomes:
 3. **claudster as a first-class agy plugin** — install once, update centrally, with the portable
    hooks/agents/MCP slice.
 
+## Status tracker & resume protocol (the interruption insurance — keep this current)
+**Rule: a phase is not done until its row below is flipped, and the flip is committed IN the same
+commit as the phase's work.** On ANY resume (new session, crash, interruption): read this table
+first, then the phase text of the first ⬜ row — never re-derive completed work.
+
+| Phase | Status |
+|---|---|
+| 0 — templates + setup script | ⬜ |
+| 0b — knowledge-flow writers sweep + /add-rules | ⬜ |
+| 1 — bootstrap infra (platform-infra / project-template) | ⬜ |
+| 2 — migration tool | ⬜ |
+| 3 — PILOT uni-sight (hard gate) | ⬜ |
+| 4 — fleet rollout (per-repo sub-tracker below) | ⬜ |
+| 5 — agy plugin contract probe | ⬜ |
+| 6 — exporter target antigravity-plugin | ⬜ |
+| 7 — distribution (marketplace + bundles) | ⬜ |
+| 7b — bundle tiering core/extras | ⬜ |
+| 8 — hooks/agents/MCP parity | ⬜ |
+| 9 — adoption & lifecycle (user-level, registry, doctor, uninstall) | ⬜ |
+| 10 — claudster-everywhere guide | ⬜ |
+
+**Phase 4 per-repo sub-tracker** (flip each row in the commit made IN that repo; claudster-source
+tracker commit may batch several flips):
+⬜ app-forge · ⬜ app-sight · ⬜ appointment-assist · ⬜ nps-lens · ⬜ rev-sight · ⬜ serve-sight ·
+⬜ career-ops · ⬜ nusba · ⬜ platform-infra(root) · ⬜ project-template(root) ·
+⬜ docket (branch `chore/agents-md-canonical` — parked for user merge)
+
+**Mandatory handoffs (run `/claudster:handoff` — relay.md update — at these points, plus at ANY
+early stop):**
+- **After Phase 4** — the fleet milestone: rules-everywhere is complete and consistent; relay must
+  record the sub-tracker state, any conflict-repos resolved by hand, and docket's parked branch.
+- **After Phase 7** — the distribution milestone: what's published where (marketplace URL, bundles/),
+  what `claudster-init`/`agy plugin install` command now works from a clean machine.
+- On interruption mid-Phase-4: the sub-tracker above + a one-line relay note ("resume at repo X")
+  is sufficient — per-repo commits make every completed repo durable.
+
 ## Verified facts (explored 2026-07-23 — trust these, re-verify only if stale)
 
 ### The generation chain (today)
@@ -268,6 +304,13 @@ One hook + one agent + one MCP tool demonstrably firing in agy.
    tooling itself. Read-only, exit 1 on failures, human-readable report.
 5. **`claudster-init --uninstall`:** remove manifest-tracked UNMODIFIED files (+ registry entry);
    modified files listed and left. Makes trying claudster risk-free.
+6. **Maintenance signals (deterministic detectors, NOT scheduled LLM runs):** doctor also computes
+   and reports — (a) rules-file budget breaches (AGENTS.md over `claude_md_budget`/alias — the
+   "run claude-md-curator now" signal), (b) kb DOC-MAP dangling links (the "run /claudster:kb"
+   signal), (c) harness-contract version drift (probed version vs installed), (d) days since last
+   doctor run (stamp `~/.claudster/last-doctor.json`). The SessionStart hook prints ONE nudge line
+   when any signal fires (pure file checks, no LLM, no auto-fix) — curator/kb stay human-triggered,
+   surfaced instead of forgotten.
 **TDD throughout; ship all of it in the plugin scripts/ like claudster_init.**
 **Commit:** `feat(dist): user-level installs, install registry + update-all, doctor, uninstall`
 
@@ -342,8 +385,10 @@ user-level installs as the skills default, install registry + --update-all, vers
 claudster doctor, --uninstall → 10 the claudster-everywhere onboarding guide). Gates after every
 claudster-source phase: python -m
 pytest scripts/tests/ claude-harness/hooks/tests/ -q --import-mode=importlib AND python
-validate_pool.py. Commit per phase (per repo in Phase 4) with the plan's commit messages; flip this
-plan's phase headers to ✅ + hash as you complete them; junai-push (bare) where the plan says so,
+validate_pool.py. RESUMABILITY IS LAW: commit per phase (per repo in Phase 4); flip the Status
+tracker row (and Phase-4 sub-tracker rows) IN the same commit as the work; on any resume read the
+Status tracker first and continue at the first ⬜ row; run /claudster:handoff after Phase 4, after
+Phase 7, and at any early stop. junai-push (bare) where the plan says so,
 with the leak-free git grep gate before any mirror publish. agy and Claude Code are authenticated
 on this box; codex may need login — if any live step blocks on auth or a human merge, mark it
 blocked-on-human in the plan and continue with the next unblocked work. Never ask a question this
