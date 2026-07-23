@@ -254,7 +254,13 @@ the bundle; full suite green.
 **Commit:** `feat(export): antigravity-plugin target — claudster as an agy plugin`
 
 ### Phase 7 — Distribution: marketplace + bundles publish (junai repo)
-Extend `sync.ps1` junai-push: publish the agy plugin + `marketplace.json` AND the deferred
+**First, mirror hygiene (pre-step, found by the 2026-07-23 rename scan):** the junai mirror
+contains a committed, byte-identical self-nested duplicate checkout at
+`vscode-extensions/junai/vscode-extensions/junai/` (~doubles the repo; any future sweep or publish
+touches it inconsistently). Remove it from the mirror repo (`git rm -r`, commit in junai) and add a
+sync.ps1 guard against re-introduction (fail if the mirror working tree contains a nested
+`vscode-extensions/junai` path). Do this BEFORE publishing new content into the mirror.
+Then extend `sync.ps1` junai-push: publish the agy plugin + `marketplace.json` AND the deferred
 `bundles/<target>/` (codex, antigravity — closes toolbox-portability Phase 4's tail so
 `claudster-init` GitHub mode works). Leak-free `git grep` gate before the mirror push. Validate:
 on this box, `agy plugin install claudster@<marketplace-from-GitHub>` → skill fires; `claudster-init

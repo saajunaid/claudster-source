@@ -30,17 +30,25 @@ Creating Model: claude-fable-5
    "Perplexity". If the motive is vendor-neutrality (valid!), pick a vendor-free name (criteria:
    pronounceable, unclaimed on PyPI/npm/GitHub, no AI-vendor substring). If no better name wins,
    keeping "claudster" is a legitimate outcome of this gate.
+   **Shortlist (availability checked 2026-07-23 — RE-VERIFY at decision time, names get squatted):**
+   | Name | Metaphor | PyPI | npm | Note |
+   |---|---|---|---|---|
+   | **caddis** (top pick) | caddisfly larva builds a portable case from whatever its local environment offers — literally this product: one toolbox, self-assembled into any harness | free | taken | npm barely matters (we publish to PyPI); mild phonetic proximity to "Caddy" web server |
+   | **caddisfly** | same, fully unambiguous | free | free | longer to type |
+   | **bowerbird** | curates the best materials into an elaborate structure | free | free | curation metaphor fits the skill pool |
+   | **heartwood** | the dense core a tree grows from — "one canonical source" | free | taken | warm, serious |
+   | **burlwood** / **madrone** | prized wood / pacific tree | free | free / taken | nice sounds, weaker metaphors |
 2. **Scope: A only** (recommended) or A+deferred-B. `.claudster/` freeze is assumed either way.
 
 ## Scope A — brand-only rename (the plan)
 
-### Phase 0 — Hygiene precondition (do regardless of rename)
-The scan found `vscode-extensions/junai/vscode-extensions/junai/` — a committed, byte-identical
-**self-nested duplicate checkout inside the junai mirror** (doubles its content; a naive rename
-find/replace would touch it inconsistently). Remove it from the mirror repo + add a guard in
-`sync.ps1` against re-introduction. Also confirm `claudster-private`'s marketplace/plugin names and
-decide whether it follows the rename (it's local/VMIE-only — it can lag).
-**Commit (junai repo):** `chore: remove self-nested duplicate checkout`
+### Phase 0 — Preconditions
+- **Mirror hygiene (nested duplicate checkout): MOVED to antigravity-plugin-parity Phase 7
+  pre-step** (2026-07-23) — it must be fixed regardless of any rename, and that plan touches the
+  mirror first. Verify it's done before Phase 1 here (a naive rename find/replace over a mirror
+  still carrying the duplicate would touch the two copies inconsistently).
+- Confirm `claudster-private`'s marketplace/plugin names and decide whether it follows the rename
+  (it's local/VMIE-only — it can lag).
 
 ### Phase 1 — The identity flip (one coordinated pass, claudster-source + mirror)
 All of these are lookup-key couplings — change together, verify with the existing test suite:
