@@ -1,6 +1,6 @@
 ---
 type: plan
-status: draft (DECISION GATE open — name choice + scope; do NOT start before antigravity-plugin-parity completes)
+status: draft (name LOCKED: caddis 2026-07-23; scope A recommended — final scope confirm at session start; do NOT start before antigravity-plugin-parity completes)
 feature: brand-rename
 creation-agent: claudster
 Original Author: Claude Code
@@ -25,12 +25,18 @@ Creating Model: claude-fable-5
   antigravity-plugin-parity program** (renaming mid-program would churn its plan/tracker/docs).
 
 ## DECISION GATE (user)
-1. **New name.** Recommendation: **NOT "claudexity"** — a portmanteau of today's three vendors
-   (claude+codex+antigravity) ages exactly like "claudster" is aging now, and it echoes
-   "Perplexity". If the motive is vendor-neutrality (valid!), pick a vendor-free name (criteria:
-   pronounceable, unclaimed on PyPI/npm/GitHub, no AI-vendor substring). If no better name wins,
-   keeping "claudster" is a legitimate outcome of this gate.
-   **Shortlist (availability checked 2026-07-23 — RE-VERIFY at decision time, names get squatted):**
+1. **New name: ✅ LOCKED — `caddis` (user, 2026-07-23).** The caddisfly larva builds its portable
+   case from whatever its environment offers — the product's own metaphor. PyPI free (our actual
+   registry); npm `caddis` taken (we don't publish npm) — `caddisfly` free everywhere as the
+   fallback/package-alias if ever needed. RE-VERIFY PyPI availability at execution time.
+   Evaluated and REJECTED alternatives: **claudexity** (three-vendor portmanteau, ages badly,
+   echoes Perplexity), **clynx** (registries free BUT an existing funded software company —
+   clynx.io, Lisbon health-tech — plus the same hidden vendor-portmanteau problem: c/y/x =
+   claude/agy/codex, and ambiguous pronunciation).
+   Criteria kept for the record: vendor-free (portmanteaus of current vendors age exactly like
+   "claudster" is aging now), pronounceable, unclaimed on PyPI, no collision with a live software
+   brand.
+   **Shortlist as evaluated (availability checked 2026-07-23):**
    | Name | Metaphor | PyPI | npm | Note |
    |---|---|---|---|---|
    | **caddis** (top pick) | caddisfly larva builds a portable case from whatever its local environment offers — literally this product: one toolbox, self-assembled into any harness | free | taken | npm barely matters (we publish to PyPI); mild phonetic proximity to "Caddy" web server |
