@@ -47,5 +47,19 @@ workbench bundle). Re-probe on version bump — this surface churns.
 ## Validation state
 - IDE layout contract: probed from the shipped workbench bundle (above) — high confidence.
 - CLI contract: probed from `agy --help` + binary strings (2026-07-23) — high confidence.
-- **Live validation now goes through the CLI** (`agy -p` from a bundle-seeded repo — no IDE eyeball
-  step needed): blocked only on `agy` Google OAuth login (HUMAN, one-time).
+- **LIVE-VALIDATED ✅ (2026-07-23, `agy` v1.1.5 headless, bundle-seeded scratch repo):**
+  the agent read the bundle's AGENTS.md (correct absolute path, all 6 Laws), discovered the
+  bundle's skills from `<workspace>/.agents/skills/`, read a SKILL.md's frontmatter, and executed
+  the `git-commit` skill workflow correctly (emitted a conventional commit to the skill's rules).
+
+## Headless scripting gotchas (learned live — cite before wrapping agy)
+- **`agy -p` binds to the LAST ACTIVE project, not the cwd.** Without `--new-project` (or
+  `--project <id>`) it answered from a previous project's workspace + `~/.agents/skills`.
+  Always pass `--new-project` when validating a fresh directory.
+- Headless tool calls are **auto-denied** ("a tool required the command permission") — pass
+  `--dangerously-skip-permissions` (throwaway dirs only) or add `permissions.allow` rules in
+  `~/.gemini/antigravity-cli/settings.json`.
+- `--sandbox` **hung to timeout on Windows Server 2019** — avoid it here until re-probed.
+- User-level skills at `~/.agents/skills/` are merged into discovery alongside workspace skills;
+  builtin skills live under `~/.gemini/antigravity-cli/builtin/skills`.
+- Default `--print-timeout` is 5m; real answers took ~1–3m on this box.

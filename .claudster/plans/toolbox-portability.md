@@ -1,6 +1,6 @@
 ---
 type: plan
-status: implemented (Phases 1-4 done 2026-07-21; Phase 5 optional/unstarted; 2 human tail items — see Phase notes)
+status: implemented (Phases 1-4 done; Phase 2 live-validated 2026-07-23; Phase 5 optional/unstarted; remaining tail: codex re-login + bundles/ mirror publish)
 feature: toolbox-portability
 creation-agent: claudster
 Original Author: Claude Code
@@ -75,11 +75,13 @@ Re-export first: `python export_runtime_resources.py --profile codex`.
 scratch repo; findings + any mapping fixes recorded in `docs/analysis/codex-cli-contract.md`.
 **Commit:** `fix(export): codex bundle validated live`
 
-### Phase 2 — Antigravity: probe → target → validate  ✅ DONE (63a84c2, 2026-07-21)
-> Antigravity IDE 1.107.0 WAS already installed. Probed contract: `docs/analysis/antigravity-contract.md`
-> — AGENTS.md workspace-wide; skills = `.claude/skills/<name>/SKILL.md` (Claude format, FLAT).
-> Target added with flatten_skills; export verified 94/94 flat. **Remaining (HUMAN): open a
-> bundle-seeded workspace in the IDE and confirm the agent lists the skills.**
+### Phase 2 — Antigravity: probe → target → validate  ✅ DONE + LIVE-VALIDATED (63a84c2 → aa2eaa0, 2026-07-23)
+> Two-surface story: IDE 1.107 probe (2026-07-21) found `.claude/skills/`; the **agy CLI v1.1.5
+> (Antigravity 2.0 harness, installed 2026-07-23) uses `.agents/skills/`** — target switched to the
+> CLI contract (aa2eaa0). **Live validation PASSED headless** (`agy -p --new-project` from a
+> bundle-seeded repo): AGENTS.md read (6 Laws), bundle skills discovered, `git-commit` skill
+> workflow executed correctly. No IDE eyeball step needed. Gotchas (project binding, permission
+> auto-deny, --sandbox hang) recorded in the contract doc.
 **Goal:** repeat the Phase-1 recipe on a second harness, from zero.
 **Implement:**
 1. Probe (no code): where does Antigravity look for project context/rules/skills? (AGENTS.md support?
