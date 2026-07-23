@@ -96,6 +96,39 @@ proves the `@AGENTS.md` import inlines; (b) same for a subfolder rule via `front
 shows root AGENTS.md content. Full suite + validate_pool green.
 **Commit:** `feat(setup): AGENTS.md-canonical rules; CLAUDE.md becomes an @import shim (root + folders)`
 
+### Phase 0b — Knowledge-flow writers/readers sweep (nothing may still write rules to CLAUDE.md)
+**Why:** after Phase 0, a CLAUDE.md is a shim. Any flow that APPENDS learnings/conventions to
+CLAUDE.md re-forks the rules for Claude only — silent single-sourcing breakage. Swept 2026-07-23;
+the lists below are exact (re-grep `CLAUDE.md` across `claude-harness/` + `.github/skills/` to catch
+additions since).
+**WRITERS — must now target AGENTS.md (the canonical file):**
+- `claude-harness/agents/knowledge-transfer.md` — "writes to … CLAUDE.md" → durable repo
+  rules/conventions go to the matching `AGENTS.md` (root or subfolder); Claude-native-only notes
+  (subagent/skill/statusline specifics) may go to the CLAUDE.md shim's Claude-native block.
+- `claude-harness/agents/claude-md-curator.md` — re-scope: curates `AGENTS.md` files (the ~80-line
+  bloat threshold applies to AGENTS.md now); treats 2-line shims as fixed artifacts (flag a shim
+  that has grown as a smell); keep the agent name (rename is churn) but fix its brief.
+- `claude-harness/commands/handoff.md` + `claude-harness/commands/setup-project-ai.md` +
+  `.github/skills/workflow/setup-project-ai/SKILL.md` — every "enrich/update CLAUDE.md" step
+  becomes "enrich AGENTS.md" (the shim is never enriched).
+- `scripts/setup_project_ai.py` ~line 551 — harness-facts scaffold text "copy … into the matching
+  CLAUDE.md (root vs backend/ vs frontend/)" → "matching AGENTS.md".
+- `claude-harness/scripts/check_doc_coverage.py` ~line 525 — `claude_md_budget` measures the
+  always-loaded rules file: point it at AGENTS.md (+ shim size); accept `claude_md_budget` config
+  key for back-compat, add `agents_md_budget` alias. Update the config comment in
+  `setup_project_ai.py` ~617.
+**READERS — mechanical wording pass ("conventions live in AGENTS.md; CLAUDE.md may be a shim"):**
+harness agents `code-reviewer, preflight, tester, data-engineer, security-analyst, sql-expert,
+ui-design-reviewer`; commands `implement, tdd, ship, ship-pr, ship-merge`; pool skills
+`best-practices (SKILL + references + codebase-context-builder), agent-md-refactor,
+receiving-code-review, using-git-worktrees, understand-anything (references/commands.md)`.
+**Enforcement:** add `scripts/tests/test_agents_md_canonical.py` — greps the harness agents/commands
+for instruction patterns that direct WRITING rules into CLAUDE.md (allowlist the shim-block
+exception) so regressions fail the build.
+**Exit gate:** grep sweep clean; new convention test + full suite + validate_pool green;
+`junai-push` (templates + agents + commands ship in the plugin → version bump expected).
+**Commit:** `fix(harness): knowledge flows write AGENTS.md — handoff/knowledge-transfer/curator/doc-budget swept`
+
 ### Phase 1 — Bootstrap infra: platform-infra + project-template (+ app-forge inherits)
 **Touches:** `E:\Projects\platform-infra\bootstrap\new-vmie-project.ps1`,
 `E:\Projects\project-template\template-overlays\claude-md\platform-rules.md` (+ both repos'
@@ -188,6 +221,30 @@ record the parity table in `docs/guide/porting-to-a-harness.md`); ship 2-3 claud
 One hook + one agent + one MCP tool demonstrably firing in agy.
 **Commit:** `feat(agy): hooks/agents/MCP parity slice`
 
+## Landmines & edge cases (checked 2026-07-23 — read before the phase that owns each)
+- **platform-infra drift/spec libs** (`bootstrap\lib\template-drift.ps1`, `sync-specs.ps1`): check
+  for CLAUDE.md filename/checksum assumptions during Phase 1 — the generator's exclude list is not
+  the only place the filename appears.
+- **docket runner** `_review_prompt` says "conventions (CLAUDE.md)" — harmless (Claude Code inlines
+  the shim's import at load), but tweak the wording on the Phase-4 docket branch while there.
+- **User-level `~/.claude/CLAUDE.md`** is Claude-personal config — NOT part of this migration; never
+  touch it.
+- **Installed-plugin staleness:** Phases 2-4 run the migration tool from the claudster-source
+  checkout (not the installed plugin), so fleet work doesn't depend on plugin update timing; still
+  `junai-push` after 0/0b so other machines get the new templates.
+- **Copilot lane unaffected:** `.github/copilot-instructions.md` files (12 repos) are a separate
+  convention — out of scope, do not migrate or delete.
+- **uni-sight has a real pytest suite** (verified) — pilot gate #4 stands as written.
+- **@import depth:** shims use exactly 1 hop (limit 5) — do not chain shims to shims.
+- **CRLF:** fleet repos are Windows-checked-out; write files with the repo's existing line endings
+  (git will warn — that's fine); never let the tool rewrite unrelated lines.
+- **`~/.agents/skills` collisions (Phase 6):** the user profile already carries non-claudster skills
+  (azure-*, etc.); the agy plugin must namespace or install to its plugin dir — never dump into
+  `~/.agents/skills` where names could collide.
+- **Two-session coordination:** before touching shared claudster-source build files
+  (`sync.ps1`, `export_runtime_resources.py`, `validate_pool.py`), check `.claudster/relay.md` for
+  a concurrent session's ownership claims (pattern from 2026-07-21).
+
 ## Non-goals
 - No second claudster; no hand-maintained copies; no symlinks for rules (Windows privilege + git
   fragility — the `@AGENTS.md` shim is the mechanism).
@@ -214,8 +271,10 @@ it autonomously from E:\Projects\claudster-source. It is the single source of tr
 facts section carries the probed contracts, exact file/line anchors, and the 20-repo fleet worklist
 with exclusions; do not re-derive them, and probe live (never from memory) anywhere it says probe.
 Order is strict: Phase 0 (templates+setup script, TDD, live-verified @AGENTS.md shim on all three
-harnesses) → Phase 1 (platform-infra generator: repoint agent-sandbox→claudster-source, append
-platform rules to AGENTS.md only; live bootstrap proof) → Phase 2 (migration tool, TDD) → Phase 3
+harnesses) → Phase 0b (knowledge-flow writers sweep — handoff/knowledge-transfer/curator/doc-budget
+must write AGENTS.md, with the new convention test) → Phase 1 (platform-infra generator: repoint
+agent-sandbox→claudster-source, append platform rules to AGENTS.md only; live bootstrap proof;
+check template-drift/sync-specs libs) → Phase 2 (migration tool, TDD) → Phase 3
 (PILOT uni-sight — hard gate: all 5 validations green or STOP and fix, never proceed) → Phase 4
 (fleet rollout per the worklist; docket ONLY on branch chore/agents-md-canonical, never push docket
 main) → Phases 5-8 (agy plugin probe → exporter target → GitHub distribution incl. the deferred
