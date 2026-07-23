@@ -15,13 +15,15 @@ Include frontmatter for:
 - PRDs, ADRs, design docs, architecture docs, and requirements docs
 - README files, runbooks, guides, reports, analyses, and handoffs
 - status trackers, implementation notes, migration notes, and other prose-first Markdown artefacts
+- session-spec / driver prompts (e.g. `.claudster/prompts/*.md`) — they are generated deliverables
+  with a lifecycle like any plan; use `type: prompt`
 
 ## Required metadata fields
 
 When creating a **new** document, add YAML frontmatter at the top and include:
 
 ```yaml
-type: plan|prd|adr|design|runbook|handoff|analysis|review
+type: plan|prd|adr|design|runbook|handoff|analysis|review|prompt
 status: draft|current|done|superseded
 feature: <feature-slug or chain_id that owns this document>
 creation-agent: claudster
@@ -43,6 +45,17 @@ Last Model Used: <exact runtime model identifier or display name>
 **Field notes:**
 - `type` — document category; choose the closest match from the list above.
 - `status` — lifecycle state; update when the document is superseded or completed.
+
+## Status lifecycle
+
+`draft` and `current` are **active**; `done` and `superseded` are **terminal**. Use `done` when the
+work a document describes is complete; use `superseded` when a newer document replaces it.
+- **`done` is the canonical terminal value.** `shipped` and `implemented` are accepted legacy
+  synonyms — tooling treats them as terminal — but prefer `done` in new and updated documents.
+  (`ready` is NOT terminal: it means approved-and-waiting-to-start, i.e. active.)
+- Terminal artifacts under `.claudster/plans/` and `.claudster/prompts/` are moved to a sibling
+  `done/` folder by `claudster_tidy` (invoked from `/handoff` and `/implement`). Flip the status
+  when the work completes; the move is mechanical and follows the status.
 - `feature` — the feature slug or chain ID that this document belongs to (e.g. `feat-2026-0609-auth-rework`). Use `standalone` if the document is not tied to a feature.
 - `creation-agent` — the plugin or tool that created the document. Use `claudster` for documents produced by the claudster Claude Code plugin; use `github-copilot` for documents produced by the GitHub Copilot junai-vscode extension; use `human` for manually authored documents.
 

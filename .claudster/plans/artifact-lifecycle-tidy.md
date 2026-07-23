@@ -15,11 +15,18 @@ Creating Model: claude-fable-5
 is manual, forgettable, and was done by hand twice this week. It should be a claudster behavior that
 works in every repo the plugin serves.
 
-## Design decisions (locked with the user, 2026-07-21)
-1. **Frontmatter `status:` is the single source of truth.** Terminal values: `done`, `shipped`,
-   `implemented` (case-insensitive; anything else = active). Plans already carry this; prompts adopt
-   the same one-line frontmatter on completion. The implementing session flips the status — that
-   already happens today; the move becomes mechanical.
+## Design decisions (locked with the user, 2026-07-21; enum reconciled 2026-07-23)
+1. **Frontmatter `status:` is the single source of truth**, per the canonical
+   `document-frontmatter.instructions.md` contract (this convention is the lifecycle extension of
+   that contract — the sibling of OKF-lite, which governs `.claudster/kb/` notes with `type:` only).
+   - Terminal values: **`done` (canonical) and `superseded`**; `shipped` / `implemented` are accepted
+     legacy synonyms treated as terminal (case-insensitive). Anything else — `draft`, `current`,
+     `ready` — is active (`ready` = approved-and-waiting, NOT terminal).
+   - Prompts are in the contract now (instruction updated 2026-07-23: `type: prompt`, prompts listed
+     in scope) — new session-spec prompts are born with frontmatter; legacy frontmatter-less prompts
+     are left alone by the mover and flagged by `--check`.
+   - The implementing session flips the status — that already happens today; the move becomes
+     mechanical.
 2. **A deterministic script does the moving — never model judgment, never a mutating hook.** With
    multiple concurrent sessions per repo, a background hook that moves files mid-session is a race.
    A command-invoked script is predictable and testable.
@@ -33,14 +40,22 @@ works in every repo the plugin serves.
 **Touches:** `claude-harness/scripts/claudster_tidy.py` (new), `scripts/tests/test_claudster_tidy.py` (new).
 **Behavior:**
 - Scan `.claudster/plans/*.md` and `.claudster/prompts/*.md` (top level only; `done/` excluded).
-- Parse YAML frontmatter `status:`; terminal → move to sibling `done/` (create if missing).
+- Parse YAML frontmatter `status:`; terminal (`done`, `superseded`, plus legacy `shipped`/
+  `implemented`, case-insensitive) → move to sibling `done/` (create if missing).
   Use `git mv` when the file is tracked (preserve history); plain move when untracked; never
   overwrite an existing `done/<name>` (report + skip).
 - `--dry-run` (default when invoked with no args from a hook context) prints what WOULD move;
   `--apply` moves. Always report: moved / would-move / stale-suspects (all phases ✅ but status
   still active — report only, never auto-flip status).
+- **`--check` mode — mechanical conformance for generated artifacts** (closes the template-vs-output
+  gap: validate_pool guards the doc-generation *templates*, nothing guarded the *outputs*):
+  every top-level plan/prompt must have frontmatter with a known `status:` enum value; legacy
+  synonyms are warned (suggest `done`); frontmatter-less files are listed. Exit 1 on violations so
+  it can gate CI/pre-push later; legacy prompts predating the convention may be grandfathered via
+  a small allowlist constant rather than moved/edited retroactively.
 - Exit 0 always in report mode; `--apply` exits 1 only on a real failure (e.g. collision).
-**Tests:** terminal statuses move; active/draft stay; prompts without frontmatter stay silently;
+**Tests:** terminal statuses (incl. `superseded` + legacy synonyms) move; active/draft/`ready` stay;
+prompts without frontmatter stay silently in `--apply` but are flagged by `--check`;
 collision skips with message; untracked files move without git; dry-run touches nothing;
 stale-suspect (checkmarked but draft) is reported not moved.
 **Commit:** `feat(harness): claudster_tidy — deterministic done/-folder lifecycle for plans+prompts`
