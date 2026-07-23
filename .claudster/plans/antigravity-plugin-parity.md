@@ -225,6 +225,18 @@ on this box, `agy plugin install claudster@<marketplace-from-GitHub>` → skill 
 --target codex` with NO `--from` works. README "Installing outside Claude Code" updated.
 **Commit:** `feat(dist): claudster agy plugin + harness bundles published — install-once from GitHub`
 
+### Phase 7b — Bundle tiering: core by default, extras opt-in (context budget)
+**Why:** Claude Code deliberately ships core (~38 skills) always-on + extras opt-in to keep context
+lean; the codex/antigravity bundles flattened that away — all 94 skills' metadata loads every
+session (codex even logs "truncated skill metadata to fit skills context budget").
+**Implement:** split the codex + antigravity targets (and the Phase-6 agy plugin) into the SAME
+core/extras tiers as the claude/claude-extras rosters (reuse those roster lists — do not invent a
+third tier split). `claudster-init` gains `--extras` to add the tail; codex disable mechanism
+(`[[skills.config]]`) and agy equivalent documented for per-skill trimming. Default install = core.
+**Exit gate:** default bundle ≤ core roster; `--extras` adds the rest; both verified via the
+harness-native probes (`codex debug prompt-input` skill count; `agy -p --new-project` skill listing).
+**Commit:** `feat(export): core/extras tiering for codex+antigravity bundles (context budget parity)`
+
 ### Phase 8 — Deeper parity: hooks, agents, MCP
 Map the portable hook slice onto agy's hooks.json (per Phase-5 schema; skip non-equivalents,
 record the parity table in `docs/guide/porting-to-a-harness.md`); ship 2-3 claudster agents
@@ -232,6 +244,41 @@ record the parity table in `docs/guide/porting-to-a-harness.md`); ship 2-3 claud
 `~/.gemini/config/mcp_config.json` + codex `[[mcp_servers]]` (absorbs toolbox-portability Phase 5).
 One hook + one agent + one MCP tool demonstrably firing in agy.
 **Commit:** `feat(agy): hooks/agents/MCP parity slice`
+
+### Phase 9 — Adoption & lifecycle: user-level installs, registry, doctor, uninstall
+**The real-world smoothness layer — each item is a probed-fact-backed fix to a lifecycle pain:**
+1. **User-level install mode (NEW DEFAULT for skills):** both harnesses merge user-level skills
+   (probed: codex `r1/r2 = ~/.codex/skills`; agy merges `~/.agents/skills` — validated live).
+   `claudster-init --user --target codex|antigravity` installs skills there ONCE (namespaced
+   sub-tree where the harness allows, to avoid collisions with existing user skills e.g. the
+   azure-* set); per-repo mode (`--dest`) remains for AGENTS.md (always per-repo) and for teams
+   that want vendored/pinned skills. Update README guidance: repo = rules, user = skills.
+2. **Install registry + fleet update:** every `claudster-init` apply appends
+   `{location, target, mode, version, timestamp}` to `~/.claudster/installs.json`;
+   `claudster-init --update-all` re-runs every registered install (conflict rules unchanged).
+3. **Version stamping + skew detection:** record the claudster bundle version in
+   `.claudster-init.json` and an `<!-- claudster vX.Y.Z -->` footer in generated AGENTS.md;
+   doctor reports skew across registry entries.
+4. **`claudster-init --doctor` (or `claudster_doctor.py`):** per harness — binary present + PATH
+   health (incl. the "new terminal" Windows gotcha), version vs the probed-contract version
+   (WARN on drift, e.g. codex 0.145 vs probed 0.137 → "re-probe the contract"), auth state
+   (codex: distrust `codex doctor`'s token-presence claim — attempt-based check; agy: keyring
+   check), rules-file integrity (root AGENTS.md present; shims are shims — reuse the Phase-2
+   fork detector), skills discovered at the harness's probed path, python availability for the
+   tooling itself. Read-only, exit 1 on failures, human-readable report.
+5. **`claudster-init --uninstall`:** remove manifest-tracked UNMODIFIED files (+ registry entry);
+   modified files listed and left. Makes trying claudster risk-free.
+**TDD throughout; ship all of it in the plugin scripts/ like claudster_init.**
+**Commit:** `feat(dist): user-level installs, install registry + update-all, doctor, uninstall`
+
+### Phase 10 — The onboarding surface: one page, every harness
+`docs/guide/claudster-everywhere.md`: the 10-minute path — one table (harness / install command /
+where skills live / where rules live / update command / doctor), the three quickstarts
+(Claude Code marketplace; codex + agy via `claudster-init --user` then per-repo AGENTS.md), the
+shim convention explained in 5 lines, troubleshooting = "run the doctor". Link it from README and
+from `docs/guide/start-here.md`; refresh the docket-Help-rendered guide pages that describe
+claudster as Claude-Code-only (the guide is the canonical md under docs/guide — docket renders it).
+**Commit:** `docs(guide): claudster-everywhere — cross-harness onboarding + troubleshooting`
 
 ## Landmines & edge cases (checked 2026-07-23 — read before the phase that owns each)
 - **platform-infra drift/spec libs** (`bootstrap\lib\template-drift.ps1`, `sync-specs.ps1`): check
@@ -289,8 +336,11 @@ agent-sandbox→claudster-source, append platform rules to AGENTS.md only; live 
 check template-drift/sync-specs libs) → Phase 2 (migration tool, TDD) → Phase 3
 (PILOT uni-sight — hard gate: all 5 validations green or STOP and fix, never proceed) → Phase 4
 (fleet rollout per the worklist; docket ONLY on branch chore/agents-md-canonical, never push docket
-main) → Phases 5-8 (agy plugin probe → exporter target → GitHub distribution incl. the deferred
-bundles/ publish → hooks/agents/MCP parity). Gates after every claudster-source phase: python -m
+main) → Phases 5-10 (agy plugin probe → exporter target → GitHub distribution incl. the deferred
+bundles/ publish → 7b core/extras bundle tiering → hooks/agents/MCP parity → 9 adoption layer:
+user-level installs as the skills default, install registry + --update-all, version stamping,
+claudster doctor, --uninstall → 10 the claudster-everywhere onboarding guide). Gates after every
+claudster-source phase: python -m
 pytest scripts/tests/ claude-harness/hooks/tests/ -q --import-mode=importlib AND python
 validate_pool.py. Commit per phase (per repo in Phase 4) with the plan's commit messages; flip this
 plan's phase headers to ✅ + hash as you complete them; junai-push (bare) where the plan says so,
