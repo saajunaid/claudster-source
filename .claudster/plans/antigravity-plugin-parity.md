@@ -6,101 +6,225 @@ creation-agent: claudster
 Original Author: Claude Code
 Creation Date: 2026-07-23T00:00:00Z
 Creating Model: claude-fable-5
+Last Author: Claude Code
+Last Updated: 2026-07-23T00:00:00Z
+Last Model Used: claude-fable-5
 ---
 
-# Antigravity plugin parity — same claudster experience in agy as in Claude Code
+# AGENTS.md-canonical rules + fleet rollout + Antigravity plugin parity
 
 ## Goal
-One claudster, two first-class homes. In Antigravity (`agy`) that means: install once at user
-level, update centrally (like the Claude Code marketplace), same rules hierarchy, same skills,
-and the portable slice of hooks/commands/agents — all packaged from the SAME canonical source by
-the SAME exporter. No fork, ever.
+One claudster, same experience in every coding agent. Three linked outcomes:
+1. **Rules single-sourcing** — `AGENTS.md` is the canonical rules file (root AND subfolders);
+   `CLAUDE.md` becomes a shim (`@AGENTS.md` + Claude-native extras). No duplicated mirrors, no drift.
+2. **Nothing manual, anywhere** — the new-project pipeline (platform-infra → project-template →
+   app-forge) AND every existing repo across `E:\Projects` + `C:\Users\jshaik\Documents` adopt the
+   pattern via tooling: pilot-validated on ONE repo before any fleet rollout.
+3. **claudster as a first-class agy plugin** — install once, update centrally, with the portable
+   hooks/agents/MCP slice.
 
-## Context (probed facts — cite, don't re-derive)
-- `docs/analysis/antigravity-contract.md` — agy v1.1.5 contract + headless gotchas (LIVE-validated
-  2026-07-23: AGENTS.md + `.agents/skills/` + skill execution all work via the bundle).
-- agy HAS a plugin system: `agy plugin install <plugin@marketplace> | validate | link | import`,
-  manifests are `plugin.json` (+ `import_manifest.json` internally), marketplaces at
-  `.agents/plugins/marketplace.json`. Binary contains NO `.claude/` paths — `plugin import claude`
-  targets something else (probably Claude Desktop extensions); found nothing on this box.
-- agy also has: hooks (`~/.agents/hooks/hooks.json` + `scripts/` exist on this box — a live
-  example to read), custom agents (`agy agents` — empty list today), `--agent`, MCP via
-  `~/.gemini/config/mcp_config.json`, settings at `~/.gemini/antigravity-cli/settings.json`.
-- Claude Code `CLAUDE.md` supports `@path` imports — the mechanism for single-sourcing rules.
-- Non-portable by nature (accept, don't chase): Claude Code statusline, permission modes,
-  slash-command UX. agy's TUI has its own equivalents.
+## Verified facts (explored 2026-07-23 — trust these, re-verify only if stale)
+
+### The generation chain (today)
+- `scripts/setup_project_ai.py` `compose_claude_md()` (~line 154-192) writes root `CLAUDE.md` from
+  `claude-harness/claude-md/root.md.tmpl` AND root `AGENTS.md` from `agents.md.tmpl` — **two
+  independent near-duplicates** (root.md.tmpl is the fuller one). Folder fragments
+  (`backend-python.md`, `backend-fastapi.md`, `frontend-react.md`, `tests-pytest.md`, selected via
+  `stack-map.json` `target:` e.g. `src/CLAUDE.md`, `frontend/CLAUDE.md`, `tests/CLAUDE.md`) are
+  written as **CLAUDE.md only — no subfolder AGENTS.md exists today**. Script is idempotent
+  (skip-if-exists unless `--force`); exit 3 = unresolved `{{TOKEN}}`s.
+- **Bootstrap pipeline**: `E:\Projects\platform-infra\bootstrap\new-vmie-project.ps1` (2103 lines,
+  13 stages) copies `E:\Projects\project-template` (Stage 1 `Copy-TemplateDeterministic` ~313-420;
+  **CLAUDE.md/AGENTS.md are in the exclude list** ~352-353), then Stage 10 (~1675-1737) runs
+  `setup_project_ai.py` from `$env:JUNO_POOL` **defaulting to `E:\Projects\agent-sandbox`**, then
+  (~1711-1728) appends `project-template\template-overlays\claude-md\platform-rules.md` to BOTH
+  `CLAUDE.md` and `AGENTS.md` (`foreach ($mirror in @("CLAUDE.md","AGENTS.md"))`).
+- **`E:\Projects\app-forge`** (FastAPI+React bootstrap console) does NOT re-implement generation —
+  `src\services\forge_service.py` shells to the same `new-vmie-project.ps1`
+  (env `FORGE_PLATFORM_INFRA`). No template edits needed there; it inherits every fix.
+- **DRIFT BUG (fix in Phase 1):** `agent-sandbox` is the FROZEN pre-extraction monorepo (last
+  commit: "claudster extraction complete (agent-sandbox now private)"). Its `setup_project_ai.py`
+  and both templates DIFFER from claudster-source (missing e.g. the ask-rules self-heal). Stage 10
+  therefore bootstraps new projects from a stale harness TODAY.
+- Claude Code `CLAUDE.md` supports `@path` imports (≤5 hops) — the shim mechanism. `@AGENTS.md` in
+  a subfolder CLAUDE.md resolves relative to that file. LIVE-VERIFY in Phase 0 before relying on it.
+- agy reads directory-based AGENTS.md (root + subfolders) — live-validated 2026-07-23 (root; verify
+  nested during Phase 0 pilot probe). codex 0.137 reads root AGENTS.md only (`child_agents_md` off).
+
+### The fleet (inventoried 2026-07-23 — the rollout worklist)
+20 git repos under the two roots (top 2 levels), claudster-source excluded:
+
+| Group | Repos |
+|---|---|
+| **A — full claudster pair (CLAUDE.md + mirror AGENTS.md + subfolder CLAUDE.mds)** | app-forge, app-sight, appointment-assist, nps-lens, rev-sight, serve-sight, uni-sight |
+| **B — CLAUDE.md hierarchy, NO AGENTS.md** | docket (4 subfolders; **deploy-on-push — branch only!**), career-ops (3), nusba (14) |
+| **C — root-only CLAUDE.md** | platform-infra, project-template (handled in Phase 1, not the fleet tool) |
+| **D — EXCLUDE from rollout** | agent-sandbox (frozen), backup\AppointmentAssist + AppointmentAssist (backups/dupes), docket-livetest (scratch), app-sight-orgs\*, claudster-private, Customer360, junaid\site (no claudster rules) |
+
+### agy plugin surface (probed 2026-07-23)
+`agy plugin install <plugin@marketplace> | validate <path> | link <mp> <target> | import | enable |
+disable`; manifests `plugin.json` (+`import_manifest.json`); marketplaces `.agents/plugins/marketplace.json`;
+hooks live example on this box: `~/.agents/hooks/hooks.json` + `scripts/`; custom agents (`agy agents`
+— empty today); MCP `~/.gemini/config/mcp_config.json`; settings `~/.gemini/antigravity-cli/settings.json`.
+Binary has NO `.claude/` paths — `plugin import claude` targets something else; do not depend on it.
+Headless gotchas (cite `docs/analysis/antigravity-contract.md`): `agy -p` binds to LAST project — always
+`--new-project`; permissions auto-denied headless — `--dangerously-skip-permissions` (scratch only);
+`--sandbox` hangs on this box.
 
 ## Phases
 
-### Phase 0 — Single-source the rules: AGENTS.md canonical, CLAUDE.md = shim
-**Goal:** repo + subfolder rules written ONCE, read natively by both harnesses.
-**Design:** `AGENTS.md` holds the content (root and subfolders); each sibling `CLAUDE.md` becomes
-`@AGENTS.md` + optional Claude-only addenda. NO symlinks (Windows privilege + git fragility).
-**Touches:** `scripts/setup_project_ai.py` + `claude-harness/claude-md/root.md.tmpl` (+ area
-fragments): generate the AGENTS.md/CLAUDE.md-shim pair instead of CLAUDE.md-only; migration mode
-for existing repos (`--migrate-rules`: move CLAUDE.md content → AGENTS.md, leave shim; refuse on
-conflict). TDD.
-**Exit gate:** in a scratch repo: Claude Code resolves the shim (probe: ask what the Laws are);
-`agy -p --new-project` reads root AND one subfolder AGENTS.md. Existing-repo migration tested on a
-copy of docket (not committed there).
-**Commit:** `feat(setup): AGENTS.md-canonical rules with CLAUDE.md @import shims`
+### Phase 0 — Templates + setup script: AGENTS.md canonical, CLAUDE.md shim (claudster-source)
+**Touches:** `claude-harness/claude-md/agents.md.tmpl`, `root.md.tmpl`, the 4 folder fragments,
+`stack-map.json` (targets), `scripts/setup_project_ai.py`, `scripts/tests/test_setup_claudster.py`.
+**Implement (TDD — tests first):**
+1. `agents.md.tmpl` becomes the single canonical root doc: merge IN everything root.md.tmpl has that
+   it lacks (harness loop diagram, "Where things live", doc-discipline). Keep it agent-neutral
+   (no Claude-only phrasing); placeholders `{{PROJECT_NAME}}`/`{{PROJECT_DESCRIPTION}}`/
+   `{{STACK_SUMMARY}}`/`{{STACK_REFERENCE_LINE}}` move here.
+2. `root.md.tmpl` becomes the shim: `# {{PROJECT_NAME}} — Project Memory` + `@AGENTS.md` + a short
+   **Claude-native block** (subagents/skills/commands pointers, statusline note — ONLY things other
+   agents can't use). Target ≤15 lines.
+3. Folder fragments: `compose_claude_md()` writes each fragment body to `<folder>/AGENTS.md`
+   (canonical) and `<folder>/CLAUDE.md` as the 2-line shim `@AGENTS.md`. Adjust `stack-map.json`
+   targets or the write loop accordingly (keep the map's `target` keys stable if possible — derive
+   both paths in code).
+4. Update docstring/comments asserting "AGENTS.md mirror"; `--force` semantics unchanged.
+**Exit gate (LIVE, scratch project):** run the script on a scratch FastAPI+React tree; then
+(a) `claude -p` (or a session) answers "what are The Laws?" WITHOUT reading AGENTS.md explicitly —
+proves the `@AGENTS.md` import inlines; (b) same for a subfolder rule via `frontend/CLAUDE.md`;
+(c) `agy -p --new-project` reads root AND `frontend/AGENTS.md`; (d) `codex debug prompt-input`
+shows root AGENTS.md content. Full suite + validate_pool green.
+**Commit:** `feat(setup): AGENTS.md-canonical rules; CLAUDE.md becomes an @import shim (root + folders)`
 
-### Phase 1 — Probe the agy plugin + hooks + agents contract
-**Goal:** pin `plugin.json` schema, marketplace.json format, hooks.json schema, custom-agent format.
-**Method (per the porting guide — probe, never assume):**
-- Read the LIVE example on this box: `~/.agents/hooks/hooks.json` + `scripts/`.
-- Scaffold a minimal plugin and iterate against `agy plugin validate <path>` until green — the
-  validator IS the schema oracle. Binary strings + official docs (antigravity.google/docs/cli) fill gaps.
-- Probe `agy plugin link <mp> <target>` and `.agents/plugins/marketplace.json` shape.
-- Probe custom agents: where agent definitions live so `agy agents` lists them; map 2-3 claudster
-  agent briefs (code-reviewer, preflight) as candidates.
-**Exit gate:** `docs/analysis/antigravity-plugin-contract.md` with verbatim schemas + a hello-world
-plugin that installs, lists, enables, and its skill fires in a session.
+### Phase 1 — Bootstrap infra: platform-infra + project-template (+ app-forge inherits)
+**Touches:** `E:\Projects\platform-infra\bootstrap\new-vmie-project.ps1`,
+`E:\Projects\project-template\template-overlays\claude-md\platform-rules.md` (+ both repos'
+own root rules via the Phase-2 tool later). app-forge: NO code change (shells to the generator).
+**Implement:**
+1. **Repoint the harness source**: Stage 10 default `$agentSandboxRoot` from `E:\Projects\agent-sandbox`
+   → `E:\Projects\claudster-source` (keep `$env:JUNO_POOL` override). This also picks up the newer
+   script fixes (drift bug above).
+2. Stage 10 append loop: append `platform-rules.md` to **AGENTS.md only** (appending prose after a
+   shim's `@AGENTS.md` line would defeat single-sourcing). Update the success print text.
+3. `platform-rules.md`: fix the header ("Appended … to CLAUDE.md" → AGENTS.md) and any
+   "`<repo>/CLAUDE.md §…`" style references.
+4. Stage 1 exclude list: unchanged (both names stay excluded) — confirm.
+**Exit gate (LIVE):** bootstrap a scratch project end-to-end via `new-vmie-project.ps1` (or its
+non-Gitea dry path if available): resulting tree has canonical AGENTS.md (with platform rules
+appended at the END of AGENTS.md only), shim CLAUDE.md, subfolder pairs; the Phase-0 (a)-(d) probes
+pass on it. Commit in platform-infra + project-template (their own repos, their own conventions).
+**Commit:** `feat(bootstrap): generator emits AGENTS.md-canonical rules; repoint harness to claudster-source`
+
+### Phase 2 — The migration tool (fleet automation, TDD)
+**Touches:** `scripts/claudster_migrate_rules.py` (new), `scripts/tests/test_migrate_rules.py` (new),
+ship in the plugin (`runtime-targets.json` claude target files list, like claudster_init).
+**Behavior (per target repo):**
+- Refuse to run on a dirty working tree (unless `--allow-dirty`). `--dry-run` default; `--apply` executes.
+- ROOT: if `AGENTS.md` exists and is the old claudster mirror → replace with content derived from
+  the (fuller, possibly enriched) `CLAUDE.md`, re-headed agent-neutrally; if `AGENTS.md` is absent
+  (group B) → `CLAUDE.md` content becomes `AGENTS.md`. Then write `CLAUDE.md` shim. **If the two
+  existing files have DIVERGED beyond the known template skeleton (project enrichments on both
+  sides), do NOT guess: emit a per-repo conflict report and skip the root pair (exit 1)** — the
+  session running the rollout resolves those few by hand-merge, tool re-run confirms.
+- SUBFOLDERS: each `<dir>/CLAUDE.md` → `git mv` to `<dir>/AGENTS.md` + write `<dir>/CLAUDE.md` shim.
+- Preserve document-frontmatter provenance if present; idempotent (re-run = no-op); `git mv` when
+  tracked; never touch `done/`-style archived files; summary report (migrated / skipped / conflicts).
+**Exit gate:** tests cover: mirror-replace, absent-AGENTS create, divergence-conflict skip,
+subfolder pair, idempotent re-run, dirty-tree refusal, dry-run touches nothing. Full suite green.
+**Commit:** `feat(tools): claudster_migrate_rules — CLAUDE.md→AGENTS.md-canonical fleet migration`
+
+### Phase 3 — PILOT on ONE repo (hard gate before any fleet work)
+**Pilot: `E:\Projects\uni-sight`** (group A: full pair + 3 subfolders + copilot file — the richest
+single test). Run the tool `--apply`, then the full validation battery:
+1. Claude Code: session answers Laws + a subfolder rule through the shims (no direct AGENTS.md read).
+2. agy: `agy -p --new-project` from the repo — root Laws + one subfolder rule + one skill still fires.
+3. codex: `codex debug prompt-input` shows the root AGENTS.md content.
+4. Repo's own tests still pass (whatever suite uni-sight has) — migration touched only rules files.
+5. `git diff` review: nothing lost from either old file (spot-check enrichments survived).
+**Exit gate:** all 5 green, committed IN uni-sight. **If any fail: fix tool/templates, re-pilot.
+DO NOT proceed to Phase 4.**
+**Commit (uni-sight):** `chore(rules): migrate to AGENTS.md-canonical (claudster pilot)`
+
+### Phase 4 — Fleet rollout (automated, per-repo commits)
+**Worklist:** Group A remainder (app-forge, app-sight, appointment-assist, nps-lens, rev-sight,
+serve-sight) then Group B (career-ops, nusba; **docket LAST and on branch `chore/agents-md-canonical`
+— NEVER push docket main, it deploys**). Group C (platform-infra, project-template roots) via the
+same tool. Group D untouched.
+**Per repo:** clean-tree check → tool `--apply` → quick probe (Claude Laws answer + `agy -p
+--new-project` root check) → commit `chore(rules): migrate to AGENTS.md-canonical rules` → next.
+Conflict-report repos: hand-merge in-session, re-run, then commit. Summary table at the end
+(repo / migrated / conflicts / validation). docket: open PR/branch, STOP for the user's merge.
+**Exit gate:** every non-excluded repo migrated & validated (docket parked on its branch); summary
+recorded in `docs/analysis/agents-md-rollout-2026-07.md`.
+
+### Phase 5 — Probe the agy plugin/hooks/agents contract
+As previously planned: scaffold hello-world plugin, iterate against `agy plugin validate` (the
+schema oracle); read the live `~/.agents/hooks/hooks.json` + `scripts/`; probe marketplace.json via
+`agy plugin link`; probe custom-agent format until `agy agents` lists one. Record ALL schemas
+verbatim in `docs/analysis/antigravity-plugin-contract.md`; hello-world must install, enable, and
+its skill fire in a live `agy -p --new-project` session.
 **Commit:** `docs(analysis): agy plugin/hooks/agents contract — probed`
 
-### Phase 2 — Exporter target `antigravity-plugin`
-**Goal:** package claudster (skills + rules templates + mapped extras) in agy plugin layout with a
-generated `plugin.json`, from the same pool. Reuse the bundle roster; version from the claudster
-manifest (same bump flow).
-**Exit gate:** `agy plugin validate dist/runtime-resources/antigravity-plugin` green; local
-`agy plugin install` → skills fire in a scratch session; `validate_pool` extended to lint the new
-bundle. Full suite green.
+### Phase 6 — Exporter target `antigravity-plugin`
+Package claudster (skill roster = the antigravity bundle roster; rules templates; mapped extras)
+in agy plugin layout with generated `plugin.json`; version follows the claudster manifest bump flow.
+`agy plugin validate` green; local install → a skill fires live; `validate_pool` extended to lint
+the bundle; full suite green.
 **Commit:** `feat(export): antigravity-plugin target — claudster as an agy plugin`
 
-### Phase 3 — Distribution + updates (the "user-level once" experience)
-**Goal:** install once, update centrally — parity with the Claude marketplace.
-**Implement:** publish the plugin bundle + a `marketplace.json` into the junai GitHub repo (extend
-`sync.ps1` junai-push — ALSO close the deferred `bundles/<target>/` publish from the
-toolbox-portability plan here, one wiring pass); document `agy plugin install claudster@<marketplace>`
-+ update flow in README "Installing outside Claude Code".
-**Exit gate:** on this box, install claudster into agy FROM GitHub, run a skill; `claudster-init`
-GitHub mode also works now (bundles published). Leak-free `git grep` gate before the mirror push.
-**Commit:** `feat(dist): claudster agy plugin published — install-once from GitHub`
+### Phase 7 — Distribution: marketplace + bundles publish (junai repo)
+Extend `sync.ps1` junai-push: publish the agy plugin + `marketplace.json` AND the deferred
+`bundles/<target>/` (codex, antigravity — closes toolbox-portability Phase 4's tail so
+`claudster-init` GitHub mode works). Leak-free `git grep` gate before the mirror push. Validate:
+on this box, `agy plugin install claudster@<marketplace-from-GitHub>` → skill fires; `claudster-init
+--target codex` with NO `--from` works. README "Installing outside Claude Code" updated.
+**Commit:** `feat(dist): claudster agy plugin + harness bundles published — install-once from GitHub`
 
-### Phase 4 — Deeper parity: hooks, agents, MCP
-**Goal:** port the portable execution-layer slice.
-- Map SessionStart-relay + guard-style hooks onto agy's hooks.json semantics where equivalents
-  exist (probed in Phase 1); skip what has no equivalent — record a parity table in the guide.
-- Ship 2-3 claudster agents as agy custom agents if Phase 1 proved the format.
-- junai-mcp into `~/.gemini/config/mcp_config.json` (+ codex `[[mcp_servers]]`) — this absorbs
-  toolbox-portability Phase 5.
-**Exit gate:** parity table in `docs/guide/porting-to-a-harness.md`; one hook + one agent + one MCP
-tool demonstrably working in agy.
+### Phase 8 — Deeper parity: hooks, agents, MCP
+Map the portable hook slice onto agy's hooks.json (per Phase-5 schema; skip non-equivalents,
+record the parity table in `docs/guide/porting-to-a-harness.md`); ship 2-3 claudster agents
+(code-reviewer, preflight) as agy custom agents if the format proved out; junai-mcp into
+`~/.gemini/config/mcp_config.json` + codex `[[mcp_servers]]` (absorbs toolbox-portability Phase 5).
+One hook + one agent + one MCP tool demonstrably firing in agy.
 **Commit:** `feat(agy): hooks/agents/MCP parity slice`
 
 ## Non-goals
-- No second claudster codebase; no hand-maintained agy copies of skills.
-- No chasing statusline/permission-mode/slash-UX parity — harness-native, accept difference.
-- No dependence on `agy plugin import claude` (targets something else; our exporter is the bridge).
+- No second claudster; no hand-maintained copies; no symlinks for rules (Windows privilege + git
+  fragility — the `@AGENTS.md` shim is the mechanism).
+- No statusline/permission-mode/slash-UX parity chasing; no reliance on `agy plugin import claude`.
+- No pushing docket main, ever. No fleet work before the Phase-3 pilot gate passes.
+- agent-sandbox stays frozen — repointed away from, never edited.
+
+## Rules for the implementing session
+- Probe-first: every harness format claim from live tools/files/binary strings; cite
+  `docs/analysis/antigravity-contract.md` + `codex-cli-contract.md`; never remembered flags.
+- TDD all code. After each claudster-source phase: `python -m pytest scripts/tests/
+  claude-harness/hooks/tests/ -q --import-mode=importlib` AND `python validate_pool.py`.
+- Commit per phase (per repo in Phase 4), only files the phase touched; update this plan's phases
+  with ✅ + hash as you go. `junai-push` (bare) after claudster-source phases that change the
+  plugin/bundles; the Phase-7 mirror push needs the leak-free `git grep` gate first.
+- Fleet repos are OTHER git repos: check `git status` before and commit IN that repo; never cross-commit.
+- If a HUMAN step blocks (auth, docket merge), record blocked-on-human in this plan and continue
+  with the next unblocked work.
 
 ## Prompt
 ```
-Read E:\Projects\claudster-source\.claudster\plans\antigravity-plugin-parity.md fully, then execute
-autonomously in E:\Projects\claudster-source. Probe-first discipline: every agy format claim comes
-from agy plugin validate / live files / binary strings — never memory; cite
-docs/analysis/antigravity-contract.md gotchas (--new-project, permission auto-deny, no --sandbox).
-TDD for all code; full suite (python -m pytest scripts/tests/ claude-harness/hooks/tests/ -q
---import-mode=importlib) + python validate_pool.py per phase; commit per phase; update this plan's
-phases with ✅ + hash. Phase 3's mirror push needs the leak-free git grep gate. agy is authenticated
-on this box; if a live agy step fails on auth, mark blocked-on-human and continue.
+Read E:\Projects\claudster-source\.claudster\plans\antigravity-plugin-parity.md FULLY, then execute
+it autonomously from E:\Projects\claudster-source. It is the single source of truth — its Verified
+facts section carries the probed contracts, exact file/line anchors, and the 20-repo fleet worklist
+with exclusions; do not re-derive them, and probe live (never from memory) anywhere it says probe.
+Order is strict: Phase 0 (templates+setup script, TDD, live-verified @AGENTS.md shim on all three
+harnesses) → Phase 1 (platform-infra generator: repoint agent-sandbox→claudster-source, append
+platform rules to AGENTS.md only; live bootstrap proof) → Phase 2 (migration tool, TDD) → Phase 3
+(PILOT uni-sight — hard gate: all 5 validations green or STOP and fix, never proceed) → Phase 4
+(fleet rollout per the worklist; docket ONLY on branch chore/agents-md-canonical, never push docket
+main) → Phases 5-8 (agy plugin probe → exporter target → GitHub distribution incl. the deferred
+bundles/ publish → hooks/agents/MCP parity). Gates after every claudster-source phase: python -m
+pytest scripts/tests/ claude-harness/hooks/tests/ -q --import-mode=importlib AND python
+validate_pool.py. Commit per phase (per repo in Phase 4) with the plan's commit messages; flip this
+plan's phase headers to ✅ + hash as you complete them; junai-push (bare) where the plan says so,
+with the leak-free git grep gate before any mirror publish. agy and Claude Code are authenticated
+on this box; codex may need login — if any live step blocks on auth or a human merge, mark it
+blocked-on-human in the plan and continue with the next unblocked work. Never ask a question this
+plan can answer.
 ```
