@@ -394,7 +394,7 @@
     },
     {
       "name": "antigravity",
-      "_comment": "Antigravity IDE bundle — probed contract (docs/analysis/antigravity-contract.md, v1.107.0): AGENTS.md discovered workspace-wide; skills read from .claude/skills/<name>/SKILL.md in the CLAUDE format, FLAT (no category nesting — hence flatten_skills). Roster mirrors the codex bundle. Rules dir (.agents/rules) and .gemini/mcp_config.json are Phase-5 seams, not shipped yet.",
+      "_comment": "Antigravity bundle — follows the CLI/2.0 contract (agy v1.1.5, probed 2026-07-23 — docs/analysis/antigravity-contract.md): AGENTS.md read as rules; skills auto-discovered at .agents/skills/<name>/SKILL.md, FLAT (hence flatten_skills; SKILL.md must START with name+description frontmatter). NOTE: IDE 1.107 used .claude/skills/ (legacy — see contract doc). Roster mirrors the codex bundle. .agents/rules and ~/.gemini/config/mcp_config.json are Phase-5 seams, not shipped yet.",
       "workspace_root": ".",
       "extra_roots": {"harness": "claude-harness"},
       "files": [
@@ -403,7 +403,7 @@
       "copies": [
         {
           "source": "skills",
-          "destination": ".claude/skills",
+          "destination": ".agents/skills",
           "flatten_skills": true,
           "excluded_names": ["_registry.md"],
           "included_skills": {
